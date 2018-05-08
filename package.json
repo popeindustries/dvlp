@@ -35,6 +35,7 @@
     "prettier": "^1.12.1"
   },
   "scripts": {
-    "test": "mocha test --reporter spec --bail"
+    "test": "mocha test --reporter spec --bail",
+    "precommit": "lint-staged"
   }
 }
