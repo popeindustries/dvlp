@@ -1,7 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
-const { testServer } = require('../');
+const testServer = require('../lib/testServer');
 const fetch = require('node-fetch');
 
 let server;

@@ -3,11 +3,11 @@
 const { client: WSClient } = require('websocket');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
-const reloadServer = require('../lib/ReloadServer');
+const reloadServer = require('../lib/reloadServer');
 
 let server;
 
-describe('ReloadServer', () => {
+describe('reloadServer', () => {
   before(async () => {
     server = await reloadServer();
   });
