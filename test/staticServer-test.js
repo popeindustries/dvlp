@@ -13,20 +13,29 @@ describe('staticServer', () => {
   });
   beforeEach(async () => {
     try {
-      server = await staticServer('www');
+      server = await staticServer('www', { port: 8080 });
     } catch (err) {
       console.error(err);
     }
   });
-  afterEach(() => {
+  afterEach(async () => {
     if (server) {
-      server.destroy();
+      try {
+        await server.destroy();
+      } catch (err) {
+        // ignore
+      }
     }
   });
   after(() => {
     process.chdir(path.resolve(__dirname, '..'));
   });
 
+  it('should allow only one active server at a time', async () => {
+    const old = server;
+    server = await staticServer('www', { port: 8080 });
+    expect(old).to.not.equal(server);
+  });
   it('should implicitly serve index.html', async () => {
     const res = await fetch('http://localhost:8080/');
     expect(res.status).to.eql(200);
@@ -53,7 +62,7 @@ describe('staticServer', () => {
     expect(res.headers.get('Content-type')).to.eql('application/json');
   });
   it('should serve files from additional directories', async () => {
-    server.destroy();
+    await server.destroy();
     server = await staticServer(['www', 'assets']);
     const res = await fetch('http://localhost:8080/index.css');
     expect(res.status).to.eql(200);

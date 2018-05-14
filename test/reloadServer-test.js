@@ -11,12 +11,17 @@ describe('reloadServer', () => {
   before(async () => {
     server = await reloadServer();
   });
-  after(() => {
+  after(async () => {
     if (server) {
-      server.destroy();
+      await server.destroy();
     }
   });
 
+  it('should allow only one active server at a time', async () => {
+    const old = server;
+    server = await reloadServer();
+    expect(old).to.not.equal(server);
+  });
   it('should serve the livereload.js file with correct mime type', async () => {
     const res = await fetch('http://localhost:35729/livereload.js');
     expect(res.status).to.eql(200);
