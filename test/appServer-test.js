@@ -12,7 +12,7 @@ function changeBodyContent(content) {
   fs.writeFileSync(path.resolve('./body.js'), `module.exports = '${content}';\n`);
 }
 
-describe.only('appServer', () => {
+describe('appServer', () => {
   before(() => {
     process.chdir(path.resolve(__dirname, 'fixtures'));
   });

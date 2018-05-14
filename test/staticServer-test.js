@@ -12,19 +12,11 @@ describe('staticServer', () => {
     process.chdir(path.resolve(__dirname, 'fixtures'));
   });
   beforeEach(async () => {
-    try {
-      server = await staticServer('www', { port: 8080 });
-    } catch (err) {
-      console.error(err);
-    }
+    server = await staticServer('www', { port: 8080 });
   });
   afterEach(async () => {
     if (server) {
-      try {
-        await server.destroy();
-      } catch (err) {
-        // ignore
-      }
+      await server.destroy();
     }
   });
   after(() => {
