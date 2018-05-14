@@ -34,4 +34,5 @@ describe('reloadServer', () => {
     });
     client.connect('ws://localhost:35729');
   });
+  it('should broadcast a reload command');
 });
