@@ -15,7 +15,7 @@ $ npm install dvlp
 
 ## Usage
 
-```bash
+```text
 $ dvlp -h
 
   Usage: dvlp [options] <path...>
