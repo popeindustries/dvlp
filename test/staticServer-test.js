@@ -23,12 +23,6 @@ describe('staticServer', () => {
     process.chdir(path.resolve(__dirname, '..'));
   });
 
-  it('should allow multiple servers at a time', async () => {
-    const old = server;
-    server = await staticServer('www', { port: 8081 });
-    expect(old).to.not.equal(server);
-    await old.destroy();
-  });
   it('should implicitly serve index.html', async () => {
     const res = await fetch('http://localhost:8080/');
     expect(res.status).to.eql(200);

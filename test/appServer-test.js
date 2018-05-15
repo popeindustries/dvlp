@@ -12,7 +12,7 @@ function changeBodyContent(content) {
   fs.writeFileSync(path.resolve('./body.js'), `module.exports = '${content}';\n`);
 }
 
-describe.skip('appServer', () => {
+describe('appServer', () => {
   before(() => {
     process.chdir(path.resolve(__dirname, 'fixtures'));
   });
@@ -26,11 +26,6 @@ describe.skip('appServer', () => {
     process.chdir(path.resolve(__dirname, '..'));
   });
 
-  it.skip('should allow only one active server at a time', async () => {
-    const old = await appServer('app.js', { port: 8000 });
-    server = await appServer('app.js', { port: 8000 });
-    expect(old).to.not.equal(server);
-  });
   it('should start an app server', async () => {
     server = await appServer('app.js', { port: 8000 });
     const res = await fetch('http://localhost:8000/');
