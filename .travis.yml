@@ -4,9 +4,8 @@ node_js:
   - "9"
   - "10"
 install:
-  - yarn install --ignore-optional
-  - yarn run test
+  - npm install --no-optional
+  - npm run test
 cache:
   directories:
-    - ~/.yarn
     - ~/.nvm
