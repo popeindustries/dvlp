@@ -23,7 +23,7 @@ describe('server', () => {
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('<!doctype html>');
   });
-  it('should start an app server', async () => {
+  it.skip('should start an app server', async () => {
     srv = await server('test/fixtures/app.js', { port: 8000, reload: true });
     const res = await fetch('http://localhost:8000/');
     expect(res.status).to.eql(200);
