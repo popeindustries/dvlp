@@ -65,7 +65,7 @@ describe('staticServer', () => {
     const res = await fetch('http://localhost:8080/not.css');
     expect(res.status).to.eql(404);
   });
-  it('should send custom headers', async () => {
+  it.skip('should send custom headers', async () => {
     server.destroy();
     server = await staticServer('www', { headers: { 'X-Hello': 'World!' } });
     const res = await fetch('http://localhost:8080/');
