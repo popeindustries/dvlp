@@ -7,6 +7,9 @@
   "author": "Alexander Pope <alex@pope-industries.com>",
   "license": "MIT",
   "private": false,
+  "bin": {
+    "dvlp": "./bin/dvlp"
+  },
   "dependencies": {
     "chokidar": "^2.0.3",
     "commander": "^2.15.1",

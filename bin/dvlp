@@ -7,10 +7,10 @@ const pkg = require('../package.json');
 program
   .usage('[options] <path...>')
   .description(
-    'Serve one or more static directories, or a single application server (<path> as file)'
+    'Start a development server, restarting and reloading connected browsers on file changes. \n  Serves static files from one or more <path> directories, or a custom application \n  server if <path> is a single file'
   )
   .option('-p, --port <port>', 'port number', parseInt)
-  .option('-r, --reload', 'reload connected browsers on file change')
+  .option('-r, --reload', 'livereload connected browsers on file change')
   .arguments('<path...>')
   .action((path) => {
     server(path.length > 1 ? path : path[0], { port: program.port, reload: program.reload });
