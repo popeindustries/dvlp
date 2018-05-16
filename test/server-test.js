@@ -12,21 +12,45 @@ describe('server', () => {
       try {
         await srv.destroy();
       } catch (err) {
-        console.log(err);
+        // console.log(err);
       }
     }
   });
 
   it('should start a static file server', async () => {
-    srv = await server('test/fixtures/www', { port: 8080, reload: true });
+    srv = await server('test/fixtures/www', { port: 8080, reload: false });
     const res = await fetch('http://localhost:8080/');
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('<!doctype html>');
   });
+  it('should throw on missing path', async () => {
+    try {
+      srv = await server('www', { port: 8080, reload: false });
+      expect(srv).to.not.exist;
+    } catch (err) {
+      expect(err).to.exist;
+    }
+  });
+  it.skip('should inject the livereload script into a static server html response', async () => {
+    srv = await server('test/fixtures/www', { port: 8080, reload: true });
+    const res = await fetch('http://localhost:8080/', { headers: { accept: 'text/html' } });
+    expect(res.status).to.eql(200);
+    expect(await res.text()).to.contain(
+      '<script src="http://localhost:35729/livereload.js"></script>'
+    );
+  });
   it('should start an app server', async () => {
-    srv = await server('test/fixtures/app.js', { port: 8000, reload: true });
+    srv = await server('test/fixtures/app.js', { port: 8000, reload: false });
     const res = await fetch('http://localhost:8000/');
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('hi');
+  });
+  it('should inject the livereload script into an app server html response', async () => {
+    srv = await server('test/fixtures/app.js', { port: 8000, reload: true });
+    const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
+    expect(res.status).to.eql(200);
+    expect(await res.text()).to.contain(
+      '<script src="http://localhost:35729/livereload.js"></script>'
+    );
   });
 });

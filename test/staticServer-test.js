@@ -31,29 +31,29 @@ describe('staticServer', () => {
   it('should serve a css file with correct mime type', async () => {
     const res = await fetch('http://localhost:8080/style.css');
     expect(res.status).to.eql(200);
-    expect(res.headers.get('Content-type')).to.eql('text/css');
+    expect(res.headers.get('Content-type')).to.include('text/css');
   });
   it('should serve a js file with correct mime type', async () => {
     const res = await fetch('http://localhost:8080/script.js');
     expect(res.status).to.eql(200);
-    expect(res.headers.get('Content-type')).to.eql('application/javascript');
+    expect(res.headers.get('Content-type')).to.include('application/javascript');
   });
   it('should serve a font file with correct mime type', async () => {
     const res = await fetch('http://localhost:8080/font.woff');
     expect(res.status).to.eql(200);
-    expect(res.headers.get('Content-type')).to.eql('font/woff');
+    expect(res.headers.get('Content-type')).to.include('application/font-woff');
   });
   it('should serve a json file with correct mime type', async () => {
     const res = await fetch('http://localhost:8080/test.json');
     expect(res.status).to.eql(200);
-    expect(res.headers.get('Content-type')).to.eql('application/json');
+    expect(res.headers.get('Content-type')).to.include('application/json');
   });
   it('should serve files from additional directories', async () => {
     await server.destroy();
     server = await staticServer(['www', 'assets']);
     const res = await fetch('http://localhost:8080/index.css');
     expect(res.status).to.eql(200);
-    expect(res.headers.get('Content-type')).to.eql('text/css');
+    expect(res.headers.get('Content-type')).to.include('text/css');
     expect(await res.text()).to.equal('body {\n  background-color: white;\n}');
   });
   it('should return 404 for missing file', async () => {

@@ -12,8 +12,16 @@ program
   .option('-p, --port <port>', 'port number', parseInt)
   .option('-r, --reload', 'livereload connected browsers on file change')
   .arguments('<path...>')
-  .action((path) => {
-    server(path.length > 1 ? path : path[0], { port: program.port, reload: program.reload });
+  .action(async (path) => {
+    try {
+      await server(path.length > 1 ? path : path[0], {
+        port: program.port,
+        reload: program.reload
+      });
+    } catch (err) {
+      console.error(err);
+      process.exit(1);
+    }
   })
   .version(pkg.version, '-v, --version')
   .parse(process.argv);
