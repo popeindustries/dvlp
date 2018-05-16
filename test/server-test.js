@@ -12,7 +12,7 @@ describe('server', () => {
       try {
         await srv.destroy();
       } catch (err) {
-        // console.log(err);
+        console.log(err);
       }
     }
   });
