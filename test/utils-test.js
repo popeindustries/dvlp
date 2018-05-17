@@ -35,17 +35,5 @@ describe('utils', () => {
         '<script src="http://localhost:35729/livereload.js"></script>\n</body>'
       );
     });
-    it('should update Content-Length header with correct length if injected', () => {
-      const res = new ServerResponse({
-        method: 'GET',
-        httpVersionMajor: 1,
-        httpVersionMinor: 1
-      });
-      injectReloadScript(res);
-      const body = '</body>';
-      res.setHeader('Content-Length', Buffer.byteLength(body));
-      res.write(body);
-      // expect(res.get)
-    });
   });
 });
