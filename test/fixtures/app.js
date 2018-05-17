@@ -1,15 +1,16 @@
 'use strict';
 
-const Koa = require('koa');
 const body = require('./body');
-const send = require('send');
+const fs = require('fs');
+const Koa = require('koa');
+const path = require('path');
 
 const app = new Koa();
 
 app.use(async (ctx) => {
   console.log(ctx.path);
   if (ctx.accepts('html')) {
-    ctx.body = `<!doctype html>
+    return (ctx.body = `<!doctype html>
     <html lang="en-gb">
       <head>
         <meta charset="utf-8">
@@ -18,10 +19,14 @@ app.use(async (ctx) => {
       <body>
       ${body}
       </body>
-    </html>`;
-  } else {
-    send(ctx.req, ctx.path, { cacheControl: false }).pipe(ctx.res);
+    </html>`);
   }
+
+  if (ctx.accepts('js')) {
+    ctx.type = 'application/javascript';
+  }
+
+  ctx.body = fs.createReadStream(path.resolve(ctx.path.slice(1)));
 });
 
 app.listen(process.env.PORT || 8000);
