@@ -8,7 +8,6 @@ const path = require('path');
 const app = new Koa();
 
 app.use(async (ctx) => {
-  console.log(ctx.path);
   if (ctx.accepts('html')) {
     return (ctx.body = `<!doctype html>
     <html lang="en-gb">

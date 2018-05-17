@@ -9,7 +9,11 @@ let server;
 
 describe('reloadServer', () => {
   before(async () => {
-    server = await reloadServer();
+    try {
+      server = await reloadServer();
+    } catch (err) {
+      console.error(err);
+    }
   });
   after(async () => {
     if (server) {
