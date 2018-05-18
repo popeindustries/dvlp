@@ -1,0 +1,62 @@
+'use strict';
+
+const { expect } = require('chai');
+const { ServerResponse } = require('http');
+const { patchRequest, patchResponse } = require('../lib/patch');
+
+function getBody(res) {
+  const output = res.output.filter((chunk) => typeof chunk === 'string').join('');
+  return output.replace(res._header, '');
+}
+function getRequest(url, headers = { accept: '*/*' }) {
+  return {
+    headers,
+    httpVersionMajor: 1,
+    httpVersionMinor: 1,
+    method: 'GET',
+    url
+  };
+}
+
+describe('patch', () => {
+  describe('patchRequest()', () => {
+    it('should add correct type', () => {
+      const req = getRequest('index.js');
+      patchRequest(req);
+      expect(req.headers.accept).to.equal('application/javascript');
+    });
+    it('should add missing extension', () => {
+      const req = getRequest('dep', { referer: 'index.js' });
+      patchRequest(req);
+      expect(req.url).to.equal('dep.js');
+    });
+  });
+
+  describe('patchResponse()', () => {
+    it('should inject script into buffered html response', () => {
+      const req = getRequest('index.html', { accept: 'text/html' });
+      const res = new ServerResponse(req);
+      patchResponse(req, res, true);
+      res.end('</body>');
+      expect(getBody(res)).to.include(
+        '<script src="http://localhost:35729/livereload.js"></script>\n</body>'
+      );
+    });
+    it('should inject script into streamed html response', () => {
+      const req = getRequest('index.html', { accept: 'text/html' });
+      const res = new ServerResponse(req);
+      patchResponse(req, res, true);
+      res.write('</body>');
+      expect(getBody(res)).to.include(
+        '<script src="http://localhost:35729/livereload.js"></script>\n</body>'
+      );
+    });
+    it.only('should resolve bare js import path', () => {
+      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req, res, true);
+      res.end('import "lodash";');
+      expect(getBody(res)).to.include('/.dvlp/lodash-4.17.10.js');
+    });
+  });
+});
