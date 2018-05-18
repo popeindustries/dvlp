@@ -45,7 +45,7 @@
     "prettier": "^1.12.1"
   },
   "scripts": {
-    "test": "NODE_ENV=test mocha test --reporter spec --bail",
+    "test": "NODE_ENV=test mocha test --reporter spec --bail --timeout 10000",
     "precommit": "lint-staged"
   }
 }
