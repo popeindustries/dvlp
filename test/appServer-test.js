@@ -1,6 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
+const { clearCache } = require('../lib/utils/module');
 const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
@@ -17,6 +18,7 @@ describe('appServer', () => {
     process.chdir(path.resolve(__dirname, 'fixtures'));
   });
   afterEach(async () => {
+    clearCache();
     if (server) {
       await server.destroy();
     }
@@ -41,5 +43,13 @@ describe('appServer', () => {
       server = s;
       changeBodyContent('bye');
     });
+  });
+  it('should serve a bundled module js file', async () => {
+    server = await appServer('app.js', { port: 8000 });
+    const res = await fetch('http://localhost:8000/.dvlp/lodash__array-4.17.10.js', {
+      headers: { referer: 'index.js' }
+    });
+    expect(res.status).to.eql(200);
+    expect(await res.text()).to.contain('function baseSlice');
   });
 });

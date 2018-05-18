@@ -4,6 +4,8 @@ const { server } = require('../index');
 const program = require('commander');
 const pkg = require('../package.json');
 
+process.env.NODE_NO_WARNINGS = '1';
+
 program
   .usage('[options] <path...>')
   .description(
