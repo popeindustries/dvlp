@@ -67,7 +67,7 @@ describe('patch', () => {
       patchResponse(req, res, true);
       res.end('import "lodash/array";\nimport "./foo.js";\nimport "debug";');
       expect(getBody(res)).to.equal(
-        'import "/.dvlp/lodash%2Farray-4.17.10.js";\nimport "./foo.js";\nimport "/.dvlp/debug-3.1.0.js";'
+        'import "/.dvlp/lodash__array-4.17.10.js";\nimport "./foo.js";\nimport "/.dvlp/debug-3.1.0.js";'
       );
     });
   });

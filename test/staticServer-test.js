@@ -1,6 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
+const { clearCache } = require('../lib/utils/module');
 const fetch = require('node-fetch');
 const path = require('path');
 const staticServer = require('../lib/staticServer');
@@ -15,6 +16,7 @@ describe('staticServer', () => {
     server = await staticServer('www', { port: 8080 });
   });
   afterEach(async () => {
+    clearCache();
     if (server) {
       await server.destroy();
     }
@@ -35,6 +37,11 @@ describe('staticServer', () => {
   });
   it('should serve a js file with correct mime type', async () => {
     const res = await fetch('http://localhost:8080/script.js');
+    expect(res.status).to.eql(200);
+    expect(res.headers.get('Content-type')).to.include('application/javascript');
+  });
+  it('should serve a bundled module js file with correct mime type', async () => {
+    const res = await fetch('http://localhost:8080/.dvlp/lodash__array-4.17.10.js');
     expect(res.status).to.eql(200);
     expect(res.headers.get('Content-type')).to.include('application/javascript');
   });
