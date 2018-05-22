@@ -3,7 +3,7 @@
 
 # dvlp
 
-**dvlp** is a no-configuration, no-conditionals, no-middleware, no-nonsense tool to help you quickly develop for the web. You shouldn't have to jump through hoops to get a development web server up and running, and you definitely shouldn't have to ship development-only functionality in your production code. **dvlp** is full of hacks so your code doesn't have to be!
+**dvlp** is a _no-configuration_, _no-conditionals_, _no-middleware_, _no-nonsense_ **server toolbox** to help you quickly develop for the web. You shouldn't have to jump through hoops to get a development web server up and running, and you definitely shouldn't have to ship development-only functionality in your production code. **dvlp** is full of hacks so your code doesn't have to be!
 
 ### Motivation
 
