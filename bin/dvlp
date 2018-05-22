@@ -12,7 +12,7 @@ program
     'Start a development server, restarting and reloading connected browsers on file changes. \n  Serves static files from one or more <path> directories, or a custom application \n  server if <path> is a single file'
   )
   .option('-p, --port <port>', 'port number', parseInt)
-  .option('-r, --reload', 'livereload connected browsers on file change')
+  .option('--no-reload', 'disable reloading connected browsers on file change')
   .arguments('<path...>')
   .action(async (path) => {
     try {
