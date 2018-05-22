@@ -13,15 +13,15 @@ Today, history's pendulum is starting to swing back the other way. Thanks to JS 
 
 ### Philosophy
 
-* No bundling: write JS modules and load them directly in the browser
-* No middleware: write JS servers without special dev/build/bundle middleware
-* No refreshing: automatically restart servers and reload browsers on file changes
+* **No bundling**: write JS modules and load them directly in the browser
+* **No middleware**: write JS servers without special dev/build/bundle middleware
+* **No refreshing**: automatically restart servers and reload browsers on file change
 
 ### How it works
 
 **dvlp** allows you to easily serve files from one or more project directories (`static` mode), or from your custom application server (`app` mode). In both cases, **dvlp** automatically injects the necessary reload script into HTML responses to enable reloading, watches all files for changes, restarts the `app` server if necessary, and reloads all connected browsers.
 
-When working with JS modules, **dvlp** will ensure that so-called _bare_ imports (which are not natively supported by browsers) work by bundling and caching them in the background. Continue writing `import * from 'lodash'` without worry that `lodash` is not a valid url reference.
+In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (which are not natively supported by browsers) work by bundling and caching them in the background. Continue writing `import * from 'lodash'` without worry that `lodash` is not a valid url reference!
 
 ## Installation
 
@@ -62,7 +62,7 @@ $ dvlp -h
 
 ## API
 
-### `server(filepath: string|[string], [options]: { port: number, reload: boolean }): Promise<{ destroy: () => void }`
+##### `server(filepath: string|[string], [options]: { port: number, reload: boolean }): Promise<{ destroy: () => void }>`
 
 Serve files at `filepath`, starting static file server if one or more directories, or app server if a single file.
 
@@ -71,7 +71,7 @@ Serve files at `filepath`, starting static file server if one or more directorie
 * **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 * **`reload: boolean`**: enable/disable browser reloading (default `true`)
 
-### `testServer([options]: { port: number, latency: number, webroot: string, routes: (app, router) => void }): Promise<{ app: Koa, port: number, server: http.Server, destroy: () => void }>`
+#### `testServer([options]: { port: number, latency: number, webroot: string, routes: (app, router) => void }): Promise<{ app: Koa, port: number, server: http.Server, destroy: () => void }>`
 
 Create a [koa](http://koajs.com/) server for handling network requests during testing.
 
