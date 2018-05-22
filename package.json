@@ -11,6 +11,7 @@
     "dvlp": "./bin/dvlp"
   },
   "dependencies": {
+    "chalk": "^2.4.1",
     "chokidar": "^2.0.3",
     "commander": "^2.15.1",
     "debug": "^3.1.0",
