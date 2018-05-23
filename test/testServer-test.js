@@ -80,4 +80,5 @@ describe('testServer', () => {
     expect(response).to.exist;
     expect(response.headers.get('Cache-Control')).to.contain('max-age=10');
   });
+  it('should be runtime reconfigurable');
 });
