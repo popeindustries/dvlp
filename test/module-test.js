@@ -1,13 +1,18 @@
 'use strict';
 
 const { expect } = require('chai');
-const { CACHE_DIR, clearCache, bundle } = require('../lib/utils/module');
+const { CACHE_DIR, cleanCache, destroyWorkers, bundle } = require('../lib/utils/module');
 const path = require('path');
 
 const LODASH = 'lodash-4.17.10.js';
 
 describe('module', () => {
-  afterEach(clearCache);
+  afterEach(() => {
+    cleanCache();
+  });
+  after(async () => {
+    await destroyWorkers();
+  });
 
   describe('bundle()', () => {
     it('should return "null" if no module bundle found', () => {

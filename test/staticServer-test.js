@@ -1,7 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
-const { clearCache } = require('../lib/utils/module');
+const { cleanCache, destroyWorkers } = require('../lib/utils/module');
 const fetch = require('node-fetch');
 const path = require('path');
 const staticServer = require('../lib/staticServer');
@@ -16,13 +16,14 @@ describe('staticServer', () => {
     server = await staticServer('www', { port: 8080 });
   });
   afterEach(async () => {
-    clearCache();
+    cleanCache();
     if (server) {
       await server.destroy();
     }
   });
-  after(() => {
+  after(async () => {
     process.chdir(path.resolve(__dirname, '..'));
+    await destroyWorkers();
   });
 
   it('should implicitly serve index.html', async () => {

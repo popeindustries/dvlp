@@ -1,7 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
-const { clearCache } = require('../lib/utils/module');
+const { cleanCache, destroyWorkers } = require('../lib/utils/module');
 const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
@@ -18,14 +18,15 @@ describe('appServer', () => {
     process.chdir(path.resolve(__dirname, 'fixtures'));
   });
   afterEach(async () => {
-    clearCache();
+    cleanCache();
     if (server) {
       await server.destroy();
     }
     changeBodyContent('hi');
   });
-  after(() => {
+  after(async () => {
     process.chdir(path.resolve(__dirname, '..'));
+    await destroyWorkers();
   });
 
   it('should start an app server', async () => {

@@ -1,7 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
-const { clearCache } = require('../lib/utils/module');
+const { cleanCache, destroyWorkers } = require('../lib/utils/module');
 const { ServerResponse } = require('http');
 const { patchRequest, patchResponse } = require('../lib/utils/patch');
 
@@ -20,7 +20,12 @@ function getRequest(url, headers = { accept: '*/*' }) {
 }
 
 describe('patch', () => {
-  afterEach(clearCache);
+  afterEach(() => {
+    cleanCache();
+  });
+  after(async () => {
+    await destroyWorkers();
+  });
 
   describe('patchRequest()', () => {
     it('should add correct type', () => {
