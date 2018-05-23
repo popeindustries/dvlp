@@ -71,16 +71,15 @@ Serve files at `filepath`, starting static file server if one or more directorie
 * **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 * **`reload: boolean`**: enable/disable browser reloading (default `true`)
 
-#### `testServer([options]: { port: number, latency: number, webroot: string, routes: (app, router) => void }): Promise<{ app: Koa, port: number, server: http.Server, destroy: () => void }>`
+#### `testServer([options]: { port: number, latency: number, webroot: string }): Promise<{ destroy: () => void }>`
 
-Create a [koa](http://koajs.com/) server for handling network requests during testing.
+Create a server for handling network requests during testing.
 
 `options` include:
 
 * **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `3333`)
 * **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
 * **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
-* **`routes: (app: Koa) => void`** register server middleware/routes with passed `app` instance
 
 ```js
 const { testServer } = require('dvlp');
@@ -93,10 +92,3 @@ If unable to resolve a request to a local file, `testServer` will respond with a
 * **`error`** return a 500 server error response (`fetch('http://localhost:3333/foo.js?error')`)
 * **`missing`** return a 404 not found response (`fetch('http://localhost:3333/foo.js?missing')`)
 * **`maxage=value`** configure `Cache-Control: public, max-age={value}` cache header (`fetch('http://localhost:3333/foo.js?maxage=10')`)
-
-The object returned from `testServer()` contains the following properties:
-
-* **`app: Koa`** the _koa_ application instance
-* **`port: number`** the assigned port number
-* **`server: http.Server`** the underlying `http.Server` instance
-* **`destroy(): Promise<void>`** close server and all outstanding connections
