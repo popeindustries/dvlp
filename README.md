@@ -54,10 +54,11 @@ $ dvlp -h
 
   Options:
 
-    -p, --port <port>  port number
-    --no-reload        disable reloading connected browsers on file change
-    -v, --version      output the version number
-    -h, --help         output usage information
+    -p, --port <port>      port number
+    -c, --config <config>  path to optional Rollup.js config file
+    --no-reload            disable reloading connected browsers on file change
+    -v, --version          output the version number
+    -h, --help             output usage information
 ```
 
 ## JS API
@@ -70,6 +71,7 @@ Serve files at `filepath`, starting static file server if one or more directorie
 
 * **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 * **`reload: boolean`**: enable/disable browser reloading (default `true`)
+* **`config: string`**: path to optional [Rollup.js](https://rollupjs.org) config file
 
 #### `testServer([options]: { port: number, latency: number, webroot: string }): Promise<{ destroy: () => void }>`
 

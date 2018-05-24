@@ -12,13 +12,15 @@ program
     'Start a development server, restarting and reloading connected browsers on file changes. \n  Serves static files from one or more <path> directories, or a custom application \n  server if <path> is a single file'
   )
   .option('-p, --port <port>', 'port number', parseInt)
+  .option('-c, --config <config>', 'path to optional Rollup.js config file')
   .option('--no-reload', 'disable reloading connected browsers on file change')
   .arguments('<path...>')
   .action(async (path) => {
     try {
       await server(path.length > 1 ? path : path[0], {
         port: program.port,
-        reload: program.reload
+        reload: program.reload,
+        config: program.config
       });
     } catch (err) {
       console.error(err);

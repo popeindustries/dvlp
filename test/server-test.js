@@ -1,20 +1,17 @@
 'use strict';
 
+const { cleanCache } = require('../lib/utils/module');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
+const path = require('path');
 const server = require('../lib/server');
 
 let srv;
 
 describe('server', () => {
   afterEach(async () => {
-    if (srv) {
-      try {
-        await srv.destroy();
-      } catch (err) {
-        console.log(err);
-      }
-    }
+    cleanCache();
+    srv && (await srv.destroy());
   });
 
   it('should start a static file server', async () => {
@@ -52,5 +49,27 @@ describe('server', () => {
     expect(await res.text()).to.contain(
       '<script src="http://localhost:35729/livereload.js"></script>'
     );
+  });
+  it('should start a static file server with custom Rollup config', async () => {
+    srv = await server('test/fixtures/www', {
+      port: 8080,
+      reload: false,
+      config: path.resolve(__dirname, './fixtures/www/rollup.config.js')
+    });
+    const res = await fetch('http://localhost:8080/.dvlp/debug-3.1.0.js');
+    expect(res.status).to.eql(200);
+    expect(await res.text()).to.contain('/* this is a test */');
+  });
+  it('should start an app server with custom Rollup config', async () => {
+    srv = await server('test/fixtures/app.js', {
+      port: 8000,
+      reload: false,
+      config: path.resolve(__dirname, './fixtures/www/rollup.config.js')
+    });
+    const res = await fetch('http://localhost:8000/.dvlp/debug-3.1.0.js', {
+      headers: { referer: 'index.js' }
+    });
+    expect(res.status).to.eql(200);
+    expect(await res.text()).to.contain('/* this is a test */');
   });
 });
