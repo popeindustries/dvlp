@@ -21,7 +21,11 @@ Today, history's pendulum is starting to swing back the other way. Thanks to JS 
 
 **dvlp** allows you to easily serve files from one or more project directories (`static` mode), or from your custom application server (`app` mode). In both cases, **dvlp** automatically injects the necessary reload script into HTML responses to enable reloading, watches all files for changes, restarts the `app` server if necessary, and reloads all connected browsers.
 
-In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (which are not natively supported by browsers) work by bundling and caching them in the background. Continue writing `import * from 'lodash'` without worry that `lodash` is not a valid url reference!
+In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (which are not supported by browsers) work by re-writing all import paths to valid urls. Since most node_modules packages are still published as CommonJS modules, each bare import is also bundled and converted to an ESM module using [Rollup.js](https://rollupjs.org). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under the project root.
+
+### Bonus!
+
+**dvlp** also includes a simple [`testServer`](#testserveroptions--port-number-latency-number-webroot-string--promise-destroy---void-) for handling network requests during testing.
 
 ## Installation
 
@@ -32,16 +36,6 @@ $ npm install dvlp
 ```
 
 ## Usage
-
-When installed locally, add a script to your package.json `scripts`:
-
-```json
-{
-  "scripts": {
-    "dev": "dvlp --port 8000 path/to/my/app.js"
-  }
-}
-```
 
 ```text
 $ dvlp -h
@@ -61,9 +55,25 @@ $ dvlp -h
     -h, --help             output usage information
 ```
 
+Add a script to your package.json `scripts`:
+
+```json
+{
+  "scripts": {
+    "dev": "dvlp --port 8000 path/to/my/app.js"
+  }
+}
+```
+
+... and launch:
+
+```text
+$ npm run dev
+```
+
 ## JS API
 
-##### `server(filepath: string|[string], [options]: { port: number, reload: boolean }): Promise<{ destroy: () => void }>`
+##### `server(filepath: string|[string], [options]: { port: number, reload: boolean, config: string }): Promise<{ destroy: () => void }>`
 
 Serve files at `filepath`, starting static file server if one or more directories, or app server if a single file.
 
