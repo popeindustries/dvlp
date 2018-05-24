@@ -18,7 +18,7 @@ describe('module', () => {
     it('should return "null" if no module bundle found', () => {
       expect(bundle('foofoo')).to.equal(null);
     });
-    it('should bundle and return bundle filepath', async () => {
+    it.only('should bundle and return bundle filepath', async () => {
       const filepath = await bundle('lodash');
       expect(filepath).to.equal(path.join(CACHE_DIR, LODASH));
     });
