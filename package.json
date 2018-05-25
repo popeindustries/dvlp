@@ -1,7 +1,7 @@
 {
   "name": "dvlp",
-  "version": "0.4.0",
-  "description": "Development servers for testing and getting stuff done",
+  "version": "0.5.0",
+  "description": "A friendly server toolbox: start a development server, restarting and reloading connected browsers on file changes",
   "main": "index.js",
   "repository": "https://github.com/popeindustries/dvlp.git",
   "author": "Alexander Pope <alex@pope-industries.com>",
