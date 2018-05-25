@@ -21,7 +21,7 @@ Today, history's pendulum is starting to swing back the other way. Thanks to JS 
 
 **dvlp** allows you to easily serve files from one or more project directories (`static` mode), or from your custom application server (`app` mode). In both cases, **dvlp** automatically injects the necessary reload script into HTML responses to enable reloading, watches all files for changes, restarts the `app` server if necessary, and reloads all connected browsers.
 
-In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (which are not supported by browsers) work by re-writing all import paths to valid urls. Since most node_modules packages are still published as CommonJS modules, each bare import is also bundled and converted to an ESM module using [Rollup.js](https://rollupjs.org). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under the project root.
+In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (which are not supported by browsers) work by re-writing all import paths to valid urls. Since most `node_modules` packages are still published as CommonJS modules, each bare import is also bundled and converted to an ESM module using [Rollup.js](https://rollupjs.org). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under the project root.
 
 ### Bonus!
 
@@ -81,7 +81,7 @@ Serve files at `filepath`, starting static file server if one or more directorie
 
 * **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 * **`reload: boolean`**: enable/disable browser reloading (default `true`)
-* **`config: string`**: path to optional [Rollup.js](https://rollupjs.org) config file
+* **`config: string`**: path to optional [Rollup.js](https://rollupjs.org) config file to control bundling of bare imports
 
 #### `testServer([options]: { port: number, latency: number, webroot: string }): Promise<{ destroy: () => void }>`
 
