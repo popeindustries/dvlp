@@ -32,9 +32,7 @@ describe('server', () => {
     srv = await server('test/fixtures/www', { port: 8080, reload: true });
     const res = await fetch('http://localhost:8080/', { headers: { accept: 'text/html' } });
     expect(res.status).to.eql(200);
-    expect(await res.text()).to.contain(
-      '<script src="http://localhost:35729/livereload.js"></script>'
-    );
+    expect(await res.text()).to.contain('/livereload.js"></script>');
   });
   it('should start an app server', async () => {
     srv = await server('test/fixtures/app.js', { port: 8000, reload: false });
@@ -46,9 +44,7 @@ describe('server', () => {
     srv = await server('test/fixtures/app.js', { port: 8000, reload: true });
     const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
     expect(res.status).to.eql(200);
-    expect(await res.text()).to.contain(
-      '<script src="http://localhost:35729/livereload.js"></script>'
-    );
+    expect(await res.text()).to.contain('/livereload.js"></script>');
   });
   it('should start a static file server with custom Rollup config', async () => {
     srv = await server('test/fixtures/www', {
