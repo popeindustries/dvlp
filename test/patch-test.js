@@ -34,7 +34,7 @@ describe('patch', () => {
       expect(req.headers.accept).to.equal('application/javascript');
     });
     it('should add missing extension', () => {
-      const req = getRequest('dep', { referer: 'index.js' });
+      const req = getRequest('dep', { accept: '*/*' });
       patchRequest(req);
       expect(req.url).to.equal('dep.js');
     });

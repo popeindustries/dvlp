@@ -16,7 +16,7 @@ describe('server', () => {
 
   it('should start a static file server', async () => {
     srv = await server('test/fixtures/www', { port: 8080, reload: false });
-    const res = await fetch('http://localhost:8080/');
+    const res = await fetch('http://localhost:8080/', { headers: { accept: 'text/html' } });
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('<!doctype html>');
   });
@@ -38,7 +38,7 @@ describe('server', () => {
   });
   it('should start an app server', async () => {
     srv = await server('test/fixtures/app.js', { port: 8000, reload: false });
-    const res = await fetch('http://localhost:8000/');
+    const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('hi');
   });
@@ -66,9 +66,7 @@ describe('server', () => {
       reload: false,
       config: path.resolve(__dirname, './fixtures/www/rollup.config.js')
     });
-    const res = await fetch('http://localhost:8000/.dvlp/debug-3.1.0.js', {
-      headers: { referer: 'index.js' }
-    });
+    const res = await fetch('http://localhost:8000/.dvlp/debug-3.1.0.js');
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('/* this is a test */');
   });

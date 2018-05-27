@@ -27,7 +27,7 @@ describe('staticServer', () => {
   });
 
   it('should implicitly serve index.html', async () => {
-    const res = await fetch('http://localhost:8080/');
+    const res = await fetch('http://localhost:8080/', { headers: { accept: 'text/html' } });
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('<!doctype html>');
   });
@@ -67,12 +67,5 @@ describe('staticServer', () => {
   it('should return 404 for missing file', async () => {
     const res = await fetch('http://localhost:8080/not.css');
     expect(res.status).to.eql(404);
-  });
-  it.skip('should send custom headers', async () => {
-    server.destroy();
-    server = await staticServer('www', { headers: { 'X-Hello': 'World!' } });
-    const res = await fetch('http://localhost:8080/');
-    expect(res.status).to.eql(200);
-    expect(res.headers.get('x-hello')).to.equal('World!');
   });
 });
