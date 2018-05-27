@@ -7,25 +7,31 @@ const program = require('commander');
 const pkg = require('../package.json');
 
 program
-  .usage('[options] <path...>')
+  .usage('[options] [path...]')
   .description(
-    'Start a development server, restarting and reloading connected browsers on file changes. \n  Serves static files from one or more <path> directories, or a custom application \n  server if <path> is a single file'
+    'Start a development server, restarting and reloading connected browsers on file changes. \n  Serves static files from one or more "path" directories, or a custom application \n  server if "path" is a single file'
   )
   .option('-p, --port <port>', 'port number', parseInt)
-  .option('-c, --config <config>', 'path to optional Rollup.js config file')
+  .option('-c, --config <config>', 'optional Rollup.js config file')
   .option('--no-reload', 'disable reloading connected browsers on file change')
-  .arguments('<path...>')
-  .action(async (path) => {
-    try {
-      await server(path.length > 1 ? path : path[0], {
-        port: program.port,
-        reload: program.reload,
-        config: program.config
-      });
-    } catch (err) {
-      console.error(err);
-      process.exit(1);
-    }
-  })
+  .arguments('[path...]')
+  .action(boot)
   .version(pkg.version, '-v, --version')
   .parse(process.argv);
+
+if (!program.args.length) {
+  boot([process.cwd()]);
+}
+
+async function boot(path) {
+  try {
+    await server(path.length > 1 ? path : path[0], {
+      port: program.port,
+      reload: program.reload,
+      config: program.config
+    });
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+}

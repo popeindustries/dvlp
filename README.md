@@ -3,7 +3,7 @@
 
 # dvlp
 
-**dvlp** is a no-configuration, no-conditionals, no-middleware, no-nonsense **server toolbox** to help you quickly develop for the web. You shouldn't have to jump through hoops to get a development web server up and running, and you definitely shouldn't have to ship development-only functionality in your production code. **dvlp** is full of hacks so your code doesn't have to be!
+**dvlp** is a no-configuration, no-conditionals, no-middleware, no-nonsense **server toolkit** to help you quickly develop for the web. You shouldn't have to jump through hoops to get a development environment up and running, and you definitely shouldn't have to include development-only functionality in your high-quality production code. **dvlp** is full of hacks so your code doesn't have to be!
 
 ### Motivation
 
@@ -40,16 +40,16 @@ $ npm install dvlp
 ```text
 $ dvlp -h
 
-  Usage: dvlp [options] <path...>
+  Usage: dvlp [options] [path...]
 
   Start a development server, restarting and reloading connected browsers on file changes.
-  Serves static files from one or more <path> directories, or a custom application
-  server if <path> is a single file
+  Serves static files from one or more "path" directories, or a custom application
+  server if "path" is a single file
 
   Options:
 
     -p, --port <port>      port number
-    -c, --config <config>  path to optional Rollup.js config file
+    -c, --config <config>  optional Rollup.js config file
     --no-reload            disable reloading connected browsers on file change
     -v, --version          output the version number
     -h, --help             output usage information
