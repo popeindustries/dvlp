@@ -16,7 +16,6 @@
     "commander": "^2.15.1",
     "debug": "^3.1.0",
     "esm": "^3.0.37",
-    "livereload-protocol": "^0.2.2",
     "mime": "^2.3.1",
     "read-pkg-up": "^3.0.0",
     "rollup": "^0.59.3",
@@ -24,9 +23,7 @@
     "rollup-plugin-json": "^3.0.0",
     "rollup-plugin-node-resolve": "^3.3.0",
     "send": "^0.16.2",
-    "sse": "0.0.8",
-    "worker-farm": "^1.6.0",
-    "ws": "^5.2.0"
+    "worker-farm": "^1.6.0"
   },
   "engines": {
     "node": ">=7.6"
