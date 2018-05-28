@@ -24,8 +24,9 @@
     "rollup-plugin-json": "^3.0.0",
     "rollup-plugin-node-resolve": "^3.3.0",
     "send": "^0.16.2",
-    "websocket": "^1.0.26",
-    "worker-farm": "^1.6.0"
+    "sse": "0.0.8",
+    "worker-farm": "^1.6.0",
+    "ws": "^5.2.0"
   },
   "engines": {
     "node": ">=7.6"
