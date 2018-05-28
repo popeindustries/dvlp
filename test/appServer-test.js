@@ -36,14 +36,15 @@ describe('appServer', () => {
     expect(await res.text()).to.contain('hi');
   });
   it('should restart an app server on file change', (done) => {
-    appServer('app.js', { port: 8000 }, async () => {
-      const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
-      expect(await res.text()).to.contain('bye');
-      done();
-    }).then((s) => {
+    appServer('app.js', { port: 8000 }).then((s) => {
       server = s;
       changeBodyContent('bye');
     });
+    setTimeout(async () => {
+      const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
+      expect(await res.text()).to.contain('bye');
+      done();
+    }, 200);
   });
   it('should serve a bundled module js file', async () => {
     server = await appServer('app.js', { port: 8000 });

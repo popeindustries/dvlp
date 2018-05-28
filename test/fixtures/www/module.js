@@ -1,4 +1,4 @@
-import dep from './dep';
+import dep from './dep.js';
 
 function main() {
   console.log(dep);
