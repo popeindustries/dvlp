@@ -33,7 +33,7 @@ describe('appServer', () => {
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('hi');
   });
-  it('should restart an app server on file change', (done) => {
+  it.skip('should restart an app server on file change', (done) => {
     appServer('app.js', { port: 8000 }).then((s) => {
       server = s;
       changeBodyContent('bye');
