@@ -9,6 +9,7 @@ const server = require('../lib/server');
 let srv;
 
 describe('server', () => {
+  beforeEach(cleanCache);
   afterEach(async () => {
     cleanCache();
     srv && (await srv.destroy());
