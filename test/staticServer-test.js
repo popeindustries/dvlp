@@ -17,9 +17,7 @@ describe('staticServer', () => {
   });
   afterEach(async () => {
     cleanCache();
-    if (server) {
-      await server.destroy();
-    }
+    server && (await server.destroy());
   });
   after(async () => {
     process.chdir(path.resolve(__dirname, '..'));

@@ -28,11 +28,11 @@ describe('server', () => {
       expect(err).to.exist;
     }
   });
-  it('should inject the livereload script into a static server html response', async () => {
+  it('should inject the reload script into a static server html response', async () => {
     srv = await server('test/fixtures/www', { port: 8080, reload: true });
     const res = await fetch('http://localhost:8080/', { headers: { accept: 'text/html' } });
     expect(res.status).to.eql(200);
-    expect(await res.text()).to.contain('/livereload.js"></script>');
+    expect(await res.text()).to.contain('sse = new EventSource');
   });
   it('should start an app server', async () => {
     srv = await server('test/fixtures/app.js', { port: 8000, reload: false });
@@ -40,11 +40,11 @@ describe('server', () => {
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('hi');
   });
-  it('should inject the livereload script into an app server html response', async () => {
+  it('should inject the reload script into an app server html response', async () => {
     srv = await server('test/fixtures/app.js', { port: 8000, reload: true });
     const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
     expect(res.status).to.eql(200);
-    expect(await res.text()).to.contain('/livereload.js"></script>');
+    expect(await res.text()).to.contain('sse = new EventSource');
   });
   it('should start a static file server with custom Rollup config', async () => {
     srv = await server('test/fixtures/www', {

@@ -19,12 +19,10 @@ describe('appServer', () => {
   });
   afterEach(async () => {
     cleanCache();
-    if (server) {
-      await server.destroy();
-    }
-    changeBodyContent('hi');
+    server && (await server.destroy());
   });
   after(async () => {
+    changeBodyContent('hi');
     process.chdir(path.resolve(__dirname, '..'));
     await destroyWorkers();
   });
@@ -44,7 +42,7 @@ describe('appServer', () => {
       const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
       expect(await res.text()).to.contain('bye');
       done();
-    }, 200);
+    }, 500);
   });
   it('should serve a bundled module js file', async () => {
     server = await appServer('app.js', { port: 8000 });
