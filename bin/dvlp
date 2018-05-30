@@ -12,7 +12,8 @@ program
     'Start a development server, restarting and reloading connected browsers on file changes. \n  Serves static files from one or more "path" directories, or a custom application \n  server if "path" is a single file'
   )
   .option('-p, --port <port>', 'port number', parseInt)
-  .option('-c, --config <config>', 'optional Rollup.js config file')
+  .option('-t, --transpiler <path>', 'path to optional transpiler')
+  .option('-r, --rollup-config <path>', 'path to optional Rollup.js config')
   .option('--no-reload', 'disable reloading connected browsers on file change')
   .arguments('[path...]')
   .action(boot)
@@ -28,7 +29,8 @@ async function boot(path) {
     await server(path.length > 1 ? path : path[0], {
       port: program.port,
       reload: program.reload,
-      config: program.config
+      rollupConfig: program.rollupConfig,
+      transpiler: program.transpiler
     });
   } catch (err) {
     console.error(err);
