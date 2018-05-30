@@ -12,7 +12,7 @@ app.use(async (ctx) => {
     <html lang="en-gb">
       <head>
         <meta charset="utf-8">
-        <script type="module" src="module.js"></script>
+        <script type="module" src="./www/module.js"></script>
       </head>
       <body>
       ${body}
