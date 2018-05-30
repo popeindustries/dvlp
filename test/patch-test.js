@@ -54,16 +54,18 @@ describe('patch', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req, res, true);
-      res.end('import "lodash";');
-      expect(getBody(res)).to.equal('import "/.dvlp/lodash-4.17.10.js";');
+      res.end('import lodash from "lodash";');
+      expect(getBody(res)).to.equal('import lodash from "/.dvlp/lodash-4.17.10.js";');
     });
     it('should resolve multiple bare js import ids', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req, res, true);
-      res.end('import "lodash/array";\nimport "./foo.js";\nimport "debug";');
+      res.end(
+        'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";'
+      );
       expect(getBody(res)).to.equal(
-        'import "/.dvlp/lodash__array-4.17.10.js";\nimport "./foo.js";\nimport "/.dvlp/debug-3.1.0.js";'
+        'import lodashArr from "/.dvlp/lodash__array-4.17.10.js";\nimport { foo } from "./foo.js";\nimport debug from "/.dvlp/debug-3.1.0.js";'
       );
     });
   });
