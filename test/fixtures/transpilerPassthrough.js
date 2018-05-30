@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports = async function transpiler(filepath) {
-  if (path.extname(filepath) !== 'js') {
-    return;
+  if (path.extname(filepath) !== '.js') {
+    return '';
   }
 
   await sleep(200);
