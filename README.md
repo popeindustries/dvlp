@@ -1,21 +1,24 @@
 [![NPM Version](https://img.shields.io/npm/v/dvlp.svg?style=flat)](https://npmjs.org/package/dvlp)
 [![Build Status](https://img.shields.io/travis/popeindustries/dvlp.svg?style=flat)](https://travis-ci.org/popeindustries/dvlp)
 
-# dvlp
+# 💥 dvlp
 
-**dvlp** is a no-configuration, no-conditionals, no-middleware, no-nonsense **dev server toolkit** to help you develop quickly and easily for the web. You shouldn't have to jump through hoops to get a development environment up and running, and you definitely shouldn't have to include development-only functionality in your high-quality production code. **dvlp** is full of hacks so your code doesn't have to be!
+**dvlp** is a no-configuration, no-conditionals, no-middleware, no-nonsense (no-vowels!) **dev server toolkit** to help you develop quickly and easily for the web. You shouldn't have to jump through hoops to get a development environment up and running, and you definitely shouldn't have to include development-only stuff in your high-quality production code! **dvlp** is full of hacks so your code doesn't have to be!
 
 ### Motivation
 
 Back in the _good old days_, our web development workflow went something like this: write HTML/CSS/JS, refresh browser, repeat. Years later, with the help of Node.js and emerging standards, we started pre-processing our CSS and transpiling our JS to take advantage of more expressive, agreeable language features. At the same time, as writing code became easier and more enjoyable, we began bundling and packaging our (growing amount of) code for delivery to the browser. The modern web development workflow soon looked like this: write HTML/JSX/SCSS/LESS/CSS/TS/JS, transpile, compile, bundle, (hot) reload, repeat. For those of us ambitious enough to tackle a full-stack, universal JS application, you would also need to include a well timed server restart (somewhere) in there.
 
-Today, history's pendulum is starting to swing back the other way. Thanks to JS modules and excellent Node.js/browser support for new language features, it's time for a _simpler_, more _comfortable_ workflow. Bundling should be treated as a production optimization (like minification), and our web servers shouldn't be responsible for building browser compatible versions of our assets.
+Today, history's pendulum is starting to swing back the other way. Thanks to JS modules and excellent Node.js/browser support for new language features, it's time for a _simpler_, more _comfortable_ workflow. Bundling should be treated as a production optimization (like minification), and our application web servers shouldn't be responsible for building our development assets.
+
+Less setup, less complexity, and less waiting is surely the path to developer happiness and comfort.
 
 ### Philosophy
 
 * **No bundling**: write JS modules and load them directly in the browser
-* **No middleware**: write JS servers without special dev/build/bundle middleware
-* **No refreshing**: automatically restart servers and reload browsers on file change
+* **No middleware**: write application servers without special dev/build/bundle middleware
+* **No waiting**: restart application servers in a blink of an eye
+* **No refreshing**: automatically reload browsers on file change
 
 ### How it works
 
@@ -25,7 +28,7 @@ In addition, when working with JS modules, **dvlp** will ensure that so-called _
 
 ### Bonus!
 
-**dvlp** also includes a simple [`testServer`](#testserveroptions--port-number-latency-number-webroot-string--promise-destroy---void-) for handling network requests during testing.
+**dvlp** also includes a simple [`testServer`](#testserveroptions--port-number-latency-number-webroot-string--promise-destroy---void-) for handling various network request scenarios during testing.
 
 ## Installation
 
@@ -48,11 +51,11 @@ $ dvlp -h
 
   Options:
 
-    -p, --port <port>      port number
-    -c, --config <config>  optional Rollup.js config file
-    --no-reload            disable reloading connected browsers on file change
-    -v, --version          output the version number
-    -h, --help             output usage information
+    -p, --port <port>           port number
+    -r, --rollup-config <path>  path to optional Rollup.js config
+    --no-reload                 disable reloading connected browsers on file change
+    -v, --version               output the version number
+    -h, --help                  output usage information
 ```
 
 Add a script to your package.json `scripts`:
@@ -73,7 +76,7 @@ $ npm run dev
 
 ## JS API
 
-##### `server(filepath: string|[string], [options]: { port: number, reload: boolean, config: string }): Promise<{ destroy: () => void }>`
+##### `server(filepath: string|[string], [options]: { port: number, reload: boolean, rollupConfig: string }): Promise<{ destroy: () => void }>`
 
 Serve files at `filepath`, starting static file server if one or more directories, or app server if a single file.
 
@@ -81,7 +84,7 @@ Serve files at `filepath`, starting static file server if one or more directorie
 
 * **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 * **`reload: boolean`**: enable/disable browser reloading (default `true`)
-* **`config: string`**: path to optional [Rollup.js](https://rollupjs.org) config file to control bundling of bare imports
+* **`rollupConfig: string`**: path to optional [Rollup.js](https://rollupjs.org) config file to configure bundling of bare imports
 
 #### `testServer([options]: { port: number, latency: number, webroot: string }): Promise<{ destroy: () => void }>`
 
