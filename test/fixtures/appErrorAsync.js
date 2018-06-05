@@ -1,5 +1,6 @@
 'use strict';
 
+const error = require('./www/error');
 const Koa = require('koa');
 const send = require('koa-send');
 
@@ -14,7 +15,7 @@ app.use(async (ctx) => {
         <script type="module" src="./www/module.js"></script>
       </head>
       <body>
-      ${errorddddd}
+      ${error}
       </body>
     </html>`);
   }

@@ -39,6 +39,11 @@ describe('server', () => {
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('sse = new EventSource');
   });
+  it('should start an app server with initial error', async () => {
+    server = await serverFactory('test/fixtures/appError.js', { port: 8000, reload: false });
+    const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
+    expect(res.status).to.eql(500);
+  });
   it.skip('should start a static file server with custom Rollup config', async () => {
     server = await serverFactory('test/fixtures/www', {
       port: 8080,
