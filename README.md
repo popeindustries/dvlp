@@ -15,10 +15,10 @@ Less setup, less complexity, and less waiting is surely the path to developer ha
 
 ### Philosophy
 
-- **No bundling**: write JS modules and load them directly in the browser
-- **No middleware**: write application servers without special dev/build/bundle middleware
-- **No waiting**: restart application servers in a blink of an eye
-- **No refreshing**: automatically reload browsers on file change
+* **No bundling**: write JS modules and load them directly in the browser
+* **No middleware**: write application servers without special dev/build/bundle middleware
+* **No waiting**: restart application servers in a blink of an eye
+* **No refreshing**: automatically reload browsers on file change
 
 ### How it works
 
@@ -74,6 +74,14 @@ Add a script to your package.json `scripts`:
 $ npm run dev
 ```
 
+## Debugging
+
+**dvlp** uses the [debug.js](https://github.com/visionmedia/debug) debugging utility. Set the following environment variable before running to see detailed debug messages:
+
+```bash
+$ DEBUG=dvlp* npm run dev
+```
+
 ## JS API
 
 ##### `server(filepath: string|[string], [options]: { port: number, reload: boolean, rollupConfig: string }): Promise<{ destroy: () => void }>`
@@ -82,19 +90,19 @@ Serve files at `filepath`, starting static file server if one or more directorie
 
 `options` include:
 
-- **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
-- **`reload: boolean`**: enable/disable browser reloading (default `true`)
-- **`rollupConfig: string`**: path to optional [Rollup.js](https://rollupjs.org) config file to configure bundling of bare imports
+* **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
+* **`reload: boolean`**: enable/disable browser reloading (default `true`)
+* **`rollupConfig: string`**: path to optional [Rollup.js](https://rollupjs.org) config file to configure bundling of bare imports
 
-#### `testServer([options]: { port: number, latency: number, webroot: string }): Promise<{ latency: number, webroot: string, mock: (url: string, response: string|object) => void, destroy: () => Promise<void> }>`
+##### `testServer([options]: { port: number, latency: number, webroot: string }): Promise<{ latency: number, webroot: string, mock: (url: string, response: string|object) => void, destroy: () => Promise<void> }>`
 
 Create a server for handling network requests during testing.
 
 `options` include:
 
-- **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `3333`)
-- **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
-- **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
+* **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `3333`)
+* **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
+* **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
 
 ```js
 const { testServer } = require('dvlp');
@@ -103,17 +111,17 @@ const { mock, destroy } = await testServer({ port: 8080, latency: 20, webroot: '
 
 If unable to resolve a request to a local file, `testServer` will respond with a dummy file of the appropriate type. This makes it easy to test ServiceWorker pre-caching, for example, without having to correctly resolve paths or create mocks. In addition, `testServer` supports the following special query parameters:
 
-- **`offline`** simulate an offline state by terminating the request (`fetch('http://localhost:3333/foo.js?offline')`)
-- **`error`** return a 500 server error response (`fetch('http://localhost:3333/foo.js?error')`)
-- **`missing`** return a 404 not found response (`fetch('http://localhost:3333/foo.js?missing')`)
-- **`maxage=value`** configure `Cache-Control: public, max-age={value}` cache header (`fetch('http://localhost:3333/foo.js?maxage=10')`)
+* **`offline`** simulate an offline state by terminating the request (`fetch('http://localhost:3333/foo.js?offline')`)
+* **`error`** return a 500 server error response (`fetch('http://localhost:3333/foo.js?error')`)
+* **`missing`** return a 404 not found response (`fetch('http://localhost:3333/foo.js?missing')`)
+* **`maxage=value`** configure `Cache-Control: public, max-age={value}` cache header (`fetch('http://localhost:3333/foo.js?maxage=10')`)
 
 Returns a **`TestServer`** instance with the following properties:
 
-- **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
-- **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
-- **`mock: (url: string, response: string|object) => void`** add a one-time mock `response` for `url`. Will return a `text/html` response if `response` type is `string`, or `application/json` response if type is `object`
-- **`destroy: () => Promise<void>`** stop and clean up running server
+* **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
+* **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
+* **`mock: (url: string, response: string|object) => void`** add a one-time mock `response` for `url`. Will return a `text/html` response if `response` type is `string`, or `application/json` response if type is `object`
+* **`destroy: () => Promise<void>`** stop and clean up running server
 
 ```js
 mock('/api/user/1234', { id: '1234', name: 'bob' });
