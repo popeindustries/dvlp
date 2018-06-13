@@ -6,24 +6,20 @@ const { server } = require('../index');
 const program = require('commander');
 const pkg = require('../package.json');
 
-const envTranspile = process.env.TRANSPILE;
-const transpile = envTranspile && (envTranspile !== '0' || envTranspile !== 'false');
-
 program
   .usage('[options] [path...]')
   .description(
-    'Start a development server, restarting and reloading connected browsers on file changes. \n  Serves static files from one or more "path" directories, or a custom application \n  server if "path" is a single file'
+    `Start a development server, restarting and reloading connected browsers on file changes.
+  Serves static files from one or more "path" directories, or a custom application
+  server if "path" is a single file.`
   )
   .option('-p, --port <port>', 'port number', parseInt)
-  .option('-r, --rollup-config <path>', 'path to optional Rollup.js config')
+  .option('-t, --transpiler <path>', 'path to optional transpiler file')
+  .option('-r, --rollup-config <path>', 'path to optional Rollup.js config file')
   .option('--no-reload', 'disable reloading connected browsers on file change')
   .arguments('[path...]')
   .action(boot)
   .version(pkg.version, '-v, --version');
-
-if (transpile) {
-  program.option('-t, --transpiler <path>', 'path to optional transpiler');
-}
 
 program.parse(process.argv);
 
