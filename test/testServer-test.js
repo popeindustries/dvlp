@@ -85,9 +85,27 @@ describe('testServer', () => {
     expect(res.headers.get('Content-type')).to.include('application/json');
     expect(server._mocks.size).to.equal(0);
   });
+  it('should respond to malformed mocked json request', async () => {
+    server = await testServer();
+    server.mock('/api/foo', { foo: 'foo' });
+    const res = await fetch('http://localhost:8080/api/foo');
+    expect(res).to.exist;
+    expect(await res.json()).to.eql({ foo: 'foo' });
+    expect(res.headers.get('Content-type')).to.include('application/json');
+    expect(server._mocks.size).to.equal(0);
+  });
   it('should respond to mocked html request', async () => {
     server = await testServer();
     server.mock('/foo', { body: 'foo' });
+    const res = await fetch('http://localhost:8080/foo');
+    expect(res).to.exist;
+    expect(await res.text()).to.eql('foo');
+    expect(res.headers.get('Content-type')).to.include('text/html');
+    expect(server._mocks.size).to.equal(0);
+  });
+  it('should respond to malformed mocked html request', async () => {
+    server = await testServer();
+    server.mock('/foo', 'foo');
     const res = await fetch('http://localhost:8080/foo');
     expect(res).to.exist;
     expect(await res.text()).to.eql('foo');
