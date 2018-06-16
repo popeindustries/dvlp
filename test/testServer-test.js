@@ -6,11 +6,17 @@ const fetch = require('node-fetch');
 
 let server;
 
-describe('testServer', () => {
+describe.only('testServer', () => {
+  before(() => {
+    testServer.disableNetConnect();
+  });
   afterEach(async () => {
     if (server) {
       await server.destroy();
     }
+  });
+  after(() => {
+    testServer.enableNetConnect();
   });
 
   it('should create server with specific "port"', async () => {
@@ -111,5 +117,14 @@ describe('testServer', () => {
     expect(await res.text()).to.eql('foo');
     expect(res.headers.get('Content-type')).to.include('text/html');
     expect(server._mocks.size).to.equal(0);
+  });
+  it('should throw when making an external request', async () => {
+    try {
+      const res = await fetch('http://www.google.com');
+      expect(res).to.not.exist;
+    } catch (err) {
+      expect(err).to.exist;
+      expect(err.message).to.equal('network connections disabled');
+    }
   });
 });
