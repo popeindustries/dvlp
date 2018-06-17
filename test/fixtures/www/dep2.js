@@ -1,5 +1,5 @@
-import debug from 'debug';
+import { __moduleExports as Debug } from 'debug';
 
 export default 'WORLD!';
 
-debug('dep2')('world!');
+Debug('dep2')('world!');
