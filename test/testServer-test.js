@@ -6,9 +6,9 @@ const fetch = require('node-fetch');
 
 let server;
 
-describe.only('testServer', () => {
+describe('testServer', () => {
   before(() => {
-    testServer.disableNetConnect();
+    testServer.disableNetwork();
   });
   afterEach(async () => {
     if (server) {
@@ -16,7 +16,7 @@ describe.only('testServer', () => {
     }
   });
   after(() => {
-    testServer.enableNetConnect();
+    testServer.enableNetwork();
   });
 
   it('should create server with specific "port"', async () => {

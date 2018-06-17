@@ -209,3 +209,17 @@ If unable to resolve a request to a local file, `testServer` will respond with a
 - **`error`** return a 500 server error response (`fetch('http://localhost:3333/foo.js?error')`)
 - **`missing`** return a 404 not found response (`fetch('http://localhost:3333/foo.js?missing')`)
 - **`maxage=value`** configure `Cache-Control: public, max-age={value}` cache header (`fetch('http://localhost:3333/foo.js?maxage=10')`)
+
+### `testServer.disableNetwork(): void`
+
+Disable all network requests with origin that is not `localhost`. Prevents all external network requests for the current Node.js process.
+
+```js
+testServer.disableNetwork();
+await fetch('https://github.com/popeindustries/dvlp');
+// => Error "network connections disabled"
+```
+
+### `testServer.enableNetwork(): void`
+
+Re-enables all previously disabled external network requests for the current Node.js process.
