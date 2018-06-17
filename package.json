@@ -1,6 +1,6 @@
 {
   "name": "dvlp",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
   "main": "index.js",
   "repository": "https://github.com/popeindustries/dvlp.git",
