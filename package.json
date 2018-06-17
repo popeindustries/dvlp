@@ -46,7 +46,7 @@
     "prettier": "^1.13.5"
   },
   "engines": {
-    "node": ">=7.6"
+    "node": ">=8"
   },
   "scripts": {
     "minify": "uglifyjs lib/utils/reloadClient.js -o lib/utils/reloadClient.min.js",
