@@ -1,10 +1,68 @@
 'use strict';
 
 const { expect } = require('chai');
-const { importModule, urlMatchesFilepath } = require('../lib/utils/file');
+const { find, importModule, urlMatchesFilepath } = require('../lib/utils/file');
 const path = require('path');
 
 describe('file', () => {
+  describe('find()', () => {
+    it('should find file for fully qualified request', async () => {
+      expect(
+        await find(
+          { headers: {}, url: '/index.html' },
+          { directories: [path.resolve('test/fixtures/www')] }
+        )
+      ).to.equal(path.resolve('test/fixtures/www/index.html'));
+    });
+    it('should find file for HTML request missing extension', async () => {
+      expect(
+        await find(
+          { headers: {}, url: '/index' },
+          { directories: [path.resolve('test/fixtures/www')] }
+        )
+      ).to.equal(path.resolve('test/fixtures/www/index.html'));
+    });
+    it('should find file for HTML request missing filename', async () => {
+      expect(
+        await find({ headers: {}, url: '/' }, { directories: [path.resolve('test/fixtures/www')] })
+      ).to.equal(path.resolve('test/fixtures/www/index.html'));
+    });
+    it('should find file for JS request missing extension', async () => {
+      expect(
+        await find(
+          { headers: {}, url: '/module' },
+          { directories: [path.resolve('test/fixtures/www')] }
+        )
+      ).to.equal(path.resolve('test/fixtures/www/module.js'));
+    });
+    it('should find file for JS request missing extension with referer', async () => {
+      expect(
+        await find(
+          { headers: { referer: '/index.js' }, url: '/module' },
+          {
+            directories: [path.resolve('test/fixtures/www')]
+          }
+        )
+      ).to.equal(path.resolve('test/fixtures/www/module.js'));
+    });
+    it('should find file for JS request missing filename', async () => {
+      expect(
+        await find(
+          { headers: {}, url: '/nested' },
+          { directories: [path.resolve('test/fixtures/www')] }
+        )
+      ).to.equal(path.resolve('test/fixtures/www/nested/index.js'));
+    });
+    it('should find file for request missing extension with type', async () => {
+      expect(
+        await find(
+          { headers: {}, url: '/dep' },
+          { directories: [path.resolve('test/fixtures/www')], type: 'js' }
+        )
+      ).to.equal(path.resolve('test/fixtures/www/dep.js'));
+    });
+  });
+
   describe('importModule()', () => {
     it('should return an es6 module', () => {
       const module = importModule(path.resolve(__dirname, 'fixtures/config.esm.js'));

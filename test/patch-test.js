@@ -4,7 +4,7 @@ const { CACHE_DIR_NAME } = require('../lib/utils/module');
 const { cleanCache, destroyWorkers } = require('../lib/utils/module');
 const { expect } = require('chai');
 const { ServerResponse } = require('http');
-const { patchRequest, patchResponse } = require('../lib/utils/patch');
+const { patchResponse } = require('../lib/utils/patch');
 
 function getBody(res) {
   const output = res.output.filter((chunk) => typeof chunk === 'string').join('');
@@ -26,14 +26,6 @@ describe('patch', () => {
   });
   after(async () => {
     await destroyWorkers();
-  });
-
-  describe('patchRequest()', () => {
-    it('should add correct type', () => {
-      const req = getRequest('index.js');
-      patchRequest(req);
-      expect(req.headers.accept).to.equal('application/javascript');
-    });
   });
 
   describe('patchResponse()', () => {
