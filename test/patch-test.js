@@ -28,38 +28,45 @@ describe('patch', () => {
     await destroyWorkers();
   });
 
-  describe('patchResponse()', () => {
+  describe.only('patchResponse()', () => {
     it('should inject script into buffered html response', () => {
       const req = getRequest('index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
-      patchResponse(req, res, 'test inject');
+      patchResponse(req, res, { scriptString: 'test inject' });
       res.end('</body>');
       expect(getBody(res)).to.include('test inject');
     });
     it('should inject script into streamed html response', () => {
       const req = getRequest('index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
-      patchResponse(req, res, 'test inject');
+      patchResponse(req, res, { scriptString: 'test inject' });
       res.write('</body>');
       expect(getBody(res)).to.include('test inject');
     });
     it('should resolve bare js import id', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
-      patchResponse(req, res, true);
+      patchResponse(req, res);
       res.end('import lodash from "lodash";');
       expect(getBody(res)).to.equal(`import lodash from "/${CACHE_DIR_NAME}/lodash-4.17.10.js";`);
     });
     it('should resolve multiple bare js import ids', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
-      patchResponse(req, res, true);
+      patchResponse(req, res);
       res.end(
         'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";'
       );
       expect(getBody(res)).to.equal(
         `import lodashArr from "/${CACHE_DIR_NAME}/lodash__array-4.17.10.js";\nimport { foo } from "./foo.js";\nimport debug from "/${CACHE_DIR_NAME}/debug-3.1.0.js";`
       );
+    });
+    it.only('should resolve js import id missing extension', () => {
+      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req, res);
+      res.end('import module from "./test/fixtures/www/module";');
+      expect(getBody(res)).to.equal(`import module from "test/fixtures/www/module.js";`);
     });
   });
 });
