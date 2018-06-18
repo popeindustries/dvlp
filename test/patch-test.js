@@ -4,7 +4,10 @@ const { cleanCache, destroyWorkers } = require('../lib/utils/moduleBundler');
 const { expect } = require('chai');
 const { moduleCacheDirName } = require('../lib/config');
 const { patchResponse } = require('../lib/utils/patch');
+const path = require('path');
 const { ServerResponse } = require('http');
+
+const NODE_PATH = process.env.NODE_PATH;
 
 function getBody(res) {
   const output = res.output.filter((chunk) => typeof chunk === 'string').join('');
@@ -21,10 +24,16 @@ function getRequest(url, headers = { accept: '*/*' }) {
 }
 
 describe('patch', () => {
+  before(() => {
+    process.env.NODE_PATH = 'test/fixtures/www';
+    require('module').Module._initPaths();
+  });
   afterEach(() => {
     cleanCache();
   });
   after(async () => {
+    process.env.NODE_PATH = NODE_PATH;
+    require('module').Module._initPaths();
     await destroyWorkers();
   });
 
@@ -62,6 +71,15 @@ describe('patch', () => {
       expect(getBody(res)).to.equal(
         `import lodashArr from "/${moduleCacheDirName}/lodash__array-4.17.10.js";\nimport { foo } from "./foo.js";\nimport debug from "/${moduleCacheDirName}/debug-3.1.0.js";`
       );
+    });
+    it.only('should resolve NODE_PATH js import id', () => {
+      const req = getRequest('index.js', { accept: 'application/javascript' });
+      req.filepath = path.resolve('test/fixtures/index.js');
+      const res = new ServerResponse(req);
+      patchResponse(req, res);
+      res.end('import module from "nested/index.js";');
+      expect(getBody(res)).to.equal(`import module from "../www/nested/index.js";`);
+      process.env.NODE_PATH = NODE_PATH;
     });
     it('should resolve js import id missing extension', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
