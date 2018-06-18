@@ -1,9 +1,9 @@
 'use strict';
 
-const { CACHE_DIR_NAME } = require('../lib/utils/module');
-const { cleanCache, destroyWorkers } = require('../lib/utils/module');
+const { cleanCache, destroyWorkers } = require('../lib/utils/moduleBundler');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
+const { moduleCacheDirName } = require('../lib/config');
 const path = require('path');
 const staticServer = require('../lib/staticServer');
 
@@ -42,7 +42,7 @@ describe('staticServer', () => {
   });
   it('should serve a bundled module js file with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });
-    const res = await fetch(`http://localhost:8080/${CACHE_DIR_NAME}/lodash__array-4.17.10.js`);
+    const res = await fetch(`http://localhost:8080/${moduleCacheDirName}/lodash__array-4.17.10.js`);
     expect(res.status).to.eql(200);
     expect(res.headers.get('Content-type')).to.include('application/javascript');
   });
@@ -59,7 +59,7 @@ describe('staticServer', () => {
     expect(res.headers.get('Content-type')).to.include('application/json');
   });
   it('should serve files from additional directories', async () => {
-    server = await staticServer(['www', 'assets']);
+    server = await staticServer(['www', 'assets'], { port: 8080 });
     const res = await fetch('http://localhost:8080/index.css');
     expect(res.status).to.eql(200);
     expect(res.headers.get('Content-type')).to.include('text/css');

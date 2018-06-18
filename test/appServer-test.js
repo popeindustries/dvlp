@@ -1,12 +1,12 @@
 'use strict';
 
-const { cleanCache, destroyWorkers } = require('../lib/utils/module');
-const { CACHE_DIR_NAME } = require('../lib/utils/module');
+const { cleanCache, destroyWorkers } = require('../lib/utils/moduleBundler');
+const appServer = require('../lib/appServer');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const fs = require('fs');
+const { moduleCacheDirName } = require('../lib/config');
 const path = require('path');
-const appServer = require('../lib/appServer');
 
 let server;
 
@@ -47,9 +47,12 @@ describe('appServer', () => {
   });
   it('should serve a bundled module js file', async () => {
     server = await appServer('app.js', { port: 8000 });
-    const res = await fetch(`http://localhost:8000/${CACHE_DIR_NAME}/lodash__array-4.17.10.js`, {
-      headers: { referer: 'index.js' }
-    });
+    const res = await fetch(
+      `http://localhost:8000/${moduleCacheDirName}/lodash__array-4.17.10.js`,
+      {
+        headers: { referer: 'index.js' }
+      }
+    );
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('function baseSlice');
   });

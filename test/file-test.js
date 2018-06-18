@@ -6,38 +6,32 @@ const path = require('path');
 
 describe('file', () => {
   describe('find()', () => {
-    it('should find file for fully qualified request', async () => {
+    it('should find file for fully qualified request', () => {
       expect(
-        await find(
+        find(
           { headers: {}, url: '/index.html' },
           { directories: [path.resolve('test/fixtures/www')] }
         )
       ).to.equal(path.resolve('test/fixtures/www/index.html'));
     });
-    it('should find file for HTML request missing extension', async () => {
+    it('should find file for HTML request missing extension', () => {
       expect(
-        await find(
-          { headers: {}, url: '/index' },
-          { directories: [path.resolve('test/fixtures/www')] }
-        )
+        find({ headers: {}, url: '/index' }, { directories: [path.resolve('test/fixtures/www')] })
       ).to.equal(path.resolve('test/fixtures/www/index.html'));
     });
-    it('should find file for HTML request missing filename', async () => {
+    it('should find file for HTML request missing filename', () => {
       expect(
-        await find({ headers: {}, url: '/' }, { directories: [path.resolve('test/fixtures/www')] })
+        find({ headers: {}, url: '/' }, { directories: [path.resolve('test/fixtures/www')] })
       ).to.equal(path.resolve('test/fixtures/www/index.html'));
     });
-    it('should find file for JS request missing extension', async () => {
+    it('should find file for JS request missing extension', () => {
       expect(
-        await find(
-          { headers: {}, url: '/module' },
-          { directories: [path.resolve('test/fixtures/www')] }
-        )
+        find({ headers: {}, url: '/module' }, { directories: [path.resolve('test/fixtures/www')] })
       ).to.equal(path.resolve('test/fixtures/www/module.js'));
     });
-    it('should find file for JS request missing extension with referer', async () => {
+    it('should find file for JS request missing extension with referer', () => {
       expect(
-        await find(
+        find(
           { headers: { referer: '/index.js' }, url: '/module' },
           {
             directories: [path.resolve('test/fixtures/www')]
@@ -45,17 +39,14 @@ describe('file', () => {
         )
       ).to.equal(path.resolve('test/fixtures/www/module.js'));
     });
-    it('should find file for JS request missing filename', async () => {
+    it('should find file for JS request missing filename', () => {
       expect(
-        await find(
-          { headers: {}, url: '/nested' },
-          { directories: [path.resolve('test/fixtures/www')] }
-        )
+        find({ headers: {}, url: '/nested' }, { directories: [path.resolve('test/fixtures/www')] })
       ).to.equal(path.resolve('test/fixtures/www/nested/index.js'));
     });
-    it('should find file for request missing extension with type', async () => {
+    it('should find file for JS request missing extension with type', () => {
       expect(
-        await find(
+        find(
           { headers: {}, url: '/dep' },
           { directories: [path.resolve('test/fixtures/www')], type: 'js' }
         )
