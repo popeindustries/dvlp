@@ -1,5 +1,6 @@
 'use strict';
 
+const { CACHE_DIR_NAME } = require('../lib/utils/module');
 const { cleanCache } = require('../lib/utils/module');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
@@ -44,13 +45,13 @@ describe('server', () => {
     const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
     expect(res.status).to.eql(500);
   });
-  it.skip('should start a static file server with custom Rollup config', async () => {
+  it('should start a static file server with custom Rollup config', async () => {
     server = await serverFactory('test/fixtures/www', {
       port: 8080,
       reload: false,
       rollupConfig: path.resolve(__dirname, './fixtures/rollup.config.js')
     });
-    const res = await fetch('http://localhost:8080/.dvlp/debug-3.1.0.js');
+    const res = await fetch(`http://localhost:8080/${CACHE_DIR_NAME}/debug-3.1.0.js`);
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('/* this is a test */');
   });
@@ -60,7 +61,7 @@ describe('server', () => {
       reload: false,
       rollupConfig: path.resolve(__dirname, './fixtures/rollup.config.js')
     });
-    const res = await fetch('http://localhost:8000/.dvlp/debug-3.1.0.js');
+    const res = await fetch(`http://localhost:8080/${CACHE_DIR_NAME}/debug-3.1.0.js`);
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('/* this is a test */');
   });

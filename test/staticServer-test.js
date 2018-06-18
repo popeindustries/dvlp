@@ -1,7 +1,8 @@
 'use strict';
 
-const { expect } = require('chai');
+const { CACHE_DIR_NAME } = require('../lib/utils/module');
 const { cleanCache, destroyWorkers } = require('../lib/utils/module');
+const { expect } = require('chai');
 const fetch = require('node-fetch');
 const path = require('path');
 const staticServer = require('../lib/staticServer');
@@ -41,7 +42,7 @@ describe('staticServer', () => {
   });
   it('should serve a bundled module js file with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });
-    const res = await fetch('http://localhost:8080/.dvlp/lodash__array-4.17.10.js');
+    const res = await fetch(`http://localhost:8080/${CACHE_DIR_NAME}/lodash__array-4.17.10.js`);
     expect(res.status).to.eql(200);
     expect(res.headers.get('Content-type')).to.include('application/javascript');
   });
