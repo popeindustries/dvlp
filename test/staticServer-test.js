@@ -1,6 +1,6 @@
 'use strict';
 
-const { cleanCache, destroyWorkers } = require('../lib/utils/bundler');
+const { cleanBundles, destroyWorkers } = require('../lib/utils/bundler');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const { bundleDirName } = require('../lib/config');
@@ -14,7 +14,7 @@ describe('staticServer', () => {
     process.chdir(path.resolve(__dirname, 'fixtures'));
   });
   afterEach(async () => {
-    cleanCache();
+    cleanBundles();
     server && (await server.destroy());
   });
   after(async () => {

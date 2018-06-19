@@ -1,6 +1,6 @@
 'use strict';
 
-const { cleanCache, destroyWorkers } = require('../lib/utils/bundler');
+const { cleanBundles, destroyWorkers } = require('../lib/utils/bundler');
 const { expect } = require('chai');
 const { bundleDirName } = require('../lib/config');
 const { patchResponse } = require('../lib/utils/patch');
@@ -29,7 +29,7 @@ describe('patch', () => {
     require('module').Module._initPaths();
   });
   afterEach(() => {
-    cleanCache();
+    cleanBundles();
   });
   after(async () => {
     process.env.NODE_PATH = NODE_PATH;
@@ -57,9 +57,7 @@ describe('patch', () => {
       const res = new ServerResponse(req);
       patchResponse(req, res);
       res.end('import lodash from "lodash";');
-      expect(getBody(res)).to.equal(
-        `import lodash from "/${bundleDirName}/lodash-4.17.10.js";`
-      );
+      expect(getBody(res)).to.equal(`import lodash from "/${bundleDirName}/lodash-4.17.10.js";`);
     });
     it('should resolve multiple bare js import ids', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });

@@ -1,6 +1,6 @@
 'use strict';
 
-const { cleanCache } = require('../lib/utils/bundler');
+const { cleanBundles } = require('../lib/utils/bundler');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const { bundleDirName } = require('../lib/config');
@@ -10,9 +10,9 @@ const serverFactory = require('../lib/server');
 let server;
 
 describe('server', () => {
-  beforeEach(cleanCache);
+  beforeEach(cleanBundles);
   afterEach(async () => {
-    cleanCache();
+    cleanBundles();
     server && (await server.destroy());
   });
 

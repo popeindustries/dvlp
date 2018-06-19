@@ -1,6 +1,6 @@
 'use strict';
 
-const { cleanCache, destroyWorkers, bundle } = require('../lib/utils/bundler');
+const { cleanBundles, destroyWorkers, bundle } = require('../lib/utils/bundler');
 const { expect } = require('chai');
 const fs = require('fs');
 const { bundleDir } = require('../lib/config');
@@ -11,7 +11,7 @@ const LODASH = 'lodash-4.17.10.js';
 
 describe('module', () => {
   afterEach(() => {
-    cleanCache();
+    cleanBundles();
   });
   after(async () => {
     await destroyWorkers();
