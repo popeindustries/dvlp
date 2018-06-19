@@ -54,6 +54,6 @@
     "minify": "uglifyjs lib/utils/reloadClient.js -o lib/utils/reloadClient.min.js",
     "prepublish": "npm run minify",
     "precommit": "lint-staged",
-    "test": "NODE_ENV=test mocha test --reporter spec --bail --timeout 10000"
+    "test": "NODE_ENV=test mocha test --reporter spec --bail --timeout 10000 --require lib/config.js"
   }
 }

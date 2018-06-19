@@ -1,11 +1,11 @@
 'use strict';
 
-const { cleanCache, destroyWorkers } = require('../lib/utils/moduleBundler');
+const { cleanCache, destroyWorkers } = require('../lib/utils/bundler');
 const appServer = require('../lib/appServer');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const fs = require('fs');
-const { moduleCacheDirName } = require('../lib/config');
+const { bundleDirName } = require('../lib/config');
 const path = require('path');
 
 let server;
@@ -48,7 +48,7 @@ describe('appServer', () => {
   it('should serve a bundled module js file', async () => {
     server = await appServer('app.js', { port: 8000 });
     const res = await fetch(
-      `http://localhost:8000/${moduleCacheDirName}/lodash__array-4.17.10.js`,
+      `http://localhost:8000/${bundleDirName}/lodash__array-4.17.10.js`,
       {
         headers: { referer: 'index.js' }
       }

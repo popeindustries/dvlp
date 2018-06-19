@@ -1,8 +1,8 @@
 'use strict';
 
-const { cleanCache, destroyWorkers } = require('../lib/utils/moduleBundler');
+const { cleanCache, destroyWorkers } = require('../lib/utils/bundler');
 const { expect } = require('chai');
-const { moduleCacheDirName } = require('../lib/config');
+const { bundleDirName } = require('../lib/config');
 const { patchResponse } = require('../lib/utils/patch');
 const path = require('path');
 const { ServerResponse } = require('http');
@@ -58,7 +58,7 @@ describe('patch', () => {
       patchResponse(req, res);
       res.end('import lodash from "lodash";');
       expect(getBody(res)).to.equal(
-        `import lodash from "/${moduleCacheDirName}/lodash-4.17.10.js";`
+        `import lodash from "/${bundleDirName}/lodash-4.17.10.js";`
       );
     });
     it('should resolve multiple bare js import ids', () => {
@@ -69,7 +69,7 @@ describe('patch', () => {
         'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";'
       );
       expect(getBody(res)).to.equal(
-        `import lodashArr from "/${moduleCacheDirName}/lodash__array-4.17.10.js";\nimport { foo } from "./foo.js";\nimport debug from "/${moduleCacheDirName}/debug-3.1.0.js";`
+        `import lodashArr from "/${bundleDirName}/lodash__array-4.17.10.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDirName}/debug-3.1.0.js";`
       );
     });
     it('should resolve NODE_PATH js import id', () => {
