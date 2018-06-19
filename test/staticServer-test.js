@@ -24,7 +24,7 @@ describe('staticServer', () => {
 
   it('should implicitly serve index.html', async () => {
     server = await staticServer('www', { port: 8080 });
-    const res = await fetch('http://localhost:8080/', { headers: { accept: 'text/html' } });
+    const res = await fetch('http://localhost:8080/');
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('<!doctype html>');
   });
@@ -37,6 +37,18 @@ describe('staticServer', () => {
   it('should serve a js file with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });
     const res = await fetch('http://localhost:8080/script.js');
+    expect(res.status).to.eql(200);
+    expect(res.headers.get('Content-type')).to.include('application/javascript');
+  });
+  it('should serve a js file with missing extension with correct mime type', async () => {
+    server = await staticServer('www', { port: 8080 });
+    const res = await fetch('http://localhost:8080/script');
+    expect(res.status).to.eql(200);
+    expect(res.headers.get('Content-type')).to.include('application/javascript');
+  });
+  it('should serve a js package file with correct mime type', async () => {
+    server = await staticServer('www', { port: 8080 });
+    const res = await fetch('http://localhost:8080/nested');
     expect(res.status).to.eql(200);
     expect(res.headers.get('Content-type')).to.include('application/javascript');
   });

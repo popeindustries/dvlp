@@ -72,7 +72,7 @@ describe('patch', () => {
         `import lodashArr from "/${moduleCacheDirName}/lodash__array-4.17.10.js";\nimport { foo } from "./foo.js";\nimport debug from "/${moduleCacheDirName}/debug-3.1.0.js";`
       );
     });
-    it.only('should resolve NODE_PATH js import id', () => {
+    it('should resolve NODE_PATH js import id', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
       req.filepath = path.resolve('test/fixtures/index.js');
       const res = new ServerResponse(req);
