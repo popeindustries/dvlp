@@ -4,7 +4,9 @@
     "ignoreSearch": true
   },
   "response": {
-    "headers": {},
+    "headers": {
+      "x-custom": "custom header"
+    },
     "body": {
       "user": {
         "name": "Nancy",
