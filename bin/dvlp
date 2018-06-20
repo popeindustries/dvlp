@@ -2,6 +2,7 @@
 
 process.env.NODE_NO_WARNINGS = '1';
 
+const { expandPath } = require('../lib/utils/file');
 const pkg = require('../package.json');
 const program = require('commander');
 const { server } = require('../index');
@@ -14,6 +15,7 @@ program
   server if "path" is a single file.`
   )
   .option('-p, --port <port>', 'port number', parseInt)
+  .option('-m, --mock <path...>', 'path to mock (directory of) files')
   .option('-t, --transpiler <path>', 'path to optional transpiler file')
   .option('-r, --rollup-config <path>', 'path to optional Rollup.js config file')
   .option('--no-reload', 'disable reloading connected browsers on file change')
@@ -28,8 +30,11 @@ if (!program.args.length) {
 }
 
 async function boot(path) {
+  path = expandPath(path);
+
   try {
     await server(path.length > 1 ? path : path[0], {
+      mockpath: expandPath(program.mock),
       port: program.port,
       reload: program.reload,
       rollupConfig: program.rollupConfig,

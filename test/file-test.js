@@ -1,10 +1,74 @@
 'use strict';
 
 const { expect } = require('chai');
-const { find, importModule, urlMatchesFilepath } = require('../lib/utils/file');
+const { expandPath, find, importModule, urlMatchesFilepath } = require('../lib/utils/file');
 const path = require('path');
 
 describe('file', () => {
+  describe('expandPath()', () => {
+    it('should return undefined for missing/empty filepath', () => {
+      expect(expandPath()).to.eql(undefined);
+      expect(expandPath(undefined)).to.eql(undefined);
+      expect(expandPath(null)).to.eql(undefined);
+      expect(expandPath('')).to.eql(undefined);
+    });
+    it('should return array for single filepath', () => {
+      expect(expandPath('test/fixtures')).to.eql(['test/fixtures']);
+    });
+    it('should return array for glob filepath', () => {
+      expect(expandPath('test/fixtures/mock/*.json')).to.eql([
+        'test/fixtures/mock/1234.json',
+        'test/fixtures/mock/5678.json'
+      ]);
+    });
+    it('should return array for filepath with " " separator', () => {
+      expect(expandPath('test/fixtures/mock/1234.json test/fixtures/mock/5678.json')).to.eql([
+        'test/fixtures/mock/1234.json',
+        'test/fixtures/mock/5678.json'
+      ]);
+    });
+    it('should return array for filepath with "," separator', () => {
+      expect(expandPath('test/fixtures/mock/1234.json,test/fixtures/mock/5678.json')).to.eql([
+        'test/fixtures/mock/1234.json',
+        'test/fixtures/mock/5678.json'
+      ]);
+    });
+    it('should return array for filepath with ", " separator', () => {
+      expect(expandPath('test/fixtures/mock/1234.json, test/fixtures/mock/5678.json')).to.eql([
+        'test/fixtures/mock/1234.json',
+        'test/fixtures/mock/5678.json'
+      ]);
+    });
+    it('should return array for filepath with ":" separator', () => {
+      expect(expandPath('test/fixtures/mock/1234.json:test/fixtures/mock/5678.json')).to.eql([
+        'test/fixtures/mock/1234.json',
+        'test/fixtures/mock/5678.json'
+      ]);
+    });
+    it('should return array for filepath with ";" separator', () => {
+      expect(expandPath('test/fixtures/mock/1234.json;test/fixtures/mock/5678.json')).to.eql([
+        'test/fixtures/mock/1234.json',
+        'test/fixtures/mock/5678.json'
+      ]);
+    });
+    it('should return empty array for missing/empty filepaths', () => {
+      expect(expandPath([undefined, null, ''])).to.eql([]);
+    });
+    it('should return array for array of single filepaths', () => {
+      expect(expandPath(['test/fixtures', 'test/fixtures/www'])).to.eql([
+        'test/fixtures',
+        'test/fixtures/www'
+      ]);
+    });
+    it('should return array for array of glob filepaths', () => {
+      expect(expandPath(['test/fixtures', 'test/fixtures/mock/*.json'])).to.eql([
+        'test/fixtures',
+        'test/fixtures/mock/1234.json',
+        'test/fixtures/mock/5678.json'
+      ]);
+    });
+  });
+
   describe('find()', () => {
     it('should find file for fully qualified request', () => {
       expect(
