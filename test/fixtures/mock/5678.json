@@ -1,0 +1,15 @@
+{
+  "request": {
+    "url": "http://www.someapi.com/v1/5678",
+    "ignoreSearch": true
+  },
+  "response": {
+    "headers": {},
+    "body": {
+      "user": {
+        "name": "Nancy",
+        "id": 5678
+      }
+    }
+  }
+}

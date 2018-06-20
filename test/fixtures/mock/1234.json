@@ -1,0 +1,11 @@
+{
+  "request": {
+    "url": "http://www.someurl.com/1234.jpg"
+  },
+  "response": {
+    "headers": {
+      "x-custom": "custom header"
+    },
+    "body": "1234.jpg"
+  }
+}

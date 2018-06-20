@@ -2,9 +2,9 @@
 
 process.env.NODE_NO_WARNINGS = '1';
 
-const { server } = require('../index');
-const program = require('commander');
 const pkg = require('../package.json');
+const program = require('commander');
+const { server } = require('../index');
 
 program
   .usage('[options] [path...]')
