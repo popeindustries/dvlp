@@ -77,7 +77,6 @@ describe('mock', () => {
       match(getRequest('/1234.jpg'), res);
       setTimeout(() => {
         expect(res.headers['Content-Type']).to.equal('image/jpeg');
-        expect(res.headers['ETag']).to.equal('W/"122d8-1641c2a2d00"');
         done();
       }, 50);
     });
