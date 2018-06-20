@@ -1,6 +1,7 @@
 'use strict';
 
 const { cleanBundles } = require('../lib/utils/bundler');
+const { cleanMocks, load } = require('../lib/utils/mock');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const { bundleDirName } = require('../lib/config');
@@ -10,26 +11,29 @@ const serverFactory = require('../lib/server');
 let server;
 
 describe('server', () => {
-  beforeEach(cleanBundles);
+  beforeEach(() => {
+    cleanBundles();
+    cleanMocks();
+  });
   afterEach(async () => {
     cleanBundles();
     server && (await server.destroy());
   });
 
   describe('static', () => {
-    it('should start a static file server', async () => {
+    it('should start a file server', async () => {
       server = await serverFactory('test/fixtures/www', { port: 8080, reload: false });
       const res = await fetch('http://localhost:8080/');
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('<!doctype html>');
     });
-    it('should inject the reload script into a static server html response', async () => {
+    it('should inject the reload script into an html response', async () => {
       server = await serverFactory('test/fixtures/www', { port: 8080, reload: true });
       const res = await fetch('http://localhost:8080/');
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('sse=new EventSource');
     });
-    it('should start a static file server with custom Rollup config', async () => {
+    it('should start a file server with custom Rollup config', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8080,
         reload: false,
@@ -47,7 +51,7 @@ describe('server', () => {
         expect(err).to.exist;
       }
     });
-    it('should transpile file content when using a transpiler with a static server', async () => {
+    it('should transpile file content when using a transpiler', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8080,
         reload: false,
@@ -57,7 +61,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.equal('this is transpiled content for: style.css');
     });
-    it('should cache transpiled file content when using a transpiler with a static server', async () => {
+    it('should cache transpiled file content when using a transpiler', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8080,
         reload: false,
@@ -72,7 +76,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(Date.now() - start).to.be.below(10);
     });
-    it('should return error when transpiler error with a static server', async () => {
+    it('should return error when transpiler error', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8080,
         reload: false,
@@ -82,27 +86,34 @@ describe('server', () => {
       expect(res.status).to.eql(500);
       expect(await res.text()).to.equal('transpiler error style.css');
     });
+    it('should respond to mocked requests', async () => {
+      load('test/fixtures/mock/1234.json');
+      server = await serverFactory('test/fixtures/www', { port: 8080, reload: false });
+      const res = await fetch('http://localhost:8080/1234.jpg');
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('content-type')).to.equal('image/jpeg');
+    });
   });
 
   describe('app', () => {
-    it('should start an app server', async () => {
+    it('should start a server', async () => {
       server = await serverFactory('test/fixtures/app.js', { port: 8000, reload: false });
       const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
     });
-    it('should inject the reload script into an app server html response', async () => {
+    it('should inject the reload script into an html response', async () => {
       server = await serverFactory('test/fixtures/app.js', { port: 8000, reload: true });
       const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('sse=new EventSource');
     });
-    it('should start an app server with initial error', async () => {
+    it('should start a with initial error', async () => {
       server = await serverFactory('test/fixtures/appError.js', { port: 8000, reload: false });
       const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
       expect(res.status).to.eql(500);
     });
-    it('should start an app server with custom Rollup config', async () => {
+    it('should start a server with custom Rollup config', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
         reload: false,
@@ -112,7 +123,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('/* this is a test */');
     });
-    it('should transpile file content when using a transpiler with an app server', async () => {
+    it('should transpile file content when using a transpiler', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
         reload: false,
@@ -121,6 +132,13 @@ describe('server', () => {
       const res = await fetch('http://localhost:8000/www/style.css');
       expect(res.status).to.eql(200);
       expect(await res.text()).to.equal('this is transpiled content for: style.css');
+    });
+    it('should respond to mocked requests', async () => {
+      load('test/fixtures/mock/1234.json');
+      server = await serverFactory('test/fixtures/app.js', { port: 8000, reload: false });
+      const res = await fetch('http://localhost:8000/1234.jpg');
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('content-type')).to.equal('image/jpeg');
     });
   });
 });

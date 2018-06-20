@@ -36,7 +36,7 @@ function getResponse() {
   };
 }
 
-describe.only('mock', () => {
+describe('mock', () => {
   afterEach(cleanMocks);
 
   describe('load()', () => {
@@ -63,7 +63,7 @@ describe.only('mock', () => {
       expect(match(getRequest('http://www.someapi.com/v1/12'), {})).to.equal(false);
     });
     it('should return "false" if no match when not ignoring search', () => {
-      expect(match(getRequest('http://www.someurl.com/1234.jpg?u=bob'), {})).to.equal(false);
+      expect(match(getRequest('/1234.jpg?u=bob'), {})).to.equal(false);
     });
     it('should respond to request for mock json', () => {
       const res = getResponse();
@@ -74,7 +74,7 @@ describe.only('mock', () => {
     });
     it('should respond to request for mock image', (done) => {
       const res = getResponse();
-      match(getRequest('http://www.someurl.com/1234.jpg'), res);
+      match(getRequest('/1234.jpg'), res);
       setTimeout(() => {
         expect(res.headers['Content-Type']).to.equal('image/jpeg');
         expect(res.headers['ETag']).to.equal('W/"122d8-1641c2a2d00"');

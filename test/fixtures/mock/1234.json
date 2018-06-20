@@ -1,6 +1,6 @@
 {
   "request": {
-    "url": "http://www.someurl.com/1234.jpg"
+    "url": "/1234.jpg"
   },
   "response": {
     "headers": {
