@@ -17,7 +17,7 @@ Less setup, less complexity, and less waiting is surely the path to developer ha
 
 - **No bundling**: write JS modules and load them directly in the browser
 - **No middleware**: write application servers without special dev/build/bundle middleware
-- **No waiting**: restart application servers in a blink of an eye
+- **No waiting**: restart application servers in the blink of an eye
 - **No refreshing**: automatically reload browsers on file change
 
 ### How it works
@@ -43,7 +43,7 @@ $ npm install dvlp
 ```text
 $ dvlp --help
 
-  Usage: dvlp [options] [path...]
+Usage: dvlp [options] [path...]
 
   Start a development server, restarting and reloading connected browsers on file changes.
   Serves static files from one or more "path" directories, or a custom application
@@ -52,6 +52,7 @@ $ dvlp --help
   Options:
 
     -p, --port <port>           port number
+    -m, --mock <path>           path to mock files (directory, file, glob pattern)
     -t, --transpiler <path>     path to optional transpiler file
     -r, --rollup-config <path>  path to optional Rollup.js config file
     --no-reload                 disable reloading connected browsers on file change
@@ -110,6 +111,34 @@ module.exports = function transpile(filepath) {
 ```
 
 In order to keep things snappy, **dvlp** will cache transpiled content and only re-transpile single files when the original contents have changed.
+
+### Mocking
+
+When developing locally, it's often useful to mock requests made from your server, especially when working with an external API. **dvlp** lets you quickly and easily mock endpoints by intercepting requests that match those registered with the `-m, --mock` flag.
+
+Mock a request by creating a `.json` file describing the mocked `request/response`:
+
+```json
+{
+  "request": {
+    "url": "http://www.someapi.com/v1/5678",
+    "ignoreSearch": true
+  },
+  "response": {
+    "headers": {
+      "x-custom": "custom header"
+    },
+    "body": {
+      "user": {
+        "name": "Nancy",
+        "id": 5678
+      }
+    }
+  }
+}
+```
+
+Note that setting `request.ignoreSearch = true` will ignore query parameters when matching an incoming request with the mocked response.
 
 ### Bundling
 
@@ -189,11 +218,11 @@ Returns a **`TestServer`** instance with the following properties:
 
 - **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
 - **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
-- **`mock: (url: string, response: object) => void`** add a one-time mock `response` for `url`. Will return a `text/html` response if `response.body` type is `string`, or `application/json` response if body type is `object`
-- **`destroy: () => Promise<void>`** stop and clean up running server
+- **`mockOnce(url: string, response: object): void`** add a one-time mock `response` for `url`. Will return a `text/html` response if `response.body` type is `string`, or `application/json` response if body type is `object`
+- **`destroy(): Promise<void>`** stop and clean up running server
 
 ```js
-server.mock('/api/user/1234', {
+server.mockOnce('/api/user/1234', {
   body: {
     id: '1234',
     name: 'bob'
