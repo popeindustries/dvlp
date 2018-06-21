@@ -121,7 +121,7 @@ Mock a request by creating a `.json` file describing the mocked `request/respons
 ```json
 {
   "request": {
-    "url": "http://www.someapi.com/v1/5678",
+    "url": "http://www.someapi.com/v1/id/101010",
     "ignoreSearch": true
   },
   "response": {
@@ -131,14 +131,49 @@ Mock a request by creating a `.json` file describing the mocked `request/respons
     "body": {
       "user": {
         "name": "Nancy",
-        "id": 5678
+        "id": "101010"
       }
     }
   }
 }
 ```
 
-Note that setting `request.ignoreSearch = true` will ignore query parameters when matching an incoming request with the mocked response.
+(_Note that setting `request.ignoreSearch = true` will ignore query parameters when matching an incoming request with the mocked response_)
+
+Though JSON responses are probably the most common, it's also possible to mock other types of payloads by linking the `response.body` to an external file:
+
+```json
+{
+  "request": {
+    "url": "http://www.someplace.com/images/avatar.jpg"
+  },
+  "response": {
+    "body": "../assets/avatar.jpg"
+  }
+}
+```
+
+(_Note that the file paths referenced in `response.body` are relative to the mock file, not the web/project root_)
+
+Register mocked responses with the command-line flag `-m, --mock` and a path to your mock files:
+
+```json
+{
+  "scripts": {
+    "dev": "dvlp --mock path/to/mock/files --port 8000 src/app.js"
+  }
+}
+```
+
+Your `path/to/mock/files` could be one of the following:
+
+- path to directory of files: `path/to/mock/directory`
+- path to file: `path/to/mock.json`
+
+(_Note that the following require wrapping in `""`_)
+
+- globbed path to multiple files/directories: `"path/to/mock/{api,assets}"`
+- multiple files/directories separated by space, `,`, `:`, or `;`: `"path/to/mock1.json, path/to/mock2.json"`
 
 ### Bundling
 
@@ -218,8 +253,31 @@ Returns a **`TestServer`** instance with the following properties:
 
 - **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
 - **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
+- **`mock(filepath: string|[string]): void`** load and register mock response files (see [mocking](#mocking))
+
+```json
+{
+  "request": {
+    "url": "http://www.someapi.com/v1/id/101010"
+  },
+  "response": {
+    "body": {
+      "user": {
+        "name": "Nancy",
+        "id": "101010"
+      }
+    }
+  }
+}
+```
+
+```js
+server.mock('path/to/mock/101010.json');
+const res = await fetch('http://www.someapi.com/v1/id/101010');
+console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
+```
+
 - **`mockOnce(url: string, response: object): void`** add a one-time mock `response` for `url`. Will return a `text/html` response if `response.body` type is `string`, or `application/json` response if body type is `object`
-- **`destroy(): Promise<void>`** stop and clean up running server
 
 ```js
 server.mockOnce('/api/user/1234', {
@@ -229,8 +287,10 @@ server.mockOnce('/api/user/1234', {
   }
 });
 const res = await fetch('http://localhost:8080/api/user/1234');
-console.log(await res.body()); // => { "id": "1234", "name": "bob" }
+console.log(await res.json()); // => { id: "1234", name: "bob" }
 ```
+
+- **`destroy(): Promise<void>`** stop and clean up running server
 
 If unable to resolve a request to a local file, `testServer` will respond with a dummy file of the appropriate type. This makes it easy to test ServiceWorker pre-caching, for example, without having to correctly resolve paths or create mocks. In addition, `testServer` supports the following special query parameters:
 
