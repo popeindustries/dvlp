@@ -149,5 +149,13 @@ describe('testServer', () => {
       expect(res.headers.get('Content-type')).to.include('application/json');
       expect(await res.json()).to.eql({ user: { name: 'Nancy', id: 5678 } });
     });
+    it('should respond to mocked external https json request', async () => {
+      server = await testServer();
+      server.mock('test/fixtures/mock');
+      const res = await fetch('https://www.someapi.com/v1/9012');
+      expect(res).to.exist;
+      expect(res.headers.get('Content-type')).to.include('application/json');
+      expect(await res.json()).to.eql({ user: { name: 'Bob', id: 9012 } });
+    });
   });
 });
