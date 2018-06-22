@@ -39,10 +39,21 @@ function getResponse() {
 describe('mock', () => {
   afterEach(cleanMocks);
 
+  describe('add()', () => {
+    it('should add a json type');
+    it('should add a file type');
+    it('should add an html type');
+    it('should handle invalid response');
+  });
+
+  describe('remove()', () => {
+    it('should remove an existing mock');
+  });
+
   describe('load()', () => {
     it('should load mock files from directory path', async () => {
       load('test/fixtures/mock');
-      expect(cache.size).to.equal(2);
+      expect(cache.size).to.equal(3);
     });
     it('should load individual mock file', async () => {
       load('test/fixtures/mock/1234.json');
@@ -81,5 +92,6 @@ describe('mock', () => {
         done();
       }, 50);
     });
+    it('should respond to request for one-time mock');
   });
 });

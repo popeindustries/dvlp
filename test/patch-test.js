@@ -3,9 +3,7 @@
 const { cleanBundles, destroyWorkers } = require('../lib/utils/bundler');
 const { expect } = require('chai');
 const { bundleDirName } = require('../lib/config');
-const http = require('http');
-const https = require('https');
-const { patchClientRequest, patchResponse } = require('../lib/utils/patch');
+const { patchResponse } = require('../lib/utils/patch');
 const path = require('path');
 const { ServerResponse } = require('http');
 
@@ -37,37 +35,6 @@ describe('patch', () => {
     process.env.NODE_PATH = NODE_PATH;
     require('module').Module._initPaths();
     await destroyWorkers();
-  });
-
-  describe('patchClientRequest()', () => {
-    it('should call passed function with url instance for http.request', (done) => {
-      patchClientRequest((url) => {
-        expect(url).to.have.property('href', 'http://localhost:3000/foo');
-        done();
-      });
-      http.request('http://localhost:3000/foo');
-    });
-    it('should call passed function with url instance for http.get', (done) => {
-      patchClientRequest((url) => {
-        expect(url).to.have.property('href', 'http://localhost:3000/foo');
-        done();
-      });
-      http.get('http://localhost:3000/foo');
-    });
-    it('should call passed function with url instance for https.request', (done) => {
-      patchClientRequest((url) => {
-        expect(url).to.have.property('href', 'https://localhost:3000/foo');
-        done();
-      });
-      https.request('https://localhost:3000/foo');
-    });
-    it('should call passed function with url instance for https.get', (done) => {
-      patchClientRequest((url) => {
-        expect(url).to.have.property('href', 'https://localhost:3000/foo');
-        done();
-      });
-      https.get('https://localhost:3000/foo');
-    });
   });
 
   describe('patchResponse()', () => {
