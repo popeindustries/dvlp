@@ -1,7 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
-const { cache, cleanMocks, load, match } = require('../lib/utils/mock');
+const { add, cache, cleanMocks, load, match, remove } = require('../lib/utils/mock');
 
 function getRequest(url, headers = { accept: '*/*' }) {
   return {
@@ -40,14 +40,34 @@ describe('mock', () => {
   afterEach(cleanMocks);
 
   describe('add()', () => {
-    it('should add a json type');
-    it('should add a file type');
-    it('should add an html type');
-    it('should handle invalid response');
+    it('should add a json type', () => {
+      add('/data.json', { body: { data: 'foo' } });
+      const mock = cache.get('localhost:8080/data.json');
+      expect(mock).to.have.property('type', 'json');
+    });
+    it('should add a file type', () => {
+      add('/image.jpeg', { body: 'image.jpeg' });
+      const mock = cache.get('localhost:8080/image.jpeg');
+      expect(mock).to.have.property('type', 'file');
+    });
+    it('should add an html type', () => {
+      add('/index.html', { body: '<body>hi</body>' });
+      const mock = cache.get('localhost:8080/index.html');
+      expect(mock).to.have.property('type', 'html');
+    });
+    it('should handle incorrectly formatted response', () => {
+      add('/data.json', { data: 'foo' });
+      const mock = cache.get('localhost:8080/data.json');
+      expect(mock.response.body).to.eql({ data: 'foo' });
+    });
   });
 
   describe('remove()', () => {
-    it('should remove an existing mock');
+    it('should remove an existing mock', () => {
+      add('/data.json', { body: { data: 'foo' } });
+      remove('/data.json');
+      expect(cache.size).to.equal(0);
+    });
   });
 
   describe('load()', () => {
@@ -92,6 +112,5 @@ describe('mock', () => {
         done();
       }, 50);
     });
-    it('should respond to request for one-time mock');
   });
 });
