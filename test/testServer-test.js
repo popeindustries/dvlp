@@ -35,7 +35,7 @@ describe('testServer', () => {
     server = await testServer({ webroot: 'lib' });
     const res = await fetch('http://localhost:8080/testServer.js');
     expect(res).to.exist;
-    expect(await res.text()).to.contain('DEFAULT_PORT');
+    expect(await res.text()).to.contain('module.exports.disableNetwork');
   });
   it('should add default connection latency to each request', async () => {
     server = await testServer();
