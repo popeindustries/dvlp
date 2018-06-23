@@ -2,7 +2,7 @@
 
 const { expect } = require('chai');
 const fetch = require('node-fetch');
-const { cleanMocks } = require('../lib/utils/mock');
+const { cache, cleanMocks } = require('../lib/utils/mock');
 const testServer = require('../lib/testServer');
 
 let server;
@@ -102,7 +102,7 @@ describe('testServer', () => {
       expect(res).to.exist;
       expect(await res.json()).to.eql({ foo: 'foo' });
       expect(res.headers.get('Content-type')).to.include('application/json');
-      expect(server._singleShotMocks.size).to.equal(0);
+      expect(cache.size).to.equal(0);
     });
     it('should respond to malformed mocked json request', async () => {
       server = await testServer();
@@ -111,25 +111,25 @@ describe('testServer', () => {
       expect(res).to.exist;
       expect(await res.json()).to.eql({ foo: 'foo' });
       expect(res.headers.get('Content-type')).to.include('application/json');
-      expect(server._singleShotMocks.size).to.equal(0);
+      expect(cache.size).to.equal(0);
     });
     it('should respond to mocked html request', async () => {
       server = await testServer();
-      server.mockOnce('/foo', { body: 'foo' });
+      server.mockOnce('/foo', { body: '<p>foo</p>' });
       const res = await fetch('http://localhost:8080/foo');
       expect(res).to.exist;
-      expect(await res.text()).to.eql('foo');
+      expect(await res.text()).to.eql('<p>foo</p>');
       expect(res.headers.get('Content-type')).to.include('text/html');
-      expect(server._singleShotMocks.size).to.equal(0);
+      expect(cache.size).to.equal(0);
     });
     it('should respond to malformed mocked html request', async () => {
       server = await testServer();
-      server.mockOnce('/foo', 'foo');
+      server.mockOnce('/foo', '<p>foo</p>');
       const res = await fetch('http://localhost:8080/foo');
       expect(res).to.exist;
-      expect(await res.text()).to.eql('foo');
+      expect(await res.text()).to.eql('<p>foo</p>');
       expect(res.headers.get('Content-type')).to.include('text/html');
-      expect(server._singleShotMocks.size).to.equal(0);
+      expect(cache.size).to.equal(0);
     });
   });
 
