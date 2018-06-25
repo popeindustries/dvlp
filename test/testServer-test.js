@@ -94,10 +94,19 @@ describe('testServer', () => {
     }
   });
 
-  describe('mockOnce()', () => {
+  describe('mock()', () => {
     it('should respond to mocked json request', async () => {
       server = await testServer();
-      server.mockOnce('/api/foo', { body: { foo: 'foo' } });
+      server.mock('/api/foo', { body: { foo: 'foo' } });
+      const res = await fetch('http://localhost:8080/api/foo');
+      expect(res).to.exist;
+      expect(await res.json()).to.eql({ foo: 'foo' });
+      expect(res.headers.get('Content-type')).to.include('application/json');
+      expect(cache.size).to.equal(1);
+    });
+    it('should respond to mocked json request only once', async () => {
+      server = await testServer();
+      server.mock('/api/foo', { body: { foo: 'foo' } }, true);
       const res = await fetch('http://localhost:8080/api/foo');
       expect(res).to.exist;
       expect(await res.json()).to.eql({ foo: 'foo' });
@@ -106,7 +115,7 @@ describe('testServer', () => {
     });
     it('should respond to malformed mocked json request', async () => {
       server = await testServer();
-      server.mockOnce('/api/foo', { foo: 'foo' });
+      server.mock('/api/foo', { foo: 'foo' }, true);
       const res = await fetch('http://localhost:8080/api/foo');
       expect(res).to.exist;
       expect(await res.json()).to.eql({ foo: 'foo' });
@@ -115,7 +124,7 @@ describe('testServer', () => {
     });
     it('should respond to mocked html request', async () => {
       server = await testServer();
-      server.mockOnce('/foo', { body: '<p>foo</p>' });
+      server.mock('/foo', { body: '<p>foo</p>' }, true);
       const res = await fetch('http://localhost:8080/foo');
       expect(res).to.exist;
       expect(await res.text()).to.eql('<p>foo</p>');
@@ -124,7 +133,7 @@ describe('testServer', () => {
     });
     it('should respond to malformed mocked html request', async () => {
       server = await testServer();
-      server.mockOnce('/foo', '<p>foo</p>');
+      server.mock('/foo', '<p>foo</p>', true);
       const res = await fetch('http://localhost:8080/foo');
       expect(res).to.exist;
       expect(await res.text()).to.eql('<p>foo</p>');
@@ -133,17 +142,17 @@ describe('testServer', () => {
     });
   });
 
-  describe('mock()', () => {
+  describe('loadMockFiles()', () => {
     it('should respond to mocked image request', async () => {
       server = await testServer();
-      server.mock('test/fixtures/mock');
+      server.loadMockFiles('test/fixtures/mock');
       const res = await fetch('http://localhost:8080/1234.jpg');
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('image/jpeg');
     });
     it('should respond to mocked external json request', async () => {
       server = await testServer();
-      server.mock('test/fixtures/mock');
+      server.loadMockFiles('test/fixtures/mock');
       const res = await fetch('http://www.someapi.com/v1/5678');
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('application/json');
@@ -151,7 +160,7 @@ describe('testServer', () => {
     });
     it('should respond to mocked external https json request', async () => {
       server = await testServer();
-      server.mock('test/fixtures/mock');
+      server.loadMockFiles('test/fixtures/mock');
       const res = await fetch('https://www.someapi.com/v1/9012');
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('application/json');

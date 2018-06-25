@@ -114,7 +114,7 @@ In order to keep things snappy, **dvlp** will cache transpiled content and only 
 
 ### Mocking
 
-When developing locally, it's often useful to mock requests made from your server, especially when working with an external API. **dvlp** lets you quickly and easily mock endpoints by intercepting requests that match those registered with the `-m, --mock` flag.
+When developing locally, it's often useful to mock requests made from your application server, especially when working with an external API. **dvlp** lets you quickly and easily mock endpoints by intercepting requests that match those registered with the `-m, --mock` flag.
 
 Mock a request by creating a `.json` file describing the mocked `request/response`:
 
@@ -258,7 +258,7 @@ Returns a **`TestServer`** instance with the following properties:
 
 - **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
 - **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
-- **`mock(filepath: string|[string]): void`** load and register mock response files (see [mocking](#mocking))
+- **`loadMockFiles(filepath: string|[string]): void`** load and register mock response files (see [mocking](#mocking))
 
 ```json
 {
@@ -282,15 +282,15 @@ const res = await fetch('http://www.someapi.com/v1/id/101010');
 console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 ```
 
-- **`mockOnce(url: string, response: object): void`** add a one-time mock `response` for `url`. Will return a `text/html` response if `response.body` type is `string`, or `application/json` response if body type is `object`
+- **`mock(request: string|object, response: object, once: boolean): void`** add a mock `response` for `request`, optionally removing it after first use (see [mocking](#mocking))
 
 ```js
-server.mockOnce('/api/user/1234', {
+server.mock('/api/user/1234', {
   body: {
     id: '1234',
     name: 'bob'
   }
-});
+}, true);
 const res = await fetch('http://localhost:8080/api/user/1234');
 console.log(await res.json()); // => { id: "1234", name: "bob" }
 ```
