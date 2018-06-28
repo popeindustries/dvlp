@@ -24,11 +24,11 @@ Less setup, less complexity, and less waiting is surely the path to developer ha
 
 **dvlp** allows you to easily serve files from one or more project directories (`static` mode), or from your custom application server (`app` mode). In both cases, **dvlp** automatically injects the necessary reload script into HTML responses to enable reloading, watches all files for changes, restarts the `app` server if necessary, and reloads all connected browsers.
 
-In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (which are not supported by browsers) work by re-writing all import paths to valid urls. Since most `node_modules` packages are still published as CommonJS modules, each bare import is also bundled and converted to an ESM module using [Rollup.js](https://rollupjs.org). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under the project root.
+In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (`import "lodash"`), which are not supported by browsers, work by re-writing all import paths to valid urls. Since most `node_modules` packages are still published as CommonJS modules, each bare import is also bundled and converted to an ESM module using [Rollup.js](https://rollupjs.org). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under the project root.
 
 ### Bonus!
 
-**dvlp** also includes a simple [`testServer`](#testserveroptions--port-number-latency-number-webroot-string--promise-destroy---void-) for handling various network request scenarios during testing.
+**dvlp** also includes a simple [`testServer`](##testserveroptions-promisetestserver) for handling various network request scenarios (mocking, latency, errors, offline, etc.) during testing.
 
 ## Installation
 
@@ -87,7 +87,7 @@ The `transpile` function should accept a `filepath` and return a content string 
 const sass = require('sass');
 const RE_SASS = /\.s[ac]ss$/;
 
-module.exports = function transpile(filepath) {
+module.exports = async function transpile(filepath) {
   if (RE_SASS.test(filepath)) {
     return sass.renderSync({ file: filepath }).css;
   }
@@ -235,9 +235,15 @@ Serve files at `filepath`, starting static file server if one or more directorie
 
 `options` include:
 
+- **`mockpath: string|[string]`** the path(s) to load mock files from (default `''`)
 - **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 - **`reload: boolean`**: enable/disable browser reloading (default `true`)
 - **`rollupConfig: string`**: path to optional [Rollup.js](https://rollupjs.org) config file to configure bundling of bare imports
+
+```js
+const { server } = require('dvlp');
+const appServer = await server('path/to/app.js', { port: 8080 });
+```
 
 ### `testServer([options]): Promise<TestServer>`
 
@@ -277,7 +283,7 @@ Returns a **`TestServer`** instance with the following properties:
 ```
 
 ```js
-server.mock('path/to/mock/101010.json');
+server.loadMockFiles('path/to/mock/101010.json');
 const res = await fetch('http://www.someapi.com/v1/id/101010');
 console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 ```
