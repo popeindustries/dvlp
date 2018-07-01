@@ -51,6 +51,8 @@ describe('appServer', () => {
       headers: { referer: 'index.js' }
     });
     expect(res.status).to.eql(200);
-    expect(await res.text()).to.contain('function baseSlice');
+    const body = await res.text();
+    expect(body).to.contain('function baseSlice');
+    expect(body).to.contain('export default array;');
   });
 });

@@ -1,6 +1,6 @@
 'use strict';
 
-const { cleanBundles, destroyWorkers, bundle } = require('../lib/utils/bundler');
+const { cleanBundles, destroyWorkers, bundle, resolveModuleId } = require('../lib/utils/bundler');
 const { expect } = require('chai');
 const fs = require('fs');
 const { bundleDir } = require('../lib/config');
@@ -19,19 +19,19 @@ describe('module', () => {
 
   describe('bundle()', () => {
     it('should return "null" if no module bundle found', () => {
-      expect(bundle('foofoo')).to.equal(null);
+      expect(bundle(resolveModuleId('foofoo'))).to.equal(null);
     });
     it('should bundle and return bundle filepath', async () => {
-      const filepath = await bundle('lodash');
+      const filepath = await bundle(resolveModuleId('lodash'));
       expect(filepath).to.equal(path.join(bundleDir, LODASH));
     });
     it('should return cached bundle filepath', async () => {
-      await bundle('lodash');
-      const filepath = await bundle('lodash');
+      await bundle(resolveModuleId('lodash'));
+      const filepath = await bundle(resolveModuleId('lodash'));
       expect(filepath).to.equal(path.join(bundleDir, LODASH));
     });
     it('should bundle with overridden config', async () => {
-      const filepath = await bundle('debug', undefined, {
+      const filepath = await bundle(resolveModuleId('debug'), 'debug', {
         input: 'foo.js',
         external: [],
         output: { banner: '/* this is a test */', format: 'cjs' }

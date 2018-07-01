@@ -15,6 +15,7 @@ function getBody(res) {
 }
 function getRequest(url, headers = { accept: '*/*' }) {
   return {
+    filepath: path.resolve('test/fixtures/www', url),
     headers,
     httpVersionMajor: 1,
     httpVersionMinor: 1,
@@ -22,18 +23,14 @@ function getRequest(url, headers = { accept: '*/*' }) {
     url
   };
 }
+function setNodePath(nodePath) {
+  process.env.NODE_PATH = nodePath;
+  require('module').Module._initPaths();
+}
 
 describe('patch', () => {
-  before(() => {
-    process.env.NODE_PATH = 'test/fixtures/www';
-    require('module').Module._initPaths();
-  });
-  afterEach(() => {
-    cleanBundles();
-  });
+  afterEach(cleanBundles);
   after(async () => {
-    process.env.NODE_PATH = NODE_PATH;
-    require('module').Module._initPaths();
     await destroyWorkers();
   });
 
@@ -71,13 +68,22 @@ describe('patch', () => {
       );
     });
     it('should resolve NODE_PATH js import id', () => {
+      setNodePath('test/fixtures/www');
       const req = getRequest('index.js', { accept: 'application/javascript' });
-      req.filepath = path.resolve('test/fixtures/index.js');
       const res = new ServerResponse(req);
       patchResponse(req, res);
       res.end('import module from "nested/index.js";');
-      expect(getBody(res)).to.equal(`import module from "../www/nested/index.js";`);
-      process.env.NODE_PATH = NODE_PATH;
+      expect(getBody(res)).to.equal(`import module from "./nested/index.js";`);
+      setNodePath(NODE_PATH);
+    });
+    it('should resolve NODE_PATH js import id missing extension', () => {
+      setNodePath('test/fixtures/www');
+      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req, res);
+      res.end('import module from "nested/foo";');
+      expect(getBody(res)).to.equal(`import module from "./nested/foo.jsx";`);
+      setNodePath(NODE_PATH);
     });
     it('should resolve js import id missing extension', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
