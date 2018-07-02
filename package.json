@@ -1,6 +1,6 @@
 {
   "name": "dvlp",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
   "main": "index.js",
   "repository": "https://github.com/popeindustries/dvlp.git",
@@ -15,7 +15,7 @@
     "chokidar": "^2.0.4",
     "commander": "^2.16.0",
     "debug": "^3.1.0",
-    "esm": "^3.0.58",
+    "esm": "^3.0.61",
     "fswatcher-child": "^1.0.4",
     "glob": "^7.1.2",
     "mime": "^2.3.1",
