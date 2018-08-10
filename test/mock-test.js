@@ -73,7 +73,7 @@ describe('mock', () => {
   describe('load()', () => {
     it('should load mock files from directory path', async () => {
       load('test/fixtures/mock');
-      expect(cache.size).to.equal(3);
+      expect(cache.size).to.equal(4);
     });
     it('should load individual mock file', async () => {
       load('test/fixtures/mock/1234.json');
