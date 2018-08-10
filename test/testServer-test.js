@@ -7,6 +7,15 @@ const testServer = require('../lib/testServer');
 
 let server;
 
+function sleep(dur) {
+  return new Promise((resolve) => {
+    if (!dur) {
+      return resolve();
+    }
+    setTimeout(resolve, dur);
+  });
+}
+
 describe('testServer', () => {
   before(() => {
     testServer.disableNetwork();
@@ -68,6 +77,18 @@ describe('testServer', () => {
     const res = await fetch('http://localhost:8080/foo.js?missing');
     expect(res).to.exist;
     expect(res.status).to.equal(404);
+  });
+  it.only('should hang when "?hang"', async () => {
+    let done = false;
+    server = await testServer();
+    console.log(server);
+    fetch('http://localhost:8080/foo.js?hang')
+      .then(() => {
+        done = true;
+      })
+      .catch(() => {});
+    await sleep(2000);
+    expect(done).to.equal(false);
   });
   it('should simulate offline when "?offline"', async () => {
     server = await testServer();
