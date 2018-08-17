@@ -291,12 +291,16 @@ console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 - **`mock(request: string|object, response: object, once: boolean): void`** add a mock `response` for `request`, optionally removing it after first use (see [mocking](#mocking))
 
 ```js
-server.mock('/api/user/1234', {
-  body: {
-    id: '1234',
-    name: 'bob'
-  }
-}, true);
+server.mock(
+  '/api/user/1234',
+  {
+    body: {
+      id: '1234',
+      name: 'bob'
+    }
+  },
+  true
+);
 const res = await fetch('http://localhost:8080/api/user/1234');
 console.log(await res.json()); // => { id: "1234", name: "bob" }
 ```
@@ -309,6 +313,7 @@ If unable to resolve a request to a local file, `testServer` will respond with a
 - **`error`** return a 500 server error response (`fetch('http://localhost:3333/foo.js?error')`)
 - **`missing`** return a 404 not found response (`fetch('http://localhost:3333/foo.js?missing')`)
 - **`maxage=value`** configure `Cache-Control: public, max-age={value}` cache header (`fetch('http://localhost:3333/foo.js?maxage=10')`)
+- **`hang`** hold connection open without responding (`fetch('http://localhost:3333/foo.js?hang')`)
 
 ### `testServer.disableNetwork(): void`
 
