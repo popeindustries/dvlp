@@ -1,8 +1,8 @@
 'use strict';
 
+const { cache, cleanMocks } = require('../lib/utils/mock');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
-const { cache, cleanMocks } = require('../lib/utils/mock');
 const testServer = require('../lib/testServer');
 
 let server;
@@ -78,10 +78,9 @@ describe('testServer', () => {
     expect(res).to.exist;
     expect(res.status).to.equal(404);
   });
-  it.only('should hang when "?hang"', async () => {
+  it('should hang when "?hang"', async () => {
     let done = false;
     server = await testServer();
-    console.log(server);
     fetch('http://localhost:8080/foo.js?hang')
       .then(() => {
         done = true;
