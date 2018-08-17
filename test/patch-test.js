@@ -99,5 +99,12 @@ describe('patch', () => {
       res.end('import module from "./test/fixtures/www/nested";');
       expect(getBody(res)).to.equal(`import module from "./test/fixtures/www/nested/index.js";`);
     });
+    it('should ignore erroneous "import" string', () => {
+      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req, res);
+      res.end('"this is use of a fake import text"');
+      expect(getBody(res)).to.equal(`"this is use of a fake import text"`);
+    });
   });
 });
