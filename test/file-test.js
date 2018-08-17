@@ -121,7 +121,7 @@ describe('file', () => {
   });
 
   describe('importModule()', () => {
-    it('should return an es6 module', async () => {
+    it.skip('should return an es6 module', async () => {
       const module = await importModule(path.resolve(__dirname, 'fixtures/config.esm.js'));
       expect(module).to.have.property('dep', 'HI!');
     });
