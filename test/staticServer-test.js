@@ -28,6 +28,12 @@ describe('staticServer', () => {
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('<!doctype html>');
   });
+  it('should rewrite request for missing html files to index.html ', async () => {
+    server = await staticServer('www', { port: 8080 });
+    const res = await fetch('http://localhost:8080/0', { headers: { accept: 'text/html' } });
+    expect(res.status).to.eql(200);
+    expect(await res.text()).to.contain('<!doctype html>');
+  });
   it('should serve a css file with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });
     const res = await fetch('http://localhost:8080/style.css');
