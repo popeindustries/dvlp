@@ -1,4 +1,4 @@
-const dep = require('./www/dep').default;
+const dep = require('./www/dep');
 
 module.exports = {
   dep

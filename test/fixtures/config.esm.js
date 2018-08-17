@@ -1,4 +1,4 @@
-import dep from './www/dep';
+import dep from './www/dep.esm';
 
 export default {
   dep
