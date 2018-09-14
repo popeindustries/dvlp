@@ -54,7 +54,7 @@ describe('patch', () => {
       const res = new ServerResponse(req);
       patchResponse(req, res);
       res.end('import lodash from "lodash";');
-      expect(getBody(res)).to.equal(`import lodash from "/${bundleDirName}/lodash-4.17.10.js";`);
+      expect(getBody(res)).to.equal(`import lodash from "/${bundleDirName}/lodash-4.17.11.js";`);
     });
     it('should resolve multiple bare js import ids', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
@@ -64,7 +64,7 @@ describe('patch', () => {
         'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";'
       );
       expect(getBody(res)).to.equal(
-        `import lodashArr from "/${bundleDirName}/lodash__array-4.17.10.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDirName}/debug-3.1.0.js";`
+        `import lodashArr from "/${bundleDirName}/lodash__array-4.17.11.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDirName}/debug-4.0.1.js";`
       );
     });
     it('should resolve NODE_PATH js import id', () => {
