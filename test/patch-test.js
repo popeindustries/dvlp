@@ -73,7 +73,7 @@ describe('patch', () => {
       const res = new ServerResponse(req);
       patchResponse(req, res);
       res.end('import module from "nested/index.js";');
-      expect(getBody(res)).to.equal(`import module from "./nested/index.js";`);
+      expect(getBody(res)).to.equal(`import module from "/test/fixtures/www/nested/index.js";`);
       setNodePath(NODE_PATH);
     });
     it('should resolve NODE_PATH js import id missing extension', () => {
@@ -82,7 +82,7 @@ describe('patch', () => {
       const res = new ServerResponse(req);
       patchResponse(req, res);
       res.end('import module from "nested/foo";');
-      expect(getBody(res)).to.equal(`import module from "./nested/foo.jsx";`);
+      expect(getBody(res)).to.equal(`import module from "/test/fixtures/www/nested/foo.jsx";`);
       setNodePath(NODE_PATH);
     });
     it('should resolve js import id missing extension', () => {
