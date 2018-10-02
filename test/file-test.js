@@ -19,7 +19,8 @@ describe('file', () => {
       expect(expandPath('test/fixtures/mock/*.json')).to.eql([
         'test/fixtures/mock/1234.json',
         'test/fixtures/mock/5678.json',
-        'test/fixtures/mock/9012.json'
+        'test/fixtures/mock/9012.json',
+        'test/fixtures/mock/multi.json'
       ]);
     });
     it('should return array for filepath with " " separator', () => {
@@ -66,7 +67,8 @@ describe('file', () => {
         'test/fixtures',
         'test/fixtures/mock/1234.json',
         'test/fixtures/mock/5678.json',
-        'test/fixtures/mock/9012.json'
+        'test/fixtures/mock/9012.json',
+        'test/fixtures/mock/multi.json'
       ]);
     });
   });

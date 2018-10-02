@@ -71,17 +71,21 @@ describe('mock', () => {
   });
 
   describe('load()', () => {
-    it('should load mock files from directory path', async () => {
-      load('test/fixtures/mock');
-      expect(cache.size).to.equal(4);
-    });
-    it('should load individual mock file', async () => {
+    it('should load individual mock file', () => {
       load('test/fixtures/mock/1234.json');
       expect(cache.size).to.equal(1);
     });
-    it('should load array of mock files', async () => {
+    it('should load array of mock files', () => {
       load(['test/fixtures/mock/1234.json', 'test/fixtures/mock/5678.json']);
       expect(cache.size).to.equal(2);
+    });
+    it('should load a single file referencing multiple mocks', () => {
+      load('test/fixtures/mock/multi.json');
+      expect(cache.size).to.equal(2);
+    });
+    it('should load mock files from directory path', () => {
+      load('test/fixtures/mock');
+      expect(cache.size).to.equal(6);
     });
   });
 

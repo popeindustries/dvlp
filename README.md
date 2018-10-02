@@ -114,9 +114,9 @@ In order to keep things snappy, **dvlp** will cache transpiled content and only 
 
 ### Mocking
 
-When developing locally, it's often useful to mock requests made from your application server, especially when working with an external API. **dvlp** lets you quickly and easily mock endpoints by intercepting requests that match those registered with the `-m, --mock` flag.
+When developing locally, it's often useful to mock responses for requests made by your application server, especially when working with an external API. **dvlp** lets you quickly and easily mock endpoints by intercepting requests that match those registered with the `-m, --mock` flag.
 
-Mock a request by creating a `.json` file describing the mocked `request/response`:
+Mock a response by creating a `.json` file describing the mocked `request/response`:
 
 ```json
 {
@@ -139,6 +139,29 @@ Mock a request by creating a `.json` file describing the mocked `request/respons
 ```
 
 (_Note that setting `request.ignoreSearch = true` will ignore query parameters when matching an incoming request with the mocked response_)
+
+Multiple mocked responses may also be included in a single file:
+
+```json
+[
+  {
+    "request": {
+      "url": "http://www.someapi.com/v1/id/101010"
+    },
+    "response": {
+      "body": {}
+    }
+  },
+  {
+    "request": {
+      "url": "http://www.someapi.com/v1/id/202020"
+    },
+    "response": {
+      "body": {}
+    }
+  }
+]
+```
 
 Though JSON responses are probably the most common, it's also possible to mock other types of payloads by linking the `response.body` to an external file:
 
@@ -168,7 +191,7 @@ Register mocked responses with the command-line flag `-m, --mock` and a path to 
 Your `path/to/mock/files` could be one of the following:
 
 - path to directory of files: `path/to/mock/directory`
-- path to file: `path/to/mock.json`
+- path to a single file: `path/to/mock.json`
 
 (_Note that the following require wrapping in `""`_)
 
