@@ -247,7 +247,6 @@ $ DEBUG=dvlp* npm run dev
 
 ## Experimental
 
-- **Run file watcher in separate process**: launch with `CHILD_WATCHER=true` to run file watching operations in a separate background process (default is `false`)
 - **Bundle modules in multiple, separate processes**: launch with `BUNDLE_WORKERS=n` (where `n` is number of background processes) to run module bundling operations in separate background processes (default is `0`)
 
 ## JS API
