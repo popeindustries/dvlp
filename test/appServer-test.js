@@ -30,7 +30,9 @@ describe('appServer', () => {
 
   it('should start an app server', async () => {
     server = await appServer('app.js', { port: 8000 });
-    const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
+    const res = await fetch('http://localhost:8000/', {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('hi');
   });
@@ -40,7 +42,9 @@ describe('appServer', () => {
       changeBodyContent('bye');
     });
     setTimeout(async () => {
-      const res = await fetch('http://localhost:8000/', { headers: { accept: 'text/html' } });
+      const res = await fetch('http://localhost:8000/', {
+        headers: { 'Content-Type': 'text/html' }
+      });
       expect(await res.text()).to.contain('bye');
       done();
     }, 500);
@@ -54,5 +58,11 @@ describe('appServer', () => {
     const body = await res.text();
     expect(body).to.contain('function baseSlice');
     expect(body).to.contain('export default array;');
+  });
+  it('should pass requests through to app', async () => {
+    server = await appServer('app.js', { port: 8000 });
+    const res = await fetch(`http://localhost:8000/script.js`);
+    expect(res.status).to.eql(200);
+    expect(res.headers.get('x-app')).to.equal('test');
   });
 });

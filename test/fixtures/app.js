@@ -7,7 +7,7 @@ const send = require('koa-send');
 const app = new Koa();
 
 app.use(async (ctx) => {
-  if (ctx.accepts('html')) {
+  if (ctx.path === '/') {
     return (ctx.body = `<!doctype html>
     <html lang="en-gb">
       <head>
@@ -19,6 +19,7 @@ app.use(async (ctx) => {
       </body>
     </html>`);
   }
+  ctx.set('x-app', 'test');
   await send(ctx, ctx.path, { root: __dirname + '/www' });
 });
 
