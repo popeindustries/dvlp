@@ -36,6 +36,12 @@ describe('appServer', () => {
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('hi');
   });
+  it('should trigger exit handlers for clean up', async () => {
+    server = await appServer('appExit.js', { port: 8000 });
+    expect(global.beforeExitCalled).to.equal(undefined);
+    await server.restart();
+    expect(global.beforeExitCalled).to.equal(true);
+  });
   it.skip('should restart an app server on file change', (done) => {
     appServer('app.js', { port: 8000 }).then((s) => {
       server = s;
