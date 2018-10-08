@@ -26,6 +26,10 @@ app.use(async (ctx) => {
 app.listen(process.env.PORT || 8000);
 
 process.on('beforeExit', () => {
-  console.log('beforeExit');
-  global.beforeExitCalled = true;
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      global.beforeExitCalled = true;
+      resolve();
+    }, 500);
+  });
 });
