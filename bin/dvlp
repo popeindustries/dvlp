@@ -18,6 +18,7 @@ program
   .option('-m, --mock <path>', 'path to mock files (directory, file, glob pattern)')
   .option('-t, --transpiler <path>', 'path to optional transpiler file')
   .option('-r, --rollup-config <path>', 'path to optional Rollup.js config file')
+  .option('-s, --silent', 'suppress default logging')
   .option('--no-reload', 'disable reloading connected browsers on file change')
   .arguments('[path...]')
   .action(boot)
@@ -38,6 +39,7 @@ async function boot(path) {
       port: program.port,
       reload: program.reload,
       rollupConfig: program.rollupConfig,
+      silent: program.silent,
       transpiler: program.transpiler
     });
   } catch (err) {
