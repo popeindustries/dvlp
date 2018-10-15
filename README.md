@@ -55,6 +55,7 @@ Usage: dvlp [options] [path...]
     -m, --mock <path>           path to mock files (directory, file, glob pattern)
     -t, --transpiler <path>     path to optional transpiler file
     -r, --rollup-config <path>  path to optional Rollup.js config file
+    -s, --silent                suppress default logging
     --no-reload                 disable reloading connected browsers on file change
     -v, --version               output the version number
     -h, --help                  output usage information
