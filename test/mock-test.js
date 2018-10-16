@@ -36,7 +36,7 @@ function getResponse() {
   };
 }
 
-describe.only('mock', () => {
+describe('mock', () => {
   afterEach(cleanMocks);
 
   describe('add()', () => {
@@ -87,7 +87,7 @@ describe.only('mock', () => {
       load('test/fixtures/mock');
       expect(cache.size).to.equal(6);
     });
-    it.skip('should load individual mock file with overriden request host', () => {
+    it('should load individual mock file with overriden request host', () => {
       load('test/fixtures/mock/5678.json', 'http://localhost:3000');
       expect(cache.size).to.equal(1);
       expect(cache.has('localhost:3000/v1/5678')).to.equal(true);
@@ -105,10 +105,9 @@ describe.only('mock', () => {
     it('should return "false" if no match when not ignoring search', () => {
       expect(match(getRequest('/1234.jpg?u=bob'), {})).to.equal(false);
     });
-    it.only('should respond to request for mock json', () => {
+    it('should respond to request for mock json', () => {
       const res = getResponse();
       match(getRequest('http://www.someapi.com/v1/5678'), res);
-      console.log(res);
       expect(res.statusCode).to.equal(200);
       expect(res.body).to.equal('{"user":{"name":"Nancy","id":5678}}');
       expect(res.headers['Content-Type']).to.equal('application/json');
