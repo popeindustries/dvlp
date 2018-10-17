@@ -44,7 +44,7 @@
     "mocha": "^5.2.0",
     "node-fetch": "^2.2.0",
     "prettier": "^1.14.3",
-    "terser": "^3.10.0"
+    "terser": "^3.10.1"
   },
   "engines": {
     "node": ">=8"
