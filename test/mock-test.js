@@ -43,22 +43,29 @@ describe('mock', () => {
     it('should add a json type', () => {
       add('/data.json', { body: { data: 'foo' } });
       const mock = cache.get('localhost:8080/data.json');
-      expect(mock).to.have.property('type', 'json');
+      expect(mock).to.have.property('default');
+      expect(mock.default).to.have.property('type', 'json');
     });
     it('should add a file type', () => {
       add('/image.jpeg', { body: 'image.jpeg' });
       const mock = cache.get('localhost:8080/image.jpeg');
-      expect(mock).to.have.property('type', 'file');
+      expect(mock.default).to.have.property('type', 'file');
     });
     it('should add an html type', () => {
       add('/index.html', { body: '<body>hi</body>' });
       const mock = cache.get('localhost:8080/index.html');
-      expect(mock).to.have.property('type', 'html');
+      expect(mock.default).to.have.property('type', 'html');
     });
     it('should handle incorrectly formatted response', () => {
       add('/data.json', { data: 'foo' });
       const mock = cache.get('localhost:8080/data.json');
-      expect(mock.response.body).to.eql({ data: 'foo' });
+      expect(mock.default.response.body).to.eql({ data: 'foo' });
+    });
+    it('should handle search', () => {
+      add({ url: '/index.html?foo', ignoreSearch: true }, { body: '<body>hi</body>' });
+      add({ url: '/foo.html?foo', ignoreSearch: false }, { body: '<body>hi</body>' });
+      expect(cache.get('localhost:8080/index.html')).to.have.property('default');
+      expect(cache.get('localhost:8080/foo.html')).to.have.property('?foo');
     });
   });
 
