@@ -338,9 +338,9 @@ If unable to resolve a request to a local file, `testServer` will respond with a
 - **`maxage=value`** configure `Cache-Control: public, max-age={value}` cache header (`fetch('http://localhost:3333/foo.js?maxage=10')`)
 - **`hang`** hold connection open without responding (`fetch('http://localhost:3333/foo.js?hang')`)
 
-### `testServer.disableNetwork(): void`
+### `testServer.disableNetwork(rerouteAllRequests: boolean): void`
 
-Disable all network requests with origin that is not `localhost`. Prevents all external network requests for the current Node.js process.
+Disable all network requests with origin that is not `localhost`. Prevents all external network requests for the current Node.js process. If `rerouteAllRequests` is set to `true`, all external requests will be re-routed to the current running server.
 
 ```js
 testServer.disableNetwork();
