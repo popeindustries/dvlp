@@ -104,14 +104,24 @@ describe('testServer', () => {
     expect(res).to.exist;
     expect(res.headers.get('Cache-Control')).to.contain('max-age=10');
   });
-  it('should throw when making an external request', async () => {
+  it('should throw when making an external request and network disabled', async () => {
     try {
       const res = await fetch('http://www.google.com');
       expect(res).to.not.exist;
     } catch (err) {
       expect(err).to.exist;
-      expect(err.message).to.equal('network connections disabled');
+      expect(err.message).to.equal(
+        'network connections disabled. Unable to request http://www.google.com/'
+      );
     }
+  });
+  it('should reroute external request when network disabled and rerouting enabled', async () => {
+    testServer.disableNetwork(true);
+    server = await testServer();
+    const res = await fetch('http://www.google.com/index.js');
+    expect(res).to.exist;
+    expect(await res.text()).to.contain('testServer');
+    testServer.disableNetwork(false);
   });
 
   describe('mock()', () => {

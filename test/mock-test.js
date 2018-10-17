@@ -87,11 +87,6 @@ describe('mock', () => {
       load('test/fixtures/mock');
       expect(cache.size).to.equal(6);
     });
-    it('should load individual mock file with overriden request host', () => {
-      load('test/fixtures/mock/5678.json', 'http://localhost:3000');
-      expect(cache.size).to.equal(1);
-      expect(cache.has('localhost:3000/v1/5678')).to.equal(true);
-    });
   });
 
   describe('match()', () => {
