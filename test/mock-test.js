@@ -75,6 +75,14 @@ describe('mock', () => {
       remove('/data.json');
       expect(cache.size).to.equal(0);
     });
+    it('should remove an existing mock when query string', () => {
+      add('/index.html?foo', { body: '<body>hi</body>' });
+      add('/index.html?bar', { body: '<body>hi</body>' });
+      remove('/index.html?foo');
+      expect(cache.size).to.equal(1);
+      remove('/index.html?bar');
+      expect(cache.size).to.equal(0);
+    });
   });
 
   describe('load()', () => {
