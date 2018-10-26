@@ -141,6 +141,20 @@ Mock a response by creating a `.json` file describing the mocked `request/respon
 
 (_Note that setting `request.ignoreSearch = true` will ignore query parameters when matching an incoming request with the mocked response_)
 
+Bad responses can also be mocked by setting `hang`, `error`, `missing`, or `offline` response properties:
+
+```json
+{
+  "request": {
+    "url": "http://www.someapi.com/v1/id/101010"
+  },
+  "response": {
+    "error": true,
+    "body": {}
+  }
+}
+```
+
 Multiple mocked responses may also be included in a single file:
 
 ```json
