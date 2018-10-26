@@ -1,7 +1,9 @@
 'use strict';
 
 const { expect } = require('chai');
-const { add, cache, cleanMocks, load, match, remove } = require('../lib/utils/mock');
+const Mock = require('../lib/utils/mock');
+
+const mocks = new Mock();
 
 function getRequest(url, headers = { accept: '*/*' }) {
   return {
@@ -37,87 +39,87 @@ function getResponse() {
 }
 
 describe('mock', () => {
-  afterEach(cleanMocks);
+  afterEach(mocks.clean);
 
   describe('add()', () => {
     it('should add a json type', () => {
-      add('/data.json', { body: { data: 'foo' } });
-      const mock = cache.get('localhost:8080/data.json');
+      mocks.add('/data.json', { body: { data: 'foo' } });
+      const mock = mocks.cache.get('localhost:8080/data.json');
       expect(mock).to.have.property('default');
       expect(mock.default).to.have.property('type', 'json');
     });
     it('should add a file type', () => {
-      add('/image.jpeg', { body: 'image.jpeg' });
-      const mock = cache.get('localhost:8080/image.jpeg');
+      mocks.add('/image.jpeg', { body: 'image.jpeg' });
+      const mock = mocks.cache.get('localhost:8080/image.jpeg');
       expect(mock.default).to.have.property('type', 'file');
     });
     it('should add an html type', () => {
-      add('/index.html', { body: '<body>hi</body>' });
-      const mock = cache.get('localhost:8080/index.html');
+      mocks.add('/index.html', { body: '<body>hi</body>' });
+      const mock = mocks.cache.get('localhost:8080/index.html');
       expect(mock.default).to.have.property('type', 'html');
     });
     it('should handle incorrectly formatted response', () => {
-      add('/data.json', { data: 'foo' });
-      const mock = cache.get('localhost:8080/data.json');
+      mocks.add('/data.json', { data: 'foo' });
+      const mock = mocks.cache.get('localhost:8080/data.json');
       expect(mock.default.response.body).to.eql({ data: 'foo' });
     });
     it('should handle search', () => {
-      add({ url: '/index.html?foo', ignoreSearch: true }, { body: '<body>hi</body>' });
-      add({ url: '/foo.html?foo', ignoreSearch: false }, { body: '<body>hi</body>' });
-      expect(cache.get('localhost:8080/index.html')).to.have.property('default');
-      expect(cache.get('localhost:8080/foo.html')).to.have.property('?foo');
+      mocks.add({ url: '/index.html?foo', ignoreSearch: true }, { body: '<body>hi</body>' });
+      mocks.add({ url: '/foo.html?foo', ignoreSearch: false }, { body: '<body>hi</body>' });
+      expect(mocks.cache.get('localhost:8080/index.html')).to.have.property('default');
+      expect(mocks.cache.get('localhost:8080/foo.html')).to.have.property('?foo');
     });
   });
 
   describe('remove()', () => {
     it('should remove an existing mock', () => {
-      add('/data.json', { body: { data: 'foo' } });
-      remove('/data.json');
-      expect(cache.size).to.equal(0);
+      mocks.add('/data.json', { body: { data: 'foo' } });
+      mocks.remove('/data.json');
+      expect(mocks.cache.size).to.equal(0);
     });
     it('should remove an existing mock when query string', () => {
-      add('/index.html?foo', { body: '<body>hi</body>' });
-      add('/index.html?bar', { body: '<body>hi</body>' });
-      remove('/index.html?foo');
-      expect(cache.size).to.equal(1);
-      remove('/index.html?bar');
-      expect(cache.size).to.equal(0);
+      mocks.add('/index.html?foo', { body: '<body>hi</body>' });
+      mocks.add('/index.html?bar', { body: '<body>hi</body>' });
+      mocks.remove('/index.html?foo');
+      expect(mocks.cache.size).to.equal(1);
+      mocks.remove('/index.html?bar');
+      expect(mocks.cache.size).to.equal(0);
     });
   });
 
   describe('load()', () => {
     it('should load individual mock file', () => {
-      load('test/fixtures/mock/1234.json');
-      expect(cache.size).to.equal(1);
+      mocks.load('test/fixtures/mock/1234.json');
+      expect(mocks.cache.size).to.equal(1);
     });
     it('should load array of mock files', () => {
-      load(['test/fixtures/mock/1234.json', 'test/fixtures/mock/5678.json']);
-      expect(cache.size).to.equal(2);
+      mocks.load(['test/fixtures/mock/1234.json', 'test/fixtures/mock/5678.json']);
+      expect(mocks.cache.size).to.equal(2);
     });
     it('should load a single file referencing multiple mocks', () => {
-      load('test/fixtures/mock/multi.json');
-      expect(cache.size).to.equal(2);
+      mocks.load('test/fixtures/mock/multi.json');
+      expect(mocks.cache.size).to.equal(2);
     });
     it('should load mock files from directory path', () => {
-      load('test/fixtures/mock');
-      expect(cache.size).to.equal(6);
+      mocks.load('test/fixtures/mock');
+      expect(mocks.cache.size).to.equal(6);
     });
   });
 
   describe('match()', () => {
     beforeEach(() => {
-      load('test/fixtures/mock');
+      mocks.load('test/fixtures/mock');
     });
 
     it('should return "false" if no match', () => {
-      expect(match(getRequest('http://www.someapi.com/v1/12'), {})).to.equal(false);
+      expect(mocks.match(getRequest('http://www.someapi.com/v1/12'), {})).to.equal(false);
     });
     it('should return "false" if no match when not ignoring search', () => {
-      expect(match(getRequest('/1234.jpg?u=bob'), {})).to.equal(false);
+      expect(mocks.match(getRequest('/1234.jpg?u=bob'), {})).to.equal(false);
     });
     it('should respond to request for mock json', () => {
       const res = getResponse();
-      match(getRequest('http://www.someapi.com/v1/5678'), res);
+      mocks.match(getRequest('http://www.someapi.com/v1/5678'), res);
       expect(res.statusCode).to.equal(200);
       expect(res.body).to.equal('{"user":{"name":"Nancy","id":5678}}');
       expect(res.headers['Content-Type']).to.equal('application/json');
@@ -125,7 +127,7 @@ describe('mock', () => {
     });
     it('should respond to request for mock image', (done) => {
       const res = getResponse();
-      match(getRequest('/1234.jpg'), res);
+      mocks.match(getRequest('/1234.jpg'), res);
       setTimeout(() => {
         expect(res.headers['Content-Type']).to.equal('image/jpeg');
         done();

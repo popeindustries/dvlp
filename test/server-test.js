@@ -1,7 +1,6 @@
 'use strict';
 
 const { cleanBundles } = require('../lib/utils/bundler');
-const { cleanMocks, load } = require('../lib/utils/mock');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const { bundleDirName } = require('../lib/config');
@@ -13,7 +12,6 @@ let server;
 describe('server', () => {
   beforeEach(() => {
     cleanBundles();
-    cleanMocks();
   });
   afterEach(async () => {
     cleanBundles();
@@ -127,8 +125,11 @@ describe('server', () => {
       expect(await res.text()).to.equal('this is transpiled content for: style.css');
     });
     it('should respond to mocked requests', async () => {
-      server = await serverFactory('test/fixtures/app.js', { port: 8000, reload: false });
-      load('test/fixtures/mock/1234.json');
+      server = await serverFactory('test/fixtures/app.js', {
+        mockpath: 'test/fixtures/mock/1234.json',
+        port: 8000,
+        reload: false
+      });
       const res = await fetch('http://localhost:8000/1234.jpg');
       expect(res.status).to.eql(200);
       expect(res.headers.get('content-type')).to.equal('image/jpeg');

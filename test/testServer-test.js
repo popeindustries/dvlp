@@ -1,6 +1,5 @@
 'use strict';
 
-const { cache, cleanMocks } = require('../lib/utils/mock');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const testServer = require('../lib/testServer');
@@ -21,10 +20,7 @@ describe('testServer', () => {
     testServer.disableNetwork();
   });
   afterEach(async () => {
-    cleanMocks();
-    if (server) {
-      await server.destroy();
-    }
+    server && (await server.destroy());
   });
   after(() => {
     testServer.enableNetwork();
@@ -132,7 +128,7 @@ describe('testServer', () => {
       expect(res).to.exist;
       expect(await res.json()).to.eql({ foo: 'foo' });
       expect(res.headers.get('Content-type')).to.include('application/json');
-      expect(cache.size).to.equal(1);
+      expect(server.mocks.cache.size).to.equal(1);
     });
     it('should respond to mocked json request only once', async () => {
       server = await testServer();
@@ -141,7 +137,7 @@ describe('testServer', () => {
       expect(res).to.exist;
       expect(await res.json()).to.eql({ foo: 'foo' });
       expect(res.headers.get('Content-type')).to.include('application/json');
-      expect(cache.size).to.equal(0);
+      expect(server.mocks.cache.size).to.equal(0);
     });
     it('should respond to malformed mocked json request', async () => {
       server = await testServer();
@@ -150,7 +146,7 @@ describe('testServer', () => {
       expect(res).to.exist;
       expect(await res.json()).to.eql({ foo: 'foo' });
       expect(res.headers.get('Content-type')).to.include('application/json');
-      expect(cache.size).to.equal(0);
+      expect(server.mocks.cache.size).to.equal(0);
     });
     it('should respond to mocked html request', async () => {
       server = await testServer();
@@ -159,7 +155,7 @@ describe('testServer', () => {
       expect(res).to.exist;
       expect(await res.text()).to.eql('<p>foo</p>');
       expect(res.headers.get('Content-type')).to.include('text/html');
-      expect(cache.size).to.equal(0);
+      expect(server.mocks.cache.size).to.equal(0);
     });
     it('should respond to malformed mocked html request', async () => {
       server = await testServer();
@@ -168,7 +164,7 @@ describe('testServer', () => {
       expect(res).to.exist;
       expect(await res.text()).to.eql('<p>foo</p>');
       expect(res.headers.get('Content-type')).to.include('text/html');
-      expect(cache.size).to.equal(0);
+      expect(server.mocks.cache.size).to.equal(0);
     });
   });
 
