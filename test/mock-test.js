@@ -11,14 +11,19 @@ function getRequest(url, headers = { accept: '*/*' }) {
     httpVersionMajor: 1,
     httpVersionMinor: 1,
     method: 'GET',
-    url
+    url,
+    socket: {
+      destroy() {
+        this.destroyed = true;
+      }
+    }
   };
 }
 
 function getResponse() {
   return {
     headers: {},
-    body: '',
+    body: null,
     end(body) {
       this.body = body;
     },
@@ -132,6 +137,38 @@ describe('mock', () => {
         expect(res.headers['Content-Type']).to.equal('image/jpeg');
         done();
       }, 50);
+    });
+    it('should hang when "response.hang"', (done) => {
+      const res = getResponse();
+      mocks.add('/index.json', { body: {}, hang: true });
+      mocks.match(getRequest('/index.json'), res);
+      setTimeout(() => {
+        expect(res.statusCode).to.equal(undefined);
+        expect(res.body).to.equal(null);
+        done();
+      }, 200);
+    });
+    it('should return 500 when "response.error"', () => {
+      const res = getResponse();
+      mocks.add('/index.json', { body: {}, error: true });
+      mocks.match(getRequest('/index.json'), res);
+      expect(res.statusCode).to.equal(500);
+      expect(res.body).to.equal('error');
+    });
+    it('should return 404 when "response.missing"', () => {
+      const res = getResponse();
+      mocks.add('/index.json', { body: {}, missing: true });
+      mocks.match(getRequest('/index.json'), res);
+      expect(res.statusCode).to.equal(404);
+      expect(res.body).to.equal('missing');
+    });
+    it('should destroy socket when "response.offline"', () => {
+      const req = getRequest('/index.json');
+      const res = getResponse();
+      mocks.add('/index.json', { body: {}, offline: true });
+      mocks.match(req, res);
+      expect(res.statusCode).to.equal(undefined);
+      expect(req.socket).to.have.property('destroyed', true);
     });
   });
 });
