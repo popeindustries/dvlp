@@ -62,6 +62,12 @@ describe('testServer', () => {
     expect(res).to.exist;
     expect(await res.text()).to.contain('hello');
   });
+  it('should not respond to requests for fake resources when "autorespond=false"', async () => {
+    server = await testServer({ autorespond: false });
+    const res = await fetch('http://localhost:8080/foo.js');
+    expect(res).to.exist;
+    expect(res.status).to.equal(404);
+  });
   it('should respond with 500 when "?error"', async () => {
     server = await testServer();
     const res = await fetch('http://localhost:8080/foo.js?error');

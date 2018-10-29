@@ -288,6 +288,7 @@ Create a server for handling network requests during testing.
 
 `options` include:
 
+- **`autorespond: boolean`** enable/disable automatic dummy responses. If unable to resolve a request to a local file, the server will respond with a dummy file of the appropriate type (default `true`)
 - **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `3333`)
 - **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
 - **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
@@ -344,7 +345,7 @@ console.log(await res.json()); // => { id: "1234", name: "bob" }
 
 - **`destroy(): Promise<void>`** stop and clean up running server
 
-If unable to resolve a request to a local file, `testServer` will respond with a dummy file of the appropriate type. This makes it easy to test ServiceWorker pre-caching, for example, without having to correctly resolve paths or create mocks. In addition, `testServer` supports the following special query parameters:
+In addition, `testServer` supports the following special query parameters:
 
 - **`offline`** simulate an offline state by terminating the request (`fetch('http://localhost:3333/foo.js?offline')`)
 - **`error`** return a 500 server error response (`fetch('http://localhost:3333/foo.js?error')`)
