@@ -107,7 +107,7 @@ describe('mock', () => {
     });
     it('should load mock files from directory path', () => {
       mocks.load('test/fixtures/mock');
-      expect(mocks.cache.size).to.equal(6);
+      expect(mocks.cache.size).to.equal(7);
     });
   });
 

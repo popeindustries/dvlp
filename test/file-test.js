@@ -20,7 +20,9 @@ describe('file', () => {
         'test/fixtures/mock/1234.json',
         'test/fixtures/mock/5678.json',
         'test/fixtures/mock/9012.json',
-        'test/fixtures/mock/multi.json'
+        'test/fixtures/mock/json.json',
+        'test/fixtures/mock/multi.json',
+        'test/fixtures/mock/test.json'
       ]);
     });
     it('should return array for filepath with " " separator', () => {
@@ -68,7 +70,9 @@ describe('file', () => {
         'test/fixtures/mock/1234.json',
         'test/fixtures/mock/5678.json',
         'test/fixtures/mock/9012.json',
-        'test/fixtures/mock/multi.json'
+        'test/fixtures/mock/json.json',
+        'test/fixtures/mock/multi.json',
+        'test/fixtures/mock/test.json'
       ]);
     });
   });

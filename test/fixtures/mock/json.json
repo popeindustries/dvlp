@@ -1,0 +1,8 @@
+{
+  "request": {
+    "url": "/json"
+  },
+  "response": {
+    "body": "./test.json"
+  }
+}
