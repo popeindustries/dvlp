@@ -71,6 +71,18 @@ describe('appServer', () => {
     expect(body).to.contain('function baseSlice');
     expect(body).to.contain('export default array;');
   });
+  it('should serve a node_modules module js file', async () => {
+    server = await appServer('app.js', { port: 8000 });
+    const res = await fetch(
+      `http://localhost:8000/node_modules/lit-html/lit-html.js`,
+      {
+        headers: { referer: 'index.js' }
+      }
+    );
+    expect(res.status).to.eql(200);
+    const body = await res.text();
+    expect(body).to.contain("export * from './lib/render.js';");
+  });
   it('should pass requests through to app', async () => {
     server = await appServer('app.js', { port: 8000 });
     const res = await fetch(`http://localhost:8000/script.js`);

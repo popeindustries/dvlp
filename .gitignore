@@ -2,3 +2,4 @@
 node_modules
 .DS_Store
 .dvlp
+!test/fixtures/node_modules

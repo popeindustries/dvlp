@@ -139,6 +139,15 @@ describe('patch', () => {
         `import lodashArr from "/${bundleDirName}/lodash__array-4.17.11.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDirName}/debug-4.1.0.js";`
       );
     });
+    it('should resolve bare js import id for es module', () => {
+      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req, res);
+      res.end('import { html } from "lit-html";');
+      expect(getBody(res)).to.equal(
+        `import { html } from "./test/fixtures/node_modules/lit-html/lit-html.js";`
+      );
+    });
     it('should resolve NODE_PATH js import id', () => {
       setNodePath('test/fixtures/www');
       const req = getRequest('index.js', { accept: 'application/javascript' });
@@ -146,7 +155,7 @@ describe('patch', () => {
       patchResponse(req, res);
       res.end('import module from "nested/index.js";');
       expect(getBody(res)).to.equal(
-        `import module from "/test/fixtures/www/nested/index.js";`
+        `import module from "./test/fixtures/www/nested/index.js";`
       );
       setNodePath(NODE_PATH);
     });
@@ -157,7 +166,7 @@ describe('patch', () => {
       patchResponse(req, res);
       res.end('import module from "nested/foo";');
       expect(getBody(res)).to.equal(
-        `import module from "/test/fixtures/www/nested/foo.jsx";`
+        `import module from "./test/fixtures/www/nested/foo.jsx";`
       );
       setNodePath(NODE_PATH);
     });
