@@ -76,6 +76,18 @@ describe('staticServer', () => {
       'application/javascript'
     );
   });
+  it('should serve a node_modules module js file with correct mime type', async () => {
+    server = await staticServer('www', { port: 8000 });
+    const res = await fetch(
+      `http://localhost:8000/node_modules/lit-html/lit-html.js`
+    );
+    expect(res.status).to.eql(200);
+    expect(res.headers.get('Content-type')).to.include(
+      'application/javascript'
+    );
+    const body = await res.text();
+    expect(body).to.contain("export * from './lib/render.js';");
+  });
   it('should serve a font file with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });
     const res = await fetch('http://localhost:8080/font.woff');
