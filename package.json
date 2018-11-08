@@ -11,6 +11,7 @@
     "dvlp": "./bin/dvlp"
   },
   "dependencies": {
+    "esm": "^3.0.84",
     "fswatcher-child": "^1.1.1",
     "worker-farm": "^1.6.0"
   },

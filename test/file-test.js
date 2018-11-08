@@ -151,14 +151,14 @@ describe('file', () => {
   });
 
   describe('importModule()', () => {
-    it.skip('should return an es module', async () => {
-      const module = await importModule(
+    it.skip('should return an es module', () => {
+      const module = importModule(
         path.resolve(__dirname, 'fixtures/config.esm.js')
       );
       expect(module).to.have.property('dep', 'HI!');
     });
-    it('should return a cjs module', async () => {
-      const module = await importModule(
+    it('should return a cjs module', () => {
+      const module = importModule(
         path.resolve(__dirname, 'fixtures/config.js')
       );
       expect(module).to.have.property('dep', 'HI!');
