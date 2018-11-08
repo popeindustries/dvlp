@@ -145,7 +145,7 @@ describe('patch', () => {
       patchResponse(req, res);
       res.end('import { html } from "lit-html";');
       expect(getBody(res)).to.equal(
-        `import { html } from "./test/fixtures/node_modules/lit-html/lit-html.js";`
+        `import { html } from "/test/fixtures/node_modules/lit-html/lit-html.js";`
       );
     });
     it('should resolve NODE_PATH js import id', () => {
@@ -155,7 +155,7 @@ describe('patch', () => {
       patchResponse(req, res);
       res.end('import module from "nested/index.js";');
       expect(getBody(res)).to.equal(
-        `import module from "./test/fixtures/www/nested/index.js";`
+        `import module from "/test/fixtures/www/nested/index.js";`
       );
       setNodePath(NODE_PATH);
     });
@@ -166,7 +166,7 @@ describe('patch', () => {
       patchResponse(req, res);
       res.end('import module from "nested/foo";');
       expect(getBody(res)).to.equal(
-        `import module from "./test/fixtures/www/nested/foo.jsx";`
+        `import module from "/test/fixtures/www/nested/foo.jsx";`
       );
       setNodePath(NODE_PATH);
     });
