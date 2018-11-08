@@ -119,6 +119,22 @@ describe('patch', () => {
         "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src http://localhost:3529/dvlpreload; "
       );
     });
+    it('should disable cache-control headers for local files', () => {
+      const req = getRequest('/index.html', { accept: 'text/html' });
+      const res = new ServerResponse(req);
+      patchResponse(req, res);
+      res.setHeader('Cache-Control', 'max-age=600');
+      expect(res.getHeader('Cache-Control')).to.equal(
+        'no-cache, dvlp-disabled'
+      );
+    });
+    it('should not disable cache-control headers for node_modules files', () => {
+      const req = getRequest('/node_modules/foo');
+      const res = new ServerResponse(req);
+      patchResponse(req, res);
+      res.setHeader('Cache-Control', 'max-age=600');
+      expect(res.getHeader('Cache-Control')).to.equal('max-age=600');
+    });
     it('should resolve bare js import id', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
