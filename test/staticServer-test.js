@@ -30,7 +30,9 @@ describe('staticServer', () => {
   });
   it('should rewrite request for missing html files to index.html ', async () => {
     server = await staticServer('www', { port: 8080 });
-    const res = await fetch('http://localhost:8080/0', { headers: { accept: 'text/html' } });
+    const res = await fetch('http://localhost:8080/0', {
+      headers: { accept: 'text/html' }
+    });
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('<!doctype html>');
   });
@@ -44,25 +46,35 @@ describe('staticServer', () => {
     server = await staticServer('www', { port: 8080 });
     const res = await fetch('http://localhost:8080/script.js');
     expect(res.status).to.eql(200);
-    expect(res.headers.get('Content-type')).to.include('application/javascript');
+    expect(res.headers.get('Content-type')).to.include(
+      'application/javascript'
+    );
   });
   it('should serve a js file with missing extension with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });
     const res = await fetch('http://localhost:8080/script');
     expect(res.status).to.eql(200);
-    expect(res.headers.get('Content-type')).to.include('application/javascript');
+    expect(res.headers.get('Content-type')).to.include(
+      'application/javascript'
+    );
   });
   it('should serve a js package file with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });
     const res = await fetch('http://localhost:8080/nested');
     expect(res.status).to.eql(200);
-    expect(res.headers.get('Content-type')).to.include('application/javascript');
+    expect(res.headers.get('Content-type')).to.include(
+      'application/javascript'
+    );
   });
   it('should serve a bundled module js file with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });
-    const res = await fetch(`http://localhost:8080/${bundleDirName}/lodash__array-4.17.10.js`);
+    const res = await fetch(
+      `http://localhost:8080/${bundleDirName}/lodash__array-4.17.10.js`
+    );
     expect(res.status).to.eql(200);
-    expect(res.headers.get('Content-type')).to.include('application/javascript');
+    expect(res.headers.get('Content-type')).to.include(
+      'application/javascript'
+    );
   });
   it('should serve a font file with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });

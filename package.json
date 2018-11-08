@@ -43,13 +43,14 @@
     "lodash-es": "^4.17.11",
     "mocha": "^5.2.0",
     "node-fetch": "^2.2.1",
-    "prettier": "^1.14.3",
+    "prettier": "^1.15.1",
     "terser": "^3.10.11"
   },
   "engines": {
     "node": ">=8"
   },
   "scripts": {
+    "format": "prettier --write './{lib,test}/**/*.{js,json}'",
     "lint": "eslint './{lib,test}/**/*.js'",
     "minify": "terser lib/utils/reloadClient.js -o lib/utils/reloadClient.min.js",
     "prepublish": "npm run minify",

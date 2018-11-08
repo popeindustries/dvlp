@@ -69,10 +69,20 @@ describe('mock', () => {
       expect(mock.default.response.body).to.eql({ data: 'foo' });
     });
     it('should handle search', () => {
-      mocks.add({ url: '/index.html?foo', ignoreSearch: true }, { body: '<body>hi</body>' });
-      mocks.add({ url: '/foo.html?foo', ignoreSearch: false }, { body: '<body>hi</body>' });
-      expect(mocks.cache.get('localhost:8080/index.html')).to.have.property('default');
-      expect(mocks.cache.get('localhost:8080/foo.html')).to.have.property('?foo');
+      mocks.add(
+        { url: '/index.html?foo', ignoreSearch: true },
+        { body: '<body>hi</body>' }
+      );
+      mocks.add(
+        { url: '/foo.html?foo', ignoreSearch: false },
+        { body: '<body>hi</body>' }
+      );
+      expect(mocks.cache.get('localhost:8080/index.html')).to.have.property(
+        'default'
+      );
+      expect(mocks.cache.get('localhost:8080/foo.html')).to.have.property(
+        '?foo'
+      );
     });
   });
 
@@ -98,7 +108,10 @@ describe('mock', () => {
       expect(mocks.cache.size).to.equal(1);
     });
     it('should load array of mock files', () => {
-      mocks.load(['test/fixtures/mock/1234.json', 'test/fixtures/mock/5678.json']);
+      mocks.load([
+        'test/fixtures/mock/1234.json',
+        'test/fixtures/mock/5678.json'
+      ]);
       expect(mocks.cache.size).to.equal(2);
     });
     it('should load a single file referencing multiple mocks', () => {
@@ -117,7 +130,9 @@ describe('mock', () => {
     });
 
     it('should return "false" if no match', () => {
-      expect(mocks.match(getRequest('http://www.someapi.com/v1/12'), {})).to.equal(false);
+      expect(
+        mocks.match(getRequest('http://www.someapi.com/v1/12'), {})
+      ).to.equal(false);
     });
     it('should return "false" if no match when not ignoring search', () => {
       expect(mocks.match(getRequest('/1234.jpg?u=bob'), {})).to.equal(false);

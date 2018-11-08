@@ -1,6 +1,11 @@
 'use strict';
 
-const { cleanBundles, destroyWorkers, bundle, resolveModuleId } = require('../lib/utils/bundler');
+const {
+  cleanBundles,
+  destroyWorkers,
+  bundle,
+  resolveModuleId
+} = require('../lib/utils/bundler');
 const { expect } = require('chai');
 const fs = require('fs');
 const { bundleDir } = require('../lib/config');

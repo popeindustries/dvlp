@@ -10,7 +10,9 @@ const { ServerResponse } = require('http');
 const NODE_PATH = process.env.NODE_PATH;
 
 function getBody(res) {
-  const output = res.output.filter((chunk) => typeof chunk === 'string').join('');
+  const output = res.output
+    .filter((chunk) => typeof chunk === 'string')
+    .join('');
   return output.replace(res._header, '');
 }
 function getRequest(url, headers = { accept: '*/*' }) {
@@ -56,7 +58,10 @@ describe('patch', () => {
         scriptString: 'test inject',
         scriptUrl: 'http://localhost:3529/dvlpreload'
       });
-      res.setHeader('Content-Security-Policy', "default-src 'self'; connect-src 'self'");
+      res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; connect-src 'self'"
+      );
       expect(res.getHeader('Content-Security-Policy')).to.equal(
         "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; script-src 'sha256-luLMma8jH4Jlp1fvgogNlmlmmvHzbKn900p4cSmKTjo='; "
       );
@@ -80,7 +85,9 @@ describe('patch', () => {
         scriptString: 'test inject',
         scriptUrl: 'http://localhost:3529/dvlpreload'
       });
-      res.writeHead(200, { 'Content-Security-Policy': "default-src 'self'; connect-src 'self'" });
+      res.writeHead(200, {
+        'Content-Security-Policy': "default-src 'self'; connect-src 'self'"
+      });
       expect(res._header).to.contain(
         "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; script-src 'sha256-luLMma8jH4Jlp1fvgogNlmlmmvHzbKn900p4cSmKTjo='; "
       );
@@ -117,7 +124,9 @@ describe('patch', () => {
       const res = new ServerResponse(req);
       patchResponse(req, res);
       res.end('import lodash from "lodash";');
-      expect(getBody(res)).to.equal(`import lodash from "/${bundleDirName}/lodash-4.17.11.js";`);
+      expect(getBody(res)).to.equal(
+        `import lodash from "/${bundleDirName}/lodash-4.17.11.js";`
+      );
     });
     it('should resolve multiple bare js import ids', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
@@ -136,7 +145,9 @@ describe('patch', () => {
       const res = new ServerResponse(req);
       patchResponse(req, res);
       res.end('import module from "nested/index.js";');
-      expect(getBody(res)).to.equal(`import module from "/test/fixtures/www/nested/index.js";`);
+      expect(getBody(res)).to.equal(
+        `import module from "/test/fixtures/www/nested/index.js";`
+      );
       setNodePath(NODE_PATH);
     });
     it('should resolve NODE_PATH js import id missing extension', () => {
@@ -145,7 +156,9 @@ describe('patch', () => {
       const res = new ServerResponse(req);
       patchResponse(req, res);
       res.end('import module from "nested/foo";');
-      expect(getBody(res)).to.equal(`import module from "/test/fixtures/www/nested/foo.jsx";`);
+      expect(getBody(res)).to.equal(
+        `import module from "/test/fixtures/www/nested/foo.jsx";`
+      );
       setNodePath(NODE_PATH);
     });
     it('should resolve js import id missing extension', () => {
@@ -153,14 +166,18 @@ describe('patch', () => {
       const res = new ServerResponse(req);
       patchResponse(req, res);
       res.end('import module from "./test/fixtures/www/module";');
-      expect(getBody(res)).to.equal(`import module from "./test/fixtures/www/module.js";`);
+      expect(getBody(res)).to.equal(
+        `import module from "./test/fixtures/www/module.js";`
+      );
     });
     it('should resolve js import id missing package index', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req, res);
       res.end('import module from "./test/fixtures/www/nested";');
-      expect(getBody(res)).to.equal(`import module from "./test/fixtures/www/nested/index.js";`);
+      expect(getBody(res)).to.equal(
+        `import module from "./test/fixtures/www/nested/index.js";`
+      );
     });
     it('should ignore erroneous "import" string', () => {
       const req = getRequest('index.js', { accept: 'application/javascript' });

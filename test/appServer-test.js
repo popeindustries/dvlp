@@ -11,7 +11,10 @@ const path = require('path');
 let server;
 
 function changeBodyContent(content) {
-  fs.writeFileSync(path.resolve('./body.js'), `module.exports = '${content}';\n`);
+  fs.writeFileSync(
+    path.resolve('./body.js'),
+    `module.exports = '${content}';\n`
+  );
 }
 
 describe('appServer', () => {
@@ -57,9 +60,12 @@ describe('appServer', () => {
   });
   it('should serve a bundled module js file', async () => {
     server = await appServer('app.js', { port: 8000 });
-    const res = await fetch(`http://localhost:8000/${bundleDirName}/lodash__array-4.17.10.js`, {
-      headers: { referer: 'index.js' }
-    });
+    const res = await fetch(
+      `http://localhost:8000/${bundleDirName}/lodash__array-4.17.10.js`,
+      {
+        headers: { referer: 'index.js' }
+      }
+    );
     expect(res.status).to.eql(200);
     const body = await res.text();
     expect(body).to.contain('function baseSlice');
