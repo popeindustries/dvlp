@@ -1,8 +1,8 @@
 #!/usr/bin/env node
+
 process.env.NODE_NO_WARNINGS = '1';
 process.env.DVLP_LAUNCHER = 'cmd';
 
-const { expandPath } = require('../lib/utils/file.js');
 const pkg = require('../package.json');
 const program = require('commander');
 const { server } = require('../dvlp.js');
@@ -37,11 +37,9 @@ if (!program.args.length) {
 }
 
 async function boot(path) {
-  path = expandPath(path);
-
   try {
-    await server(path.length > 1 ? path : path[0], {
-      mockpath: expandPath(program.mock),
+    await server(path, {
+      mockpath: program.mock,
       port: program.port,
       reload: program.reload,
       rollupConfig: program.rollupConfig,

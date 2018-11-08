@@ -11,6 +11,7 @@
     "dvlp": "./bin/dvlp"
   },
   "dependencies": {
+    "commander": "^2.19.0",
     "esm": "^3.0.84",
     "fswatcher-child": "^1.1.1",
     "worker-farm": "^1.6.0"
@@ -20,7 +21,6 @@
     "chai": "^4.2.0",
     "chalk": "^2.4.1",
     "chokidar": "^2.0.4",
-    "commander": "^2.19.0",
     "debug": "^4.1.0",
     "eslint": "^5.8.0",
     "eslint-config-prettier": "^3.1.0",
