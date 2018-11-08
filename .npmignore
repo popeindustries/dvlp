@@ -1,3 +1,5 @@
 test
 .*
-lib/utils/reloadClient.js
+lib
+rollup.config.js
+package-lock.json

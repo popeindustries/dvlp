@@ -11,14 +11,32 @@
     "dvlp": "./bin/dvlp"
   },
   "dependencies": {
+    "fswatcher-child": "^1.1.1",
+    "worker-farm": "^1.6.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.1",
+    "chai": "^4.2.0",
     "chalk": "^2.4.1",
     "chokidar": "^2.0.4",
     "commander": "^2.19.0",
     "debug": "^4.1.0",
-    "fswatcher-child": "^1.1.1",
+    "eslint": "^5.8.0",
+    "eslint-config-prettier": "^3.1.0",
+    "eslint-plugin-prettier": "^3.0.0",
     "glob": "^7.1.3",
+    "husky": "^1.1.3",
     "is-module": "^1.0.0",
+    "koa": "^2.6.1",
+    "koa-send": "^5.0.0",
+    "lint-staged": "^8.0.4",
+    "lit-html": "^0.12.0",
+    "lodash": "^4.17.11",
+    "lodash-es": "^4.17.11",
     "mime": "^2.3.1",
+    "mocha": "^5.2.0",
+    "node-fetch": "^2.2.1",
+    "prettier": "^1.15.1",
     "read-pkg-up": "^4.0.0",
     "resolve": "^1.8.1",
     "resolve-from": "^4.0.0",
@@ -29,35 +47,22 @@
     "rollup-plugin-node-resolve": "^3.4.0",
     "send": "^0.16.2",
     "server-destroy": "^1.0.1",
-    "worker-farm": "^1.6.0"
-  },
-  "devDependencies": {
-    "babel-eslint": "^10.0.1",
-    "chai": "^4.2.0",
-    "eslint": "^5.8.0",
-    "eslint-config-prettier": "^3.1.0",
-    "eslint-plugin-prettier": "^3.0.0",
-    "husky": "^1.1.3",
-    "koa": "^2.6.1",
-    "koa-send": "^5.0.0",
-    "lint-staged": "^8.0.4",
-    "lit-html": "^0.12.0",
-    "lodash": "^4.17.11",
-    "lodash-es": "^4.17.11",
-    "mocha": "^5.2.0",
-    "node-fetch": "^2.2.1",
-    "prettier": "^1.15.1",
     "terser": "^3.10.11"
   },
   "engines": {
     "node": ">=8"
   },
   "scripts": {
+    "build": "rollup --config rollup.config.js",
+    "copy": "cp -f lib/utils/bundlerWorker.js . && cp -f lib/reloadClient.min.js .",
+    "delete": "rm -f bundlerWorker.js dvlp.js reloadClient.min.js",
     "format": "prettier --write './{lib,test}/**/*.{js,json}'",
     "lint": "eslint './{lib,test}/**/*.js'",
-    "minify": "terser lib/utils/reloadClient.js -o lib/utils/reloadClient.min.js",
-    "prepublish": "npm run minify",
+    "minify": "terser lib/utils/reloadClient.js -o lib/reloadClient.min.js",
+    "prepare": "npm run minify",
+    "prepublishOnly": "npm run minify && npm run build && npm run copy",
     "precommit": "lint-staged",
+    "postpublish": "npm run delete",
     "test": "NODE_ENV=test mocha test --reporter spec --bail --timeout 10000 --require lib/config.js"
   }
 }

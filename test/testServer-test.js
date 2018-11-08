@@ -32,7 +32,7 @@ describe('testServer', () => {
   });
   it('should respond to requests for resources using default "webroot"', async () => {
     server = await testServer();
-    const res = await fetch('http://localhost:8080/index.js');
+    const res = await fetch('http://localhost:8080/lib/index.js');
     expect(res).to.exist;
     expect(await res.text()).to.contain('testServer');
   });
@@ -120,7 +120,7 @@ describe('testServer', () => {
   it('should reroute external request when network disabled and rerouting enabled', async () => {
     testServer.disableNetwork(true);
     server = await testServer();
-    const res = await fetch('http://www.google.com/index.js');
+    const res = await fetch('http://www.google.com/lib/index.js');
     expect(res).to.exist;
     expect(await res.text()).to.contain('testServer');
     testServer.disableNetwork(false);

@@ -37,7 +37,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('sse=new EventSource');
     });
-    it('should start a file server with custom Rollup config', async () => {
+    it.skip('should start a file server with custom Rollup config', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8080,
         reload: false,
@@ -129,7 +129,7 @@ describe('server', () => {
       });
       expect(res.status).to.eql(500);
     });
-    it('should start a server with custom Rollup config', async () => {
+    it.skip('should start a server with custom Rollup config', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
         reload: false,
