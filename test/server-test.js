@@ -119,7 +119,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('sse=new EventSource');
     });
-    it('should start a with initial error', async () => {
+    it('should start with initial error', async () => {
       server = await serverFactory('test/fixtures/appError.js', {
         port: 8000,
         reload: false
