@@ -238,7 +238,7 @@ In the rare case you need to configure Rollup.js to work with the packages you'r
     format: 'es',
     sourcemap: false
   },
-  external: (id) => isBareImport(id),
+  external: (id) => /^[^./]/.test(id),
   plugins: [
     resolve({
       browser: true
