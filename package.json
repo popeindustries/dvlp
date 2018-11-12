@@ -1,8 +1,8 @@
 {
   "name": "dvlp",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
-  "main": "index.js",
+  "main": "dvlp.js",
   "repository": "https://github.com/popeindustries/dvlp.git",
   "author": "Alexander Pope <alex@pope-industries.com>",
   "license": "MIT",
