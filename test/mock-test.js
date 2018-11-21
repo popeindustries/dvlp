@@ -84,6 +84,12 @@ describe('mock', () => {
         '?foo'
       );
     });
+    it('should handle 127.0.0.1 as localhost', () => {
+      mocks.add('http://127.0.0.1:8080/foo', { body: { data: 'bar' } });
+      const mock = mocks.cache.get('localhost:8080/foo');
+      expect(mock).to.have.property('default');
+      expect(mock.default).to.have.property('type', 'json');
+    });
   });
 
   describe('remove()', () => {
@@ -148,6 +154,14 @@ describe('mock', () => {
     it('should respond to request for mock image', (done) => {
       const res = getResponse();
       mocks.match(getRequest('/1234.jpg'), res);
+      setTimeout(() => {
+        expect(res.headers['Content-Type']).to.equal('image/jpeg');
+        done();
+      }, 50);
+    });
+    it('should respond to loopback request', (done) => {
+      const res = getResponse();
+      mocks.match(getRequest('http://127.0.0.1:8080/1234.jpg'), res);
       setTimeout(() => {
         expect(res.headers['Content-Type']).to.equal('image/jpeg');
         done();
