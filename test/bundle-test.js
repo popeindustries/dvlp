@@ -11,7 +11,7 @@ const fs = require('fs');
 const { bundleDir } = require('../lib/config');
 const path = require('path');
 
-const DEBUG = 'debug-4.1.0.js';
+const DEBUG = 'debug-4.1.1.js';
 const LODASH = 'lodash-4.17.11.js';
 
 describe('bundle()', () => {

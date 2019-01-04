@@ -152,7 +152,7 @@ describe('patch', () => {
         'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";'
       );
       expect(getBody(res)).to.equal(
-        `import lodashArr from "/${bundleDirName}/lodash__array-4.17.11.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDirName}/debug-4.1.0.js";`
+        `import lodashArr from "/${bundleDirName}/lodash__array-4.17.11.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDirName}/debug-4.1.1.js";`
       );
     });
     it('should resolve bare js import id for es module', () => {
