@@ -35,11 +35,7 @@ program
 
 program.parse(process.argv);
 
-if (!program.args.length) {
-  boot([process.cwd()]);
-}
-
-async function boot(path) {
+async function boot(path = [process.cwd()]) {
   try {
     await server(path, {
       mockpath: program.mock,
