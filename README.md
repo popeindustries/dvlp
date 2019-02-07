@@ -28,7 +28,7 @@ In addition, when working with JS modules, **dvlp** will ensure that so-called _
 
 ### Bonus!
 
-**dvlp** also includes a simple [`testServer`](##testserveroptions-promisetestserver) for handling various network request scenarios (mocking, latency, errors, offline, etc.) during testing.
+**dvlp** also includes a simple [`testServer`](#testserveroptions-promisetestserver) for handling various network request scenarios (mocking, latency, errors, offline, etc.) during testing.
 
 ## Installation
 
