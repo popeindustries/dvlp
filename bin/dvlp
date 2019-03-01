@@ -1,4 +1,4 @@
-#!/usr/bin/env node --expose_gc
+#!/usr/bin/env node
 
 process.env.NODE_NO_WARNINGS = '1';
 
