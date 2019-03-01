@@ -10,8 +10,12 @@ const { ServerResponse } = require('http');
 const NODE_PATH = process.env.NODE_PATH;
 
 function getBody(res) {
-  const output = res.output
-    .filter((chunk) => typeof chunk === 'string')
+  const output = (res.output || res.outputData)
+    .filter(
+      (chunk) =>
+        typeof chunk === 'string' || (chunk.data && chunk.data.length > 0)
+    )
+    .map((chunk) => chunk.data || chunk)
     .join('');
   return output.replace(res._header, '');
 }
