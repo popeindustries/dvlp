@@ -61,10 +61,7 @@ describe('appServer', () => {
   it('should serve a bundled module js file', async () => {
     server = await appServer('app.js', { port: 8000 });
     const res = await fetch(
-      `http://localhost:8000/${bundleDirName}/lodash__array-4.17.10.js`,
-      {
-        headers: { referer: 'index.js' }
-      }
+      `http://localhost:8000/${bundleDirName}/lodash__array-4.17.10.js`
     );
     expect(res.status).to.eql(200);
     const body = await res.text();
@@ -74,10 +71,7 @@ describe('appServer', () => {
   it('should serve a node_modules module js file', async () => {
     server = await appServer('app.js', { port: 8000 });
     const res = await fetch(
-      `http://localhost:8000/node_modules/lit-html/lit-html.js`,
-      {
-        headers: { referer: 'index.js' }
-      }
+      `http://localhost:8000/node_modules/lit-html/lit-html.js`
     );
     expect(res.status).to.eql(200);
     const body = await res.text();
