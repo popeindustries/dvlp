@@ -78,15 +78,13 @@ describe('staticServer', () => {
   });
   it('should serve a node_modules module js file with correct mime type', async () => {
     server = await staticServer('www', { port: 8000 });
-    const res = await fetch(
-      `http://localhost:8000/node_modules/lit-html/lit-html.js`
-    );
+    const res = await fetch(`http://localhost:8000/node_modules/foo/foo.js`);
     expect(res.status).to.eql(200);
     expect(res.headers.get('Content-type')).to.include(
       'application/javascript'
     );
     const body = await res.text();
-    expect(body).to.contain("export * from './lib/render.js';");
+    expect(body).to.contain("console.log('this is foo');");
   });
   it('should serve a font file with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });

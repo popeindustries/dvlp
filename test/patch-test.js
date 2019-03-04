@@ -165,7 +165,7 @@ describe('patch', () => {
       patchResponse(req, res);
       res.end('import { html } from "lit-html";');
       expect(getBody(res)).to.equal(
-        `import { html } from "/test/fixtures/node_modules/lit-html/lit-html.js";`
+        `import { html } from "/node_modules/lit-html/lit-html.js";`
       );
     });
     it('should resolve NODE_PATH js import id', () => {
