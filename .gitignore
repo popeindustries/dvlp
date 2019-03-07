@@ -5,4 +5,4 @@ node_modules
 !test/fixtures/node_modules
 /bundlerWorker.js
 /dvlp.js
-/lib/reload-client.min.js
+/reload-client.min.js
