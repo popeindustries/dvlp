@@ -6,16 +6,16 @@ const path = require('path');
 
 describe('file', () => {
   describe('expandPath()', () => {
-    it('should return undefined for missing/empty filepath', () => {
+    it('should return undefined for missing/empty filePath', () => {
       expect(expandPath()).to.eql(undefined);
       expect(expandPath(undefined)).to.eql(undefined);
       expect(expandPath(null)).to.eql(undefined);
       expect(expandPath('')).to.eql(undefined);
     });
-    it('should return array for single filepath', () => {
+    it('should return array for single filePath', () => {
       expect(expandPath('test/fixtures')).to.eql(['test/fixtures']);
     });
-    it('should return array for glob filepath', () => {
+    it('should return array for glob filePath', () => {
       expect(expandPath('test/fixtures/mock/*.json')).to.eql([
         'test/fixtures/mock/1234.json',
         'test/fixtures/mock/5678.json',
@@ -25,7 +25,7 @@ describe('file', () => {
         'test/fixtures/mock/test.json'
       ]);
     });
-    it('should return array for filepath with " " separator', () => {
+    it('should return array for filePath with " " separator', () => {
       expect(
         expandPath('test/fixtures/mock/1234.json test/fixtures/mock/5678.json')
       ).to.eql([
@@ -33,7 +33,7 @@ describe('file', () => {
         'test/fixtures/mock/5678.json'
       ]);
     });
-    it('should return array for filepath with "," separator', () => {
+    it('should return array for filePath with "," separator', () => {
       expect(
         expandPath('test/fixtures/mock/1234.json,test/fixtures/mock/5678.json')
       ).to.eql([
@@ -41,7 +41,7 @@ describe('file', () => {
         'test/fixtures/mock/5678.json'
       ]);
     });
-    it('should return array for filepath with ", " separator', () => {
+    it('should return array for filePath with ", " separator', () => {
       expect(
         expandPath('test/fixtures/mock/1234.json, test/fixtures/mock/5678.json')
       ).to.eql([
@@ -49,7 +49,7 @@ describe('file', () => {
         'test/fixtures/mock/5678.json'
       ]);
     });
-    it('should return array for filepath with ":" separator', () => {
+    it('should return array for filePath with ":" separator', () => {
       expect(
         expandPath('test/fixtures/mock/1234.json:test/fixtures/mock/5678.json')
       ).to.eql([
@@ -57,7 +57,7 @@ describe('file', () => {
         'test/fixtures/mock/5678.json'
       ]);
     });
-    it('should return array for filepath with ";" separator', () => {
+    it('should return array for filePath with ";" separator', () => {
       expect(
         expandPath('test/fixtures/mock/1234.json;test/fixtures/mock/5678.json')
       ).to.eql([
@@ -65,16 +65,16 @@ describe('file', () => {
         'test/fixtures/mock/5678.json'
       ]);
     });
-    it('should return empty array for missing/empty filepaths', () => {
+    it('should return empty array for missing/empty filePaths', () => {
       expect(expandPath([undefined, null, ''])).to.eql([]);
     });
-    it('should return array for array of single filepaths', () => {
+    it('should return array for array of single filePaths', () => {
       expect(expandPath(['test/fixtures', 'test/fixtures/www'])).to.eql([
         'test/fixtures',
         'test/fixtures/www'
       ]);
     });
-    it('should return array for array of glob filepaths', () => {
+    it('should return array for array of glob filePaths', () => {
       expect(expandPath(['test/fixtures', 'test/fixtures/mock/*.json'])).to.eql(
         [
           'test/fixtures',

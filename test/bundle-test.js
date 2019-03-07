@@ -25,28 +25,28 @@ describe('bundle()', () => {
   it('should return "null" if no module bundle found', () => {
     expect(bundle(resolveModuleId('foofoo'))).to.equal(null);
   });
-  it('should bundle and return bundle filepath', async () => {
-    const filepath = await bundle(resolveModuleId('lodash'));
-    expect(filepath).to.equal(path.join(bundleDir, LODASH));
+  it('should bundle and return bundle filePath', async () => {
+    const filePath = await bundle(resolveModuleId('lodash'));
+    expect(filePath).to.equal(path.join(bundleDir, LODASH));
   });
-  it('should return cached bundle filepath', async () => {
+  it('should return cached bundle filePath', async () => {
     await bundle(resolveModuleId('lodash'));
-    const filepath = await bundle(resolveModuleId('lodash'));
-    expect(filepath).to.equal(path.join(bundleDir, LODASH));
+    const filePath = await bundle(resolveModuleId('lodash'));
+    expect(filePath).to.equal(path.join(bundleDir, LODASH));
   });
   it('should bundle with overridden config', async () => {
-    const filepath = await bundle(resolveModuleId('debug'), 'debug', {
+    const filePath = await bundle(resolveModuleId('debug'), 'debug', {
       input: 'foo.js',
       output: { banner: '/* this is a test */', format: 'cjs' }
     });
-    const module = fs.readFileSync(filepath, 'utf8');
-    expect(filepath).to.equal(path.join(bundleDir, DEBUG));
+    const module = fs.readFileSync(filePath, 'utf8');
+    expect(filePath).to.equal(path.join(bundleDir, DEBUG));
     expect(module).to.contain('/* this is a test */');
   });
   it('should skip bundling transient dependencies', async () => {
-    const filepath = await bundle(resolveModuleId('debug'));
-    const module = fs.readFileSync(filepath, 'utf8');
-    expect(filepath).to.equal(path.join(bundleDir, DEBUG));
+    const filePath = await bundle(resolveModuleId('debug'));
+    const module = fs.readFileSync(filePath, 'utf8');
+    expect(filePath).to.equal(path.join(bundleDir, DEBUG));
     expect(module).to.contain("import ms from 'ms';");
   });
 });

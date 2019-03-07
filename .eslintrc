@@ -15,11 +15,15 @@
   },
   "plugins": ["prettier"],
   "rules": {
+    "no-constant-condition": "off",
     "no-console": "off",
     "no-unused-vars": ["error", { "ignoreRestSiblings": true }],
     "sort-imports": [
       "warn",
-      { "ignoreCase": true, "memberSyntaxSortOrder": ["none", "all", "multiple", "single"] }
+      {
+        "ignoreCase": true,
+        "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+      }
     ]
   }
 }
