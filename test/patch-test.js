@@ -1,9 +1,9 @@
 'use strict';
 
-const { cleanBundles, destroyWorkers } = require('../lib/utils/bundler');
+const { cleanBundles, destroyWorkers } = require('../lib/bundler/bundle.js');
 const { expect } = require('chai');
-const { bundleDirName } = require('../lib/config');
-const { patchResponse } = require('../lib/utils/patch');
+const { bundleDirName } = require('../lib/config.js');
+const { patchResponse } = require('../lib/utils/patch.js');
 const path = require('path');
 const { ServerResponse } = require('http');
 

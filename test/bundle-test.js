@@ -5,10 +5,10 @@ const {
   destroyWorkers,
   bundle,
   resolveModuleId
-} = require('../lib/utils/bundler');
+} = require('../lib/bundler/bundle.js');
 const { expect } = require('chai');
 const fs = require('fs');
-const { bundleDir } = require('../lib/config');
+const { bundleDir } = require('../lib/config.js');
 const path = require('path');
 
 const DEBUG = 'debug-4.1.1.js';
