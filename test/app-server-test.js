@@ -1,7 +1,7 @@
 'use strict';
 
 const { cleanBundles, destroyWorkers } = require('../lib/bundler/bundle.js');
-const appServer = require('../lib/appServer.js');
+const appServer = require('../lib/app-server.js');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const fs = require('fs');
