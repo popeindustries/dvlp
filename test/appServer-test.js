@@ -39,6 +39,14 @@ describe('appServer', () => {
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('hi');
   });
+  it('should start an esm app server', async () => {
+    server = await appServer('appEsm.js', { port: 8000 });
+    const res = await fetch('http://localhost:8000/', {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
+    expect(res.status).to.eql(200);
+    expect(await res.text()).to.contain('hi');
+  });
   it('should trigger exit handlers for clean up', async () => {
     server = await appServer('appExit.js', { port: 8000 });
     expect(global.beforeExitCalled).to.equal(undefined);
