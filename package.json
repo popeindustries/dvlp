@@ -58,8 +58,8 @@
   },
   "scripts": {
     "build": "rollup --config rollup.config.js",
-    "copy": "cp -f lib/utils/bundler-worker.js . && cp -f lib/reload-client.min.js .",
-    "delete": "rm -f bundler-worker.js dvlp.js reload-client.min.js",
+    "copy": "cp -f lib/bundler/bundle-worker.js . && cp -f lib/reload-client.min.js .",
+    "delete": "rm -f bundle-worker.js dvlp.js reload-client.min.js",
     "format": "prettier --write './{lib,test}/**/*.{js,json}'",
     "lint": "eslint './{lib,test}/**/*.js'",
     "minify": "terser lib/utils/reload-client.js -o lib/reload-client.min.js",
@@ -73,5 +73,11 @@
     "hooks": {
       "pre-commit": "lint-staged"
     }
+  },
+  "lint-staged": {
+    "linters": {
+      "*.js": ["prettier --write", "eslint", "git add"]
+    },
+    "ignore": ["*.min.js"]
   }
 }
