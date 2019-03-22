@@ -1,11 +1,11 @@
 'use strict';
 
-const { cleanBundles, destroyWorkers } = require('../lib/utils/bundler');
-const { bundleDirName } = require('../lib/config');
+const { cleanBundles, destroyWorkers } = require('../lib/bundler/bundle.js');
+const { bundleDirName } = require('../lib/config.js');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const path = require('path');
-const staticServer = require('../lib/staticServer');
+const staticServer = require('../lib/static-server.js');
 
 let server;
 

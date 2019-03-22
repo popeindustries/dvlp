@@ -81,16 +81,16 @@ $ npm run dev
 
 In some cases you may want to write HTML/CSS/JS in a non-standard, higher-order language like SASS (for CSS), or JSX (for JS). In these cases, you can pass **dvlp** a `transpile` function to convert file contents on the fly when requested by the browser.
 
-The `transpile` function should accept a `filepath` and return a content string (or Promise resolving to a string) if the file has be transpiled. If nothing is returned, **dvlp** will handle the file normally:
+The `transpile` function should accept a `filePath` and return a content string (or Promise resolving to a string) if the file has be transpiled. If nothing is returned, **dvlp** will handle the file normally:
 
 ```js
 // scripts/transpile.js
 const sass = require('sass');
 const RE_SASS = /\.s[ac]ss$/;
 
-module.exports = async function transpile(filepath) {
-  if (RE_SASS.test(filepath)) {
-    return sass.renderSync({ file: filepath }).css;
+module.exports = async function transpile(filePath) {
+  if (RE_SASS.test(filePath)) {
+    return sass.renderSync({ file: filePath }).css;
   }
 };
 ```
@@ -267,9 +267,9 @@ $ DEBUG=dvlp* npm run dev
 
 ## JS API
 
-### `server(filepath: string|[string], [options]): Promise<{ destroy: () => void }>`
+### `server(filePath: string|[string], [options]): Promise<{ destroy: () => void }>`
 
-Serve files at `filepath`, starting static file server if one or more directories, or app server if a single file.
+Serve files at `filePath`, starting static file server if one or more directories, or app server if a single file.
 
 `options` include:
 
@@ -303,7 +303,7 @@ Returns a **`TestServer`** instance with the following properties:
 
 - **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
 - **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
-- **`loadMockFiles(filepath: string|[string]): void`** load and register mock response files (see [mocking](#mocking))
+- **`loadMockFiles(filePath: string|[string]): void`** load and register mock response files (see [mocking](#mocking))
 
 ```json
 {

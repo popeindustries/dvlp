@@ -56,14 +56,13 @@
   },
   "scripts": {
     "build": "rollup --config rollup.config.js",
-    "copy": "cp -f lib/utils/bundlerWorker.js . && cp -f lib/reloadClient.min.js .",
-    "delete": "rm -f bundlerWorker.js dvlp.js reloadClient.min.js",
+    "copy": "cp -f lib/utils/bundler-worker.js . && cp -f lib/reload-client.min.js .",
+    "delete": "rm -f bundler-worker.js dvlp.js reload-client.min.js",
     "format": "prettier --write './{lib,test}/**/*.{js,json}'",
     "lint": "eslint './{lib,test}/**/*.js'",
-    "minify": "terser lib/utils/reloadClient.js -o lib/reloadClient.min.js",
+    "minify": "terser lib/utils/reload-client.js -o lib/reload-client.min.js",
     "prepare": "npm run minify",
     "prepublishOnly": "npm run minify && npm run build && npm run copy",
-    "precommit": "lint-staged",
     "postpublish": "npm run delete",
     "test": "cross-env NODE_ENV=test mocha test/*-test.js --reporter spec --bail --timeout 10000 --require lib/config.js"
   }

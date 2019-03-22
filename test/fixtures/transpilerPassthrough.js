@@ -1,14 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = async function transpiler(filepath) {
-  if (path.extname(filepath) !== '.js') {
+module.exports = async function transpiler(filePath) {
+  if (path.extname(filePath) !== '.js') {
     return '';
   }
 
   await sleep(200);
-  console.log('***transpiled', filepath);
-  return fs.readFileSync(filepath, 'utf8');
+  console.log('***transpiled', filePath);
+  return fs.readFileSync(filePath, 'utf8');
 };
 
 function sleep(duration) {
