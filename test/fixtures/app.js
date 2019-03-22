@@ -12,7 +12,7 @@ app.use(async (ctx) => {
     <html lang="en-gb">
       <head>
         <meta charset="utf-8">
-        <script type="module" src="module.js"></script>
+        <script type="module" src="www/module.js"></script>
       </head>
       <body>
       ${body}
@@ -20,7 +20,7 @@ app.use(async (ctx) => {
     </html>`);
   }
   ctx.set('x-app', 'test');
-  await send(ctx, ctx.path, { root: __dirname + '/www' });
+  await send(ctx, ctx.path, { root: __dirname });
 });
 
 app.listen(process.env.PORT || 8000);
