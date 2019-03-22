@@ -1,4 +1,4 @@
-import dep from './www/dep.esm';
+import dep from './www/dep.mjs';
 
 export default {
   dep

@@ -146,12 +146,12 @@ describe('file', () => {
           { headers: {}, url: '/dep' },
           { directories: [path.resolve('test/fixtures/www')], type: 'js' }
         )
-      ).to.equal(path.resolve('test/fixtures/www/dep.js'));
+      ).to.equal(path.resolve('test/fixtures/www/dep.mjs'));
     });
   });
 
   describe('importModule()', () => {
-    it.skip('should return an es module', () => {
+    it('should return an es module', () => {
       const module = importModule(
         path.resolve(__dirname, 'fixtures/config.esm.js')
       );

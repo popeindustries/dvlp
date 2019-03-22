@@ -1,4 +1,4 @@
-import { __moduleExports as Debug } from 'debug';
+import Debug from 'debug';
 
 export default 'WORLD!';
 
