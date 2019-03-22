@@ -16,11 +16,10 @@ describe('resolve/package', () => {
 
   it('should retrieve package details for project file', () => {
     const cache = new Map();
-    const packageDetails = findPackage(cache, 'index.js');
-    expect(packageDetails).to.have.property('dir', process.cwd());
-    expect(packageDetails).to.have.property(
-      'path',
-      path.resolve('package.json')
-    );
+    const pkgDetails = findPackage(cache, 'index.js');
+    const pkgJson = path.resolve('package.json');
+    expect(pkgDetails).to.have.property('dir', process.cwd());
+    expect(pkgDetails).to.have.property('path', pkgJson);
+    expect(cache.get(pkgJson)).to.equal(pkgDetails);
   });
 });
