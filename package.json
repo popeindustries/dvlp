@@ -65,5 +65,10 @@
     "prepublishOnly": "npm run minify && npm run build && npm run copy",
     "postpublish": "npm run delete",
     "test": "cross-env NODE_ENV=test mocha test/*-test.js --reporter spec --bail --timeout 10000 --require lib/config.js"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
