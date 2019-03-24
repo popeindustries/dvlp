@@ -1,11 +1,11 @@
 'use strict';
 
-const { cleanBundles } = require('../lib/bundler/bundle.js');
+const { cleanBundles } = require('../lib/bundler/index.js');
+const config = require('../lib/config.js');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
-const { bundleDirName } = require('../lib/config.js');
 const path = require('path');
-const serverFactory = require('../lib/server.js');
+const serverFactory = require('../lib/server/index.js');
 
 let server;
 
@@ -44,7 +44,7 @@ describe('server', () => {
         rollupConfig: path.resolve(__dirname, './fixtures/rollup.config.js')
       });
       const res = await fetch(
-        `http://localhost:8080/${bundleDirName}/debug-3.1.0.js`
+        `http://localhost:8080/${config.bundleDirName}/debug-3.1.0.js`
       );
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('/* this is a test */');
@@ -136,7 +136,7 @@ describe('server', () => {
         rollupConfig: path.resolve(__dirname, './fixtures/rollup.config.js')
       });
       const res = await fetch(
-        `http://localhost:8000/${bundleDirName}/debug-3.1.0.js`
+        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`
       );
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('/* this is a test */');

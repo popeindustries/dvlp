@@ -2,7 +2,7 @@
 
 const { expect } = require('chai');
 const fetch = require('node-fetch');
-const testServer = require('../lib/test-server.js');
+const testServer = require('../lib/test-server/index.js');
 
 let server;
 
@@ -38,7 +38,7 @@ describe('testServer', () => {
   });
   it('should respond to requests for resources using specific "webroot"', async () => {
     server = await testServer({ webroot: 'lib' });
-    const res = await fetch('http://localhost:8080/test-server.js');
+    const res = await fetch('http://localhost:8080/test-server/index.js');
     expect(res).to.exist;
     expect(await res.text()).to.contain('module.exports.disableNetwork');
   });

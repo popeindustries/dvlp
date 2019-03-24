@@ -58,11 +58,11 @@
   },
   "scripts": {
     "build": "rollup --config rollup.config.js",
-    "copy": "cp -f lib/bundler/bundle-worker.js . && cp -f lib/reload-client.min.js .",
+    "copy": "cp -f lib/bundler/bundle-worker.js . && cp -f lib/reloader/reload-client.min.js .",
     "delete": "rm -f bundle-worker.js dvlp.js reload-client.min.js",
     "format": "prettier --write './{lib,test}/**/*.{js,json}'",
     "lint": "eslint './{lib,test}/**/*.js'",
-    "minify": "terser lib/utils/reload-client.js -o lib/reload-client.min.js",
+    "minify": "terser lib/reloader/reload-client.js -o lib/reloader/reload-client.min.js",
     "prepare": "npm run minify",
     "prepublishOnly": "npm run minify && npm run build && npm run copy",
     "postpublish": "npm run delete",

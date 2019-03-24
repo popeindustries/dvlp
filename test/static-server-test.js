@@ -1,11 +1,11 @@
 'use strict';
 
-const { cleanBundles, destroyWorkers } = require('../lib/bundler/bundle.js');
-const { bundleDirName } = require('../lib/config.js');
+const { cleanBundles, destroyWorkers } = require('../lib/bundler/index.js');
+const config = require('../lib/config.js');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const path = require('path');
-const staticServer = require('../lib/static-server.js');
+const staticServer = require('../lib/server/static-server.js');
 
 let server;
 
@@ -69,7 +69,7 @@ describe('staticServer', () => {
   it('should serve a bundled module js file with correct mime type', async () => {
     server = await staticServer('www', { port: 8080 });
     const res = await fetch(
-      `http://localhost:8080/${bundleDirName}/lodash__array-4.17.10.js`
+      `http://localhost:8080/${config.bundleDirName}/lodash__array-4.17.10.js`
     );
     expect(res.status).to.eql(200);
     expect(res.headers.get('Content-type')).to.include(
