@@ -4,8 +4,9 @@ const { expect } = require('chai');
 const EventSource = require('eventsource');
 const fetch = require('node-fetch');
 const testServer = require('../lib/test-server/index.js');
+const { Client: WebSocket } = require('faye-websocket');
 
-let server;
+let es, server, ws;
 
 function sleep(dur) {
   return new Promise((resolve) => {
@@ -22,6 +23,8 @@ describe('testServer', () => {
   });
   afterEach(async () => {
     server && (await server.destroy());
+    es && es.close();
+    ws && ws.close();
   });
   after(() => {
     testServer.enableNetwork();
@@ -201,11 +204,11 @@ describe('testServer', () => {
     });
   });
 
-  describe.skip('push()', () => {
+  describe('push()', () => {
     it('should push message via EventSource', (done) => {
       testServer({ enableEventSource: true }).then((srvr) => {
         server = srvr;
-        const es = new EventSource('http://localhost:8080');
+        es = new EventSource('http://localhost:8080');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
           server.push('hi');
@@ -219,13 +222,26 @@ describe('testServer', () => {
     it('should push event via EventSource', (done) => {
       testServer({ enableEventSource: true }).then((srvr) => {
         server = srvr;
-        const es = new EventSource('http://localhost:8080');
+        es = new EventSource('http://localhost:8080');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
           server.push('hi', { event: 'hello' });
         };
         es.addEventListener('hello', (event) => {
-          console.log(event);
+          expect(event.data).to.equal('hi');
+          done();
+        });
+      });
+    });
+    it('should push message via WebSocket', (done) => {
+      testServer({ enableWebSocket: true }).then((srvr) => {
+        server = srvr;
+        ws = new WebSocket('ws://localhost:8080');
+        ws.on('open', () => {
+          expect(ws.readyState).to.equal(1);
+          server.push('hi');
+        });
+        ws.on('message', (event) => {
           expect(event.data).to.equal('hi');
           done();
         });
