@@ -98,7 +98,7 @@ module.exports = async function transpile(filePath) {
 ...reference the original file as you normally would:
 
 ```html
-<link rel="stylesheet" href="src/index.sass">
+<link rel="stylesheet" href="src/index.sass" />
 ```
 
 ...and pass the `transpile` file with the `-t, --transpiler` flag:
@@ -289,10 +289,10 @@ Create a server for handling network requests during testing.
 
 `options` include:
 
-- **`autorespond: boolean`** enable/disable automatic dummy responses. If unable to resolve a request to a local file, the server will respond with a dummy file of the appropriate type (default `true`)
-- **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `3333`)
+- **`autorespond: boolean`** enable/disable automatic dummy responses. If unable to resolve a request to a local file or mock, the server will respond with a dummy file of the appropriate type (default `true`)
 - **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
-- **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
+- **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `3333`)
+- **`webroot: String`** the subpath from `process.cwd()` to prepend to relative paths (default `''`)
 
 ```js
 const { testServer } = require('dvlp');
