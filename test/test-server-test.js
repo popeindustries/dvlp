@@ -1,6 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
+const EventSource = require('eventsource');
 const fetch = require('node-fetch');
 const testServer = require('../lib/test-server/index.js');
 
@@ -197,6 +198,38 @@ describe('testServer', () => {
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('application/json');
       expect(await res.json()).to.eql({ user: { name: 'Bob', id: 9012 } });
+    });
+  });
+
+  describe.skip('push()', () => {
+    it('should push message via EventSource', (done) => {
+      testServer({ enableEventSource: true }).then((srvr) => {
+        server = srvr;
+        const es = new EventSource('http://localhost:8080');
+        es.onopen = () => {
+          expect(es.readyState).to.equal(1);
+          server.push('hi');
+        };
+        es.onmessage = (event) => {
+          expect(event.data).to.equal('hi');
+          done();
+        };
+      });
+    });
+    it('should push event via EventSource', (done) => {
+      testServer({ enableEventSource: true }).then((srvr) => {
+        server = srvr;
+        const es = new EventSource('http://localhost:8080');
+        es.onopen = () => {
+          expect(es.readyState).to.equal(1);
+          server.push('hi', { event: 'hello' });
+        };
+        es.addEventListener('hello', (event) => {
+          console.log(event);
+          expect(event.data).to.equal('hi');
+          done();
+        });
+      });
     });
   });
 });
