@@ -39,6 +39,14 @@ describe('appServer', () => {
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('hi');
   });
+  it('should start an app server listening for "request" event', async () => {
+    server = await appServer('appListener.js', { port: 8000 });
+    const res = await fetch('http://localhost:8000/', {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
+    expect(res.status).to.eql(200);
+    expect(await res.text()).to.contain('ok');
+  });
   it('should start an esm app server', async () => {
     server = await appServer('appEsm.js', { port: 8000 });
     const res = await fetch('http://localhost:8000/', {
@@ -68,6 +76,16 @@ describe('appServer', () => {
   });
   it('should serve a bundled module js file', async () => {
     server = await appServer('app.js', { port: 8000 });
+    const res = await fetch(
+      `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.10.js`
+    );
+    expect(res.status).to.eql(200);
+    const body = await res.text();
+    expect(body).to.contain('function baseSlice');
+    expect(body).to.contain('export default array;');
+  });
+  it('should serve a bundled module js file from server listening for "request" event', async () => {
+    server = await appServer('appListener.js', { port: 8000 });
     const res = await fetch(
       `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.10.js`
     );
