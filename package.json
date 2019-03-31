@@ -31,6 +31,10 @@
     "glob": "^7.1.3",
     "husky": "^1.3.1",
     "is-module": "^1.0.0",
+    "karma": "^4.0.1",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-mocha": "^1.3.0",
     "koa": "^2.7.0",
     "koa-send": "^5.0.0",
     "lint-staged": "^8.1.5",
@@ -69,6 +73,7 @@
     "prepublishOnly": "npm run minify && npm run build && npm run copy",
     "postpublish": "npm run delete",
     "test": "cross-env NODE_ENV=test mocha test/*-test.js --reporter spec --bail --timeout 10000 --require lib/config.js",
+    "test:browser": "karma start --single-run karma.conf.js",
     "demo": "./bin/dvlp test/fixtures/app.js"
   },
   "husky": {

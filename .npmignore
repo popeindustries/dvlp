@@ -1,5 +1,7 @@
-test
+/test
+/test-browser
 .*
-lib
+/lib
 rollup.config.js
+karma.config.js
 package-lock.json
