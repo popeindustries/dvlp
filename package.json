@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "commander": "^2.19.0",
-    "esm": "^3.2.22",
     "fswatcher-child": "^1.1.1",
     "worker-farm": "^1.6.0"
   },
@@ -40,6 +39,7 @@
     "mime": "^2.4.0",
     "mocha": "^6.0.2",
     "node-fetch": "^2.3.0",
+    "pirates": "^4.0.1",
     "prettier": "^1.16.4",
     "read-pkg-up": "^5.0.0",
     "resolve": "^1.10.0",
@@ -52,7 +52,7 @@
     "sass": "^1.17.3",
     "send": "^0.16.2",
     "server-destroy": "^1.0.1",
-    "sucrase": "^3.10.0",
+    "sucrase": "^3.10.1",
     "terser": "^3.17.0"
   },
   "engines": {

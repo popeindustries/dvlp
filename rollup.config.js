@@ -4,7 +4,7 @@ const json = require('rollup-plugin-json');
 const resolve = require('rollup-plugin-node-resolve');
 
 module.exports = {
-  external: [...builtinModules, 'worker-farm', 'fswatcher-child', 'esm'],
+  external: [...builtinModules, 'worker-farm', 'fswatcher-child'],
   input: 'lib/index.js',
   // Fix error with rollup resolving of acorn by ignoring 'module'
   plugins: [commonjs(), resolve({ module: false }), json()],
