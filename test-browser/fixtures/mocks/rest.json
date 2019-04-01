@@ -1,0 +1,12 @@
+[
+  {
+    "request": {
+      "url": "http://localhost:8000/foo"
+    },
+    "response": {
+      "body": {
+        "name": "foo"
+      }
+    }
+  }
+]
