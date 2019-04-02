@@ -50,6 +50,7 @@
     "rollup-plugin-commonjs": "^9.2.2",
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^4.0.1",
+    "rollup-plugin-replace": "^2.1.1",
     "sass": "^1.17.3",
     "send": "^0.16.2",
     "server-destroy": "^1.0.1",
@@ -60,15 +61,10 @@
     "node": ">=8"
   },
   "scripts": {
-    "build": "rollup --config rollup.config.js",
-    "copy": "cp -f lib/bundler/bundle-worker.js . && cp -f lib/reloader/reload-client.min.js .",
-    "delete": "rm -f bundle-worker.js dvlp.js reload-client.min.js",
+    "build": "rollup --config rollup.config.js && cp -f lib/bundler/bundle-worker.js .",
     "format": "prettier --write './{lib,test}/**/*.{js,json}'",
     "lint": "eslint './{lib,test}/**/*.js'",
-    "minify": "terser lib/reloader/reload-client.js -o lib/reloader/reload-client.min.js",
-    "prepare": "npm run minify",
-    "prepublishOnly": "npm run minify && npm run build && npm run copy",
-    "postpublish": "npm run delete",
+    "prepublishOnly": "npm run build",
     "test": "cross-env NODE_ENV=test mocha test/*-test.js --reporter spec --bail --timeout 10000 --require lib/config.js",
     "test:browser": "node ./test-browser/launch.js",
     "demo": "./bin/dvlp test/fixtures/app.js"

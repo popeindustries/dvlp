@@ -35,7 +35,7 @@ describe('server', () => {
       });
       const res = await fetch('http://localhost:8080/');
       expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('sse=new EventSource');
+      expect(await res.text()).to.contain('sse = new EventSource');
     });
     it.skip('should start a file server with custom Rollup config', async () => {
       server = await serverFactory('test/fixtures/www', {
@@ -117,7 +117,7 @@ describe('server', () => {
         headers: { accept: 'text/html' }
       });
       expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('sse=new EventSource');
+      expect(await res.text()).to.contain('sse = new EventSource');
     });
     it('should start with initial error', async () => {
       server = await serverFactory('test/fixtures/appError.js', {
