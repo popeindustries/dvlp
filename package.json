@@ -65,8 +65,8 @@
     "lint": "eslint './{lib,test}/**/*.js'",
     "prepublishOnly": "npm run build",
     "test": "cross-env NODE_ENV=test mocha test/*-test.js --reporter spec --bail --timeout 10000 --require lib/config.js",
-    "test:browser": "./bin/dvlp --mock test-browser/fixtures/mocks test-browser",
-    "demo": "./bin/dvlp --mock test-browser/fixtures/mocks test-browser/fixtures/app.js"
+    "test:browser": "./bin/dvlp --mock test-browser/fixtures/mock test-browser",
+    "demo": "./bin/dvlp --mock test-browser/fixtures/mock test-browser/fixtures/app.js"
   },
   "husky": {
     "hooks": {
