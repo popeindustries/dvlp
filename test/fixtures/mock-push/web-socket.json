@@ -1,0 +1,10 @@
+[
+  {
+    "request": {
+      "url": "ws://localhost:8888/feed"
+    },
+    "response": {
+      "body": ""
+    }
+  }
+]

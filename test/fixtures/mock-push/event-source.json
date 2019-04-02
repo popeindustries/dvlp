@@ -1,0 +1,41 @@
+[
+  {
+    "request": {
+      "url": "https://localhost:8888/feed"
+    },
+    "response": {
+      "body": "connect to foo and bar"
+    }
+  },
+  {
+    "push": {
+      "url": "https://localhost:8888/feed",
+      "events": [
+        {
+          "id": "foo event",
+          "message": {
+            "title": "foo"
+          },
+          "event": "foo"
+        },
+        {
+          "id": "bar event",
+          "sequence": [
+            {
+              "message": "bar1",
+              "delay": 500
+            },
+            {
+              "message": "bar2",
+              "event": "bar",
+              "delay": 1000
+            },
+            {
+              "message": "bar3"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

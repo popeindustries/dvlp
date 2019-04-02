@@ -38,7 +38,7 @@ program.parse(process.argv);
 async function boot(path = [process.cwd()]) {
   try {
     await server(path, {
-      mockpath: program.mock,
+      mockPath: program.mock,
       port: program.port,
       reload: program.reload,
       rollupConfig: program.rollupConfig,

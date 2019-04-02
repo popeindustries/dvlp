@@ -225,7 +225,7 @@ describe('testServer', () => {
         es = new EventSource('http://localhost:8080');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
-          server.push('hi', { event: 'hello' });
+          server.push('hi', 'hello');
         };
         es.addEventListener('hello', (event) => {
           expect(event.data).to.equal('hi');
