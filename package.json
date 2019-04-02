@@ -67,7 +67,7 @@
     "prepublishOnly": "npm run build",
     "test": "cross-env NODE_ENV=test mocha test/*-test.js --reporter spec --bail --timeout 10000 --require lib/config.js",
     "test:browser": "node ./test-browser/launch.js",
-    "demo": "./bin/dvlp test/fixtures/app.js"
+    "demo": "./bin/dvlp --mock test-browser/fixtures/mocks test-browser/fixtures/app.js"
   },
   "husky": {
     "hooks": {

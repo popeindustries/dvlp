@@ -273,7 +273,7 @@ Serve files at `filePath`, starting static file server if one or more directorie
 
 `options` include:
 
-- **`mockpath: string|[string]`** the path(s) to load mock files from (default `''`)
+- **`mockPath: string|[string]`** the path(s) to load mock files from (default `''`)
 - **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 - **`reload: boolean`**: enable/disable browser reloading (default `true`)
 - **`rollupConfig: string`**: path to optional [Rollup.js](https://rollupjs.org) config file to configure bundling of bare imports

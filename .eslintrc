@@ -6,6 +6,10 @@
     "node": true
   },
   "extends": ["eslint:recommended", "prettier"],
+  "globals": {
+    "$MOCKS": "readonly",
+    "$RELOAD_PORT": "readonly"
+  },
   "parser": "babel-eslint",
   "parserOptions": {
     "ecmaVersion": 2017,

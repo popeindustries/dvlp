@@ -155,7 +155,7 @@ describe('server', () => {
     });
     it('should respond to mocked requests', async () => {
       server = await serverFactory('test/fixtures/app.js', {
-        mockpath: 'test/fixtures/mock/1234.json',
+        mockPath: 'test/fixtures/mock/1234.json',
         port: 8000,
         reload: false
       });
