@@ -211,7 +211,7 @@ describe('testServer', () => {
         es = new EventSource('http://localhost:8080');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
-          server.push('hi');
+          server.push('http://localhost:8080', 'hi');
         };
         es.onmessage = (event) => {
           expect(event.data).to.equal('hi');
@@ -225,7 +225,7 @@ describe('testServer', () => {
         es = new EventSource('http://localhost:8080');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
-          server.push('hi', 'hello');
+          server.push('http://localhost:8080', 'hi', { event: 'hello' });
         };
         es.addEventListener('hello', (event) => {
           expect(event.data).to.equal('hi');
@@ -239,7 +239,7 @@ describe('testServer', () => {
         ws = new WebSocket('ws://localhost:8080');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
-          server.push('hi');
+          server.push('ws://localhost:8080', 'hi');
         });
         ws.on('message', (event) => {
           expect(event.data).to.equal('hi');

@@ -1,41 +1,49 @@
 [
   {
-    "request": {
+    "stream": {
       "url": "https://localhost:8888/feed"
     },
-    "response": {
-      "body": "connect to foo and bar"
-    }
-  },
-  {
-    "push": {
-      "url": "https://localhost:8888/feed",
-      "events": [
-        {
-          "id": "foo event",
-          "message": {
-            "title": "foo"
-          },
-          "event": "foo"
+    "events": [
+      {
+        "name": "open",
+        "message": {
+          "title": "open"
         },
-        {
-          "id": "bar event",
-          "sequence": [
-            {
-              "message": "bar1",
-              "delay": 500
-            },
-            {
-              "message": "bar2",
-              "event": "bar",
-              "delay": 1000
-            },
-            {
-              "message": "bar3"
-            }
-          ]
+        "options": {
+          "event": "foo"
         }
-      ]
-    }
+      },
+      {
+        "name": "foo event",
+        "message": {
+          "title": "foo"
+        },
+        "options": {
+          "event": "foo"
+        }
+      },
+      {
+        "name": "bar event",
+        "sequence": [
+          {
+            "message": "bar1",
+            "options": {
+              "delay": 500,
+              "event": "bar"
+            }
+          },
+          {
+            "message": "bar2",
+            "options": {
+              "delay": 1000,
+              "event": "bar"
+            }
+          },
+          {
+            "message": "bar3"
+          }
+        ]
+      }
+    ]
   }
 ]
