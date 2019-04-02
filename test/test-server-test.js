@@ -206,7 +206,7 @@ describe('testServer', () => {
 
   describe('push()', () => {
     it('should push message via EventSource', (done) => {
-      testServer({ enableEventSource: true }).then((srvr) => {
+      testServer().then((srvr) => {
         server = srvr;
         es = new EventSource('http://localhost:8080');
         es.onopen = () => {
@@ -220,7 +220,7 @@ describe('testServer', () => {
       });
     });
     it('should push event via EventSource', (done) => {
-      testServer({ enableEventSource: true }).then((srvr) => {
+      testServer().then((srvr) => {
         server = srvr;
         es = new EventSource('http://localhost:8080');
         es.onopen = () => {
@@ -234,7 +234,7 @@ describe('testServer', () => {
       });
     });
     it('should push message via WebSocket', (done) => {
-      testServer({ enableWebSocket: true }).then((srvr) => {
+      testServer().then((srvr) => {
         server = srvr;
         ws = new WebSocket('ws://localhost:8080');
         ws.on('open', () => {
