@@ -2,6 +2,7 @@
 
 const { expect } = require('chai');
 const Mock = require('../lib/mock/index.js');
+const { pushEvent } = require('../lib/push-events/index.js');
 
 const mocks = new Mock();
 
@@ -19,7 +20,6 @@ function getRequest(url, headers = { accept: '*/*' }) {
     }
   };
 }
-
 function getResponse() {
   return {
     headers: {},
@@ -46,34 +46,34 @@ function getResponse() {
 describe('mock', () => {
   afterEach(mocks.clean);
 
-  describe('add()', () => {
+  describe('addResponse()', () => {
     it('should add a json type', () => {
-      mocks.add('/data.json', { body: { data: 'foo' } });
+      mocks.addResponse('/data.json', { body: { data: 'foo' } });
       const mock = mocks.cache.get('localhost:8080/data.json');
       expect(mock).to.have.property('default');
       expect(mock.default).to.have.property('type', 'json');
     });
     it('should add a file type', () => {
-      mocks.add('/image.jpeg', { body: 'image.jpeg' });
+      mocks.addResponse('/image.jpeg', { body: 'image.jpeg' });
       const mock = mocks.cache.get('localhost:8080/image.jpeg');
       expect(mock.default).to.have.property('type', 'file');
     });
     it('should add an html type', () => {
-      mocks.add('/index.html', { body: '<body>hi</body>' });
+      mocks.addResponse('/index.html', { body: '<body>hi</body>' });
       const mock = mocks.cache.get('localhost:8080/index.html');
       expect(mock.default).to.have.property('type', 'html');
     });
     it('should handle incorrectly formatted response', () => {
-      mocks.add('/data.json', { data: 'foo' });
+      mocks.addResponse('/data.json', { data: 'foo' });
       const mock = mocks.cache.get('localhost:8080/data.json');
       expect(mock.default.response.body).to.eql({ data: 'foo' });
     });
     it('should handle search', () => {
-      mocks.add(
+      mocks.addResponse(
         { url: '/index.html?foo', ignoreSearch: true },
         { body: '<body>hi</body>' }
       );
-      mocks.add(
+      mocks.addResponse(
         { url: '/foo.html?foo', ignoreSearch: false },
         { body: '<body>hi</body>' }
       );
@@ -85,25 +85,94 @@ describe('mock', () => {
       );
     });
     it('should handle 127.0.0.1 as localhost', () => {
-      mocks.add('http://127.0.0.1:8080/foo', { body: { data: 'bar' } });
+      mocks.addResponse('http://127.0.0.1:8080/foo', { body: { data: 'bar' } });
       const mock = mocks.cache.get('localhost:8080/foo');
       expect(mock).to.have.property('default');
       expect(mock.default).to.have.property('type', 'json');
     });
   });
 
+  describe('addPushEvents()', () => {
+    it('should add a single EventSource event', () => {
+      mocks.addPushEvents('http://localhost:8080/foo', {
+        name: 'foo',
+        message: 'foo'
+      });
+      const mock = mocks.cache.get('localhost:8080/foo');
+      expect(mock).to.have.property('default');
+      expect(mock.default).to.have.property('type', 'es');
+      expect(mock.default.events).to.have.property('foo');
+    });
+    it('should add a single WebSocket event', () => {
+      mocks.addPushEvents('ws://localhost:8080/foo', {
+        name: 'foo',
+        message: 'foo'
+      });
+      const mock = mocks.cache.get('localhost:8080/foo');
+      expect(mock).to.have.property('default');
+      expect(mock.default).to.have.property('type', 'ws');
+      expect(mock.default.events).to.have.property('foo');
+    });
+    it('should add multiple EventSource events', () => {
+      mocks.addPushEvents('http://localhost:8080/foo', [
+        {
+          name: 'foo',
+          message: 'foo'
+        },
+        {
+          name: 'bar',
+          message: 'bar'
+        }
+      ]);
+      const mock = mocks.cache.get('localhost:8080/foo');
+      expect(mock.default.events).to.have.property('foo');
+      expect(mock.default.events).to.have.property('bar');
+    });
+    it('should add multiple WebSocket events', () => {
+      mocks.addPushEvents('ws://localhost:8080/foo', [
+        {
+          name: 'foo',
+          message: 'foo'
+        },
+        {
+          name: 'bar',
+          message: 'bar'
+        }
+      ]);
+      const mock = mocks.cache.get('localhost:8080/foo');
+      expect(mock.default.events).to.have.property('foo');
+      expect(mock.default.events).to.have.property('bar');
+    });
+    it('should ignore events with no name', () => {
+      mocks.addPushEvents('http://localhost:8080/foo', {
+        message: 'foo'
+      });
+      const mock = mocks.cache.get('localhost:8080/foo');
+      expect(mock).to.have.property('default');
+      expect(mock.default.events).to.not.have.property('foo');
+    });
+  });
+
   describe('remove()', () => {
     it('should remove an existing mock', () => {
-      mocks.add('/data.json', { body: { data: 'foo' } });
+      mocks.addResponse('/data.json', { body: { data: 'foo' } });
       mocks.remove('/data.json');
       expect(mocks.cache.size).to.equal(0);
     });
     it('should remove an existing mock when query string', () => {
-      mocks.add('/index.html?foo', { body: '<body>hi</body>' });
-      mocks.add('/index.html?bar', { body: '<body>hi</body>' });
+      mocks.addResponse('/index.html?foo', { body: '<body>hi</body>' });
+      mocks.addResponse('/index.html?bar', { body: '<body>hi</body>' });
       mocks.remove('/index.html?foo');
       expect(mocks.cache.size).to.equal(1);
       mocks.remove('/index.html?bar');
+      expect(mocks.cache.size).to.equal(0);
+    });
+    it('should remove an existing push event mock', () => {
+      mocks.addPushEvents('http://localhost:8080/foo', {
+        name: 'foo',
+        message: 'foo'
+      });
+      mocks.remove('http://localhost:8080/foo');
       expect(mocks.cache.size).to.equal(0);
     });
   });
@@ -130,22 +199,24 @@ describe('mock', () => {
     });
   });
 
-  describe('match()', () => {
+  describe('matchResponse()', () => {
     beforeEach(() => {
       mocks.load('test/fixtures/mock');
     });
 
     it('should return "false" if no match', () => {
       expect(
-        mocks.match(getRequest('http://www.someapi.com/v1/12'), {})
+        mocks.matchResponse(getRequest('http://www.someapi.com/v1/12'), {})
       ).to.equal(false);
     });
     it('should return "false" if no match when not ignoring search', () => {
-      expect(mocks.match(getRequest('/1234.jpg?u=bob'), {})).to.equal(false);
+      expect(mocks.matchResponse(getRequest('/1234.jpg?u=bob'), {})).to.equal(
+        false
+      );
     });
     it('should respond to request for mock json', () => {
       const res = getResponse();
-      mocks.match(getRequest('http://www.someapi.com/v1/5678'), res);
+      mocks.matchResponse(getRequest('http://www.someapi.com/v1/5678'), res);
       expect(res.statusCode).to.equal(200);
       expect(res.body).to.equal('{"user":{"name":"Nancy","id":5678}}');
       expect(res.headers['Content-Type']).to.equal('application/json');
@@ -153,7 +224,7 @@ describe('mock', () => {
     });
     it('should respond to request for mock image', (done) => {
       const res = getResponse();
-      mocks.match(getRequest('/1234.jpg'), res);
+      mocks.matchResponse(getRequest('/1234.jpg'), res);
       setTimeout(() => {
         expect(res.headers['Content-Type']).to.equal('image/jpeg');
         done();
@@ -161,7 +232,7 @@ describe('mock', () => {
     });
     it('should respond to loopback request', (done) => {
       const res = getResponse();
-      mocks.match(getRequest('http://127.0.0.1:8080/1234.jpg'), res);
+      mocks.matchResponse(getRequest('http://127.0.0.1:8080/1234.jpg'), res);
       setTimeout(() => {
         expect(res.headers['Content-Type']).to.equal('image/jpeg');
         done();
@@ -169,8 +240,8 @@ describe('mock', () => {
     });
     it('should hang when "response.hang"', (done) => {
       const res = getResponse();
-      mocks.add('/index.json', { body: {}, hang: true });
-      mocks.match(getRequest('/index.json'), res);
+      mocks.addResponse('/index.json', { body: {}, hang: true });
+      mocks.matchResponse(getRequest('/index.json'), res);
       setTimeout(() => {
         expect(res.statusCode).to.equal(undefined);
         expect(res.body).to.equal(null);
@@ -179,25 +250,44 @@ describe('mock', () => {
     });
     it('should return 500 when "response.error"', () => {
       const res = getResponse();
-      mocks.add('/index.json', { body: {}, error: true });
-      mocks.match(getRequest('/index.json'), res);
+      mocks.addResponse('/index.json', { body: {}, error: true });
+      mocks.matchResponse(getRequest('/index.json'), res);
       expect(res.statusCode).to.equal(500);
       expect(res.body).to.equal('error');
     });
     it('should return 404 when "response.missing"', () => {
       const res = getResponse();
-      mocks.add('/index.json', { body: {}, missing: true });
-      mocks.match(getRequest('/index.json'), res);
+      mocks.addResponse('/index.json', { body: {}, missing: true });
+      mocks.matchResponse(getRequest('/index.json'), res);
       expect(res.statusCode).to.equal(404);
       expect(res.body).to.equal('missing');
     });
     it('should destroy socket when "response.offline"', () => {
       const req = getRequest('/index.json');
       const res = getResponse();
-      mocks.add('/index.json', { body: {}, offline: true });
-      mocks.match(req, res);
+      mocks.addResponse('/index.json', { body: {}, offline: true });
+      mocks.matchResponse(req, res);
       expect(res.statusCode).to.equal(undefined);
       expect(req.socket).to.have.property('destroyed', true);
+    });
+  });
+
+  describe('matchPushEvent()', () => {
+    beforeEach(() => {
+      mocks.load('test/fixtures/mock-push');
+    });
+
+    it('should return "false" if no match', () => {
+      expect(
+        mocks.matchPushEvent('https://localhost:8888/foo', 'open', pushEvent)
+      ).to.equal(false);
+      expect(
+        mocks.matchPushEvent(
+          'https://localhost:8888/feed',
+          'opeeeen',
+          pushEvent
+        )
+      ).to.equal(false);
     });
   });
 });

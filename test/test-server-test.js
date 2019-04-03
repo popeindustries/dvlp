@@ -133,7 +133,7 @@ describe('testServer', () => {
   describe('mock()', () => {
     it('should respond to mocked json request', async () => {
       server = await testServer();
-      server.mock('/api/foo', { body: { foo: 'foo' } });
+      server.mockResponse('/api/foo', { body: { foo: 'foo' } });
       const res = await fetch('http://localhost:8080/api/foo');
       expect(res).to.exist;
       expect(await res.json()).to.eql({ foo: 'foo' });
@@ -142,7 +142,7 @@ describe('testServer', () => {
     });
     it('should respond to mocked json request only once', async () => {
       server = await testServer();
-      server.mock('/api/foo', { body: { foo: 'foo' } }, true);
+      server.mockResponse('/api/foo', { body: { foo: 'foo' } }, true);
       const res = await fetch('http://localhost:8080/api/foo');
       expect(res).to.exist;
       expect(await res.json()).to.eql({ foo: 'foo' });
@@ -151,7 +151,7 @@ describe('testServer', () => {
     });
     it('should respond to malformed mocked json request', async () => {
       server = await testServer();
-      server.mock('/api/foo', { foo: 'foo' }, true);
+      server.mockResponse('/api/foo', { foo: 'foo' }, true);
       const res = await fetch('http://localhost:8080/api/foo');
       expect(res).to.exist;
       expect(await res.json()).to.eql({ foo: 'foo' });
@@ -160,7 +160,7 @@ describe('testServer', () => {
     });
     it('should respond to mocked html request', async () => {
       server = await testServer();
-      server.mock('/foo', { body: '<p>foo</p>' }, true);
+      server.mockResponse('/foo', { body: '<p>foo</p>' }, true);
       const res = await fetch('http://localhost:8080/foo');
       expect(res).to.exist;
       expect(await res.text()).to.eql('<p>foo</p>');
@@ -169,7 +169,7 @@ describe('testServer', () => {
     });
     it('should respond to malformed mocked html request', async () => {
       server = await testServer();
-      server.mock('/foo', '<p>foo</p>', true);
+      server.mockResponse('/foo', '<p>foo</p>', true);
       const res = await fetch('http://localhost:8080/foo');
       expect(res).to.exist;
       expect(await res.text()).to.eql('<p>foo</p>');
@@ -204,14 +204,14 @@ describe('testServer', () => {
     });
   });
 
-  describe('push()', () => {
+  describe('pushEvent()', () => {
     it('should push message via EventSource', (done) => {
       testServer().then((srvr) => {
         server = srvr;
         es = new EventSource('http://localhost:8080');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
-          server.push('http://localhost:8080', 'hi');
+          server.pushEvent('http://localhost:8080', { message: 'hi' });
         };
         es.onmessage = (event) => {
           expect(event.data).to.equal('hi');
@@ -225,7 +225,10 @@ describe('testServer', () => {
         es = new EventSource('http://localhost:8080');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
-          server.push('http://localhost:8080', 'hi', { event: 'hello' });
+          server.pushEvent('http://localhost:8080', {
+            message: 'hi',
+            options: { event: 'hello' }
+          });
         };
         es.addEventListener('hello', (event) => {
           expect(event.data).to.equal('hi');
@@ -239,11 +242,99 @@ describe('testServer', () => {
         ws = new WebSocket('ws://localhost:8080');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
-          server.push('ws://localhost:8080', 'hi');
+          server.pushEvent('ws://localhost:8080', { message: 'hi' });
         });
         ws.on('message', (event) => {
           expect(event.data).to.equal('hi');
           done();
+        });
+      });
+    });
+    it('should push mock event via EventSource', (done) => {
+      testServer({ port: 8888 }).then((srvr) => {
+        server = srvr;
+        server.loadMockFiles('test/fixtures/mock-push');
+        es = new EventSource('http://localhost:8888/feed');
+        es.onopen = () => {
+          expect(es.readyState).to.equal(1);
+          server.pushEvent('http://localhost:8888/feed', 'open');
+        };
+        es.addEventListener('foo', (event) => {
+          expect(event.data).to.equal('{"title":"open"}');
+          done();
+        });
+      });
+    });
+    it('should push mock event via WebSocket', (done) => {
+      testServer({ port: 8888 }).then((srvr) => {
+        server = srvr;
+        server.loadMockFiles('test/fixtures/mock-push');
+        ws = new WebSocket('ws://localhost:8888/socket');
+        ws.on('open', () => {
+          expect(ws.readyState).to.equal(1);
+          server.pushEvent('ws://localhost:8888/socket', 'foo event');
+        });
+        ws.on('message', (event) => {
+          expect(event.data).to.equal('{"title":"foo"}');
+          done();
+        });
+      });
+    });
+    it('should push a sequence of mock events via EventSource', (done) => {
+      testServer({ port: 8888 }).then((srvr) => {
+        let events = [];
+        let last;
+        server = srvr;
+        server.loadMockFiles('test/fixtures/mock-push');
+        es = new EventSource('http://localhost:8888/feed');
+        es.onopen = () => {
+          last = Date.now();
+          expect(es.readyState).to.equal(1);
+          server.pushEvent('http://localhost:8888/feed', 'bar events');
+        };
+        es.addEventListener('bar', (event) => {
+          const now = Date.now();
+          const elapsed = now - last;
+          last = now;
+          events.push(event.data);
+          if (events.length === 1) {
+            expect(elapsed).to.be.within(480, 520);
+          } else if (events.length === 2) {
+            expect(elapsed).to.be.within(980, 1020);
+          } else if (events.length === 3) {
+            expect(elapsed).to.be.within(0, 20);
+            expect(events).to.eql(['bar1', 'bar2', 'bar3']);
+            done();
+          }
+        });
+      });
+    });
+    it('should push a sequence of mock events via EventSource', (done) => {
+      testServer({ port: 8888 }).then((srvr) => {
+        let events = [];
+        let last;
+        server = srvr;
+        server.loadMockFiles('test/fixtures/mock-push');
+        ws = new WebSocket('ws://localhost:8888/socket');
+        ws.on('open', () => {
+          last = Date.now();
+          expect(ws.readyState).to.equal(1);
+          server.pushEvent('ws://localhost:8888/socket', 'bar events');
+        });
+        ws.on('message', (event) => {
+          const now = Date.now();
+          const elapsed = now - last;
+          last = now;
+          events.push(event.data);
+          if (events.length === 1) {
+            expect(elapsed).to.be.within(480, 520);
+          } else if (events.length === 2) {
+            expect(elapsed).to.be.within(980, 1020);
+          } else if (events.length === 3) {
+            expect(elapsed).to.be.within(0, 20);
+            expect(events).to.eql(['bar1', 'bar2', 'bar3']);
+            done();
+          }
         });
       });
     });

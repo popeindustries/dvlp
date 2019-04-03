@@ -1,7 +1,7 @@
 [
   {
     "stream": {
-      "url": "ws://localhost:8888/socket"
+      "url": "es://localhost:8080/socket"
     },
     "events": [
       {

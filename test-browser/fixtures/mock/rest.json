@@ -1,7 +1,7 @@
 [
   {
     "request": {
-      "url": "http://localhost:8000/foo"
+      "url": "http://www.google.com/foo"
     },
     "response": {
       "body": {
