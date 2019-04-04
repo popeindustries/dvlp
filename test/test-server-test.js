@@ -22,9 +22,9 @@ describe('testServer', () => {
     testServer.disableNetwork();
   });
   afterEach(async () => {
-    server && (await server.destroy());
     es && es.close();
     ws && ws.close();
+    server && (await server.destroy());
   });
   after(() => {
     testServer.enableNetwork();
@@ -239,10 +239,10 @@ describe('testServer', () => {
     it('should push message via WebSocket', (done) => {
       testServer().then((srvr) => {
         server = srvr;
-        ws = new WebSocket('ws://localhost:8080');
+        ws = new WebSocket('ws://localhost:8080/socket');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
-          server.pushEvent('ws://localhost:8080', { message: 'hi' });
+          server.pushEvent('ws://localhost:8080/socket', { message: 'hi' });
         });
         ws.on('message', (event) => {
           expect(event.data).to.equal('hi');
