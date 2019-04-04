@@ -107,4 +107,15 @@ describe('appServer', () => {
     expect(res.status).to.eql(200);
     expect(res.headers.get('x-app')).to.equal('test');
   });
+  it('should start with custom Rollup config', async () => {
+    server = await appServer('app.js', {
+      port: 8000,
+      rollupConfig: require(path.resolve('rollup.config.js'))
+    });
+    const res = await fetch(
+      `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`
+    );
+    expect(res.status).to.eql(200);
+    expect(await res.text()).to.contain('/* this is a test */');
+  });
 });

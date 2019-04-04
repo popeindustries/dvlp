@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   input: 'client/index.js',
   output: {
     file: 'www/assets/js/client.js',

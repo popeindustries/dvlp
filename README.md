@@ -28,7 +28,7 @@ In addition, when working with JS modules, **dvlp** will ensure that so-called _
 
 ### Bonus!
 
-**dvlp** also includes a simple [`testServer`](#testserveroptions-promisetestserver) for handling various network request scenarios (mocking, latency, errors, offline, etc.) during testing.
+**dvlp** also includes a [`testServer`](#testserveroptions-promisetestserver) for handling various network request scenarios (mocking, latency, errors, offline, etc.) during testing.
 
 ## Installation
 
@@ -54,7 +54,6 @@ Usage: dvlp [options] [path...]
     -p, --port <port>           port number
     -m, --mock <path>           path to mock files (directory, file, glob pattern)
     -t, --transpiler <path>     path to optional transpiler file
-    -r, --rollup-config <path>  path to optional Rollup.js config file
     -s, --silent                suppress default logging
     --no-reload                 disable reloading connected browsers on file change
     -v, --version               output the version number
@@ -217,15 +216,7 @@ Your `path/to/mock/files` could be one of the following:
 
 As mentioned in [How it works](#how-it-works), **dvlp** will bundle CommonJS packages imported from `node_modules` in order to convert them to es6 modules. [Rollup.js](https://rollupjs.org) is used to create these bundles, and they are then cached on disk inside the `.dvlp` directory under your project root.
 
-In the rare case you need to configure Rollup.js to work with the packages you're importing, you can pass a custom configuration file:
-
-```json
-{
-  "scripts": {
-    "dev": "dvlp --rollup-config rollup.config.js --port 8000 src/app.js"
-  }
-}
-```
+In the rare case you need to configure Rollup.js to work with the packages you're importing, you can add a custom configuration file to the `.dvlp` directory (`.dvlp/rollup.config.js`).
 
 **dvlp** will override/ignore the `input`, `treeshake`, and `watch` input options, as well as the `file`, `format`, and `sourcemap` output options. Here is the default configuration currently used:
 
@@ -276,7 +267,6 @@ Serve files at `filePath`, starting static file server if one or more directorie
 - **`mockPath: string|[string]`** the path(s) to load mock files from (default `''`)
 - **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 - **`reload: boolean`**: enable/disable browser reloading (default `true`)
-- **`rollupConfig: string`**: path to optional [Rollup.js](https://rollupjs.org) config file to configure bundling of bare imports
 
 ```js
 const { server } = require('dvlp');

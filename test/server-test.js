@@ -1,11 +1,9 @@
 'use strict';
 
 const { cleanBundles } = require('../lib/bundler/index.js');
-const config = require('../lib/config.js');
 const EventSource = require('eventsource');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
-const path = require('path');
 const serverFactory = require('../lib/server/index.js');
 const { Client: WebSocket } = require('faye-websocket');
 
@@ -40,18 +38,6 @@ describe('server', () => {
       const res = await fetch('http://localhost:8000/');
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('sse = new EventSource');
-    });
-    it.skip('should start a file server with custom Rollup config', async () => {
-      server = await serverFactory('test/fixtures/www', {
-        port: 8000,
-        reload: false,
-        rollupConfig: path.resolve(__dirname, './fixtures/rollup.config.js')
-      });
-      const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`
-      );
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('/* this is a test */');
     });
     it('should throw on missing path', async () => {
       try {
@@ -234,18 +220,6 @@ describe('server', () => {
         headers: { accept: 'text/html' }
       });
       expect(res.status).to.eql(500);
-    });
-    it.skip('should start a server with custom Rollup config', async () => {
-      server = await serverFactory('test/fixtures/app.js', {
-        port: 8000,
-        reload: false,
-        rollupConfig: path.resolve(__dirname, './fixtures/rollup.config.js')
-      });
-      const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`
-      );
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('/* this is a test */');
     });
     it('should transpile file content when using a transpiler', async () => {
       server = await serverFactory('test/fixtures/app.js', {
