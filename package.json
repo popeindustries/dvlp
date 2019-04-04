@@ -11,7 +11,7 @@
     "dvlp": "./bin/dvlp"
   },
   "dependencies": {
-    "commander": "^2.19.0",
+    "commander": "^2.20.0",
     "fswatcher-child": "^1.1.1",
     "worker-farm": "^1.6.0"
   },
@@ -36,7 +36,7 @@
     "lit-html": "^1.0.0",
     "lodash": "^4.17.11",
     "lodash-es": "^4.17.11",
-    "mime": "^2.4.0",
+    "mime": "^2.4.1",
     "mocha": "^6.0.2",
     "node-fetch": "^2.3.0",
     "pirates": "^4.0.1",
@@ -46,11 +46,11 @@
     "resolve-from": "^4.0.0",
     "rimraf": "^2.6.3",
     "rollup": "^1.8.0",
-    "rollup-plugin-commonjs": "^9.2.3",
+    "rollup-plugin-commonjs": "^9.3.0",
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^4.0.1",
     "rollup-plugin-replace": "^2.1.1",
-    "sass": "^1.17.3",
+    "sass": "^1.17.4",
     "send": "^0.16.2",
     "server-destroy": "^1.0.1",
     "sucrase": "^3.10.1",
