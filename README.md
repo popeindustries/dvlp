@@ -17,6 +17,7 @@ Less setup, less complexity, and less waiting is surely the path to developer ha
 
 - **No bundling**: write JS modules and load them directly in the browser
 - **No middleware**: write application servers without special dev/build/bundle middleware
+- **No infrastructure**: mock external JSON/EventSource/WebSocket resources
 - **No waiting**: restart application servers in the blink of an eye
 - **No refreshing**: automatically reload browsers on file change
 
