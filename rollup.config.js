@@ -11,13 +11,13 @@ const reloadClient = terser.minify(
 ).code;
 const mockClient = terser
   .minify(fs.readFileSync('lib/mock/mock-client.js', 'utf8'))
-  .code.replace(/'/g, "\\'");
+  .code.replace(/(["\\])/g, '\\$1');
 
 module.exports = [
   {
     external: [...builtinModules],
     input: 'lib/bundler/bundle-worker.js',
-    plugins: [commonjs(), resolve({ module: false }), json()],
+    plugins: [commonjs(), resolve({ mainFields: ['main'] }), json()],
     output: {
       file: 'bundle-worker.js',
       format: 'cjs'
@@ -29,11 +29,11 @@ module.exports = [
     plugins: [
       replace({
         'global.$RELOAD_CLIENT': `'${reloadClient}'`,
-        'global.$MOCK_CLIENT': `'${mockClient}'`
+        'global.$MOCK_CLIENT': `"${mockClient}"`
       }),
       commonjs(),
       // Fix error with rollup resolving of acorn by ignoring 'module'
-      resolve({ module: false }),
+      resolve({ mainFields: ['main'] }),
       json()
     ],
     output: {
