@@ -2,6 +2,7 @@
 /test-browser
 .*
 /lib
+/docs
 rollup.config.js
 karma.config.js
 package-lock.json

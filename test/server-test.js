@@ -156,7 +156,7 @@ describe('server', () => {
         });
       });
     });
-    it('should handle push mock event via EventSource', (done) => {
+    it('should handle push mock event via WebSocket', (done) => {
       serverFactory('test/fixtures/www', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
