@@ -79,12 +79,12 @@ $ npm run dev
 
 ### Transpiling
 
-In some cases, you may want to write HTML/CSS/JS in a non-standard, higher-order language like SASS (for CSS), or JSX (for JS). In these cases, you can pass **dvlp** a `transpile` function to convert file contents on the fly when requested by the browser.
+In some cases, you may want to write CSS/JS in a non-standard, higher-order language like SASS (for CSS), or JSX (for JS). In these cases, you can pass **dvlp** a `transpile` function to convert file contents on the fly when imported by an application server or requested by the browser.
 
 <details>
 <summary>Writing a transpiler</summary>
 
-The `transpile` function should accept a `filePath` and return a content string (or Promise resolving to a string) if the file has be transpiled. If nothing is returned, **dvlp** will handle the file normally:
+The `transpile` function should accept a `filePath` string and `isServer` boolean, and return a content string (or a string resolving Promise if **not** transpiling a server file) if the file has be transpiled. If nothing is returned, **dvlp** will handle the file normally:
 
 ```js
 // scripts/transpile.js
@@ -92,17 +92,25 @@ const fs = require('fs');
 const sass = require('sass');
 const sucrase = require('sucrase');
 
+const RE_JS = /\.jsx?$/;
 const RE_SASS = /\.s[ac]ss$/;
-const RE_TS = /\.tsx?$/;
 
-module.exports = async function transpile(filePath) {
+/**
+ * Transpile server and client files
+ *
+ * @param { string } filePath
+ * @param { boolean } isServer
+ */
+module.exports = function transpile(filePath, isServer) {
+  const jsTransforms = isServer ? ['imports', 'jsx'] : ['jsx'];
+
   if (RE_SASS.test(filePath)) {
     return sass.renderSync({
       file: filePath
     }).css;
-  } else if (RE_TS.test(filePath)) {
+  } else if (RE_JS.test(filePath)) {
     return sucrase.transform(fs.readFileSync(filePath, 'utf8'), {
-      transforms: ['typescript', 'jsx']
+      transforms: jsTransforms
     }).code;
   }
 };
@@ -114,7 +122,7 @@ module.exports = async function transpile(filePath) {
 <link rel="stylesheet" href="src/index.sass" />
 ```
 
-...and pass the `transpile` file with the `-t, --transpiler` flag:
+...and pass a reference to the `transpile.js` file with the `-t, --transpiler` flag:
 
 ```json
 {
@@ -124,9 +132,9 @@ module.exports = async function transpile(filePath) {
 }
 ```
 
-In order to keep things snappy, **dvlp** will cache transpiled content and only re-transpile single files when the original contents have changed.
-
 </details>
+
+In order to keep things snappy, **dvlp** will cache transpiled content and only re-transpile single files when the original contents have changed.
 
 ### Mocking
 
