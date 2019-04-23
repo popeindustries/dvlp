@@ -163,5 +163,12 @@ describe('file', () => {
       );
       expect(module).to.have.property('dep', 'HI!');
     });
+    it('should return a jsx module', () => {
+      const module = importModule(
+        path.resolve(__dirname, 'fixtures/component.jsx'),
+        require('./fixtures/transpilerServer.js')
+      );
+      expect(module).to.have.property('type', 'div');
+    });
   });
 });

@@ -42,6 +42,7 @@
     "permessage-deflate": "^0.1.6",
     "pirates": "^4.0.1",
     "prettier": "^1.17.0",
+    "react": "^16.8.6",
     "read-pkg-up": "^5.0.0",
     "resolve": "^1.10.0",
     "resolve-from": "^5.0.0",
