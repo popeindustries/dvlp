@@ -3,8 +3,9 @@ node_js:
   - '8'
   - '10'
   - '11'
+  - '12'
 install:
-  - npm install --no-optional
+  - npm install
 cache:
   directories:
     - ~/.nvm
