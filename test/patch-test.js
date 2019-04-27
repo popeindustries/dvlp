@@ -3,6 +3,7 @@
 const { cleanBundles, destroyWorkers } = require('../lib/bundler/index.js');
 const config = require('../lib/config.js');
 const { expect } = require('chai');
+const { gzipSync } = require('zlib');
 const { patchResponse } = require('../lib/utils/patch.js');
 const path = require('path');
 const { ServerResponse } = require('http');
@@ -61,6 +62,18 @@ describe('patch', () => {
         '<head>\n<script>test inject</script></head>'
       );
     });
+    it('should uncompress gzipped html response', () => {
+      const req = getRequest('index.html', { accept: 'text/html' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res, {
+        headerScript: { string: 'test inject' }
+      });
+      res.setHeader('Content-Encoding', 'gzip');
+      res.end(gzipSync(Buffer.from('<head></head>')));
+      expect(getBody(res)).to.equal(
+        '<head>\n<script>test inject</script></head>'
+      );
+    });
     it('should inject footer script into streamed html response', () => {
       const req = getRequest('index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
@@ -68,6 +81,7 @@ describe('patch', () => {
         footerScript: { string: 'test inject' }
       });
       res.write('</body>');
+      res.end();
       expect(getBody(res)).to.include('<script>test inject</script>\n</body>');
     });
     it('should inject header script into streamed html response', () => {
@@ -77,6 +91,7 @@ describe('patch', () => {
         headerScript: { string: 'test inject' }
       });
       res.write('<head></head>');
+      res.end();
       expect(getBody(res)).to.include(
         '<head>\n<script>test inject</script></head>'
       );
