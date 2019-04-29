@@ -43,7 +43,7 @@ describe('patch', () => {
 
   describe('patchResponse()', () => {
     it('should inject footer script into buffered html response', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
         footerScript: { string: 'test inject' }
@@ -52,7 +52,7 @@ describe('patch', () => {
       expect(getBody(res)).to.equal('<script>test inject</script>\n</body>');
     });
     it('should inject header script into buffered html response', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
         headerScript: { string: 'test inject' }
@@ -63,7 +63,7 @@ describe('patch', () => {
       );
     });
     it('should uncompress gzipped html response', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
         headerScript: { string: 'test inject' }
@@ -75,7 +75,7 @@ describe('patch', () => {
       );
     });
     it('should inject footer script into streamed html response', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
         footerScript: { string: 'test inject' }
@@ -85,7 +85,7 @@ describe('patch', () => {
       expect(getBody(res)).to.include('<script>test inject</script>\n</body>');
     });
     it('should inject header script into streamed html response', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
         headerScript: { string: 'test inject' }
@@ -97,7 +97,7 @@ describe('patch', () => {
       );
     });
     it('should inject csp header when connect-src', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
         footerScript: {
@@ -117,7 +117,7 @@ describe('patch', () => {
       );
     });
     it('should inject csp header when no connect-src', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
         footerScript: {
@@ -131,7 +131,7 @@ describe('patch', () => {
       );
     });
     it('should inject csp header with writeHead when connect-src', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
         footerScript: {
@@ -147,7 +147,7 @@ describe('patch', () => {
       );
     });
     it('should inject csp header with writeHead when no connect-src', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
         footerScript: {
@@ -161,7 +161,7 @@ describe('patch', () => {
       );
     });
     it('should not inject script hash in csp header when no nonce/sha and unsafe-inline', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
         footerScript: {
@@ -178,7 +178,7 @@ describe('patch', () => {
       );
     });
     it('should inject script hash in csp header when no nonce/sha and missing unsafe-inline', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filepath, req, res, {
         footerScript: {
@@ -200,7 +200,7 @@ describe('patch', () => {
       );
     });
     it('should inject script hash in csp header when nonce', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filepath, req, res, {
         footerScript: {
@@ -222,7 +222,7 @@ describe('patch', () => {
       );
     });
     it('should inject script hash in csp header when sha', () => {
-      const req = getRequest('index.html', { accept: 'text/html' });
+      const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filepath, req, res, {
         footerScript: {
@@ -260,7 +260,7 @@ describe('patch', () => {
       expect(res.getHeader('Cache-Control')).to.equal('max-age=600');
     });
     it('should resolve bare js import id', () => {
-      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('import lodash from "lodash";');
@@ -269,7 +269,7 @@ describe('patch', () => {
       );
     });
     it('should resolve multiple bare js import ids', () => {
-      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end(
@@ -284,7 +284,7 @@ describe('patch', () => {
       );
     });
     it('should resolve bare js import id for es module', () => {
-      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('import { html } from "lit-html";');
@@ -294,7 +294,7 @@ describe('patch', () => {
     });
     it('should resolve NODE_PATH js import id', () => {
       setNodePath('test/fixtures/www');
-      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('import module from "nested/index.js";');
@@ -305,7 +305,7 @@ describe('patch', () => {
     });
     it('should resolve NODE_PATH js import id missing extension', () => {
       setNodePath('test/fixtures/www');
-      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('import module from "nested/foo";');
@@ -315,7 +315,7 @@ describe('patch', () => {
       setNodePath(NODE_PATH);
     });
     it('should resolve js import id missing extension', () => {
-      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/module";');
@@ -323,8 +323,26 @@ describe('patch', () => {
         `import module from "./test/fixtures/www/module.js";`
       );
     });
+    it('should resolve jsx import id missing extension', () => {
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res);
+      res.end('import component from "./test/fixtures/component";');
+      expect(getBody(res)).to.equal(
+        `import component from "./test/fixtures/component.jsx";`
+      );
+    });
+    it('should resolve ts import id missing extension', () => {
+      const req = getRequest('/index.ts', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res);
+      res.end('import route from "./test/fixtures/route";');
+      expect(getBody(res)).to.equal(
+        `import route from "./test/fixtures/route.ts";`
+      );
+    });
     it('should resolve js import id missing package index', () => {
-      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/nested";');
@@ -332,15 +350,26 @@ describe('patch', () => {
         `import module from "./test/fixtures/www/nested/index.js";`
       );
     });
+    it('should resolve ts import id missing package index', () => {
+      const req = getRequest('/index.ts', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res);
+      res.end('import module from "./test/fixtures/www/nested-ts";');
+      expect(getBody(res)).to.equal(
+        `import module from "./test/fixtures/www/nested-ts/index.ts";`
+      );
+    });
     it('should ignore erroneous "import" string', () => {
-      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('"this is use of a fake import text"');
       expect(getBody(res)).to.equal(`"this is use of a fake import text"`);
     });
     it('should resolve js import with browser field', () => {
-      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const req = getRequest('/test/fixtures/index.js', {
+        accept: 'application/javascript'
+      });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('import "bar";');
@@ -349,7 +378,9 @@ describe('patch', () => {
       );
     });
     it('should resolve js import with browser field map', () => {
-      const req = getRequest('index.js', { accept: 'application/javascript' });
+      const req = getRequest('/test/fixtures/index.js', {
+        accept: 'application/javascript'
+      });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('import "bat";');
