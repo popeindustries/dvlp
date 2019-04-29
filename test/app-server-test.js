@@ -34,7 +34,7 @@ describe('appServer', () => {
   it('should start an app server', async () => {
     server = await appServer('app.js', { port: 8000 });
     const res = await fetch('http://localhost:8000/', {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      headers: { Accept: 'text/html; charset=utf-8' }
     });
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('hi');
@@ -42,7 +42,7 @@ describe('appServer', () => {
   it('should start an app server listening for "request" event', async () => {
     server = await appServer('appListener.js', { port: 8000 });
     const res = await fetch('http://localhost:8000/', {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      headers: { Accept: 'text/html; charset=utf-8' }
     });
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('ok');
@@ -50,10 +50,20 @@ describe('appServer', () => {
   it('should start an esm app server', async () => {
     server = await appServer('appEsm.js', { port: 8000 });
     const res = await fetch('http://localhost:8000/', {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      headers: { Accept: 'text/html; charset=utf-8' }
     });
     expect(res.status).to.eql(200);
     expect(await res.text()).to.contain('hi');
+  });
+  it('should polyfill process.env', async () => {
+    server = await appServer('appEsm.js', { port: 8000 });
+    const res = await fetch('http://localhost:8000/', {
+      headers: { Accept: 'text/html; charset=utf-8' }
+    });
+    expect(res.status).to.eql(200);
+    expect(await res.text()).to.contain(
+      '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="test"</script>'
+    );
   });
   it('should trigger exit handlers for clean up', async () => {
     server = await appServer('appExit.js', { port: 8000 });
@@ -68,7 +78,7 @@ describe('appServer', () => {
     });
     setTimeout(async () => {
       const res = await fetch('http://localhost:8000/', {
-        headers: { 'Content-Type': 'text/html' }
+        headers: { Accept: 'text/html' }
       });
       expect(await res.text()).to.contain('bye');
       done();
