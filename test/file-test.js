@@ -132,7 +132,7 @@ describe('file', () => {
         )
       ).to.equal(path.resolve('test/fixtures/www/module.js'));
     });
-    it('should find file for JS request missing filename', () => {
+    it('should find file for JS request missing package filename', () => {
       expect(
         find(
           { headers: {}, url: '/nested' },
@@ -147,6 +147,22 @@ describe('file', () => {
           { directories: [path.resolve('test/fixtures/www')], type: 'js' }
         )
       ).to.equal(path.resolve('test/fixtures/www/dep.mjs'));
+    });
+    it('should find file for JS string missing extension with type', () => {
+      expect(
+        find('/dep', {
+          directories: [path.resolve('test/fixtures/www')],
+          type: 'js'
+        })
+      ).to.equal(path.resolve('test/fixtures/www/dep.mjs'));
+    });
+    it('should find file for JS string missing package filename', () => {
+      expect(
+        find('/nested', {
+          directories: [path.resolve('test/fixtures/www')],
+          type: 'js'
+        })
+      ).to.equal(path.resolve('test/fixtures/www/nested/index.js'));
     });
   });
 
