@@ -118,9 +118,29 @@ describe.only('resolver', () => {
           resolver.resolve(path.resolve('foo.js'), path.resolve('foo.js'))
         ).to.equal(path.resolve('foo.js'));
       });
-      it.only('should resolve a relative path to a js file in the same directory', () => {
+      it('should resolve a relative path to a js file in the same directory', () => {
         expect(resolver.resolve(path.resolve('foo.js'), './baz')).to.equal(
           path.resolve('baz.js')
+        );
+      });
+      it('should resolve a relative path to a js file in a child directory', () => {
+        expect(
+          resolver.resolve(path.resolve('foo.js'), './nested/foo')
+        ).to.equal(path.resolve('nested/foo.js'));
+      });
+      it('should resolve a relative path to a js file in a parent directory', () => {
+        expect(
+          resolver.resolve(path.resolve('nested/foo.js'), '../baz')
+        ).to.equal(path.resolve('baz.js'));
+      });
+      it('should not resolve a js file with an unkown extension', () => {
+        expect(resolver.resolve(path.resolve('foo.js'), './bar.blah')).to.equal(
+          undefined
+        );
+      });
+      it.only('should resolve a file name containing multiple "."', () => {
+        expect(resolver.resolve(path.resolve('foo.js'), './foo.bar')).to.equal(
+          path.resolve('foo.bar.js')
         );
       });
     });
