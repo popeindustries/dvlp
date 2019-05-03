@@ -1,18 +1,22 @@
 'use strict';
 
-const { clearCache, resolve } = require('../lib/resolver/index.js');
+const { clearResolverCache, resolve } = require('../lib/resolver/index.js');
 const {
   getPackage,
   resolvePackagePath
 } = require('../lib/resolver/package.js');
+const config = require('../lib/config.js');
 const { expect } = require('chai');
 const path = require('path');
 
 describe('resolver', () => {
   before(() => {
-    process.chdir(path.resolve(__dirname, 'fixtures/resolver'));
+    const cwd = path.resolve(__dirname, 'fixtures/resolver');
+    config.directories.push(cwd);
+    process.chdir(cwd);
   });
   after(() => {
+    config.directories.pop();
     process.chdir(path.resolve(__dirname, '..'));
   });
 
@@ -100,7 +104,7 @@ describe('resolver', () => {
 
   describe('resolver', () => {
     afterEach(() => {
-      clearCache();
+      clearResolverCache();
     });
 
     describe('resolve()', () => {

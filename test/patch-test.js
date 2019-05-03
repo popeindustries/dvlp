@@ -1,6 +1,7 @@
 'use strict';
 
 const { cleanBundles, destroyWorkers } = require('../lib/bundler/index.js');
+const { clearResolverCache } = require('../lib/resolver/index.js');
 const config = require('../lib/config.js');
 const { expect } = require('chai');
 const { gzipSync } = require('zlib');
@@ -36,7 +37,10 @@ function setNodePath(nodePath) {
 }
 
 describe('patch', () => {
-  afterEach(cleanBundles);
+  afterEach(() => {
+    cleanBundles();
+    clearResolverCache();
+  });
   after(async () => {
     await destroyWorkers();
   });
@@ -259,6 +263,13 @@ describe('patch', () => {
       res.setHeader('Cache-Control', 'max-age=600');
       expect(res.getHeader('Cache-Control')).to.equal('max-age=600');
     });
+    it.only('should not resolve valid relative js import id', () => {
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res);
+      res.end('import "./body.js";');
+      expect(getBody(res)).to.equal(`import "./body.js";`);
+    });
     it('should resolve bare js import id', () => {
       const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
@@ -320,7 +331,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/module";');
       expect(getBody(res)).to.equal(
-        `import module from "./test/fixtures/www/module.js";`
+        `import module from "/test/fixtures/www/module.js";`
       );
     });
     it('should resolve jsx import id missing extension', () => {
@@ -329,7 +340,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import component from "./test/fixtures/component";');
       expect(getBody(res)).to.equal(
-        `import component from "./test/fixtures/component.jsx";`
+        `import component from "/test/fixtures/component.jsx";`
       );
     });
     it('should resolve ts import id missing extension', () => {
@@ -338,7 +349,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import route from "./test/fixtures/route";');
       expect(getBody(res)).to.equal(
-        `import route from "./test/fixtures/route.ts";`
+        `import route from "/test/fixtures/route.ts";`
       );
     });
     it('should resolve js import id missing package index', () => {
@@ -347,7 +358,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/nested";');
       expect(getBody(res)).to.equal(
-        `import module from "./test/fixtures/www/nested/index.js";`
+        `import module from "/test/fixtures/www/nested/index.js";`
       );
     });
     it('should resolve ts import id missing package index', () => {
@@ -356,7 +367,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/nested-ts";');
       expect(getBody(res)).to.equal(
-        `import module from "./test/fixtures/www/nested-ts/index.ts";`
+        `import module from "/test/fixtures/www/nested-ts/index.ts";`
       );
     });
     it('should ignore erroneous "import" string', () => {
