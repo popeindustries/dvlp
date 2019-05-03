@@ -32,7 +32,7 @@
     "is-module": "^1.0.0",
     "koa": "^2.7.0",
     "koa-send": "^5.0.0",
-    "lint-staged": "^8.1.5",
+    "lint-staged": "^8.1.6",
     "lit-html": "^1.0.0",
     "lodash": "^4.17.11",
     "lodash-es": "^4.17.11",
