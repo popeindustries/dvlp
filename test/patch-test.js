@@ -263,7 +263,7 @@ describe('patch', () => {
       res.setHeader('Cache-Control', 'max-age=600');
       expect(res.getHeader('Cache-Control')).to.equal('max-age=600');
     });
-    it.only('should not resolve valid relative js import id', () => {
+    it('should not resolve valid relative js import id', () => {
       const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
