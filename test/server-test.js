@@ -15,8 +15,15 @@ describe('server', () => {
   });
   afterEach(async () => {
     cleanBundles();
-    es && es.close();
-    ws && ws.close();
+    if (es) {
+      es.removeAllListeners();
+      es.close();
+      es = null;
+    }
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
     server && (await server.destroy());
   });
 
@@ -102,7 +109,7 @@ describe('server', () => {
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8080%2Ffeed'
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -118,7 +125,7 @@ describe('server', () => {
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8080%2Ffeed'
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -129,7 +136,7 @@ describe('server', () => {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              stream: 'http://localhost:8888/feed',
+              stream: 'http://localhost:8080/feed',
               event: 'open'
             })
           });
@@ -251,7 +258,7 @@ describe('server', () => {
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8080%2Ffeed'
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -267,7 +274,7 @@ describe('server', () => {
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8080%2Ffeed'
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -278,7 +285,7 @@ describe('server', () => {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              stream: 'http://localhost:8888/feed',
+              stream: 'http://localhost:8080/feed',
               event: 'open'
             })
           });
