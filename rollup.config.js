@@ -1,4 +1,3 @@
-const { builtinModules } = require('module');
 const commonjs = require('rollup-plugin-commonjs');
 const fs = require('fs');
 const json = require('rollup-plugin-json');
@@ -13,18 +12,22 @@ const mockClient = terser
   .minify(fs.readFileSync('lib/mock/mock-client.js', 'utf8'))
   .code.replace(/(["\\])/g, '\\$1');
 
+function external(id) {
+  return !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0');
+}
+
 module.exports = [
   {
-    external: [...builtinModules],
+    external,
     input: 'lib/bundler/bundle-worker.js',
-    plugins: [commonjs(), resolve({ mainFields: ['main'] }), json()],
+    plugins: [commonjs(), resolve(), json()],
     output: {
       file: 'bundle-worker.js',
       format: 'cjs'
     }
   },
   {
-    external: [...builtinModules, 'worker-farm', 'fswatcher-child'],
+    external,
     input: 'lib/index.js',
     plugins: [
       replace({
@@ -32,8 +35,7 @@ module.exports = [
         'global.$MOCK_CLIENT': `"${mockClient}"`
       }),
       commonjs(),
-      // Fix error with rollup resolving of acorn by ignoring 'module'
-      resolve({ mainFields: ['main'] }),
+      resolve(),
       json()
     ],
     output: {
