@@ -13,7 +13,7 @@ const mockClient = terser
   .code.replace(/(["\\])/g, '\\$1');
 
 function external(id) {
-  return !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0');
+  return /^[^./\0]/.test(id);
 }
 
 module.exports = [
