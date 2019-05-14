@@ -78,6 +78,14 @@ describe('patch', () => {
         '<head>\n<script>test inject</script></head>'
       );
     });
+    it('should uncompress gzipped css response', () => {
+      const req = getRequest('/index.css');
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res);
+      res.setHeader('Content-Encoding', 'gzip');
+      res.end(gzipSync(Buffer.from('body { backgroundColor: #fff; }')));
+      expect(getBody(res)).to.equal('body { backgroundColor: #fff; }');
+    });
     it('should inject footer script into streamed html response', () => {
       const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
