@@ -94,7 +94,7 @@ describe('staticServer', () => {
     server = await staticServer({ port: 8080 });
     const res = await fetch('http://localhost:8080/font.woff');
     expect(res.status).to.eql(200);
-    expect(res.headers.get('Content-type')).to.include('application/font-woff');
+    expect(res.headers.get('Content-type')).to.include('font/woff');
   });
   it('should serve a json file with correct mime type', async () => {
     server = await staticServer({ port: 8080 });
