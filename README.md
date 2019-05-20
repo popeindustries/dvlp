@@ -348,7 +348,7 @@ Your `path/to/mock/files` could be one of the following:
 (_Note that the following require wrapping in `""`_)
 
 - globbed path to multiple files/directories: `"path/to/mock/{api,assets}"`
-- multiple files/directories separated by space, `,`, `:`, or `;`: `"path/to/mock1.json, path/to/mock2.json"`
+- multiple files/directories separated by space, `,`, or `;`: `"path/to/mock1.json, path/to/mock2.json"`
 
 </details>
 

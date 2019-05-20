@@ -49,14 +49,6 @@ describe('file', () => {
         'test/fixtures/mock/5678.json'
       ]);
     });
-    it('should return array for filePath with ":" separator', () => {
-      expect(
-        expandPath('test/fixtures/mock/1234.json:test/fixtures/mock/5678.json')
-      ).to.eql([
-        'test/fixtures/mock/1234.json',
-        'test/fixtures/mock/5678.json'
-      ]);
-    });
     it('should return array for filePath with ";" separator', () => {
       expect(
         expandPath('test/fixtures/mock/1234.json;test/fixtures/mock/5678.json')
