@@ -19,7 +19,7 @@ function external(id) {
 module.exports = [
   {
     external,
-    input: 'lib/bundler/bundle-worker.js',
+    input: './lib/bundler/bundle-worker.js',
     plugins: [commonjs(), resolve(), json()],
     output: {
       file: 'bundle-worker.js',
@@ -28,7 +28,7 @@ module.exports = [
   },
   {
     external,
-    input: 'lib/index.js',
+    input: './lib/index.js',
     plugins: [
       replace({
         'global.$RELOAD_CLIENT': `'${reloadClient}'`,
@@ -39,6 +39,7 @@ module.exports = [
       json()
     ],
     output: {
+      exports: 'named',
       file: 'dvlp.js',
       format: 'cjs'
     }
