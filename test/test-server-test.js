@@ -212,7 +212,7 @@ describe('testServer', () => {
   });
 
   describe('pushEvent()', () => {
-    it.skip('should push message via EventSource', (done) => {
+    it('should push message via EventSource', (done) => {
       testServer({ port: 8080 }).then((srvr) => {
         server = srvr;
         es = new EventSource('http://localhost:8080');
@@ -226,7 +226,7 @@ describe('testServer', () => {
         };
       });
     });
-    it.skip('should push event via EventSource', (done) => {
+    it('should push event via EventSource', (done) => {
       testServer({ port: 8080 }).then((srvr) => {
         server = srvr;
         es = new EventSource('http://localhost:8080');
@@ -257,7 +257,7 @@ describe('testServer', () => {
         });
       });
     });
-    it.skip('should push mock event via EventSource', (done) => {
+    it('should push mock event via EventSource', (done) => {
       testServer({ port: 8080 }).then((srvr) => {
         server = srvr;
         server.loadMockFiles('test/fixtures/mock-push');
@@ -287,7 +287,7 @@ describe('testServer', () => {
         });
       });
     });
-    it.skip('should push a sequence of mock events via EventSource', (done) => {
+    it('should push a sequence of mock events via EventSource', (done) => {
       testServer({ port: 8080 }).then((srvr) => {
         let events = [];
         let last;
@@ -316,7 +316,7 @@ describe('testServer', () => {
         });
       });
     });
-    it('should push a sequence of mock events via WebSocket', (done) => {
+    it('should push a sequence of mock events via EventSource', (done) => {
       testServer({ port: 8888 }).then((srvr) => {
         let events = [];
         let last;
