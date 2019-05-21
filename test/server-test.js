@@ -101,7 +101,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(res.headers.get('content-type')).to.equal('image/jpeg');
     });
-    it('should handle mock EventSource connection', (done) => {
+    it.skip('should handle mock EventSource connection', (done) => {
       serverFactory('test/fixtures/www', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
@@ -117,7 +117,7 @@ describe('server', () => {
         };
       });
     });
-    it('should handle push mock event via EventSource', (done) => {
+    it.skip('should handle push mock event via EventSource', (done) => {
       serverFactory('test/fixtures/www', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
@@ -250,7 +250,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(res.headers.get('content-type')).to.equal('image/jpeg');
     });
-    it('should handle mock EventSource connection', (done) => {
+    it.skip('should handle mock EventSource connection', (done) => {
       serverFactory('test/fixtures/app.js', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
@@ -266,7 +266,7 @@ describe('server', () => {
         };
       });
     });
-    it('should handle push mock event via EventSource', (done) => {
+    it.skip('should handle push mock event via EventSource', (done) => {
       serverFactory('test/fixtures/app.js', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
