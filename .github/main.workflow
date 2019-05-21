@@ -1,34 +1,16 @@
 workflow "Run Tests" {
   on = "push"
-  resolves = ["npm test (10)", "npm test (latest)"]
+  resolves = "Test Matrix"
 }
 
-# node@8
+action "Test Matrix" {
+  uses = "actions/node-matrix@v1.0.0"
 
-# node@10
-action "npm ci (10)" {
-  uses = "docker://node:10"
-  runs = "npm"
-  args = "ci"
-}
+  # Specify the versions of node to test against as `args`.
+  args = ["8", "10", "12"]
 
-action "npm test (10)" {
-  needs = ["npm ci (10)"]
-  uses = "docker://node:10"
-  runs = "npm"
-  args = "test"
-}
-
-# node@latest
-action "npm ci (latest)" {
-  uses = "docker://node"
-  runs = "npm"
-  args = "ci"
-}
-
-action "npm test (latest)" {
-  needs = ["npm ci (latest)"]
-  uses = "docker://node"
-  runs = "npm"
-  args = "test"
+  # Provide a GITHUB_TOKEN so that each version's tests show up in a
+  # separate check run. Without this, they'll all be included in the
+  # text output of this action.
+  secrets = ["GITHUB_TOKEN"]
 }
