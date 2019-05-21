@@ -1,16 +1,15 @@
-workflow "Run Tests" {
+workflow "Build and Test" {
   on = "push"
-  resolves = "Test Matrix"
+  resolves = ["Test"]
 }
 
-action "Test Matrix" {
-  uses = "actions/node-matrix@v1.0.0"
+action "Build" {
+  uses = "actions/npm@master"
+  args = "install"
+}
 
-  # Specify the versions of node to test against as `args`.
-  args = ["8", "10", "12"]
-
-  # Provide a GITHUB_TOKEN so that each version's tests show up in a
-  # separate check run. Without this, they'll all be included in the
-  # text output of this action.
-  secrets = ["GITHUB_TOKEN"]
+action "Test" {
+  needs = ["Build"]
+  uses = "actions/npm@master"
+  args = "test"
 }
