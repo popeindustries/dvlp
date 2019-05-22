@@ -140,18 +140,18 @@ describe.only('file', () => {
     it('should find file for JS request missing extension with type', () => {
       expect(
         find(
-          { headers: {}, url: '/dep' },
+          { headers: {}, url: '/dep-esm' },
           { directories: [path.resolve('test/fixtures/www')], type: 'js' }
         )
-      ).to.equal(path.resolve('test/fixtures/www/dep.mjs'));
+      ).to.equal(path.resolve('test/fixtures/www/dep-esm.js'));
     });
     it('should find file for JS string missing extension with type', () => {
       expect(
-        find('/dep', {
+        find('/dep-esm', {
           directories: [path.resolve('test/fixtures/www')],
           type: 'js'
         })
-      ).to.equal(path.resolve('test/fixtures/www/dep.mjs'));
+      ).to.equal(path.resolve('test/fixtures/www/dep-esm.js'));
     });
     it('should find file for JS string missing package filename', () => {
       expect(

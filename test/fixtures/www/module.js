@@ -1,4 +1,4 @@
-import dep from './dep.mjs';
+import dep from './dep-esm.js';
 
 function main() {
   console.log(dep);
