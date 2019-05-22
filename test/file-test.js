@@ -4,7 +4,7 @@ const { expect } = require('chai');
 const { expandPath, find, importModule } = require('../lib/utils/file.js');
 const path = require('path');
 
-describe('file', () => {
+describe.only('file', () => {
   describe('expandPath()', () => {
     it('should return undefined for missing/empty filePath', () => {
       expect(expandPath()).to.eql(undefined);
