@@ -17,7 +17,7 @@ function sleep(dur) {
   });
 }
 
-describe('testServer', () => {
+describe.only('testServer', () => {
   before(() => {
     testServer.disableNetwork();
   });
