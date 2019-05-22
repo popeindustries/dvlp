@@ -8,3 +8,5 @@ install:
 cache:
   directories:
     - ~/.nvm
+after_script:
+  - killall -9 node
