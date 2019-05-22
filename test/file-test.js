@@ -82,6 +82,11 @@ describe('file', () => {
   });
 
   describe('find()', () => {
+    it('should find file for absolute file path', () => {
+      expect(find(path.resolve('test/fixtures/www/index.html'))).to.equal(
+        path.resolve('test/fixtures/www/index.html')
+      );
+    });
     it('should find file for fully qualified request', () => {
       expect(
         find(

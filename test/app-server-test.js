@@ -84,7 +84,7 @@ describe('appServer', () => {
       done();
     }, 500);
   });
-  it.only('should serve a bundled module js file', async () => {
+  it('should serve a bundled module js file', async () => {
     server = await appServer('app.js', { port: 8000 });
     const res = await fetch(
       `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.11.js`

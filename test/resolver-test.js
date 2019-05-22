@@ -109,7 +109,7 @@ describe('resolver', () => {
 
     describe('resolve()', () => {
       it("should not resolve a file if the reference file doesn't exist", () => {
-        expect(resolve(path.resolve('blah.js'), '')).to.equal(undefined);
+        expect(resolve('', path.resolve('blah.js'))).to.equal(undefined);
       });
       it('should resolve an absolute path', () => {
         expect(
@@ -117,122 +117,122 @@ describe('resolver', () => {
         ).to.equal(path.resolve('foo.js'));
       });
       it('should resolve a relative path to a js file in the same directory', () => {
-        expect(resolve(path.resolve('foo.js'), './baz')).to.equal(
+        expect(resolve('./baz', path.resolve('foo.js'))).to.equal(
           path.resolve('baz.js')
         );
       });
       it('should resolve a relative path to a js file in a child directory', () => {
-        expect(resolve(path.resolve('foo.js'), './nested/foo')).to.equal(
+        expect(resolve('./nested/foo', path.resolve('foo.js'))).to.equal(
           path.resolve('nested/foo.js')
         );
       });
       it('should resolve a relative path to a js file in a parent directory', () => {
-        expect(resolve(path.resolve('nested/foo.js'), '../baz')).to.equal(
+        expect(resolve('../baz', path.resolve('nested/foo.js'))).to.equal(
           path.resolve('baz.js')
         );
       });
       it('should not resolve a js file with an unkown extension', () => {
-        expect(resolve(path.resolve('foo.js'), './bar.blah')).to.equal(
+        expect(resolve('./bar.blah', path.resolve('foo.js'))).to.equal(
           undefined
         );
       });
       it('should resolve a file name containing multiple "."', () => {
-        expect(resolve(path.resolve('foo.js'), './foo.bar')).to.equal(
+        expect(resolve('./foo.bar', path.resolve('foo.js'))).to.equal(
           path.resolve('foo.bar.js')
         );
       });
       it('should resolve a js package module path containing a package.json file and a "main" file field', () => {
-        expect(resolve(path.resolve('baz.js'), 'foo')).to.equal(
+        expect(resolve('foo', path.resolve('baz.js'))).to.equal(
           path.resolve('node_modules/foo/lib/bat.js')
         );
       });
       it('should resolve a js package module path containing a package.json file and a "main" directory field', () => {
-        expect(resolve(path.resolve('baz.js'), 'foo-dir')).to.equal(
+        expect(resolve('foo-dir', path.resolve('baz.js'))).to.equal(
           path.resolve('node_modules/foo-dir/lib/index.js')
         );
       });
       it('should resolve a js package module path from a deeply nested location', () => {
-        expect(resolve(path.resolve('nested/nested/bar.js'), 'foo')).to.equal(
+        expect(resolve('foo', path.resolve('nested/nested/bar.js'))).to.equal(
           path.resolve('node_modules/foo/lib/bat.js')
         );
       });
       it('should not resolve a sub-module of a js package module path from a deeply nested location', () => {
         expect(
-          resolve(path.resolve('nested/nested/bar.js'), 'bar/bat')
+          resolve('bar/bat', path.resolve('nested/nested/bar.js'))
         ).to.equal(undefined);
       });
       it('should resolve a js package module source path', () => {
-        expect(resolve(path.resolve('baz.js'), 'foo/lib/bat')).to.equal(
+        expect(resolve('foo/lib/bat', path.resolve('baz.js'))).to.equal(
           path.resolve('node_modules/foo/lib/bat.js')
         );
       });
       it('should resolve a js package module path for a deeply nested package module', () => {
         expect(
           resolve(
-            path.resolve('node_modules/bar/node_modules/bat/index.js'),
-            'foo'
+            'foo',
+            path.resolve('node_modules/bar/node_modules/bat/index.js')
           )
         ).to.equal(path.resolve('node_modules/foo/lib/bat.js'));
       });
       it('should resolve a js package module source path for a deeply nested package module', () => {
         expect(
           resolve(
-            path.resolve('node_modules/bar/node_modules/bat/index.js'),
-            'foo/lib/bar'
+            'foo/lib/bar',
+            path.resolve('node_modules/bar/node_modules/bat/index.js')
           )
         ).to.equal(path.resolve('node_modules/foo/lib/bar.js'));
       });
       it('should resolve a scoped js package module path containing a package.json file and a "main" file field', () => {
         expect(
-          resolve(path.resolve('baz.js'), '@popeindustries/test')
+          resolve('@popeindustries/test', path.resolve('baz.js'))
         ).to.equal(path.resolve('node_modules/@popeindustries/test/test.js'));
       });
       it('should resolve a scoped js package module source path', () => {
         expect(
-          resolve(path.resolve('baz.js'), '@popeindustries/test/lib/bar')
+          resolve('@popeindustries/test/lib/bar', path.resolve('baz.js'))
         ).to.equal(
           path.resolve('node_modules/@popeindustries/test/lib/bar.js')
         );
       });
       it('should resolve an aliased main module file via simple "browser" field', () => {
-        expect(resolve(path.resolve('baz.js'), 'browser')).to.equal(
+        expect(resolve('browser', path.resolve('baz.js'))).to.equal(
           path.resolve('node_modules/browser/browser/foo.js')
         );
       });
       it('should resolve an aliased main file via "browser" hash', () => {
-        expect(resolve(path.resolve('baz.js'), 'browser-hash')).to.equal(
+        expect(resolve('browser-hash', path.resolve('baz.js'))).to.equal(
           path.resolve('node_modules/browser-hash/browser/foo.js')
         );
       });
       it('should resolve an aliased package with multiple aliases via "browser" hash', () => {
         expect(
-          resolve(path.resolve('node_modules/browser-hash/bar.js'), 'foo')
+          resolve('foo', path.resolve('node_modules/browser-hash/bar.js'))
         ).to.equal(path.resolve('node_modules/browser-hash/foo.js'));
       });
       it('should resolve an aliased package with a file via "browser" hash', () => {
         expect(
-          resolve(path.resolve('node_modules/browser-hash/foo.js'), 'bar')
+          resolve('bar', path.resolve('node_modules/browser-hash/foo.js'))
         ).to.equal(path.resolve('node_modules/browser-hash/foo.js'));
       });
       it('should resolve an aliased file with a package via "browser" hash', () => {
         expect(
-          resolve(path.resolve('node_modules/browser-hash/foo.js'), './bing')
+          resolve('./bing', path.resolve('node_modules/browser-hash/foo.js'))
         ).to.equal(
           path.resolve('node_modules/browser-hash/node_modules/bing/index.js')
         );
         expect(
-          resolve(path.resolve('node_modules/browser-hash/foo.js'), './bing.js')
+          resolve('./bing.js', path.resolve('node_modules/browser-hash/foo.js'))
         ).to.equal(
           path.resolve('node_modules/browser-hash/node_modules/bing/index.js')
         );
       });
       it('should resolve an aliased native module via a "browser" hash', () => {
         expect(
-          resolve(path.resolve('node_modules/browser-hash/bar.js'), 'net')
+          resolve('net', path.resolve('node_modules/browser-hash/bar.js'))
         ).to.equal(path.resolve('node_modules/browser-hash/foo.js'));
       });
       it('should resolve a native module reference', () => {
-        expect(resolve(path.resolve('foo.js'), 'http')).to.equal(undefined);
+        expect(resolve('http', path.resolve('foo.js'))).to.equal(undefined);
       });
     });
   });
