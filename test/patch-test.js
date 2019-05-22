@@ -36,7 +36,7 @@ function setNodePath(nodePath) {
   require('module').Module._initPaths();
 }
 
-describe.only('patch', () => {
+describe('patch', () => {
   afterEach(() => {
     cleanBundles();
     clearResolverCache();

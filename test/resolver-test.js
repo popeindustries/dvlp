@@ -9,7 +9,7 @@ const config = require('../lib/config.js');
 const { expect } = require('chai');
 const path = require('path');
 
-describe.only('resolver', () => {
+describe('resolver', () => {
   before(() => {
     const cwd = path.resolve(__dirname, 'fixtures/resolver');
     config.directories.push(cwd);

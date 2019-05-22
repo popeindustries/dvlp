@@ -9,7 +9,7 @@ const staticServer = require('../lib/server/static-server.js');
 
 let server;
 
-describe.only('staticServer', () => {
+describe('staticServer', () => {
   before(() => {
     const cwd = path.resolve(__dirname, 'fixtures');
     config.directories.push(cwd, path.resolve(__dirname, 'fixtures/www'));

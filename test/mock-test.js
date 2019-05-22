@@ -43,7 +43,7 @@ function getResponse() {
   };
 }
 
-describe.only('mock', () => {
+describe('mock', () => {
   afterEach(mocks.clean);
 
   describe('addResponse()', () => {
