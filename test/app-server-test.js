@@ -17,7 +17,7 @@ function changeBodyContent(content) {
   );
 }
 
-describe('appServer', () => {
+describe.only('appServer', () => {
   before(() => {
     process.chdir(path.resolve(__dirname, 'fixtures'));
   });
