@@ -5,17 +5,9 @@ const appServer = require('../lib/server/app-server.js');
 const config = require('../lib/config.js');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
-const fs = require('fs');
 const path = require('path');
 
 let server;
-
-function changeBodyContent(content) {
-  fs.writeFileSync(
-    path.resolve('./body.js'),
-    `module.exports = '${content}';\n`
-  );
-}
 
 describe('appServer', () => {
   before(() => {
@@ -26,7 +18,6 @@ describe('appServer', () => {
     server && (await server.destroy());
   });
   after(async () => {
-    changeBodyContent('hi');
     process.chdir(path.resolve(__dirname, '..'));
     await destroyWorkers();
   });
@@ -70,19 +61,6 @@ describe('appServer', () => {
     expect(global.beforeExitCalled).to.equal(undefined);
     await server.restart();
     expect(global.beforeExitCalled).to.equal(true);
-  });
-  it.skip('should restart an app server on file change', (done) => {
-    appServer('app.js', { port: 8000 }).then((s) => {
-      server = s;
-      changeBodyContent('bye');
-    });
-    setTimeout(async () => {
-      const res = await fetch('http://localhost:8000/', {
-        headers: { Accept: 'text/html' }
-      });
-      expect(await res.text()).to.contain('bye');
-      done();
-    }, 500);
   });
   it('should serve a bundled module js file', async () => {
     server = await appServer('app.js', { port: 8000 });

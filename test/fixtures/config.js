@@ -1,4 +1,4 @@
-const dep = require('./www/dep.cjs');
+const dep = require('./www/dep-cjs.js');
 
 module.exports = {
   dep
