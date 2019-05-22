@@ -9,7 +9,7 @@ const path = require('path');
 
 let server;
 
-describe.only('appServer', () => {
+describe('appServer', () => {
   before(() => {
     process.chdir(path.resolve(__dirname, 'fixtures'));
   });
@@ -19,7 +19,7 @@ describe.only('appServer', () => {
   });
   after(async () => {
     process.chdir(path.resolve(__dirname, '..'));
-    destroyWorkers();
+    await destroyWorkers();
   });
 
   it('should start an app server', async () => {

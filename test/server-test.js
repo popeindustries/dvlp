@@ -27,7 +27,7 @@ describe('server', () => {
     server && (await server.destroy());
   });
 
-  describe('static', () => {
+  describe.only('static', () => {
     it('should start a file server', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
