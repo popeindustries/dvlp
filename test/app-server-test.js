@@ -19,7 +19,7 @@ describe.only('appServer', () => {
   });
   after(async () => {
     process.chdir(path.resolve(__dirname, '..'));
-    await destroyWorkers();
+    destroyWorkers();
   });
 
   it('should start an app server', async () => {
