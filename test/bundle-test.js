@@ -15,7 +15,7 @@ const { resolve } = require('../lib/resolver/index.js');
 const DEBUG = 'debug-4.1.1.js';
 const LODASH = 'lodash-4.17.11.js';
 
-describe('bundle()', () => {
+describe.only('bundle()', () => {
   afterEach(() => {
     cleanBundles();
   });
