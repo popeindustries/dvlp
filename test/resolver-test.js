@@ -26,9 +26,6 @@ describe('resolver', () => {
         expect(resolvePackagePath(path.resolve('foo.js'))).to.eql(
           process.cwd()
         );
-        expect(resolvePackagePath(path.resolve('node_modules'))).to.eql(
-          process.cwd()
-        );
       });
       it('should return a package path when passed a node_modules path', () => {
         expect(resolvePackagePath(path.resolve('node_modules/foo'))).to.eql(
@@ -52,7 +49,9 @@ describe('resolver', () => {
 
     describe('getpackage()', () => {
       it('should return undefined if a package is not found', () => {
-        expect(getPackage('node_modules/zing')).to.equal(undefined);
+        expect(getPackage(path.resolve('node_modules/zing'))).to.equal(
+          undefined
+        );
       });
       it('should return details for the project root package', () => {
         const pkg = getPackage(process.cwd());
@@ -170,7 +169,7 @@ describe('resolver', () => {
         expect(
           resolve(
             'foo',
-            path.resolve('node_modules/bar/node_modules/bat/index.js')
+            path.resolve('node_modules/bar/node_modules/boo/index.js')
           )
         ).to.equal(path.resolve('node_modules/foo/lib/bat.js'));
       });
@@ -178,9 +177,14 @@ describe('resolver', () => {
         expect(
           resolve(
             'foo/lib/bar',
-            path.resolve('node_modules/bar/node_modules/bat/index.js')
+            path.resolve('node_modules/bar/node_modules/boo/index.js')
           )
         ).to.equal(path.resolve('node_modules/foo/lib/bar.js'));
+      });
+      it('should resolve a js package module source path with nested package.json', () => {
+        expect(resolve('bat/boo', path.resolve('index.js'))).to.equal(
+          path.resolve('node_modules/bat/boo/index.esm.js')
+        );
       });
       it('should resolve a scoped js package module path containing a package.json file and a "main" file field', () => {
         expect(

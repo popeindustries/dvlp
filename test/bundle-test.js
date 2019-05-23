@@ -28,20 +28,20 @@ describe('bundle()', () => {
   });
   it('should bundle and return bundle filePath', async () => {
     const filePath = await bundle(
-      resolveModuleId('lodash', resolve('lodash', 'index.js'))
+      resolveModuleId('lodash', resolve('lodash', path.resolve('index.js')))
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
   it('should return cached bundle filePath', async () => {
     await bundle(resolveModuleId('lodash', resolve('index.js', 'lodash')));
     const filePath = await bundle(
-      resolveModuleId('lodash', resolve('lodash', 'index.js'))
+      resolveModuleId('lodash', resolve('lodash', path.resolve('index.js')))
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
   it('should bundle with overridden config', async () => {
     const filePath = await bundle(
-      resolveModuleId('debug', resolve('debug', 'index.js')),
+      resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
       'debug',
       {
         input: 'foo.js',
@@ -54,7 +54,7 @@ describe('bundle()', () => {
   });
   it('should skip bundling transient dependencies', async () => {
     const filePath = await bundle(
-      resolveModuleId('debug', resolve('debug', 'index.js'))
+      resolveModuleId('debug', resolve('debug', path.resolve('index.js')))
     );
     const module = fs.readFileSync(filePath, 'utf8');
     expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
