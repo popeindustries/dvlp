@@ -42,7 +42,7 @@
     "husky": "^2.3.0",
     "koa": "^2.7.0",
     "koa-send": "^5.0.0",
-    "lint-staged": "^8.1.7",
+    "lint-staged": "^9.0.0",
     "lit-html": "^1.0.0",
     "lodash": "^4.17.11",
     "mocha": "^6.1.4",
