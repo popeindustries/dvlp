@@ -22,7 +22,7 @@
     "permessage-deflate": "^0.1.6",
     "pirates": "^4.0.1",
     "rimraf": "^2.6.3",
-    "rollup": "^1.12.3",
+    "rollup": "^1.17.0",
     "rollup-plugin-commonjs": "^10.0.0",
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^5.0.0",
@@ -70,15 +70,10 @@
     }
   },
   "lint-staged": {
-    "linters": {
-      "*.js": [
-        "prettier --write",
-        "eslint",
-        "git add"
-      ]
-    },
-    "ignore": [
-      "*.min.js"
+    "*.js": [
+      "prettier --write",
+      "eslint",
+      "git add"
     ]
   }
 }

@@ -284,7 +284,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import lodash from "lodash";');
       expect(getBody(res)).to.equal(
-        `import lodash from "/${config.bundleDirName}/lodash-4.17.11.js";`
+        `import lodash from "/${config.bundleDirName}/lodash-4.17.14.js";`
       );
     });
     it('should resolve multiple bare js import ids', () => {
@@ -295,11 +295,7 @@ describe('patch', () => {
         'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";'
       );
       expect(getBody(res)).to.equal(
-        `import lodashArr from "/${
-          config.bundleDirName
-        }/lodash__array-4.17.11.js";\nimport { foo } from "./foo.js";\nimport debug from "/${
-          config.bundleDirName
-        }/debug-4.1.1.js";`
+        `import lodashArr from "/${config.bundleDirName}/lodash__array-4.17.14.js";\nimport { foo } from "./foo.js";\nimport debug from "/${config.bundleDirName}/debug-4.1.1.js";`
       );
     });
     it('should resolve bare js import id for es module', () => {
