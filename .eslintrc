@@ -20,6 +20,7 @@
   },
   "plugins": ["prettier"],
   "rules": {
+    "no-async-promise-executor": "off",
     "no-constant-condition": "off",
     "no-console": "off",
     "no-unused-vars": ["error", { "ignoreRestSiblings": true }],
