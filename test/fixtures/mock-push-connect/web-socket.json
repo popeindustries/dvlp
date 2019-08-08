@@ -1,0 +1,19 @@
+[
+  {
+    "stream": {
+      "url": "ws://localhost:8888/socket"
+    },
+    "events": [
+      {
+        "name": "foo event",
+        "connect": true,
+        "message": "foo"
+      },
+      {
+        "name": "bar event",
+        "connect": true,
+        "message": "bar"
+      }
+    ]
+  }
+]

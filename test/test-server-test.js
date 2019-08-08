@@ -272,6 +272,23 @@ describe('testServer', () => {
         });
       });
     });
+    it('should push mock connect event via EventSource', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        server.loadMockFiles('test/fixtures/mock-push-connect');
+        es = new EventSource('http://localhost:8080/feed');
+        es.onopen = () => {
+          expect(es.readyState).to.equal(1);
+        };
+        es.addEventListener('foo', (event) => {
+          expect(event.data).to.equal('{"title":"foo"}');
+        });
+        es.addEventListener('bar', (event) => {
+          expect(event.data).to.equal('{"title":"bar"}');
+          done();
+        });
+      });
+    });
     it('should push mock event via WebSocket', (done) => {
       testServer({ port: 8888 }).then((srvr) => {
         server = srvr;
@@ -284,6 +301,24 @@ describe('testServer', () => {
         ws.on('message', (event) => {
           expect(event.data).to.equal('{"title":"foo"}');
           done();
+        });
+      });
+    });
+    it('should push mock connect events via WebSocket', (done) => {
+      testServer({ port: 8888 }).then((srvr) => {
+        const events = [];
+        server = srvr;
+        server.loadMockFiles('test/fixtures/mock-push-connect');
+        ws = new WebSocket('ws://localhost:8888/socket');
+        ws.on('open', () => {
+          expect(ws.readyState).to.equal(1);
+        });
+        ws.on('message', (event) => {
+          events.push(event.data);
+          if (events.length === 2) {
+            expect(events).to.eql(['foo', 'bar']);
+            done();
+          }
         });
       });
     });

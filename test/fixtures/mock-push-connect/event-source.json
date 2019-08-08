@@ -1,0 +1,29 @@
+[
+  {
+    "stream": {
+      "url": "https://localhost:8080/feed"
+    },
+    "events": [
+      {
+        "name": "foo event",
+        "connect": true,
+        "message": {
+          "title": "foo"
+        },
+        "options": {
+          "event": "foo"
+        }
+      },
+      {
+        "name": "bar event",
+        "connect": true,
+        "message": {
+          "title": "bar"
+        },
+        "options": {
+          "event": "bar"
+        }
+      }
+    ]
+  }
+]

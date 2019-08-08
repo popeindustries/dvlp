@@ -257,7 +257,8 @@ Mock a `WebSocket` or `EventStream` by creating a `.json` file describing the mo
   },
   "events": [
     {
-      "name": "connect",
+      "name": "hello Bob",
+      "connect": true,
       "message": {
         "people": ["Bob Builder"]
       },
@@ -284,7 +285,7 @@ Mock a `WebSocket` or `EventStream` by creating a `.json` file describing the mo
 
 (_Specifying a `stream.protocol = "socket.io"` will negotiate WebSocket responses using the Socket.io protocol_)
 
-An event's `name` is a custom, unique string used to identify the event for manual triggering (see below), but an event named `connect` has a special meaning and will be triggered automatically on initial connection.
+An event's `name` is a custom, unique string used to identify the event for manual triggering (see below). Adding the property `connect: true` will flag an event to be triggered automatically on initial connection.
 
 A sequence of events may also be described by nesting events under the `sequence` property:
 
@@ -503,7 +504,7 @@ console.log(await res.json()); // => { id: "1234", name: "bob" }
 ```js
 server.mock('ws://www.somesocket.com/stream', [
   {
-    name: 'connect',
+    name: 'hi',
     message: 'hi!'
   },
   {

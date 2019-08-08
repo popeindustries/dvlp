@@ -20,6 +20,7 @@
   },
   "plugins": ["prettier"],
   "rules": {
+    "require-atomic-updates": "off",
     "no-async-promise-executor": "off",
     "no-constant-condition": "off",
     "no-console": "off",
