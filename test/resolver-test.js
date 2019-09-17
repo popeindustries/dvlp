@@ -230,6 +230,11 @@ describe('resolver', () => {
           path.resolve('node_modules/browser-hash/node_modules/bing/index.js')
         );
       });
+      it('should resolve an aliased file with a package file via "browser" hash', () => {
+        expect(
+          resolve('./test.js', path.resolve('node_modules/browser-hash/foo.js'))
+        ).to.equal(path.resolve('node_modules/@popeindustries/test/test.js'));
+      });
       it('should resolve an aliased native module via a "browser" hash', () => {
         expect(
           resolve('net', path.resolve('node_modules/browser-hash/bar.js'))
