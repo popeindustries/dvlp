@@ -58,9 +58,15 @@ describe('appServer', () => {
   });
   it('should trigger exit handlers for clean up', async () => {
     server = await appServer('appExit.js', { port: 8000 });
-    expect(global.beforeExitCalled).to.equal(undefined);
+    expect(global.context.beforeExitCalled).to.equal(undefined);
     await server.restart();
-    expect(global.beforeExitCalled).to.equal(true);
+    expect(global.context.beforeExitCalled).to.equal(true);
+  });
+  it('should trigger exit handlers for clean up', async () => {
+    server = await appServer('appGlobals.js', { port: 8000 });
+    expect(global.foo).to.equal('foo');
+    await server.destroy();
+    expect(global.foo).to.equal(undefined);
   });
   it('should serve a bundled module js file', async () => {
     server = await appServer('app.js', { port: 8000 });

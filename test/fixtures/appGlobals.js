@@ -6,6 +6,8 @@ const send = require('koa-send');
 
 const app = new Koa();
 
+global.foo = 'foo';
+
 app.use(async (ctx) => {
   if (ctx.path === '/') {
     return (ctx.body = `<!doctype html>
@@ -24,12 +26,3 @@ app.use(async (ctx) => {
 });
 
 app.listen(process.env.PORT || 8000);
-
-process.on('beforeExit', () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      global.context.beforeExitCalled = true;
-      resolve();
-    }, 500);
-  });
-});
