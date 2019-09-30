@@ -64,7 +64,7 @@ type PushEvent = {
   };
 };
 
-class Mock {
+export class Mock {
   cache: Map<string, object>;
 
   constructor(filePaths?: string | Array<string>);
