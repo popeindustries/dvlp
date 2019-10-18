@@ -43,6 +43,7 @@ describe('bundle()', () => {
     const filePath = await bundle(
       resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
       'debug',
+      undefined,
       {
         input: 'foo.js',
         output: { banner: '/* this is a test */', format: 'cjs' }
