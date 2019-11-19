@@ -13,7 +13,7 @@
   "dependencies": {
     "chalk": "^3.0.0",
     "chokidar": "^3.1.0",
-    "commander": "^3.0.1",
+    "commander": "^4.0.1",
     "debug": "^4.1.1",
     "faye-websocket": "^0.11.3",
     "get-port": "^5.0.0",
@@ -36,22 +36,22 @@
   "devDependencies": {
     "babel-eslint": "^10.0.3",
     "chai": "^4.2.0",
-    "eslint": "^6.4.0",
-    "eslint-config-prettier": "^6.3.0",
+    "eslint": "^6.6.0",
+    "eslint-config-prettier": "^6.7.0",
     "eslint-plugin-prettier": "^3.1.1",
     "eventsource": "^1.0.7",
-    "husky": "^3.0.9",
-    "koa": "^2.10.0",
+    "husky": "^3.1.0",
+    "koa": "^2.11.0",
     "koa-send": "^5.0.0",
-    "lint-staged": "^9.2.5",
+    "lint-staged": "^9.4.3",
     "lit-html": "^1.1.2",
     "lodash": "^4.17.15",
     "mocha": "^6.2.2",
     "node-fetch": "^2.6.0",
-    "prettier": "^1.18.2",
-    "react": "^16.9.0",
-    "sass": "^1.22.12",
-    "terser": "^4.3.9"
+    "prettier": "^1.19.1",
+    "react": "^16.12.0",
+    "sass": "^1.23.6",
+    "terser": "^4.4.0"
   },
   "engines": {
     "node": ">=8"
