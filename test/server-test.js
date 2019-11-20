@@ -1,15 +1,17 @@
 'use strict';
 
 const { cleanBundles } = require('../lib/bundler/index.js');
+const config = require('../lib/config.js');
 const EventSource = require('eventsource');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
+const path = require('path');
 const serverFactory = require('../lib/server/index.js');
 const { Client: WebSocket } = require('faye-websocket');
 
 let es, server, ws;
 
-describe('server', () => {
+describe.only('server', () => {
   beforeEach(() => {
     cleanBundles();
   });
@@ -28,7 +30,18 @@ describe('server', () => {
   });
 
   describe('static', () => {
-    it('should start a file server', async () => {
+    before(() => {
+      config.directories.push(
+        path.resolve(__dirname, 'fixtures'),
+        path.resolve(__dirname, 'fixtures/www')
+      );
+    });
+    after(() => {
+      config.directories.pop();
+      config.directories.pop();
+    });
+
+    it('should implicitly serve index.html', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
         reload: false
@@ -36,6 +49,104 @@ describe('server', () => {
       const res = await fetch('http://localhost:8000/');
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('<!doctype html>');
+    });
+    it('should rewrite request for missing html files to index.html ', async () => {
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch('http://localhost:8000/0', {
+        headers: { accept: 'text/html' }
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('<!doctype html>');
+    });
+    it('should serve a css file with correct mime type', async () => {
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch('http://localhost:8000/style.css');
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('Content-type')).to.include('text/css');
+    });
+    it('should serve a js file with correct mime type', async () => {
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch('http://localhost:8000/script.js');
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('Content-type')).to.include(
+        'application/javascript'
+      );
+    });
+    it('should serve a js file with missing extension with correct mime type', async () => {
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch('http://localhost:8000/script');
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('Content-type')).to.include(
+        'application/javascript'
+      );
+    });
+    it('should serve a js package file with correct mime type', async () => {
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch('http://localhost:8000/nested');
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('Content-type')).to.include(
+        'application/javascript'
+      );
+    });
+    it('should serve a bundled module js file with correct mime type', async () => {
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch(
+        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.10.js`
+      );
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('Content-type')).to.include(
+        'application/javascript'
+      );
+    });
+    it('should serve a node_modules module js file with correct mime type', async () => {
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch(`http://localhost:8000/node_modules/foo/foo.js`);
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('Content-type')).to.include(
+        'application/javascript'
+      );
+      const body = await res.text();
+      expect(body).to.contain("console.log('this is foo');");
+    });
+    it('should serve a font file with correct mime type', async () => {
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch('http://localhost:8000/font.woff');
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('Content-type')).to.include('font/woff');
+    });
+    it('should serve a json file with correct mime type', async () => {
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch('http://localhost:8000/test.json');
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('Content-type')).to.include('application/json');
+    });
+    it('should serve files from additional directories', async () => {
+      config.directories.push(path.resolve(__dirname, 'fixtures/assets'));
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch('http://localhost:8000/index.css');
+      config.directories.pop();
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('Content-type')).to.include('text/css');
+      expect(await res.text()).to.equal(
+        'body {\n  background-color: white;\n}'
+      );
+    });
+    it('should return 404 for missing file', async () => {
+      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      const res = await fetch('http://localhost:8000/not.css');
+      expect(res.status).to.eql(404);
+    });
+    it('should start with custom Rollup config', async () => {
+      config.rollupConfigPath = path.resolve('test/fixtures/rollup.config.js');
+      server = await serverFactory('test/fixtures/www', {
+        port: 8000
+      });
+      const res = await fetch(
+        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`
+      );
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('/* this is a test */');
+      config.rollupConfigPath = undefined;
     });
     it('should inject the reload script into an html response', async () => {
       server = await serverFactory('test/fixtures/www', {
@@ -109,7 +220,7 @@ describe('server', () => {
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8080%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -125,7 +236,7 @@ describe('server', () => {
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8080%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -136,7 +247,7 @@ describe('server', () => {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              stream: 'http://localhost:8080/feed',
+              stream: 'http://localhost:8888/feed',
               event: 'open'
             })
           });
@@ -207,6 +318,95 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
     });
+    it('should start an app server listening for "request" event', async () => {
+      server = await serverFactory('test/fixtures/appListener.js', {
+        port: 8000
+      });
+      const res = await fetch('http://localhost:8000/', {
+        headers: { Accept: 'text/html; charset=utf-8' }
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('ok');
+    });
+    it('should start an esm app server', async () => {
+      server = await serverFactory('test/fixtures/appEsm.js', { port: 8000 });
+      const res = await fetch('http://localhost:8000/', {
+        headers: { Accept: 'text/html; charset=utf-8' }
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('hi');
+    });
+    it('should polyfill process.env', async () => {
+      server = await serverFactory('test/fixtures/appEsm.js', { port: 8000 });
+      const res = await fetch('http://localhost:8000/', {
+        headers: { Accept: 'text/html; charset=utf-8' }
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain(
+        '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="test";</script>'
+      );
+    });
+    it('should trigger exit handlers for clean up', async () => {
+      server = await serverFactory('test/fixtures/appExit.js', { port: 8000 });
+      expect(global.context.beforeExitCalled).to.equal(undefined);
+      await server.restart();
+      expect(global.context.beforeExitCalled).to.equal(true);
+    });
+    it('should trigger exit handlers for clean up', async () => {
+      server = await serverFactory('test/fixtures/appGlobals.js', {
+        port: 8000
+      });
+      expect(global.foo).to.equal('foo');
+      await server.destroy();
+      expect(global.foo).to.equal(undefined);
+    });
+    it('should serve a bundled module js file', async () => {
+      server = await serverFactory('test/fixtures/app.js', { port: 8000 });
+      const res = await fetch(
+        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.15.js`
+      );
+      expect(res.status).to.eql(200);
+      const body = await res.text();
+      expect(body).to.contain('function baseSlice');
+      expect(body).to.contain('export default array;');
+    });
+    it('should serve a bundled module js file from server listening for "request" event', async () => {
+      server = await serverFactory('test/fixtures/appListener.js', {
+        port: 8000
+      });
+      const res = await fetch(
+        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.15.js`
+      );
+      expect(res.status).to.eql(200);
+      const body = await res.text();
+      expect(body).to.contain('function baseSlice');
+      expect(body).to.contain('export default array;');
+    });
+    it('should serve a node_modules module js file', async () => {
+      server = await serverFactory('test/fixtures/app.js', { port: 8000 });
+      const res = await fetch(`http://localhost:8000/node_modules/foo/foo.js`);
+      expect(res.status).to.eql(200);
+      const body = await res.text();
+      expect(body).to.contain("console.log('this is foo')");
+    });
+    it('should pass requests through to app', async () => {
+      server = await serverFactory('test/fixtures/app.js', { port: 8000 });
+      const res = await fetch(`http://localhost:8000/www/script.js`);
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('x-app')).to.equal('test');
+    });
+    it('should start with custom Rollup config', async () => {
+      config.rollupConfigPath = path.resolve('test/fixtures/rollup.config.js');
+      server = await serverFactory('test/fixtures/app.js', {
+        port: 8000
+      });
+      const res = await fetch(
+        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`
+      );
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('/* this is a test */');
+      config.rollupConfigPath = undefined;
+    });
     it('should inject the reload script into an html response', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
@@ -258,7 +458,7 @@ describe('server', () => {
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8080%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -274,7 +474,7 @@ describe('server', () => {
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8080%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -285,7 +485,7 @@ describe('server', () => {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              stream: 'http://localhost:8080/feed',
+              stream: 'http://localhost:8888/feed',
               event: 'open'
             })
           });
