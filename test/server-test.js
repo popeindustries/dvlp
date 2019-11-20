@@ -11,7 +11,7 @@ const { Client: WebSocket } = require('faye-websocket');
 
 let es, server, ws;
 
-describe.only('server', () => {
+describe('server', () => {
   beforeEach(() => {
     cleanBundles();
   });
