@@ -54,7 +54,7 @@
     "terser": "^4.4.0"
   },
   "engines": {
-    "node": ">=8"
+    "node": ">=10"
   },
   "scripts": {
     "build": "rollup --config rollup.config.js",
