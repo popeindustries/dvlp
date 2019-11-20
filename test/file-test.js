@@ -67,17 +67,17 @@ describe('file', () => {
       ]);
     });
     it('should return array for array of glob filePaths', () => {
-      expect(expandPath(['test/fixtures', 'test/fixtures/mock/*.json'])).to.eql(
-        [
-          'test/fixtures',
-          'test/fixtures/mock/1234.json',
-          'test/fixtures/mock/5678.json',
-          'test/fixtures/mock/9012.json',
-          'test/fixtures/mock/json.json',
-          'test/fixtures/mock/multi.json',
-          'test/fixtures/mock/test.json'
-        ]
-      );
+      expect(
+        expandPath(['test/fixtures', 'test/fixtures/mock/*.json'])
+      ).to.eql([
+        'test/fixtures',
+        'test/fixtures/mock/1234.json',
+        'test/fixtures/mock/5678.json',
+        'test/fixtures/mock/9012.json',
+        'test/fixtures/mock/json.json',
+        'test/fixtures/mock/multi.json',
+        'test/fixtures/mock/test.json'
+      ]);
     });
   });
 
@@ -91,7 +91,7 @@ describe('file', () => {
       expect(
         find(
           { headers: {}, url: '/index.html' },
-          { directories: [path.resolve('test/fixtures/www')] }
+          { directory: path.resolve('test/fixtures/www') }
         )
       ).to.equal(path.resolve('test/fixtures/www/index.html'));
     });
@@ -99,7 +99,7 @@ describe('file', () => {
       expect(
         find(
           { headers: {}, url: '/index' },
-          { directories: [path.resolve('test/fixtures/www')] }
+          { directory: path.resolve('test/fixtures/www') }
         )
       ).to.equal(path.resolve('test/fixtures/www/index.html'));
     });
@@ -107,7 +107,7 @@ describe('file', () => {
       expect(
         find(
           { headers: {}, url: '/' },
-          { directories: [path.resolve('test/fixtures/www')] }
+          { directory: path.resolve('test/fixtures/www') }
         )
       ).to.equal(path.resolve('test/fixtures/www/index.html'));
     });
@@ -115,7 +115,7 @@ describe('file', () => {
       expect(
         find(
           { headers: {}, url: '/module' },
-          { directories: [path.resolve('test/fixtures/www')] }
+          { directory: path.resolve('test/fixtures/www') }
         )
       ).to.equal(path.resolve('test/fixtures/www/module.js'));
     });
@@ -124,7 +124,7 @@ describe('file', () => {
         find(
           { headers: { referer: '/index.js' }, url: '/module' },
           {
-            directories: [path.resolve('test/fixtures/www')]
+            directory: path.resolve('test/fixtures/www')
           }
         )
       ).to.equal(path.resolve('test/fixtures/www/module.js'));
@@ -133,7 +133,7 @@ describe('file', () => {
       expect(
         find(
           { headers: {}, url: '/nested' },
-          { directories: [path.resolve('test/fixtures/www')] }
+          { directory: path.resolve('test/fixtures/www') }
         )
       ).to.equal(path.resolve('test/fixtures/www/nested/index.js'));
     });
@@ -141,14 +141,14 @@ describe('file', () => {
       expect(
         find(
           { headers: {}, url: '/dep-esm' },
-          { directories: [path.resolve('test/fixtures/www')], type: 'js' }
+          { directory: path.resolve('test/fixtures/www'), type: 'js' }
         )
       ).to.equal(path.resolve('test/fixtures/www/dep-esm.js'));
     });
     it('should find file for JS string missing extension with type', () => {
       expect(
         find('/dep-esm', {
-          directories: [path.resolve('test/fixtures/www')],
+          directory: path.resolve('test/fixtures/www'),
           type: 'js'
         })
       ).to.equal(path.resolve('test/fixtures/www/dep-esm.js'));
@@ -156,7 +156,7 @@ describe('file', () => {
     it('should find file for JS string missing package filename', () => {
       expect(
         find('/nested', {
-          directories: [path.resolve('test/fixtures/www')],
+          directory: path.resolve('test/fixtures/www'),
           type: 'js'
         })
       ).to.equal(path.resolve('test/fixtures/www/nested/index.js'));

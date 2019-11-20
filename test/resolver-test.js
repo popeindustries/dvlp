@@ -198,6 +198,11 @@ describe('resolver', () => {
           path.resolve('node_modules/@popeindustries/test/lib/bar.js')
         );
       });
+      it('should resolve a scoped js package css source path', () => {
+        expect(
+          resolve('@popeindustries/test/test.css', path.resolve('baz.js'))
+        ).to.equal(path.resolve('node_modules/@popeindustries/test/test.css'));
+      });
       it('should resolve an aliased main module file via simple "browser" field', () => {
         expect(resolve('browser', path.resolve('baz.js'))).to.equal(
           path.resolve('node_modules/browser/browser/foo.js')
