@@ -30,15 +30,8 @@ describe('server', () => {
   });
 
   describe('static', () => {
-    before(() => {
-      config.directories.push(
-        path.resolve(__dirname, 'fixtures'),
-        path.resolve(__dirname, 'fixtures/www')
-      );
-    });
-    after(() => {
-      config.directories.pop();
-      config.directories.pop();
+    afterEach(() => {
+      config.directories = [process.cwd()];
     });
 
     it('should implicitly serve index.html', async () => {
@@ -98,9 +91,9 @@ describe('server', () => {
         'application/javascript'
       );
     });
-    it('should serve a node_modules module js file with correct mime type', async () => {
-      server = await serverFactory('test/fixtures/www', { port: 8000 });
-      const res = await fetch(`http://localhost:8000/node_modules/foo/foo.js`);
+    it('should serve a node_modules js file with correct mime type', async () => {
+      server = await serverFactory('test/fixtures', { port: 8000 });
+      const res = await fetch(`http://localhost:8000/foo/foo.js`);
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include(
         'application/javascript'
@@ -121,10 +114,11 @@ describe('server', () => {
       expect(res.headers.get('Content-type')).to.include('application/json');
     });
     it('should serve files from additional directories', async () => {
-      config.directories.push(path.resolve(__dirname, 'fixtures/assets'));
-      server = await serverFactory('test/fixtures/www', { port: 8000 });
+      server = await serverFactory(
+        ['test/fixtures/www', path.resolve(__dirname, 'fixtures/assets')],
+        { port: 8000 }
+      );
       const res = await fetch('http://localhost:8000/index.css');
-      config.directories.pop();
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include('text/css');
       expect(await res.text()).to.equal(
