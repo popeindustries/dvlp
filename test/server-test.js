@@ -16,6 +16,7 @@ describe('server', () => {
     cleanBundles();
   });
   afterEach(async () => {
+    config.directories = [process.cwd()];
     cleanBundles();
     if (es) {
       es.removeAllListeners();
@@ -30,10 +31,6 @@ describe('server', () => {
   });
 
   describe('static', () => {
-    afterEach(() => {
-      config.directories = [process.cwd()];
-    });
-
     it('should implicitly serve index.html', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
