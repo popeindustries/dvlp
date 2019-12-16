@@ -57,7 +57,6 @@ Usage: dvlp [options] [path...]
     -t, --transpiler <path>     path to optional transpiler file
     -s, --silent                suppress default logging
     --no-reload                 disable reloading connected browsers on file change
-    --watch-deps                also watch node_modules for file changes
     -v, --version               output the version number
     -h, --help                  output usage information
 ```
