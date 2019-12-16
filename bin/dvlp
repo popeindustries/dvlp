@@ -29,7 +29,6 @@ program
   )
   .option('-s, --silent', 'suppress default logging')
   .option('--no-reload', 'disable reloading connected browsers on file change')
-  .option('--watch-deps', 'also watch node_modules for file changes')
   .arguments('[path...]')
   .action(boot)
   .version(pkg.version, '-v, --version');
@@ -44,8 +43,7 @@ async function boot(path = [process.cwd()]) {
       reload: program.reload,
       rollupConfig: program.rollupConfig,
       silent: program.silent,
-      transpiler: program.transpiler,
-      watchDeps: program.watchDeps
+      transpiler: program.transpiler
     });
   } catch (err) {
     console.error(err);
