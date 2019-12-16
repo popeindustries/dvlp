@@ -248,6 +248,11 @@ describe('resolver', () => {
       it('should resolve a native module reference', () => {
         expect(resolve('http', path.resolve('foo.js'))).to.equal(undefined);
       });
+      it('should resolve a symlinked js package file', () => {
+        expect(resolve('linked', path.resolve('baz.js'))).to.equal(
+          path.resolve('linked/index.js')
+        );
+      });
     });
   });
 });
