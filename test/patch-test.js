@@ -304,7 +304,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import { html } from "lit-html";');
       expect(getBody(res)).to.equal(
-        `import { html } from "/node_modules/lit-html/lit-html.js";`
+        `import { html } from "${process.cwd()}/node_modules/lit-html/lit-html.js";`
       );
     });
     it('should resolve NODE_PATH js import id', () => {
@@ -314,7 +314,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "nested/index.js";');
       expect(getBody(res)).to.equal(
-        `import module from "/test/fixtures/www/nested/index.js";`
+        `import module from "${process.cwd()}/test/fixtures/www/nested/index.js";`
       );
       setNodePath(NODE_PATH);
     });
@@ -325,7 +325,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "nested/foo";');
       expect(getBody(res)).to.equal(
-        `import module from "/test/fixtures/www/nested/foo.jsx";`
+        `import module from "${process.cwd()}/test/fixtures/www/nested/foo.jsx";`
       );
       setNodePath(NODE_PATH);
     });
@@ -335,7 +335,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/module";');
       expect(getBody(res)).to.equal(
-        `import module from "/test/fixtures/www/module.js";`
+        `import module from "${process.cwd()}/test/fixtures/www/module.js";`
       );
     });
     it('should resolve jsx import id missing extension', () => {
@@ -344,7 +344,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import component from "./test/fixtures/component";');
       expect(getBody(res)).to.equal(
-        `import component from "/test/fixtures/component.jsx";`
+        `import component from "${process.cwd()}/test/fixtures/component.jsx";`
       );
     });
     it('should resolve ts import id missing extension', () => {
@@ -353,7 +353,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import route from "./test/fixtures/route";');
       expect(getBody(res)).to.equal(
-        `import route from "/test/fixtures/route.ts";`
+        `import route from "${process.cwd()}/test/fixtures/route.ts";`
       );
     });
     it('should resolve js import id missing package index', () => {
@@ -362,7 +362,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/nested";');
       expect(getBody(res)).to.equal(
-        `import module from "/test/fixtures/www/nested/index.js";`
+        `import module from "${process.cwd()}/test/fixtures/www/nested/index.js";`
       );
     });
     it('should resolve ts import id missing package index', () => {
@@ -371,7 +371,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/nested-ts";');
       expect(getBody(res)).to.equal(
-        `import module from "/test/fixtures/www/nested-ts/index.ts";`
+        `import module from "${process.cwd()}/test/fixtures/www/nested-ts/index.ts";`
       );
     });
     it('should ignore erroneous "import" string', () => {
@@ -389,7 +389,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import "bar";');
       expect(getBody(res)).to.equal(
-        `import "/test/fixtures/node_modules/bar/browser.js";`
+        `import "${process.cwd()}/test/fixtures/node_modules/bar/browser.js";`
       );
     });
     it('should resolve js import with browser field map', () => {
@@ -400,7 +400,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import "bat";');
       expect(getBody(res)).to.equal(
-        `import "/test/fixtures/node_modules/bat/browser.js";`
+        `import "${process.cwd()}/test/fixtures/node_modules/bat/browser.js";`
       );
     });
   });

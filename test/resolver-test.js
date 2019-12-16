@@ -186,6 +186,11 @@ describe('resolver', () => {
           path.resolve('node_modules/bat/boo/index.esm.js')
         );
       });
+      it('should resolve a js package module path in a parent node_modules directory', () => {
+        expect(resolve('foo', path.resolve('nested/nested/bar.js'))).to.equal(
+          path.resolve('node_modules/foo/lib/bat.js')
+        );
+      });
       it('should resolve a scoped js package module path containing a package.json file and a "main" file field', () => {
         expect(
           resolve('@popeindustries/test', path.resolve('baz.js'))
