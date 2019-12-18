@@ -83,9 +83,12 @@ describe('file', () => {
 
   describe('find()', () => {
     it('should find file for absolute file path', () => {
-      expect(find(path.resolve('test/fixtures/www/index.html'))).to.equal(
-        path.resolve('test/fixtures/www/index.html')
-      );
+      const p = path.resolve('test/fixtures/www/index.html');
+      expect(find(p)).to.equal(p);
+    });
+    it('should find file for encoded absolute file path', () => {
+      const p = path.resolve('test/fixtures/www/spå   ces.js');
+      expect(find(encodeURI(p))).to.equal(p);
     });
     it('should find file for fully qualified request', () => {
       expect(
