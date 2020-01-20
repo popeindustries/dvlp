@@ -1,4 +1,4 @@
-const commonjs = require('rollup-plugin-commonjs');
+const commonjs = require('@rollup/plugin-commonjs');
 const fs = require('fs');
 const json = require('@rollup/plugin-json');
 const replace = require('@rollup/plugin-replace');

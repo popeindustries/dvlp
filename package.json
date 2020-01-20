@@ -11,6 +11,7 @@
     "dvlp": "./bin/dvlp"
   },
   "dependencies": {
+    "@rollup/plugin-commonjs": "^11.0.1",
     "@rollup/plugin-json": "^4.0.0",
     "@rollup/plugin-node-resolve": "^7.0.0",
     "@rollup/plugin-replace": "^2.2.0",
@@ -27,7 +28,6 @@
     "pirates": "^4.0.1",
     "rimraf": "^3.0.0",
     "rollup": "^1.27.5",
-    "rollup-plugin-commonjs": "^10.1.0",
     "send": "^0.17.1",
     "server-destroy": "^1.0.1",
     "sucrase": "^3.10.1",
@@ -36,22 +36,22 @@
   "devDependencies": {
     "babel-eslint": "^10.0.3",
     "chai": "^4.2.0",
-    "eslint": "^6.7.2",
-    "eslint-config-prettier": "^6.7.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.9.0",
     "eslint-plugin-prettier": "^3.1.2",
     "eventsource": "^1.0.7",
-    "husky": "^3.1.0",
+    "husky": "^4.0.10",
     "koa": "^2.11.0",
     "koa-send": "^5.0.0",
-    "lint-staged": "^9.5.0",
+    "lint-staged": "^10.0.0",
     "lit-html": "^1.1.2",
     "lodash": "^4.17.15",
-    "mocha": "^6.2.2",
+    "mocha": "^7.0.0",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
     "react": "^16.12.0",
-    "sass": "^1.23.7",
-    "terser": "^4.4.2"
+    "sass": "^1.25.0",
+    "terser": "^4.6.3"
   },
   "engines": {
     "node": ">=10"
