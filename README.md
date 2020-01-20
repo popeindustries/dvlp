@@ -25,7 +25,7 @@ Less setup, less complexity, and less waiting is surely the path to developer ha
 
 **dvlp** allows you to easily serve files from one or more project directories (`static` mode), or from your custom application server (`app` mode). In both cases, **dvlp** automatically injects the necessary reload script into HTML responses to enable reloading, watches all files for changes, restarts the `app` server if necessary, and reloads all connected browsers.
 
-In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (`import "lodash"`), which are not supported by browsers, work by re-writing all import paths to valid urls. Since most `node_modules` packages are still published as CommonJS modules, each bare import is also bundled and converted to an ESM module using [Rollup.js](https://rollupjs.org). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under the project root.
+In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (`import "lodash"`), which are not supported by browsers, work by re-writing all import paths to valid urls. Since most `node_modules` packages are still published as CommonJS modules, each bare import is also bundled and converted to an ESM module using [Rollup.js](https://rollupjs.org). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under your project root.
 
 ### Bonus!
 
