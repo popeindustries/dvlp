@@ -1,5 +1,5 @@
 [![NPM Version](https://img.shields.io/npm/v/dvlp.svg?style=flat)](https://npmjs.org/package/dvlp)
-[![Build Status](https://img.shields.io/github/workflow/status/popeindustries/dvlp/dvlp test/master](https://github.com/popeindustries/dvlp/actions)
+[![Build Status](https://img.shields.io/github/workflow/status/popeindustries/dvlp/test/master](https://github.com/popeindustries/dvlp/actions)
 
 # 💥 dvlp
 
