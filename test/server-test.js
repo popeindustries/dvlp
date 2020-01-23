@@ -334,7 +334,7 @@ describe('server', () => {
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain(
-        '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="test";</script>'
+        '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="test";\nwindow.DVLP=true;</script>'
       );
     });
     it('should trigger exit handlers for clean up', async () => {
