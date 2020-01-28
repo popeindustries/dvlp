@@ -144,7 +144,9 @@ describe('server', () => {
         port: 8000,
         reload: true
       });
-      const res = await fetch('http://localhost:8000/');
+      const res = await fetch('http://localhost:8000/', {
+        headers: { accept: 'text/html' }
+      });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('sse = new EventSource');
     });
