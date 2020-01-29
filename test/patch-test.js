@@ -264,6 +264,15 @@ describe('patch', () => {
         'no-cache, dvlp-disabled'
       );
     });
+    it.skip('should disable cache-control headers for local files when cache-control not set', () => {
+      const req = getRequest('/index.html', { accept: 'text/html' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res);
+      res.end('done');
+      expect(res.getHeader('Cache-Control')).to.equal(
+        'no-cache, dvlp-disabled'
+      );
+    });
     it('should not disable cache-control headers for node_modules files', () => {
       const req = getRequest('/node_modules/foo');
       const res = new ServerResponse(req);
