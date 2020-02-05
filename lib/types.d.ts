@@ -1,7 +1,16 @@
-declare type RequestHandler = (
-  req: import('http').ClientRequest,
-  res: import('http').ServerResponse
-) => void;
+declare type Req = import('http').IncomingMessage & {
+  filePath: string;
+  type: string;
+  url: string;
+};
+
+declare type Res = import('http').ServerResponse & {
+  encoding: string;
+  transpiled: boolean;
+  url: string;
+};
+
+declare type RequestHandler = (req: Req, res: Res) => void;
 
 declare type Config = {
   activePort: number;
@@ -9,9 +18,7 @@ declare type Config = {
   bundleDirName: string;
   directories: Array<string>;
   extensionsByType: {
-    css: Array<string>;
-    html: Array<string>;
-    js: Array<string>;
+    [type: string]: Array<string>;
   };
   latency: number;
   maxAge: string;
@@ -24,7 +31,7 @@ declare type Config = {
 };
 
 declare type PatchResponseConfig = {
-  directories: Array<string>;
+  directories?: Array<string>;
   rollupConfig?: {};
   footerScript?: {
     hash?: string;
@@ -93,6 +100,15 @@ declare type Package = {
   version: string;
 };
 
+declare type InterceptClientRequestCallback = (url: URL) => boolean;
+
+declare type InterceptFileReadCallback = (filePath: string) => void;
+
+declare type InterceptProcessOnCallback = (
+  event: string,
+  callback: () => void
+) => void;
+
 /* export */ declare class Mock {
   cache: Map<string, object>;
 
@@ -147,6 +163,8 @@ declare type Package = {
   options?: {
     event?: string;
     id?: string;
+    namespace?: string;
+    protocol?: string;
   };
 };
 
