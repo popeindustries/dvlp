@@ -153,19 +153,28 @@ declare type InterceptProcessOnCallback = (
   };
 };
 
+declare type PushClient = {
+  on(event: string, callback: (event: { data: string }) => void): void;
+  send(msg: string, options?: PushEventOptions): void;
+  removeAllListeners(): void;
+  close(): void;
+};
+
 /* export */ declare type PushStream = {
   url: string;
   type: string;
 };
 
+/* export */ declare type PushEventOptions = {
+  event?: string;
+  id?: string;
+  namespace?: string;
+  protocol?: string;
+};
+
 /* export */ declare type PushEvent = {
   message: string | { [key: string]: any };
-  options?: {
-    event?: string;
-    id?: string;
-    namespace?: string;
-    protocol?: string;
-  };
+  options?: PushEventOptions;
 };
 
 /* export */ declare type ServerOptions = {
