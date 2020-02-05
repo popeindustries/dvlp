@@ -1,6 +1,7 @@
 const commonjs = require('@rollup/plugin-commonjs');
 const fs = require('fs');
 const json = require('@rollup/plugin-json');
+const path = require('path');
 const replace = require('@rollup/plugin-replace');
 const resolve = require('@rollup/plugin-node-resolve');
 const terser = require('terser');
@@ -15,6 +16,13 @@ const mockClient = terser
 function external(id) {
   return /^[^./\0]/.test(id);
 }
+
+fs.writeFileSync(
+  path.resolve('dvlp.d.ts'),
+  fs
+    .readFileSync(path.resolve('lib/types.d.ts'), 'utf8')
+    .replace(/\/\* export \*\//g, 'export')
+);
 
 module.exports = [
   {

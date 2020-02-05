@@ -1,30 +1,105 @@
-import { IncomingMessage, OutgoingMessage } from 'http';
+declare type RequestHandler = (
+  req: import('http').ClientRequest,
+  res: import('http').ServerResponse
+) => void;
 
-type ServerOptions = {
-  mockPath?: string | Array<string>;
-  port?: number;
-  reload?: boolean;
-  transpiler?: string;
+declare type Config = {
+  activePort: number;
+  bundelDir: string;
+  bundleDirName: string;
+  directories: Array<string>;
+  extensionsByType: {
+    css: Array<string>;
+    html: Array<string>;
+    js: Array<string>;
+  };
+  latency: number;
+  maxAge: string;
+  maxModuleBundleWorkers: number;
+  port: number;
+  testing: boolean;
+  typesByExtension: {
+    [extension: string]: string;
+  };
 };
 
-type Server = {
-  destroy(): () => Promise<void>;
+declare type PatchResponseConfig = {
+  directories: Array<string>;
+  rollupConfig?: {};
+  footerScript?: {
+    hash?: string;
+    string: string;
+    url?: string;
+  };
+  headerScript?: {
+    hash?: string;
+    string: string;
+    url?: string;
+  };
 };
 
-type TestServerOptions = {
-  autorespond?: boolean;
-  latency?: number;
-  port?: number;
-  webroot?: string;
+declare type Transpiler = (
+  filePath: string,
+  isServer: boolean
+) => Promise<string> | string | undefined;
+
+declare type TranspilerCache = Map<string, string>;
+
+declare type TranspilerState = {
+  transpilerCache: TranspilerCache;
+  lastChanged: string;
+  transpiler: Transpiler;
 };
 
-type MockRequest = {
+declare type Watcher = {
+  add: (filePath: string, allowNodeModules: boolean) => void;
+  close: () => void;
+};
+
+declare type BundleWorker = (
+  id: string,
+  outputPath: string,
+  overrideOptions: import('rollup').RollupOptions,
+  fn: (err: Error) => void
+) => void;
+
+declare class ReloadServer {
+  clients: Set<EventSource>;
+  port: number;
+  server: import('http').Server;
+
+  constructor(port: number);
+  start(): Promise<void>;
+  send(filePath: string): void;
+  stop(): Promise<void>;
+  destroy(): Promise<void>;
+}
+
+declare type Reloader = {
+  client: string;
+  clientHash: string;
+  destroy: () => Promise<void>;
+  send: (filePath: string) => void;
+};
+
+declare type Package = {
+  aliases: { [key: string]: string };
+  isNodeModule: boolean;
+  manifestPath: string;
+  main: string;
+  name: string;
+  path: string;
+  paths: Array<string>;
+  version: string;
+};
+
+export declare type MockRequest = {
   url: string;
-  filePath: string;
+  filePath?: string;
   ignoreSearch?: boolean;
 };
 
-type MockResponse = {
+export declare type MockResponse = {
   body: string | { [key: string]: any };
   hang?: boolean;
   headers?: { [key: string]: any };
@@ -32,31 +107,31 @@ type MockResponse = {
   missing?: boolean;
 };
 
-type MockPushStream = {
+export declare type MockPushStream = {
   url: string;
-  filePath: string;
   type: string;
+  filePath?: string;
   ignoreSearch?: boolean;
   protocol?: string;
 };
 
-type MockPushEvent = {
+export declare type MockPushEvent = {
   name: string;
   message?: string | { [key: string]: any };
   sequence?: Array<MockPushEvent>;
-  options: {
+  options?: {
     delay?: number;
     event?: string;
     id?: string;
   };
 };
 
-type PushStream = {
+export declare type PushStream = {
   url: string;
   type: string;
 };
 
-type PushEvent = {
+export declare type PushEvent = {
   message: string | { [key: string]: any };
   options?: {
     event?: string;
@@ -64,92 +139,26 @@ type PushEvent = {
   };
 };
 
-export class Mock {
-  cache: Map<string, object>;
+export declare type ServerOptions = {
+  mockPath?: string | Array<string>;
+  port?: number;
+  reload?: boolean;
+  silent?: boolean;
+  transpiler?: string;
+};
 
-  constructor(filePaths?: string | Array<string>);
+export declare type Server = {
+  port: number;
+  restart(): Promise<void>;
+  destroy(): Promise<void>;
+};
 
-  /**
-   * Add new mock for 'res'
-   *
-   * @param { string | MockRequest } req
-   * @param { MockResponse } res
-   * @param { boolean } [once]
-   */
-  addResponse(
-    req: string | MockRequest,
-    res: MockResponse,
-    once?: boolean
-  ): void;
-
-  /**
-   * Add new push mock for 'events'
-   *
-   * @param { string | MockPushStream } stream
-   * @param { MockPushEvent | Array<MockPushEvent> } events
-   */
-  addPushEvents(
-    stream: string | MockPushStream,
-    events: MockPushEvent | Array<MockPushEvent>
-  ): void;
-
-  /**
-   * Load mock files from disk
-   *
-   * @param { string | Array<string> } filePaths
-   */
-  load(filePaths: string | Array<string>): void;
-
-  /**
-   * Match and handle mock response for 'req'
-   * Will respond if 'res' passed
-   *
-   * @param { string | ClientRequest } req
-   * @param { ServerResponse } [res]
-   * @returns { boolean | object | undefined }
-   */
-  matchResponse(
-    req: string | IncomingMessage,
-    res: OutgoingMessage
-  ): boolean | { [key: string]: any } | undefined;
-
-  /**
-   * Match and handle mock push event for 'stream'
-   *
-   * @param { string | MockPushStream } stream
-   * @param { string } name
-   * @param { (stream: string | PushStream, event: PushEvent) => void } push
-   * @returns { boolean }
-   */
-  matchPushEvent(
-    stream: string | MockPushStream,
-    name: string,
-    push: (stream: string | PushStream, event: PushEvent) => void
-  ): boolean;
-
-  /**
-   * Determine if 'url' matches cached mock
-   *
-   * @param { URL } url
-   * @returns { boolean }
-   */
-  hasMatch(url: URL): boolean;
-
-  /**
-   * Remove existing mock
-   *
-   * @param { string | IncomingMessage | MockPushStream } reqOrStream
-   * @returns { void }
-   */
-  remove(reqOrStream: string | IncomingMessage | MockPushStream): void;
-
-  /**
-   * Clear all mocks
-   *
-   * @returns { void }
-   */
-  clean(): void;
-}
+export declare type TestServerOptions = {
+  autorespond?: boolean;
+  latency?: number;
+  port?: number;
+  webroot?: string;
+};
 
 export class TestServer {
   latency: number;
@@ -157,87 +166,27 @@ export class TestServer {
   webroot: string;
 
   constructor(options: TestServerOptions);
-
-  /**
-   * Load mock files at 'filePath'
-   *
-   * @param { string | Array<string> } filePath
-   */
   loadMockFiles(filePath: string | Array<string>): void;
-
-  /**
-   * Register mock 'response' for 'request'
-   *
-   * @param { string | MockRequest } request
-   * @param { MockResponse } response
-   * @param { boolean } [once]
-   */
   mockResponse(
     request: string | MockRequest,
     response: MockResponse,
     once?: boolean
   ): void;
-
-  /**
-   * Register mock push 'events' for 'stream'
-   *
-   * @param { string | MockPushStream } stream
-   * @param { MockPushEvent | Array<MockPushEvent> } events
-   */
   mockPushEvents(
     stream: string | MockPushStream,
     events: MockPushEvent | Array<MockPushEvent>
   ): void;
-
-  /**
-   * Push data to WebSocket/EventSource clients
-   * A string passed as 'event' will be handled as a named mock push event
-   *
-   * @param { string | PushStream } stream
-   * @param { string | PushEvent } [event]
-   * @returns { void }
-   */
   pushEvent(stream: string | PushStream, event?: string | PushEvent): void;
-
-  /**
-   * Destroy instance
-   *
-   * @returns { Promise<void> }
-   */
   destroy(): Promise<void>;
 }
 
-/**
- * Create server
- *
- * @param { string } filePath
- * @param { ServerOptions } [options]
- * @returns { server }
- */
-export function server(filePath: string, options?: ServerOptions): Server;
-
-/**
- * Create test server
- *
- * @param { TestServerOptions } [options]
- * @returns { TestServer }
- */
-export function testServer(options: TestServerOptions): Promise<TestServer>;
+export function testServer(
+  options: TestServerOptions
+): Promise<TestServer>;
 
 export namespace testServer {
-  /**
-   * Disable all external network connections
-   * and optionally reroute all external requests to this server
-   *
-   * @param { boolean } [rerouteAllRequests]
-   * @returns { void }
-   */
-  export function disableNetwork(rerouteAllRequests?: boolean): void;
-
-  /**
-   * Enable all external network connections
-   *
-   * @returns { void }
-   */
-  export function enableNetwork(): void;
+  export declare function disableNetwork(
+    rerouteAllRequests?: boolean
+  ): void;
+  export declare function enableNetwork(): void;
 }

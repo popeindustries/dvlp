@@ -5,7 +5,7 @@ declare type RequestHandler = (
 
 declare type Config = {
   activePort: number;
-  bundelDir: string;
+  bundleDir: string;
   bundleDirName: string;
   directories: Array<string>;
   extensionsByType: {
@@ -15,7 +15,7 @@ declare type Config = {
   };
   latency: number;
   maxAge: string;
-  maxModuleBundleWorkers: number;
+  maxModuleBundlerWorkers: number;
   port: number;
   testing: boolean;
   typesByExtension: {
@@ -93,6 +93,17 @@ declare type Package = {
   version: string;
 };
 
+/* export */ declare class Mock {
+  cache: Map<string, object>;
+
+  constructor(filePaths?: string | Array<string>);
+  addResponse(
+    req: string | MockRequest,
+    res: MockResponse,
+    once?: boolean
+  ): void;
+}
+
 /* export */ declare type MockRequest = {
   url: string;
   filePath?: string;
@@ -160,7 +171,7 @@ declare type Package = {
   webroot?: string;
 };
 
-/* export */ class TestServer {
+/* export */ declare class TestServer {
   latency: number;
   mocks: Mock;
   webroot: string;
@@ -180,13 +191,11 @@ declare type Package = {
   destroy(): Promise<void>;
 }
 
-/* export */ function testServer(
+/* export */ declare function testServer(
   options: TestServerOptions
 ): Promise<TestServer>;
 
-/* export */ namespace testServer {
-  /* export */ declare function disableNetwork(
-    rerouteAllRequests?: boolean
-  ): void;
-  /* export */ declare function enableNetwork(): void;
+/* export */ declare namespace testServer {
+  /* export */ function disableNetwork(rerouteAllRequests?: boolean): void;
+  /* export */ function enableNetwork(): void;
 }
