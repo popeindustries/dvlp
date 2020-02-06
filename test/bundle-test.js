@@ -23,8 +23,8 @@ describe('bundle()', () => {
     await destroyWorkers();
   });
 
-  it('should return "null" if no module bundle found', () => {
-    expect(bundle(resolveModuleId('foofoo'))).to.equal(null);
+  it('should return "undefined" if no module bundle found', () => {
+    expect(bundle(resolveModuleId('foofoo'))).to.equal(undefined);
   });
   it('should bundle and return bundle filePath', async () => {
     const filePath = await bundle(

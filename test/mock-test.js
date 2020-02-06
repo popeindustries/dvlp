@@ -216,7 +216,11 @@ describe('mock', () => {
     });
     it('should respond to request for mock json', () => {
       const res = getResponse();
-      mocks.matchResponse(getRequest('http://www.someapi.com/v1/5678'), res);
+      mocks.matchResponse(
+        'http://www.someapi.com/v1/5678',
+        getRequest('http://www.someapi.com/v1/5678'),
+        res
+      );
       expect(res.statusCode).to.equal(200);
       expect(res.body).to.equal('{"user":{"name":"Nancy","id":5678}}');
       expect(res.headers['Content-Type']).to.equal('application/json');
@@ -224,7 +228,7 @@ describe('mock', () => {
     });
     it('should respond to request for mock image', (done) => {
       const res = getResponse();
-      mocks.matchResponse(getRequest('/1234.jpg'), res);
+      mocks.matchResponse('/1234.jpg', getRequest('/1234.jpg'), res);
       setTimeout(() => {
         expect(res.headers['Content-Type']).to.equal('image/jpeg');
         done();
@@ -232,7 +236,11 @@ describe('mock', () => {
     });
     it('should respond to loopback request', (done) => {
       const res = getResponse();
-      mocks.matchResponse(getRequest('http://127.0.0.1:8080/1234.jpg'), res);
+      mocks.matchResponse(
+        'http://127.0.0.1:8080/1234.jpg',
+        getRequest('http://127.0.0.1:8080/1234.jpg'),
+        res
+      );
       setTimeout(() => {
         expect(res.headers['Content-Type']).to.equal('image/jpeg');
         done();
@@ -241,7 +249,7 @@ describe('mock', () => {
     it('should hang when "response.hang"', (done) => {
       const res = getResponse();
       mocks.addResponse('/index.json', { body: {}, hang: true });
-      mocks.matchResponse(getRequest('/index.json'), res);
+      mocks.matchResponse('/index.json', getRequest('/index.json'), res);
       setTimeout(() => {
         expect(res.statusCode).to.equal(undefined);
         expect(res.body).to.equal(null);
@@ -251,14 +259,14 @@ describe('mock', () => {
     it('should return 500 when "response.error"', () => {
       const res = getResponse();
       mocks.addResponse('/index.json', { body: {}, error: true });
-      mocks.matchResponse(getRequest('/index.json'), res);
+      mocks.matchResponse('/index.json', getRequest('/index.json'), res);
       expect(res.statusCode).to.equal(500);
       expect(res.body).to.equal('error');
     });
     it('should return 404 when "response.missing"', () => {
       const res = getResponse();
       mocks.addResponse('/index.json', { body: {}, missing: true });
-      mocks.matchResponse(getRequest('/index.json'), res);
+      mocks.matchResponse('/index.json', getRequest('/index.json'), res);
       expect(res.statusCode).to.equal(404);
       expect(res.body).to.equal('missing');
     });
@@ -266,7 +274,7 @@ describe('mock', () => {
       const req = getRequest('/index.json');
       const res = getResponse();
       mocks.addResponse('/index.json', { body: {}, offline: true });
-      mocks.matchResponse(req, res);
+      mocks.matchResponse('/index.json', req, res);
       expect(res.statusCode).to.equal(undefined);
       expect(req.socket).to.have.property('destroyed', true);
     });

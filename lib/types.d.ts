@@ -1,3 +1,38 @@
+declare module 'server-destroy' {
+  function destroy(server: import('http').Server): void;
+  export = destroy;
+}
+
+declare module 'faye-websocket' {
+  class PushClient {
+    on(event: string, callback: (event: { data: string }) => void): void;
+    send(msg: string, options?: PushEventOptions): void;
+    removeAllListeners(): void;
+    close(): void;
+  }
+  class EventSource extends PushClient {
+    static isEventSource(eventSource: unknown): boolean;
+    constructor(req: Req, res: Res, options: object);
+  }
+  class WebSocket extends PushClient {
+    static isWebSocket(webSocket: unknown): boolean;
+    static EventSource: EventSource;
+    constructor(
+      req: Req,
+      socket: object,
+      body: string,
+      protocols: Array<object>,
+      options: { extensions: Array<unknown> }
+    );
+  }
+  export = WebSocket;
+}
+
+declare module 'permessage-deflate' {
+  function deflate(): void;
+  export = deflate;
+}
+
 declare type Req = import('http').IncomingMessage & {
   filePath: string;
   type: string;
@@ -66,25 +101,13 @@ declare type Watcher = {
 declare type BundleWorker = (
   id: string,
   outputPath: string,
-  overrideOptions: import('rollup').RollupOptions,
-  fn: (err: Error) => void
+  overrideOptions: import('rollup').RollupOptions | undefined,
+  fn: (err?: Error) => void
 ) => void;
-
-declare class ReloadServer {
-  clients: Set<EventSource>;
-  port: number;
-  server: import('http').Server;
-
-  constructor(port: number);
-  start(): Promise<void>;
-  send(filePath: string): void;
-  stop(): Promise<void>;
-  destroy(): Promise<void>;
-}
 
 declare type Reloader = {
   client: string;
-  clientHash: string;
+  url: string;
   destroy: () => Promise<void>;
   send: (filePath: string) => void;
 };
@@ -109,8 +132,41 @@ declare type InterceptProcessOnCallback = (
   callback: () => void
 ) => void;
 
-/* export */ declare class Mock {
-  cache: Map<string, object>;
+declare type MockResponseData = {
+  key: string;
+  filePath: string;
+  url: URL;
+  ignoreSearch: boolean;
+  once: boolean;
+  type: 'html' | 'file' | 'json';
+  response: MockResponse;
+};
+
+declare type MockStreamData = {
+  key: string;
+  filePath: string;
+  url: URL;
+  ignoreSearch: boolean;
+  type: 'ws' | 'es';
+  protocol: string;
+  events: {
+    [name: string]: {
+      name: string;
+      message?: string | { [key: string]: any };
+      sequence?: Array<{}>;
+      options: MockPushEventOptions & {
+        protocol?: string;
+      };
+    };
+  };
+};
+
+declare type MockCacheEntry = {
+  [key: string]: MockResponseData | MockStreamData;
+};
+
+/* export */ declare class MockInstance {
+  cache: Map<string, MockCacheEntry>;
 
   constructor(filePaths?: string | Array<string>);
   addResponse(
@@ -118,7 +174,35 @@ declare type InterceptProcessOnCallback = (
     res: MockResponse,
     once?: boolean
   ): void;
+  addPushEvents(
+    stream: string | MockPushStream,
+    events: MockPushEvent | Array<MockPushEvent>
+  ): void;
+  load(filePaths: string | Array<string>): void;
+  matchResponse(
+    key: string,
+    req?: Req,
+    res?: Res
+  ): false | MockResponseData | MockStreamData | undefined;
+  matchPushEvent(
+    stream: string | MockPushStream,
+    name: string,
+    push: (stream: string | PushStream, event: PushEvent) => void
+  ): boolean;
+  hasMatch(keyOrMock: string | Req | MockRequest | MockPushStream): boolean;
+  remove(keyOrMock: string | Req | MockRequest | MockPushStream): void;
+  clean(): void;
 }
+
+declare type MockResponseJSONSchema = {
+  request: MockRequest;
+  response: MockResponse;
+};
+
+declare type MockPushEventJSONSchema = {
+  stream: MockPushStream;
+  events: MockPushEvent;
+};
 
 /* export */ declare type MockRequest = {
   url: string;
@@ -142,23 +226,26 @@ declare type InterceptProcessOnCallback = (
   protocol?: string;
 };
 
-/* export */ declare type MockPushEvent = {
-  name: string;
-  message?: string | { [key: string]: any };
-  sequence?: Array<MockPushEvent>;
-  options?: {
-    delay?: number;
-    event?: string;
-    id?: string;
-  };
+/* export */ declare type MockPushEventOptions = {
+  delay?: number;
+  event?: string;
+  id?: string;
 };
 
-declare type PushClient = {
+/* export */ declare type MockPushEvent = {
+  name: string;
+  connect?: boolean;
+  message?: string | { [key: string]: any };
+  sequence?: Array<MockPushEvent>;
+  options?: MockPushEventOptions;
+};
+
+declare interface PushClient {
   on(event: string, callback: (event: { data: string }) => void): void;
   send(msg: string, options?: PushEventOptions): void;
   removeAllListeners(): void;
   close(): void;
-};
+}
 
 /* export */ declare type PushStream = {
   url: string;
@@ -199,8 +286,8 @@ declare type PushClient = {
 };
 
 /* export */ declare class TestServer {
-  latency: number;
-  mocks: Mock;
+  latency: string;
+  mocks: MockInstance;
   webroot: string;
 
   constructor(options: TestServerOptions);
