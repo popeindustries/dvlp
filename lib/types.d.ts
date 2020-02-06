@@ -47,6 +47,10 @@ declare type Res = import('http').ServerResponse & {
 
 declare type RequestHandler = (req: Req, res: Res) => void;
 
+declare type DestroyableHttpServer = import('http').Server & {
+  destroy?(): void;
+};
+
 declare type Config = {
   activePort: number;
   bundleDir: string;
@@ -59,6 +63,7 @@ declare type Config = {
   maxAge: string;
   maxModuleBundlerWorkers: number;
   port: number;
+  rollupConfigPath: string;
   testing: boolean;
   typesByExtension: {
     [extension: string]: string;
@@ -94,7 +99,7 @@ declare type TranspilerState = {
 };
 
 declare type Watcher = {
-  add: (filePath: string, allowNodeModules: boolean) => void;
+  add: (filePath: string) => void;
   close: () => void;
 };
 
@@ -116,7 +121,7 @@ declare type Package = {
   aliases: { [key: string]: string };
   isNodeModule: boolean;
   manifestPath: string;
-  main: string;
+  main?: string;
   name: string;
   path: string;
   paths: Array<string>;
@@ -165,8 +170,9 @@ declare type MockCacheEntry = {
   [key: string]: MockResponseData | MockStreamData;
 };
 
-/* export */ declare class MockInstance {
+declare class MockInstance {
   cache: Map<string, MockCacheEntry>;
+  client: string;
 
   constructor(filePaths?: string | Array<string>);
   addResponse(
@@ -189,8 +195,12 @@ declare type MockCacheEntry = {
     name: string,
     push: (stream: string | PushStream, event: PushEvent) => void
   ): boolean;
-  hasMatch(keyOrMock: string | Req | MockRequest | MockPushStream): boolean;
-  remove(keyOrMock: string | Req | MockRequest | MockPushStream): void;
+  hasMatch(
+    keyOrObjectWithUrl: string | URL | Req | MockRequest | MockPushStream
+  ): boolean;
+  remove(
+    keyOrObjectWithUrl: string | URL | Req | MockRequest | MockPushStream
+  ): void;
   clean(): void;
 }
 
@@ -285,8 +295,8 @@ declare interface PushClient {
   webroot?: string;
 };
 
-/* export */ declare class TestServer {
-  latency: string;
+declare class TestServerInstance {
+  latency: number;
   mocks: MockInstance;
   webroot: string;
 
@@ -307,7 +317,7 @@ declare interface PushClient {
 
 /* export */ declare function testServer(
   options: TestServerOptions
-): Promise<TestServer>;
+): Promise<TestServerInstance>;
 
 /* export */ declare namespace testServer {
   /* export */ function disableNetwork(rerouteAllRequests?: boolean): void;
