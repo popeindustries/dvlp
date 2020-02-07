@@ -484,7 +484,7 @@ console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 - **`mockResponse(request: string|object, response: object, once: boolean, onMock: () => void): void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking))
 
 ```js
-server.mock(
+server.mockResponse(
   '/api/user/1234',
   {
     body: {
@@ -501,7 +501,7 @@ console.log(await res.json()); // => { id: "1234", name: "bob" }
 - **`mockPushEvents(stream: string|object, events: object|[object]): void`** add one or more mock `events` for a WebSocket/EventSource `stream` (see [mocking](#mocking))
 
 ```js
-server.mock('ws://www.somesocket.com/stream', [
+server.mockPushEvents('ws://www.somesocket.com/stream', [
   {
     name: 'hi',
     message: 'hi!'
