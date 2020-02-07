@@ -39,7 +39,7 @@ describe('testServer', () => {
 
   it('should create server with specific "port"', async () => {
     server = await testServer({ port: 3332 });
-    expect(server).to.have.property('_port', 3332);
+    expect(server).to.have.property('port', 3332);
   });
   it('should respond to requests for resources using default "webroot"', async () => {
     server = await testServer();

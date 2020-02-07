@@ -145,6 +145,7 @@ declare type MockResponseData = {
   once: boolean;
   type: 'html' | 'file' | 'json';
   response: MockResponse;
+  onMock?: () => void;
 };
 
 declare type MockStreamData = {
@@ -178,7 +179,8 @@ declare type MockCacheEntry = {
   addResponse(
     req: string | MockRequest,
     res: MockResponse,
-    once?: boolean
+    once?: boolean,
+    onMock?: () => void
   ): void;
   addPushEvents(
     stream: string | MockPushStream,
@@ -226,6 +228,7 @@ declare type MockPushEventJSONSchema = {
   headers?: { [key: string]: any };
   error?: boolean;
   missing?: boolean;
+  offline?: boolean;
 };
 
 /* export */ declare type MockPushStream = {
@@ -350,11 +353,13 @@ declare interface PushClient {
   /**
    * Register mock `response` for `request`.
    * If `once`, mock will be unregistered after first use.
+   * If `onMock`, callback when response is mocked
    */
   mockResponse(
     request: string | MockRequest,
     response: MockResponse,
-    once?: boolean
+    once?: boolean,
+    onMock?: () => void
   ): void;
   /**
    * Register mock push `events` for `stream`

@@ -234,6 +234,11 @@ describe('mock', () => {
         done();
       }, 50);
     });
+    it('should call onMock callback when response mocked', (done) => {
+      const res = getResponse();
+      mocks.addResponse('/index.json', { body: {} }, true, done);
+      mocks.matchResponse('/index.json', getRequest('/index.json'), res);
+    });
     it('should respond to loopback request', (done) => {
       const res = getResponse();
       mocks.matchResponse(

@@ -481,7 +481,7 @@ const res = await fetch('http://www.someapi.com/v1/id/101010');
 console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 ```
 
-- **`mockResponse(request: string|object, response: object, once: boolean): void`** add a mock `response` for `request`, optionally removing it after first use (see [mocking](#mocking))
+- **`mockResponse(request: string|object, response: object, once: boolean, onMock: () => void): void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking))
 
 ```js
 server.mock(
