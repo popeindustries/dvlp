@@ -431,6 +431,7 @@ Serve files at `filePath`, starting static file server if one or more directorie
 - **`mockPath: string|[string]`** the path(s) to load mock files from (default `''`)
 - **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 - **`reload: boolean`**: enable/disable browser reloading (default `true`)
+- **`silent: boolean`**: disable/enable default logging (default `false`)
 - **`transpiler: string`**: the path to a custom transpiler script (default `''`)
 
 ```js
@@ -445,8 +446,8 @@ Create a server for handling network requests during testing.
 `options` include:
 
 - **`autorespond: boolean`** enable/disable automatic dummy responses. If unable to resolve a request to a local file or mock, the server will respond with a dummy file of the appropriate type (default `true`)
-- **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
-- **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `3333`)
+- **`latency: number`** the amount of artificial latency to introduce (in `ms`) for responses (default `50`)
+- **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 - **`webroot: String`** the subpath from `process.cwd()` to prepend to relative paths (default `''`)
 
 ```js
@@ -454,10 +455,8 @@ const { testServer } = require('dvlp');
 const server = await testServer({ port: 8080, latency: 20, webroot: 'lib' });
 ```
 
-Returns a **`TestServer`** instance with the following properties:
+Returns a **`TestServer`** instance with the following methods:
 
-- **`latency: number`** the minimum amount of random artificial latency to introduce (in `ms`) for responses (default `50`)
-- **`webroot: String`** the subpath from `process.cwd()` to preppend to relative paths (default `''`)
 - **`loadMockFiles(filePath: string|[string]): void`** load and register mock response files (see [mocking](#mocking))
 
 ```json

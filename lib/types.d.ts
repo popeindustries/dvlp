@@ -275,43 +275,102 @@ declare interface PushClient {
 };
 
 /* export */ declare type ServerOptions = {
+  /**
+   * The path(s) to load mock files from.
+   */
   mockPath?: string | Array<string>;
+  /**
+   * Port to expose on `localhost`.
+   * Will use `process.env.PORT` if not specified here (default `8080`).
+   */
   port?: number;
+  /**
+   * Enable/disable browser reloading (default `true`).
+   */
   reload?: boolean;
+  /**
+   * Disable/enable default logging (default `false`).
+   */
   silent?: boolean;
+  /**
+   * The path to a custom transpiler script (default `''`).
+   */
   transpiler?: string;
 };
 
-/* export */ declare type Server = {
+/* export  */ declare type Server = {
   port: number;
+  /**
+   * Restart running server
+   */
   restart(): Promise<void>;
+  /**
+   * Destroy server instance
+   */
   destroy(): Promise<void>;
 };
 
+/* export */ declare function server(
+  filePath: string | Array<string>,
+  options: ServerOptions
+): Promise<Server>;
+
 /* export */ declare type TestServerOptions = {
+  /**
+   * Enable/disable automatic dummy responses.
+   * If unable to resolve a request to a local file or mock,
+   * the server will respond with a dummy file of the appropriate type (default `true`).
+   */
   autorespond?: boolean;
+  /**
+   * The amount of artificial latency to introduce (in `ms`) for responses (default `50`).
+   */
   latency?: number;
+  /**
+   * The port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`).
+   */
   port?: number;
+  /**
+   * The subpath from `process.cwd()` to prepend to relative paths (default `''`).
+   */
   webroot?: string;
 };
 
 declare class TestServerInstance {
   latency: number;
+  port: number;
   mocks: MockInstance;
   webroot: string;
 
   constructor(options: TestServerOptions);
+  /**
+   * Load mock files at `filePath`
+   */
   loadMockFiles(filePath: string | Array<string>): void;
+  /**
+   * Register mock `response` for `request`.
+   * If `once`, mock will be unregistered after first use.
+   */
   mockResponse(
     request: string | MockRequest,
     response: MockResponse,
     once?: boolean
   ): void;
+  /**
+   * Register mock push `events` for `stream`
+   */
   mockPushEvents(
     stream: string | MockPushStream,
     events: MockPushEvent | Array<MockPushEvent>
   ): void;
+  /**
+   * Push data to WebSocket/EventSource clients
+   * A string passed as `event` will be handled as a named mock push event
+   */
   pushEvent(stream: string | PushStream, event?: string | PushEvent): void;
+  /**
+   * Destroy server instance
+   */
   destroy(): Promise<void>;
 }
 
@@ -320,6 +379,13 @@ declare class TestServerInstance {
 ): Promise<TestServerInstance>;
 
 /* export */ declare namespace testServer {
+  /**
+   * Disable all external network connections,
+   * and optionally reroute all external requests to this server with `rerouteAllRequests=true`
+   */
   /* export */ function disableNetwork(rerouteAllRequests?: boolean): void;
+  /**
+   * Re-enable all external network connections
+   */
   /* export */ function enableNetwork(): void;
 }
