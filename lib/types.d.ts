@@ -170,7 +170,7 @@ declare type MockCacheEntry = {
   [key: string]: MockResponseData | MockStreamData;
 };
 
-declare class MockInstance {
+/* export */ declare class MockInstance {
   cache: Map<string, MockCacheEntry>;
   client: string;
 
@@ -298,7 +298,7 @@ declare interface PushClient {
   transpiler?: string;
 };
 
-/* export  */ declare type Server = {
+/* export */ declare type Server = {
   port: number;
   /**
    * Restart running server
@@ -336,7 +336,7 @@ declare interface PushClient {
   webroot?: string;
 };
 
-declare class TestServerInstance {
+/* export */ declare class TestServerInstance {
   latency: number;
   port: number;
   mocks: MockInstance;
