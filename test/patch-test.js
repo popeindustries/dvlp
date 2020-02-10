@@ -282,6 +282,13 @@ describe('patch', () => {
       res.end('done');
       expect(res.getHeader('Cache-Control')).to.equal('max-age=600');
     });
+    it('should enable cross origin headers', () => {
+      const req = getRequest('/index.html', { accept: 'text/html' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res);
+      res.end('done');
+      expect(res.getHeader('Access-Control-Allow-Origin')).to.equal('*');
+    });
     it('should not resolve valid relative js import id', () => {
       const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
