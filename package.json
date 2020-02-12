@@ -25,6 +25,7 @@
     "glob": "^7.1.5",
     "is-module": "^1.0.0",
     "mime": "^2.4.4",
+    "path-to-regexp": "^6.1.0",
     "permessage-deflate": "^0.1.7",
     "pirates": "^4.0.1",
     "rimraf": "^3.0.0",

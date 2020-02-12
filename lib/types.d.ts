@@ -173,7 +173,7 @@ declare type MockStreamData = {
 };
 
 declare type MockCacheEntry = {
-  [key: string]: MockResponseData | MockStreamData;
+  [key: RegExp]: MockResponseData | MockStreamData;
 };
 
 /* export */ declare class MockInstance {
