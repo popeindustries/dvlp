@@ -141,6 +141,7 @@ declare type InterceptProcessOnCallback = (
 declare type MockResponseType = 'html' | 'file' | 'json';
 
 declare type MockResponseData = {
+  regexp: RegExp;
   key: string;
   filePath: string;
   url: URL;
@@ -154,6 +155,7 @@ declare type MockResponseData = {
 declare type MockStreamType = 'ws' | 'es';
 
 declare type MockStreamData = {
+  regexp: RegExp;
   key: string;
   filePath: string;
   url: URL;
@@ -172,12 +174,8 @@ declare type MockStreamData = {
   };
 };
 
-declare type MockCacheEntry = {
-  [key: RegExp]: MockResponseData | MockStreamData;
-};
-
 /* export */ declare class MockInstance {
-  cache: Map<string, MockCacheEntry>;
+  cache: Map<string, MockResponseData | MockStreamData>;
   client: string;
 
   constructor(filePaths?: string | Array<string>);
