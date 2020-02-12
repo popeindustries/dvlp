@@ -314,7 +314,7 @@ declare interface PushClient {
 };
 
 /* export */ declare function server(
-  filePath: string | Array<string>,
+  filePath: string | Array<string> | (() => void),
   options: ServerOptions
 ): Promise<Server>;
 
