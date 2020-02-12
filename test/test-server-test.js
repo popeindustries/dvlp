@@ -183,6 +183,13 @@ describe('testServer', () => {
       expect(res.headers.get('Content-type')).to.include('text/html');
       expect(server.mocks.cache.size).to.equal(0);
     });
+    it('should respond with mock error via default error response handler', async () => {
+      server = await testServer();
+      server.mockResponse('/foo', testServer.mockErrorResponseHandler, true);
+      const res = await fetch('http://localhost:8080/foo');
+      expect(res).to.exist;
+      expect(res.status).to.equal(500);
+    });
   });
 
   describe('loadMockFiles()', () => {

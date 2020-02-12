@@ -24,7 +24,14 @@
     "no-async-promise-executor": "off",
     "no-constant-condition": "off",
     "no-console": "off",
-    "no-unused-vars": ["error", { "ignoreRestSiblings": true }],
+    "no-unused-vars": [
+      "error",
+      {
+        "args": "none",
+        "ignoreRestSiblings": true,
+        "vars": "all"
+      }
+    ],
     "sort-imports": [
       "warn",
       {

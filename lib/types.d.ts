@@ -43,6 +43,7 @@ declare type Res = import('http').ServerResponse & {
   encoding: string;
   transpiled: boolean;
   url: string;
+  error?: Error;
 };
 
 declare type RequestHandler = (req: Req, res: Res) => void;
@@ -137,23 +138,27 @@ declare type InterceptProcessOnCallback = (
   callback: () => void
 ) => void;
 
+declare type MockResponseType = 'html' | 'file' | 'json';
+
 declare type MockResponseData = {
   key: string;
   filePath: string;
   url: URL;
   ignoreSearch: boolean;
   once: boolean;
-  type: 'html' | 'file' | 'json';
-  response: MockResponse;
-  onMock?: () => void;
+  type: MockResponseType;
+  response: MockResponse | MockResponseHandler;
+  callback?: () => void;
 };
+
+declare type MockStreamType = 'ws' | 'es';
 
 declare type MockStreamData = {
   key: string;
   filePath: string;
   url: URL;
   ignoreSearch: boolean;
-  type: 'ws' | 'es';
+  type: MockStreamType;
   protocol: string;
   events: {
     [name: string]: {
@@ -178,7 +183,7 @@ declare type MockCacheEntry = {
   constructor(filePaths?: string | Array<string>);
   addResponse(
     req: string | MockRequest,
-    res: MockResponse,
+    res: MockResponse | MockResponseHandler,
     once?: boolean,
     onMock?: () => void
   ): void;
@@ -191,7 +196,7 @@ declare type MockCacheEntry = {
     key: string,
     req?: Req,
     res?: Res
-  ): false | MockResponseData | MockStreamData | undefined;
+  ): boolean | MockResponseData | undefined;
   matchPushEvent(
     stream: string | MockPushStream,
     name: string,
@@ -221,6 +226,12 @@ declare type MockPushEventJSONSchema = {
   filePath?: string;
   ignoreSearch?: boolean;
 };
+
+/* export */ declare type MockResponseHandler = (
+  url: URL,
+  req: Req,
+  res: Res
+) => undefined;
 
 /* export */ declare type MockResponse = {
   body: string | { [key: string]: any };
@@ -357,9 +368,9 @@ declare interface PushClient {
    */
   mockResponse(
     request: string | MockRequest,
-    response: MockResponse,
+    response: MockResponse | MockResponseHandler,
     once?: boolean,
-    onMock?: () => void
+    onMockCallback?: () => void
   ): void;
   /**
    * Register mock push `events` for `stream`
@@ -393,4 +404,36 @@ declare interface PushClient {
    * Re-enable all external network connections
    */
   /* export */ function enableNetwork(): void;
+  /**
+   * Default mock response handler for network hang
+   */
+  /* export */ function mockHangResponseHandler(
+    url: URL,
+    req: Req,
+    res: Res
+  ): undefined;
+  /**
+   * Default mock response handler for 500 response
+   */
+  /* export */ function mockErrorResponseHandler(
+    url: URL,
+    req: Req,
+    res: Res
+  ): undefined;
+  /**
+   * Default mock response handler for 404 response
+   */
+  /* export */ function mockMissingResponseHandler(
+    url: URL,
+    req: Req,
+    res: Res
+  ): undefined;
+  /**
+   * Default mock response handler for offline
+   */
+  /* export */ function mockOfflineResponseHandler(
+    url: URL,
+    req: Req,
+    res: Res
+  ): undefined;
 }
