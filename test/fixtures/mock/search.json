@@ -1,0 +1,8 @@
+{
+  "request": {
+    "url": "http://www.someapi.com/v1/search?foo=foo&bar=bar"
+  },
+  "response": {
+    "body": {}
+  }
+}

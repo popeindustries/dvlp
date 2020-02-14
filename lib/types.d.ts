@@ -141,12 +141,12 @@ declare type InterceptProcessOnCallback = (
 declare type MockResponseType = 'html' | 'file' | 'json';
 
 declare type MockResponseData = {
-  regexp: RegExp;
-  key: string;
-  filePath: string;
-  url: URL;
+  origin: string;
+  pathRegex: RegExp;
+  searchParams: URLSearchParams;
   ignoreSearch: boolean;
   once: boolean;
+  filePath: string;
   type: MockResponseType;
   response: MockResponse | MockResponseHandler;
   callback?: () => void;
@@ -154,28 +154,31 @@ declare type MockResponseData = {
 
 declare type MockStreamType = 'ws' | 'es';
 
-declare type MockStreamData = {
-  regexp: RegExp;
-  key: string;
-  filePath: string;
-  url: URL;
-  ignoreSearch: boolean;
-  type: MockStreamType;
-  protocol: string;
-  events: {
-    [name: string]: {
-      name: string;
-      message?: string | { [key: string]: any };
-      sequence?: Array<{}>;
-      options: MockPushEventOptions & {
-        protocol?: string;
-      };
+declare type MockStreamEventsData = {
+  [name: string]: {
+    name: string;
+    message?: string | { [key: string]: any };
+    sequence?: Array<MockStreamEventsData>;
+    options: MockPushEventOptions & {
+      protocol?: string;
     };
   };
 };
 
+declare type MockStreamData = {
+  origin: string;
+  pathRegex: RegExp;
+  searchParams: URLSearchParams;
+  ignoreSearch: boolean;
+  filePath: string;
+  type: MockStreamType;
+  protocol: string;
+  events: MockStreamEventsData;
+};
+
 /* export */ declare class MockInstance {
-  cache: Map<string, MockResponseData | MockStreamData>;
+  responseCache: Set<MockResponseData>;
+  streamCache: Set<MockStreamData>;
   client: string;
 
   constructor(filePaths?: string | Array<string>);

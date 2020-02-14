@@ -1,0 +1,8 @@
+{
+  "request": {
+    "url": "http://www.someapi.com/v3/params/:param1/:param2\\?foo=foo&bar=bar"
+  },
+  "response": {
+    "body": {}
+  }
+}
