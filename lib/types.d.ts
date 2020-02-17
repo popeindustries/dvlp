@@ -138,7 +138,7 @@ declare type InterceptProcessOnCallback = (
   callback: () => void
 ) => void;
 
-declare type MockResponseType = 'html' | 'file' | 'json';
+declare type MockResponseDataType = 'html' | 'file' | 'json';
 
 declare type MockResponseData = {
   origin: string;
@@ -147,21 +147,19 @@ declare type MockResponseData = {
   ignoreSearch: boolean;
   once: boolean;
   filePath: string;
-  type: MockResponseType;
+  type: MockResponseDataType;
   response: MockResponse | MockResponseHandler;
   callback?: () => void;
 };
 
-declare type MockStreamType = 'ws' | 'es';
+declare type MockStreamDataType = 'ws' | 'es';
 
-declare type MockStreamEventsData = {
-  [name: string]: {
-    name: string;
-    message?: string | { [key: string]: any };
-    sequence?: Array<MockStreamEventsData>;
-    options: MockPushEventOptions & {
-      protocol?: string;
-    };
+declare type MockStreamEventData = {
+  name?: string;
+  message?: string | { [key: string]: any };
+  sequence?: Array<MockStreamEventData>;
+  options: MockPushEventOptions & {
+    protocol?: string;
   };
 };
 
@@ -171,9 +169,9 @@ declare type MockStreamData = {
   searchParams: URLSearchParams;
   ignoreSearch: boolean;
   filePath: string;
-  type: MockStreamType;
+  type: MockStreamDataType;
   protocol: string;
-  events: MockStreamEventsData;
+  events: { [name: string]: MockStreamEventData };
 };
 
 /* export */ declare class MockInstance {
@@ -217,11 +215,6 @@ declare type MockResponseJSONSchema = {
   response: MockResponse;
 };
 
-declare type MockPushEventJSONSchema = {
-  stream: MockPushStream;
-  events: MockPushEvent;
-};
-
 /* export */ declare type MockRequest = {
   url: string;
   filePath?: string;
@@ -243,6 +236,11 @@ declare type MockPushEventJSONSchema = {
   offline?: boolean;
 };
 
+declare type MockPushEventJSONSchema = {
+  stream: MockPushStream;
+  events: Array<MockPushEvent>;
+};
+
 /* export */ declare type MockPushStream = {
   url: string;
   type: string;
@@ -255,6 +253,7 @@ declare type MockPushEventJSONSchema = {
   delay?: number;
   event?: string;
   id?: string;
+  namespace?: string;
 };
 
 /* export */ declare type MockPushEvent = {
