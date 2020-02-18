@@ -141,6 +141,7 @@ declare type InterceptProcessOnCallback = (
 declare type MockResponseDataType = 'html' | 'file' | 'json';
 
 declare type MockResponseData = {
+  url: URL;
   originRegex: RegExp;
   pathRegex: RegExp;
   searchParams: URLSearchParams;
@@ -163,6 +164,7 @@ declare type MockStreamEventData = {
 };
 
 declare type MockStreamData = {
+  url: URL;
   originRegex: RegExp;
   pathRegex: RegExp;
   searchParams: URLSearchParams;

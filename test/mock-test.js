@@ -200,6 +200,12 @@ describe('mock', () => {
       mocks.load('test/fixtures/mock');
       expect(mocks.cache.size).to.equal(9);
     });
+    it('should load mock files from directory path and update client string', () => {
+      mocks.load('test/fixtures/mock-push');
+      expect(mocks.client).to.include(
+        '"pathRegex": "^\\\\/feed[\\\\/#\\\\?]?$"'
+      );
+    });
   });
 
   describe('matchResponse()', () => {

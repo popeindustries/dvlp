@@ -1,16 +1,21 @@
-const { expect } = window.chai;
+var expect = window.chai.expect;
 
-describe('Mock', () => {
-  it('should respond to mocked fetch request', async () => {
-    const res = await fetch('http://www.google.com/foo', {
-      mode: 'cors'
+describe('Mock', function() {
+  if (window.fetch) {
+    it('should respond to mocked fetch request', function(done) {
+      fetch('http://www.google.com/foo', {
+        mode: 'cors'
+      }).then(function(res) {
+        res.json().then(function(json) {
+          expect(json).to.eql({ name: 'foo' });
+          done();
+        });
+      });
     });
-    const json = await res.json();
-    expect(json).to.eql({ name: 'foo' });
-  });
-  it('should respond to mocked AJAX request', (done) => {
+  }
+  it('should respond to mocked AJAX request', function(done) {
     const xhr = new XMLHttpRequest();
-    xhr.onload = () => {
+    xhr.onload = function() {
       const json = JSON.parse(xhr.response);
       expect(json).to.eql({ name: 'foo' });
       done();
@@ -18,47 +23,48 @@ describe('Mock', () => {
     xhr.open('GET', 'http://www.google.com/foo');
     xhr.send();
   });
-  it('should respond to mocked EventSource', (done) => {
-    const es = new EventSource('http://localhost:8080/feed');
-    es.onopen = () => {
-      expect(es.readyState).to.equal(1);
-      es.close();
-      done();
-    };
-  });
-  it('should respond to mocked WebSocket', (done) => {
-    const ws = new WebSocket('ws://localhost:8080/socket');
-    ws.onopen = () => {
-      expect(ws.readyState).to.equal(1);
-      ws.close();
-      done();
-    };
-  });
-
-  describe('Push Events', () => {
-    it('should push mocked EventSource event', (done) => {
+  if (window.EventSource) {
+    it('should respond to mocked EventSource', function(done) {
       const es = new EventSource('http://localhost:8080/feed');
-      es.onopen = () => {
+      es.onopen = function() {
+        expect(es.readyState).to.equal(1);
+        es.close();
+        done();
+      };
+    });
+    it('should push mocked EventSource event', function(done) {
+      const es = new EventSource('http://localhost:8080/feed');
+      es.onopen = function() {
         expect(es.readyState).to.equal(1);
         window.dvlp.pushEvent('http://localhost:8080/feed', 'open');
       };
-      es.addEventListener('foo', (event) => {
+      es.addEventListener('foo', function(event) {
         expect(event.data).to.equal('{"title":"open"}');
         es.close();
         done();
       });
     });
-    it('should push mocked WebSocket event', (done) => {
+  }
+  if (window.WebSocket) {
+    it('should respond to mocked WebSocket', function(done) {
       const ws = new WebSocket('ws://localhost:8080/socket');
-      ws.onopen = () => {
+      ws.onopen = function() {
+        expect(ws.readyState).to.equal(1);
+        ws.close();
+        done();
+      };
+    });
+    it('should push mocked WebSocket event', function(done) {
+      const ws = new WebSocket('ws://localhost:8080/socket');
+      ws.onopen = function() {
         expect(ws.readyState).to.equal(1);
         window.dvlp.pushEvent('ws://localhost:8080/socket', 'foo event');
       };
-      ws.onmessage = (event) => {
+      ws.onmessage = function(event) {
         expect(event.data).to.equal('{"title":"foo"}');
         ws.close();
         done();
       };
     });
-  });
+  }
 });
