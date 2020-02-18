@@ -6,21 +6,21 @@
     "events": [
       {
         "name": "foo event",
-        "connect": true,
         "message": {
           "title": "foo"
         },
         "options": {
+          "connect": true,
           "event": "foo"
         }
       },
       {
         "name": "bar event",
-        "connect": true,
         "message": {
           "title": "bar"
         },
         "options": {
+          "connect": true,
           "event": "bar"
         }
       }

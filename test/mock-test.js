@@ -43,31 +43,31 @@ function getResponse() {
   };
 }
 
-describe.only('mock', () => {
+describe('mock', () => {
   afterEach(mocks.clean);
 
   describe('addResponse()', () => {
     it('should add a json type', () => {
       const href = '/data.json';
       mocks.addResponse(href, { body: { data: 'foo' } });
-      expect(mocks.responseCache.size).to.equal(1);
-      const mock = Array.from(mocks.responseCache)[0];
+      expect(mocks.cache.size).to.equal(1);
+      const mock = Array.from(mocks.cache)[0];
+      expect(mock.originRegex.test('http://localhost:8080')).to.be.true;
       expect(mock.pathRegex.test(href)).to.be.true;
-      expect(mock).to.have.property('origin', 'http://localhost:8080');
     });
     it('should add a file type', () => {
       mocks.addResponse('/image.jpeg', { body: 'image.jpeg' });
-      const mock = Array.from(mocks.responseCache)[0];
+      const mock = Array.from(mocks.cache)[0];
       expect(mock).to.have.property('type', 'file');
     });
     it('should add an html type', () => {
       mocks.addResponse('/index.html', { body: '<body>hi</body>' });
-      const mock = Array.from(mocks.responseCache)[0];
+      const mock = Array.from(mocks.cache)[0];
       expect(mock).to.have.property('type', 'html');
     });
     it('should handle incorrectly formatted response', () => {
       mocks.addResponse('/data.json', { data: 'foo' });
-      const mock = Array.from(mocks.responseCache)[0];
+      const mock = Array.from(mocks.cache)[0];
       expect(mock.response.body).to.eql({ data: 'foo' });
     });
     it('should handle search', () => {
@@ -79,7 +79,7 @@ describe.only('mock', () => {
         { url: '/foo.html?foo', ignoreSearch: false },
         { body: '<body>hi</body>' }
       );
-      const [mock1, mock2] = Array.from(mocks.responseCache);
+      const [mock1, mock2] = Array.from(mocks.cache);
       expect(mock1).to.have.property('ignoreSearch', true);
       expect(mock2).to.have.property('ignoreSearch', false);
       expect(mock1.pathRegex.test('/index.html/')).to.be.true;
@@ -87,31 +87,33 @@ describe.only('mock', () => {
     });
     it('should handle 127.0.0.1 as localhost', () => {
       mocks.addResponse('http://127.0.0.1:8080/foo', { body: { data: 'bar' } });
-      const mock = Array.from(mocks.responseCache)[0];
+      const mock = Array.from(mocks.cache)[0];
       expect(mock).to.have.property('type', 'json');
     });
   });
 
   describe('addPushEvents()', () => {
-    it.only('should add a single EventSource event', () => {
+    it('should add a single EventSource event', () => {
       mocks.addPushEvents('http://localhost:8080/foo', {
         name: 'foo',
         message: 'foo'
       });
-      const mock = mocks.cache.get('localhost:8080/foo');
-      expect(mock).to.have.property('default');
-      expect(mock.default).to.have.property('type', 'es');
-      expect(mock.default.events).to.have.property('foo');
+      const mock = Array.from(mocks.cache)[0];
+      expect(mock).to.have.property('type', 'es');
+      expect(mock.originRegex.test('http://localhost:8080')).to.be.true;
+      expect(mock.events).to.have.property('foo');
+      expect(mock.events.foo[0]).to.have.property('message', 'foo');
     });
     it('should add a single WebSocket event', () => {
       mocks.addPushEvents('ws://localhost:8080/foo', {
         name: 'foo',
         message: 'foo'
       });
-      const mock = mocks.cache.get('localhost:8080/foo');
-      expect(mock).to.have.property('default');
-      expect(mock.default).to.have.property('type', 'ws');
-      expect(mock.default.events).to.have.property('foo');
+      const mock = Array.from(mocks.cache)[0];
+      expect(mock).to.have.property('type', 'ws');
+      expect(mock.originRegex.test('ws://localhost:8080')).to.be.true;
+      expect(mock.events).to.have.property('foo');
+      expect(mock.events.foo[0]).to.have.property('message', 'foo');
     });
     it('should add multiple EventSource events', () => {
       mocks.addPushEvents('http://localhost:8080/foo', [
@@ -124,9 +126,10 @@ describe.only('mock', () => {
           message: 'bar'
         }
       ]);
-      const mock = mocks.cache.get('localhost:8080/foo');
-      expect(mock.default.events).to.have.property('foo');
-      expect(mock.default.events).to.have.property('bar');
+      const mock = Array.from(mocks.cache)[0];
+      expect(mock).to.have.property('type', 'es');
+      expect(mock.events).to.have.property('foo');
+      expect(mock.events).to.have.property('bar');
     });
     it('should add multiple WebSocket events', () => {
       mocks.addPushEvents('ws://localhost:8080/foo', [
@@ -139,17 +142,17 @@ describe.only('mock', () => {
           message: 'bar'
         }
       ]);
-      const mock = mocks.cache.get('localhost:8080/foo');
-      expect(mock.default.events).to.have.property('foo');
-      expect(mock.default.events).to.have.property('bar');
+      const mock = Array.from(mocks.cache)[0];
+      expect(mock).to.have.property('type', 'ws');
+      expect(mock.events).to.have.property('foo');
+      expect(mock.events).to.have.property('bar');
     });
     it('should ignore events with no name', () => {
       mocks.addPushEvents('http://localhost:8080/foo', {
         message: 'foo'
       });
-      const mock = mocks.cache.get('localhost:8080/foo');
-      expect(mock).to.have.property('default');
-      expect(mock.default.events).to.not.have.property('foo');
+      const mock = Array.from(mocks.cache)[0];
+      expect(mock.events).to.deep.equal({});
     });
   });
 
@@ -195,7 +198,7 @@ describe.only('mock', () => {
     });
     it('should load mock files from directory path', () => {
       mocks.load('test/fixtures/mock');
-      expect(mocks.cache.size).to.equal(7);
+      expect(mocks.cache.size).to.equal(9);
     });
   });
 

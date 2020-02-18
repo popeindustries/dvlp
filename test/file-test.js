@@ -22,6 +22,8 @@ describe('file', () => {
         'test/fixtures/mock/9012.json',
         'test/fixtures/mock/json.json',
         'test/fixtures/mock/multi.json',
+        'test/fixtures/mock/params.json',
+        'test/fixtures/mock/search.json',
         'test/fixtures/mock/test.json'
       ]);
     });
@@ -76,6 +78,8 @@ describe('file', () => {
         'test/fixtures/mock/9012.json',
         'test/fixtures/mock/json.json',
         'test/fixtures/mock/multi.json',
+        'test/fixtures/mock/params.json',
+        'test/fixtures/mock/search.json',
         'test/fixtures/mock/test.json'
       ]);
     });

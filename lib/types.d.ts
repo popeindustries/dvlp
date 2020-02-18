@@ -141,7 +141,7 @@ declare type InterceptProcessOnCallback = (
 declare type MockResponseDataType = 'html' | 'file' | 'json';
 
 declare type MockResponseData = {
-  origin: string;
+  originRegex: RegExp;
   pathRegex: RegExp;
   searchParams: URLSearchParams;
   ignoreSearch: boolean;
@@ -156,27 +156,25 @@ declare type MockStreamDataType = 'ws' | 'es';
 
 declare type MockStreamEventData = {
   name?: string;
-  message?: string | { [key: string]: any };
-  sequence?: Array<MockStreamEventData>;
+  message: string | { [key: string]: any };
   options: MockPushEventOptions & {
     protocol?: string;
   };
 };
 
 declare type MockStreamData = {
-  origin: string;
+  originRegex: RegExp;
   pathRegex: RegExp;
   searchParams: URLSearchParams;
   ignoreSearch: boolean;
   filePath: string;
   type: MockStreamDataType;
   protocol: string;
-  events: { [name: string]: MockStreamEventData };
+  events: { [name: string]: Array<MockStreamEventData> };
 };
 
 /* export */ declare class MockInstance {
-  responseCache: Set<MockResponseData>;
-  streamCache: Set<MockStreamData>;
+  cache: Set<MockResponseData | MockStreamData>;
   client: string;
 
   constructor(filePaths?: string | Array<string>);
@@ -192,7 +190,7 @@ declare type MockStreamData = {
   ): void;
   load(filePaths: string | Array<string>): void;
   matchResponse(
-    key: string,
+    href: string,
     req?: Req,
     res?: Res
   ): boolean | MockResponseData | undefined;
@@ -202,10 +200,20 @@ declare type MockStreamData = {
     push: (stream: string | PushStream, event: PushEvent) => void
   ): boolean;
   hasMatch(
-    keyOrObjectWithUrl: string | URL | Req | MockRequest | MockPushStream
+    reqOrMockData:
+      | string
+      | URL
+      | { url: string }
+      | MockResponseData
+      | MockStreamData
   ): boolean;
   remove(
-    keyOrObjectWithUrl: string | URL | Req | MockRequest | MockPushStream
+    reqOrMockData:
+      | string
+      | URL
+      | { url: string }
+      | MockResponseData
+      | MockStreamData
   ): void;
   clean(): void;
 }
@@ -251,6 +259,7 @@ declare type MockPushEventJSONSchema = {
 
 /* export */ declare type MockPushEventOptions = {
   delay?: number;
+  connect?: boolean;
   event?: string;
   id?: string;
   namespace?: string;
@@ -258,7 +267,6 @@ declare type MockPushEventJSONSchema = {
 
 /* export */ declare type MockPushEvent = {
   name: string;
-  connect?: boolean;
   message?: string | { [key: string]: any };
   sequence?: Array<MockPushEvent>;
   options?: MockPushEventOptions;

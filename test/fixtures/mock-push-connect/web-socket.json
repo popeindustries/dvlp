@@ -6,13 +6,17 @@
     "events": [
       {
         "name": "foo event",
-        "connect": true,
-        "message": "foo"
+        "message": "foo",
+        "options": {
+          "connect": true
+        }
       },
       {
         "name": "bar event",
-        "connect": true,
-        "message": "bar"
+        "message": "bar",
+        "options": {
+          "connect": true
+        }
       }
     ]
   }
