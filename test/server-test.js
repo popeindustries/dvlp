@@ -5,6 +5,7 @@ const config = require('../lib/config.js');
 const EventSource = require('eventsource');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
+const http = require('http');
 const path = require('path');
 const serverFactory = require('../lib/server/index.js');
 const { Client: WebSocket } = require('faye-websocket');
@@ -305,6 +306,24 @@ describe('server', () => {
         port: 8000,
         reload: false
       });
+      const res = await fetch('http://localhost:8000/', {
+        headers: { accept: 'text/html' }
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('hi');
+    });
+    it('should start a function server', async () => {
+      server = await serverFactory(
+        () => {
+          http
+            .createServer((req, res) => {
+              res.writeHead(200);
+              res.end('hi');
+            })
+            .listen(8000);
+        },
+        { port: 8000, reload: false }
+      );
       const res = await fetch('http://localhost:8000/', {
         headers: { accept: 'text/html' }
       });

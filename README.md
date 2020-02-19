@@ -422,9 +422,9 @@ $ DEBUG=dvlp* npm run dev
 
 ## JS API
 
-### `server(filePath: string|[string], [options]): Promise<{ destroy: () => void }>`
+### `server(filePath: string|[string]|() => void, [options]): Promise<{ destroy: () => void }>`
 
-Serve files at `filePath`, starting static file server if one or more directories, or app server if a single file.
+Serve files at `filePath`, starting static file server if one or more directories, or app server if a single file or function (which starts an application server when imported/called).
 
 `options` include:
 
