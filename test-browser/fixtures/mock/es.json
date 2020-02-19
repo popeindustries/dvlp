@@ -1,7 +1,7 @@
 [
   {
     "stream": {
-      "url": "http://localhost:8080/feed"
+      "url": "http://someapi.com/feed"
     },
     "events": [
       {

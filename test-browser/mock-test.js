@@ -25,7 +25,7 @@ describe('Mock', function() {
   });
   if (window.EventSource) {
     it('should respond to mocked EventSource', function(done) {
-      const es = new EventSource('http://localhost:8080/feed');
+      const es = new EventSource('http://someapi.com/feed');
       es.onopen = function() {
         expect(es.readyState).to.equal(1);
         es.close();
@@ -33,10 +33,10 @@ describe('Mock', function() {
       };
     });
     it('should push mocked EventSource event', function(done) {
-      const es = new EventSource('http://localhost:8080/feed');
+      const es = new EventSource('http://someapi.com/feed');
       es.onopen = function() {
         expect(es.readyState).to.equal(1);
-        window.dvlp.pushEvent('http://localhost:8080/feed', 'open');
+        window.dvlp.pushEvent('http://someapi.com/feed', 'open');
       };
       es.addEventListener('foo', function(event) {
         expect(event.data).to.equal('{"title":"open"}');
@@ -47,7 +47,7 @@ describe('Mock', function() {
   }
   if (window.WebSocket) {
     it('should respond to mocked WebSocket', function(done) {
-      const ws = new WebSocket('ws://localhost:8080/socket');
+      const ws = new WebSocket('ws://someapi.com/socket');
       ws.onopen = function() {
         expect(ws.readyState).to.equal(1);
         ws.close();
@@ -55,10 +55,10 @@ describe('Mock', function() {
       };
     });
     it('should push mocked WebSocket event', function(done) {
-      const ws = new WebSocket('ws://localhost:8080/socket');
+      const ws = new WebSocket('ws://someapi.com/socket');
       ws.onopen = function() {
         expect(ws.readyState).to.equal(1);
-        window.dvlp.pushEvent('ws://localhost:8080/socket', 'foo event');
+        window.dvlp.pushEvent('ws://someapi.com/socket', 'foo event');
       };
       ws.onmessage = function(event) {
         expect(event.data).to.equal('{"title":"foo"}');
