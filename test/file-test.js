@@ -6,11 +6,11 @@ const path = require('path');
 
 describe('file', () => {
   describe('expandPath()', () => {
-    it('should return undefined for missing/empty filePath', () => {
-      expect(expandPath()).to.eql(undefined);
-      expect(expandPath(undefined)).to.eql(undefined);
-      expect(expandPath(null)).to.eql(undefined);
-      expect(expandPath('')).to.eql(undefined);
+    it('should return empty array for missing/empty filePath', () => {
+      expect(expandPath()).to.eql([]);
+      expect(expandPath(undefined)).to.eql([]);
+      expect(expandPath(null)).to.eql([]);
+      expect(expandPath('')).to.eql([]);
     });
     it('should return array for single filePath', () => {
       expect(expandPath('test/fixtures')).to.eql(['test/fixtures']);
