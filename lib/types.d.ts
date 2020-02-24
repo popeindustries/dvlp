@@ -37,6 +37,7 @@ declare type Req = import('http').IncomingMessage & {
   filePath: string;
   type: string;
   url: string;
+  params?: { [key: string]: string } | {};
 };
 
 declare type Res = import('http').ServerResponse & {
@@ -144,6 +145,7 @@ declare type MockResponseData = {
   url: URL;
   originRegex: RegExp;
   pathRegex: RegExp;
+  paramsMatch: import('path-to-regexp').MatchFunction;
   searchParams: URLSearchParams;
   ignoreSearch: boolean;
   once: boolean;
@@ -167,6 +169,7 @@ declare type MockStreamData = {
   url: URL;
   originRegex: RegExp;
   pathRegex: RegExp;
+  paramsMatch: import('path-to-regexp').MatchFunction;
   searchParams: URLSearchParams;
   ignoreSearch: boolean;
   filePath: string;
@@ -232,7 +235,6 @@ declare type MockResponseJSONSchema = {
 };
 
 /* export */ declare type MockResponseHandler = (
-  url: URL,
   req: Req,
   res: Res
 ) => undefined;

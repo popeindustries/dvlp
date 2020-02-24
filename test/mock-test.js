@@ -286,10 +286,25 @@ describe('mock', () => {
     it('should invoke response handler', (done) => {
       const href = '/index.json';
       const res = getResponse();
-      mocks.addResponse(href, (url, req, res) => {
-        expect(url).to.have.property('pathname', href);
+      mocks.addResponse(href, (req, res) => {
+        expect(new URL(req.url, 'http://localhost')).to.have.property(
+          'pathname',
+          href
+        );
         done();
       });
+      mocks.matchResponse(href, getRequest(href), res);
+    });
+    it('should invoke response handler with parameters', (done) => {
+      const href = 'http://www.someapi.com/v3/handler/foo/bar';
+      const res = getResponse();
+      mocks.addResponse(
+        'http://www.someapi.com/v3/handler/:param1/:param2',
+        (req, res) => {
+          expect(req.params).to.deep.equal({ param1: 'foo', param2: 'bar' });
+          done();
+        }
+      );
       mocks.matchResponse(href, getRequest(href), res);
     });
     it('should hang when "response.hang"', (done) => {
