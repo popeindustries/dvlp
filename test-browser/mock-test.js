@@ -1,18 +1,6 @@
 var expect = window.chai.expect;
 
 describe('Mock', function() {
-  if (window.fetch) {
-    it('should respond to mocked fetch request', function(done) {
-      fetch('http://www.google.com/foo', {
-        mode: 'cors'
-      }).then(function(res) {
-        res.json().then(function(json) {
-          expect(json).to.eql({ name: 'foo' });
-          done();
-        });
-      });
-    });
-  }
   it('should respond to mocked AJAX request', function(done) {
     const xhr = new XMLHttpRequest();
     xhr.onload = function() {
@@ -23,7 +11,17 @@ describe('Mock', function() {
     xhr.open('GET', 'http://www.google.com/foo');
     xhr.send();
   });
-  if (window.EventSource) {
+  if (typeof Proxy !== 'undefined') {
+    it('should respond to mocked fetch request', function(done) {
+      fetch('http://www.google.com/foo', {
+        mode: 'cors'
+      }).then(function(res) {
+        res.json().then(function(json) {
+          expect(json).to.eql({ name: 'foo' });
+          done();
+        });
+      });
+    });
     it('should respond to mocked EventSource', function(done) {
       const es = new EventSource('http://someapi.com/feed');
       es.onopen = function() {
@@ -44,8 +42,6 @@ describe('Mock', function() {
         done();
       });
     });
-  }
-  if (window.WebSocket) {
     it('should respond to mocked WebSocket', function(done) {
       const ws = new WebSocket('ws://someapi.com/socket');
       ws.onopen = function() {

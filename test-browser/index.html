@@ -12,7 +12,7 @@
     <script src="node_modules/mocha/mocha.js"></script>
     <script class="mocha-init">
       mocha.setup('bdd');
-      mocha.checkLeaks();
+      mocha.checkLeaks(false);
     </script>
     <script src="./mock-test.js"></script>
     <script class="mocha-exec">
