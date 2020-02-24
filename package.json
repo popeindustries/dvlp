@@ -1,6 +1,6 @@
 {
   "name": "dvlp",
-  "version": "7.4.0",
+  "version": "7.3.0",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
   "main": "dvlp.js",
   "types": "dvlp.d.ts",
@@ -59,7 +59,7 @@
     "react": "^16.12.0",
     "sass": "^1.25.0",
     "terser": "^4.6.3",
-    "typescript": "^3.8.2"
+    "typescript": "^3.7.5"
   },
   "engines": {
     "node": ">=10"
