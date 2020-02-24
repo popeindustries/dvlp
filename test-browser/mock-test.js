@@ -11,7 +11,7 @@ describe('Mock', function() {
     xhr.open('GET', 'http://www.google.com/foo');
     xhr.send();
   });
-  if (typeof Proxy !== 'undefined') {
+  if (typeof fetch !== 'undefined') {
     it('should respond to mocked fetch request', function(done) {
       fetch('http://www.google.com/foo', {
         mode: 'cors'
@@ -22,6 +22,8 @@ describe('Mock', function() {
         });
       });
     });
+  }
+  if (typeof EventSource !== 'undefined') {
     it('should respond to mocked EventSource', function(done) {
       const es = new EventSource('http://someapi.com/feed');
       es.onopen = function() {
@@ -42,6 +44,8 @@ describe('Mock', function() {
         done();
       });
     });
+  }
+  if (typeof WebSocket !== 'undefined') {
     it('should respond to mocked WebSocket', function(done) {
       const ws = new WebSocket('ws://someapi.com/socket');
       ws.onopen = function() {
