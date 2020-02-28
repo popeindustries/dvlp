@@ -481,7 +481,7 @@ const res = await fetch('http://www.someapi.com/v1/id/101010');
 console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 ```
 
-- **`mockResponse(request: string|object, response: object|(url, req, res) => void, once: boolean, onMock: () => void): void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking))
+- **`mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMock: () => void): void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking))
 
 ```js
 server.mockResponse(
@@ -503,7 +503,7 @@ Or pass a response handler:
 ```js
 server.mockResponse(
   '/api/user/1234',
-  (url, req, res) => {
+  (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'application/json'
     });
