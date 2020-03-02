@@ -57,9 +57,9 @@
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
     "react": "^16.13.0",
-    "sass": "^1.26.1",
+    "sass": "^1.26.2",
     "terser": "^4.6.4",
-    "typescript": "^3.8.2"
+    "typescript": "^3.8.3"
   },
   "engines": {
     "node": ">=10"
