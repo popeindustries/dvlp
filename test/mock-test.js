@@ -90,6 +90,13 @@ describe('mock', () => {
       const mock = Array.from(mocks.cache)[0];
       expect(mock).to.have.property('type', 'json');
     });
+    it('should return a remove function', () => {
+      const href = '/data.json';
+      const remove = mocks.addResponse(href, { body: { data: 'foo' } });
+      expect(mocks.cache.size).to.equal(1);
+      remove();
+      expect(mocks.cache.size).to.equal(0);
+    });
   });
 
   describe('addPushEvents()', () => {

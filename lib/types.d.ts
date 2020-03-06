@@ -188,11 +188,11 @@ declare type MockStreamData = {
     res: MockResponse | MockResponseHandler,
     once?: boolean,
     onMock?: () => void
-  ): void;
+  ): () => void;
   addPushEvents(
     stream: string | MockPushStream,
     events: MockPushEvent | Array<MockPushEvent>
-  ): void;
+  ): () => void;
   load(filePaths: string | Array<string>): void;
   matchResponse(
     href: string,
