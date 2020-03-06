@@ -481,7 +481,7 @@ const res = await fetch('http://www.someapi.com/v1/id/101010');
 console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 ```
 
-- **`mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMock: () => void): void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking))
+- **`mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMock: () => void): () => void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
 
 ```js
 server.mockResponse(
@@ -501,7 +501,7 @@ console.log(await res.json()); // => { id: "1234", name: "bob" }
 Or pass a response handler:
 
 ```js
-server.mockResponse(
+const removeMock = server.mockResponse(
   '/api/user/1234',
   (req, res) => {
     res.writeHead(200, {
@@ -513,12 +513,13 @@ server.mockResponse(
 );
 const res = await fetch('http://localhost:8080/api/user/1234');
 console.log(await res.json()); // => { id: "1234", name: "bob" }
+removeMock();
 ```
 
-- **`mockPushEvents(stream: string|object, events: object|[object]): void`** add one or more mock `events` for a WebSocket/EventSource `stream` (see [mocking](#mocking))
+- **`mockPushEvents(stream: string|object, events: object|[object]): () => void`** add one or more mock `events` for a WebSocket/EventSource `stream` (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
 
 ```js
-server.mockPushEvents('ws://www.somesocket.com/stream', [
+const removeMock = server.mockPushEvents('ws://www.somesocket.com/stream', [
   {
     name: 'hi',
     message: 'hi!'
@@ -531,6 +532,7 @@ server.mockPushEvents('ws://www.somesocket.com/stream', [
 ws = new WebSocket('ws://www.somesocket.com/stream');
 ws.addEventListener('message', (event) => {
   console.log(event.data); // => hi!
+  removeMock();
 });
 ```
 
