@@ -29,7 +29,7 @@
     "permessage-deflate": "^0.1.7",
     "pirates": "^4.0.1",
     "rimraf": "^3.0.0",
-    "rollup": "^1.32.0",
+    "rollup": "^2.0.2",
     "send": "^0.17.1",
     "server-destroy": "^1.0.1",
     "sucrase": "^3.12.1",
@@ -58,7 +58,7 @@
     "prettier": "^1.19.1",
     "react": "^16.13.0",
     "sass": "^1.26.2",
-    "terser": "^4.6.4",
+    "terser": "^4.6.6",
     "typescript": "^3.8.3"
   },
   "engines": {
