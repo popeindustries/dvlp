@@ -11,6 +11,24 @@ describe('Mock', function() {
     xhr.open('GET', 'http://www.google.com/foo');
     xhr.send();
   });
+  it.only('should add a local json response', function(done) {
+    var remove = window.dvlp.addResponse(
+      'http://www.google.com/bar',
+      { body: { name: 'bar' } },
+      true
+    );
+    expect(window.dvlp.cache).to.have.length(4);
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      const json = JSON.parse(xhr.response);
+      expect(json).to.eql({ name: 'bar' });
+      remove();
+      expect(window.dvlp.cache).to.have.length(3);
+      done();
+    };
+    xhr.open('GET', 'http://www.google.com/bar');
+    xhr.send();
+  });
   it('should disable/enable all network connections when using AJAX', function(done) {
     window.dvlp.disableNetwork();
     const xhr = new XMLHttpRequest();
