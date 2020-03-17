@@ -70,7 +70,7 @@
     "lint": "tsc --noEmit && eslint './{lib,test}/**/*.js'",
     "prepublishOnly": "npm run build",
     "test": "NODE_ENV=test mocha test/*-test.js --reporter spec --bail --exit --timeout 10000 --require lib/config.js",
-    "test:browser": "npm run build && ./bin/dvlp --mock test-browser/fixtures/mock --no-reload test-browser",
+    "test:browser": "npm run build && ./bin/dvlp --mock test-browser/fixtures/mock test-browser",
     "demo": "./bin/dvlp test/fixtures/app.js"
   },
   "husky": {

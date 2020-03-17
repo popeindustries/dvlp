@@ -11,6 +11,17 @@ describe('Mock', function() {
     xhr.open('GET', 'http://www.google.com/foo');
     xhr.send();
   });
+  it('should disable/enable all network connections when using AJAX', function(done) {
+    window.dvlp.disableNetwork();
+    const xhr = new XMLHttpRequest();
+    try {
+      xhr.open('GET', 'http://www.apple.com');
+    } catch (err) {
+      expect(err.message).to.include('network connections disabled');
+      done();
+    }
+    window.dvlp.enableNetwork();
+  });
   if (typeof fetch !== 'undefined') {
     it('should respond to mocked fetch request', function(done) {
       fetch('http://www.google.com/foo', {
@@ -21,6 +32,16 @@ describe('Mock', function() {
           done();
         });
       });
+    });
+    it('should disable/enable all network connections when using fetch', function(done) {
+      window.dvlp.disableNetwork();
+      try {
+        fetch('http://www.apple.com');
+      } catch (err) {
+        expect(err.message).to.include('network connections disabled');
+        done();
+      }
+      window.dvlp.enableNetwork();
     });
   }
   if (typeof EventSource !== 'undefined') {
@@ -44,6 +65,16 @@ describe('Mock', function() {
         done();
       });
     });
+    it('should disable/enable all network connections when using EventSource', function(done) {
+      window.dvlp.disableNetwork();
+      try {
+        new EventSource('http://someotherapi.com/feed');
+      } catch (err) {
+        expect(err.message).to.include('network connections disabled');
+        done();
+      }
+      window.dvlp.enableNetwork();
+    });
   }
   if (typeof WebSocket !== 'undefined') {
     it('should respond to mocked WebSocket', function(done) {
@@ -65,6 +96,16 @@ describe('Mock', function() {
         ws.close();
         done();
       };
+    });
+    it('should disable/enable all network connections when using WebSocket', function(done) {
+      window.dvlp.disableNetwork();
+      try {
+        new WebSocket('http://someotherapi.com/feed');
+      } catch (err) {
+        expect(err.message).to.include('network connections disabled');
+        done();
+      }
+      window.dvlp.enableNetwork();
     });
   }
 });
