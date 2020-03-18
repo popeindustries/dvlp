@@ -350,6 +350,14 @@ describe('mock', () => {
       expect(res.statusCode).to.equal(undefined);
       expect(req.socket).to.have.property('destroyed', true);
     });
+    it('should return custom status', () => {
+      const href = '/index.json';
+      const res = getResponse();
+      mocks.addResponse(href, { body: {}, status: 403 });
+      mocks.matchResponse(href, getRequest(href), res);
+      expect(res.statusCode).to.equal(403);
+      expect(res.headers['Content-Type']).to.equal('application/json');
+    });
   });
 
   describe('matchPushEvent()', () => {

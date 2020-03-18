@@ -246,6 +246,7 @@ declare type MockResponseJSONSchema = {
   error?: boolean;
   missing?: boolean;
   offline?: boolean;
+  status?: number;
 };
 
 declare type MockPushEventJSONSchema = {
