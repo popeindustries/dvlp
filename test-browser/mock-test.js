@@ -28,6 +28,53 @@ describe('Mock', function() {
     xhr.open('GET', 'http://www.google.com/bar');
     xhr.send();
   });
+  it('should respond to locally mocked AJAX request with custom status', function(done) {
+    window.dvlp.addResponse(
+      'http://www.google.com/bar',
+      { body: { name: 'bar' }, status: 403 },
+      true
+    );
+    expect(window.dvlp.cache).to.have.length(4);
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      expect(xhr.status).to.equal(403);
+      const json = JSON.parse(xhr.response);
+      expect(json).to.eql({ name: 'bar' });
+      expect(window.dvlp.cache).to.have.length(3);
+      done();
+    };
+    xhr.open('GET', 'http://www.google.com/bar');
+    xhr.send();
+  });
+  it('should respond to locally mocked AJAX request with error status', function(done) {
+    window.dvlp.addResponse(
+      'http://www.google.com/bar',
+      { body: {}, error: 500 },
+      true
+    );
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      expect(xhr.status).to.equal(500);
+      expect(xhr.response).to.eql('"error"');
+      done();
+    };
+    xhr.open('GET', 'http://www.google.com/bar');
+    xhr.send();
+  });
+  it('should not respond to locally mocked hung AJAX request', function(done) {
+    window.dvlp.addResponse(
+      'http://www.google.com/bar',
+      { body: {}, hang: true },
+      true
+    );
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      expect(xhr.status).to.not.exist;
+    };
+    xhr.open('GET', 'http://www.google.com/bar');
+    xhr.send();
+    setTimeout(done, 200);
+  });
   it('should disable/enable all network connections when using AJAX', function(done) {
     window.dvlp.disableNetwork();
     const xhr = new XMLHttpRequest();
@@ -50,7 +97,7 @@ describe('Mock', function() {
         });
       });
     });
-    it('should responsd to locally mocked fetch request', function(done) {
+    it('should respond to locally mocked fetch request', function(done) {
       var remove = window.dvlp.addResponse(
         'http://www.google.com/bar',
         { body: { name: 'bar' } },
@@ -67,6 +114,56 @@ describe('Mock', function() {
           done();
         });
       });
+    });
+    it('should respond to locally mocked fetch request with custom status', function(done) {
+      var remove = window.dvlp.addResponse(
+        'http://www.google.com/bar',
+        { body: { name: 'bar' }, status: 403 },
+        false
+      );
+      expect(window.dvlp.cache).to.have.length(4);
+      fetch('http://www.google.com/bar', {
+        mode: 'cors'
+      }).then(function(res) {
+        expect(res.status).to.equal(403);
+        expect(res.ok).to.be.false;
+        res.json().then(function(json) {
+          expect(json).to.eql({ name: 'bar' });
+          remove();
+          expect(window.dvlp.cache).to.have.length(3);
+          done();
+        });
+      });
+    });
+    it('should respond to locally mocked fetch request with error status', function(done) {
+      window.dvlp.addResponse(
+        'http://www.google.com/bar',
+        { body: {}, error: true },
+        true
+      );
+      fetch('http://www.google.com/bar', {
+        mode: 'cors'
+      }).then(function(res) {
+        expect(res.status).to.equal(500);
+        expect(res.ok).to.be.false;
+        res.text().then(function(text) {
+          expect(text).to.equal('"error"');
+          done();
+        });
+      });
+    });
+    it('should not respond to locally mocked hung fetch request', function(done) {
+      window.dvlp.addResponse(
+        'http://www.google.com/bar',
+        { body: {}, hang: true },
+        true
+      );
+      fetch('http://www.google.com/bar', {
+        mode: 'cors'
+      }).then(function(res) {
+        expect(res).to.not.exist;
+      });
+      setTimeout(done, 200);
     });
     it('should disable/enable all network connections when using fetch', function(done) {
       window.dvlp.disableNetwork();
