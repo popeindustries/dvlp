@@ -29,7 +29,7 @@
     "permessage-deflate": "^0.1.7",
     "pirates": "^4.0.1",
     "rimraf": "^3.0.0",
-    "rollup": "^2.0.2",
+    "rollup": "^2.1.0",
     "send": "^0.17.1",
     "server-destroy": "^1.0.1",
     "sucrase": "^3.12.1",
@@ -53,12 +53,12 @@
     "lint-staged": "^10.0.8",
     "lit-html": "^1.1.2",
     "lodash": "^4.17.15",
-    "mocha": "^7.1.0",
+    "mocha": "^7.1.1",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
     "react": "^16.13.0",
     "sass": "^1.26.3",
-    "terser": "^4.6.6",
+    "terser": "^4.6.7",
     "typescript": "^3.8.3"
   },
   "engines": {
