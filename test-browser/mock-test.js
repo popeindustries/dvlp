@@ -11,8 +11,8 @@ describe('Mock', function() {
     xhr.open('GET', 'http://www.google.com/foo');
     xhr.send();
   });
-  it.only('should add a local json response', function(done) {
-    var remove = window.dvlp.addResponse(
+  it('should respond to locally mocked AJAX request', function(done) {
+    window.dvlp.addResponse(
       'http://www.google.com/bar',
       { body: { name: 'bar' } },
       true
@@ -22,7 +22,6 @@ describe('Mock', function() {
     xhr.onload = function() {
       const json = JSON.parse(xhr.response);
       expect(json).to.eql({ name: 'bar' });
-      remove();
       expect(window.dvlp.cache).to.have.length(3);
       done();
     };
@@ -47,6 +46,24 @@ describe('Mock', function() {
       }).then(function(res) {
         res.json().then(function(json) {
           expect(json).to.eql({ name: 'foo' });
+          done();
+        });
+      });
+    });
+    it('should responsd to locally mocked fetch request', function(done) {
+      var remove = window.dvlp.addResponse(
+        'http://www.google.com/bar',
+        { body: { name: 'bar' } },
+        false
+      );
+      expect(window.dvlp.cache).to.have.length(4);
+      fetch('http://www.google.com/bar', {
+        mode: 'cors'
+      }).then(function(res) {
+        res.json().then(function(json) {
+          expect(json).to.eql({ name: 'bar' });
+          remove();
+          expect(window.dvlp.cache).to.have.length(3);
           done();
         });
       });
