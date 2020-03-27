@@ -4,5 +4,5 @@
 /src
 /docs
 rollup.config.js
-karma.config.js
+tsconfig.js
 package-lock.json
