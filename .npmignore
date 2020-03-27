@@ -4,5 +4,5 @@
 /src
 /docs
 rollup.config.js
-tsconfig.js
+tsconfig.json
 package-lock.json
