@@ -1,8 +1,8 @@
 'use strict';
 
 const { expect } = require('chai');
-const Mock = require('../lib/mock/index.js');
-const { pushEvent } = require('../lib/push-events/index.js');
+const Mock = require('../src/mock/index.js');
+const { pushEvent } = require('../src/push-events/index.js');
 
 const mocks = new Mock();
 

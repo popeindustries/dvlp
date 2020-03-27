@@ -1,7 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
-const { expandPath, find, importModule } = require('../lib/utils/file.js');
+const { expandPath, find, importModule } = require('../src/utils/file.js');
 const path = require('path');
 
 describe('file', () => {

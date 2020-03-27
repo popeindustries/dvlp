@@ -3,7 +3,7 @@
 const { expect } = require('chai');
 const EventSource = require('eventsource');
 const fetch = require('node-fetch');
-const testServer = require('../lib/test-server/index.js');
+const testServer = require('../src/test-server/index.js');
 const { Client: WebSocket } = require('faye-websocket');
 
 let es, server, ws;
@@ -43,12 +43,12 @@ describe('testServer', () => {
   });
   it('should respond to requests for resources using default "webroot"', async () => {
     server = await testServer();
-    const res = await fetch('http://localhost:8080/lib/index.js');
+    const res = await fetch('http://localhost:8080/src/index.js');
     expect(res).to.exist;
     expect(await res.text()).to.contain('testServer');
   });
   it('should respond to requests for resources using specific "webroot"', async () => {
-    server = await testServer({ webroot: 'lib' });
+    server = await testServer({ webroot: 'src' });
     const res = await fetch('http://localhost:8080/test-server/index.js');
     expect(res).to.exist;
     expect(await res.text()).to.contain('module.exports.disableNetwork');
@@ -131,7 +131,7 @@ describe('testServer', () => {
   it('should reroute external request when network disabled and rerouting enabled', async () => {
     testServer.disableNetwork(true);
     server = await testServer();
-    const res = await fetch('http://www.google.com/lib/index.js');
+    const res = await fetch('http://www.google.com/src/index.js');
     expect(res).to.exist;
     expect(await res.text()).to.contain('testServer');
     testServer.disableNetwork(false);

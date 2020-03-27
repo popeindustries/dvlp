@@ -1,11 +1,11 @@
 'use strict';
 
-const { clearResolverCache, resolve } = require('../lib/resolver/index.js');
+const { clearResolverCache, resolve } = require('../src/resolver/index.js');
 const {
   getPackage,
   resolvePackagePath,
-} = require('../lib/resolver/package.js');
-const config = require('../lib/config.js');
+} = require('../src/resolver/package.js');
+const config = require('../src/config.js');
 const { expect } = require('chai');
 const path = require('path');
 

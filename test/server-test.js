@@ -1,13 +1,13 @@
 'use strict';
 
-const { cleanBundles } = require('../lib/bundler/index.js');
-const config = require('../lib/config.js');
+const { cleanBundles } = require('../src/bundler/index.js');
+const config = require('../src/config.js');
 const EventSource = require('eventsource');
 const { expect } = require('chai');
 const fetch = require('node-fetch');
 const http = require('http');
 const path = require('path');
-const serverFactory = require('../lib/server/index.js');
+const serverFactory = require('../src/server/index.js');
 const { Client: WebSocket } = require('faye-websocket');
 
 let es, server, ws;

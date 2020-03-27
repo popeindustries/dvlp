@@ -1,11 +1,11 @@
 'use strict';
 
-const { cleanBundles, destroyWorkers } = require('../lib/bundler/index.js');
-const { clearResolverCache } = require('../lib/resolver/index.js');
-const config = require('../lib/config.js');
+const { cleanBundles, destroyWorkers } = require('../src/bundler/index.js');
+const { clearResolverCache } = require('../src/resolver/index.js');
+const config = require('../src/config.js');
 const { expect } = require('chai');
 const { gzipSync } = require('zlib');
-const { patchResponse } = require('../lib/utils/patch.js');
+const { patchResponse } = require('../src/utils/patch.js');
 const path = require('path');
 const { ServerResponse } = require('http');
 

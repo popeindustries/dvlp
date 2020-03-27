@@ -5,12 +5,12 @@ const {
   destroyWorkers,
   bundle,
   resolveModuleId,
-} = require('../lib/bundler/index.js');
-const config = require('../lib/config.js');
+} = require('../src/bundler/index.js');
+const config = require('../src/config.js');
 const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
-const { resolve } = require('../lib/resolver/index.js');
+const { resolve } = require('../src/resolver/index.js');
 
 const DEBUG = 'debug-4.1.1.js';
 const LODASH = 'lodash-4.17.15.js';

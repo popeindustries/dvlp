@@ -98,11 +98,11 @@ module.exports = function transpile(filePath, isServer) {
 
   if (RE_SASS.test(filePath)) {
     return sass.renderSync({
-      file: filePath
+      file: filePath,
     }).css;
   } else if (RE_JS.test(filePath)) {
     return sucrase.transform(fs.readFileSync(filePath, 'utf8'), {
-      transforms: jsTransforms
+      transforms: jsTransforms,
     }).code;
   }
 };
@@ -444,7 +444,7 @@ Create a server for handling network requests during testing.
 
 ```js
 const { testServer } = require('dvlp');
-const server = await testServer({ port: 8080, latency: 20, webroot: 'lib' });
+const server = await testServer({ port: 8080, latency: 20, webroot: 'src' });
 ```
 
 Returns a **`TestServer`** instance with the following methods:
@@ -481,10 +481,10 @@ server.mockResponse(
   {
     body: {
       id: '1234',
-      name: 'bob'
-    }
+      name: 'bob',
+    },
   },
-  true
+  true,
 );
 const res = await fetch('http://localhost:8080/api/user/1234');
 console.log(await res.json()); // => { id: "1234", name: "bob" }
@@ -497,11 +497,11 @@ const removeMock = server.mockResponse(
   '/api/user/1234',
   (req, res) => {
     res.writeHead(200, {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     });
     res.end(JSON.stringify({ id: '1234', name: 'bob' }));
   },
-  true
+  true,
 );
 const res = await fetch('http://localhost:8080/api/user/1234');
 console.log(await res.json()); // => { id: "1234", name: "bob" }
@@ -514,12 +514,12 @@ removeMock();
 const removeMock = server.mockPushEvents('ws://www.somesocket.com/stream', [
   {
     name: 'hi',
-    message: 'hi!'
+    message: 'hi!',
   },
   {
     name: 'so scary',
-    message: 'boo!'
-  }
+    message: 'boo!',
+  },
 ]);
 ws = new WebSocket('ws://www.somesocket.com/stream');
 ws.addEventListener('message', (event) => {

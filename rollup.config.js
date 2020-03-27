@@ -7,10 +7,10 @@ const resolve = require('@rollup/plugin-node-resolve');
 const terser = require('terser');
 
 const reloadClient = terser.minify(
-  fs.readFileSync('lib/reloader/reload-client.js', 'utf8')
+  fs.readFileSync('src/reloader/reload-client.js', 'utf8'),
 ).code;
 const mockClient = terser
-  .minify(fs.readFileSync('lib/mock/mock-client.js', 'utf8'))
+  .minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'))
   .code.replace(/(["\\])/g, '\\$1');
 
 function external(id) {
@@ -20,36 +20,36 @@ function external(id) {
 fs.writeFileSync(
   path.resolve('dvlp.d.ts'),
   fs
-    .readFileSync(path.resolve('lib/types.d.ts'), 'utf8')
-    .replace(/\/\* export \*\//g, 'export')
+    .readFileSync(path.resolve('src/types.d.ts'), 'utf8')
+    .replace(/\/\* export \*\//g, 'export'),
 );
 
 module.exports = [
   {
     external,
-    input: './lib/bundler/bundle-worker.js',
+    input: './src/bundler/bundle-worker.js',
     plugins: [commonjs(), resolve(), json()],
     output: {
       file: 'bundle-worker.js',
-      format: 'cjs'
-    }
+      format: 'cjs',
+    },
   },
   {
     external,
-    input: './lib/index.js',
+    input: './src/index.js',
     plugins: [
       replace({
         'global.$RELOAD_CLIENT': `'${reloadClient}'`,
-        'global.$MOCK_CLIENT': `"${mockClient}"`
+        'global.$MOCK_CLIENT': `"${mockClient}"`,
       }),
       commonjs(),
       resolve(),
-      json()
+      json(),
     ],
     output: {
       exports: 'named',
       file: 'dvlp.js',
-      format: 'cjs'
-    }
-  }
+      format: 'cjs',
+    },
+  },
 ];
