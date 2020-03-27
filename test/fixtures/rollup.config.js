@@ -3,6 +3,6 @@ module.exports = {
   output: {
     file: 'www/assets/js/client.js',
     format: 'iife',
-    banner: '/* this is a test */'
-  }
+    banner: '/* this is a test */',
+  },
 };

@@ -39,24 +39,24 @@
     "@types/debug": "^4.1.5",
     "@types/glob": "^7.1.1",
     "@types/mime": "^2.0.1",
-    "@types/rimraf": "^2.0.3",
+    "@types/rimraf": "^2.0.4",
     "@types/send": "^0.14.5",
     "babel-eslint": "^10.1.0",
     "chai": "^4.2.0",
     "eslint": "^6.8.0",
-    "eslint-config-prettier": "^6.10.0",
+    "eslint-config-prettier": "^6.10.1",
     "eslint-plugin-prettier": "^3.1.2",
     "eventsource": "^1.0.7",
     "husky": "^4.2.3",
     "koa": "^2.11.0",
     "koa-send": "^5.0.0",
-    "lint-staged": "^10.0.8",
-    "lit-html": "^1.1.2",
+    "lint-staged": "^10.0.9",
+    "lit-html": "^1.2.1",
     "lodash": "^4.17.15",
     "mocha": "^7.1.1",
     "node-fetch": "^2.6.0",
-    "prettier": "^1.19.1",
-    "react": "^16.13.0",
+    "prettier": "^2.0.2",
+    "react": "^16.13.1",
     "sass": "^1.26.3",
     "terser": "^4.6.7",
     "typescript": "^3.8.3"
@@ -73,6 +73,12 @@
     "test:browser": "npm run build && ./bin/dvlp --mock test-browser/fixtures/mock test-browser",
     "demo": "./bin/dvlp test/fixtures/app.js"
   },
+  "prettier": {
+    "arrowParens": "always",
+    "printWidth": 80,
+    "singleQuote": true,
+    "trailingComma": "all"
+  },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
@@ -81,8 +87,7 @@
   "lint-staged": {
     "*.js": [
       "prettier --write",
-      "eslint",
-      "git add"
+      "eslint"
     ]
   }
 }

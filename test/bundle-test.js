@@ -4,7 +4,7 @@ const {
   cleanBundles,
   destroyWorkers,
   bundle,
-  resolveModuleId
+  resolveModuleId,
 } = require('../lib/bundler/index.js');
 const config = require('../lib/config.js');
 const { expect } = require('chai');
@@ -28,14 +28,14 @@ describe('bundle()', () => {
   });
   it('should bundle and return bundle filePath', async () => {
     const filePath = await bundle(
-      resolveModuleId('lodash', resolve('lodash', path.resolve('index.js')))
+      resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
   it('should return cached bundle filePath', async () => {
     await bundle(resolveModuleId('lodash', resolve('index.js', 'lodash')));
     const filePath = await bundle(
-      resolveModuleId('lodash', resolve('lodash', path.resolve('index.js')))
+      resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
@@ -46,8 +46,8 @@ describe('bundle()', () => {
       undefined,
       {
         input: 'foo.js',
-        output: { banner: '/* this is a test */', format: 'cjs' }
-      }
+        output: { banner: '/* this is a test */', format: 'cjs' },
+      },
     );
     const module = fs.readFileSync(filePath, 'utf8');
     expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
@@ -55,7 +55,7 @@ describe('bundle()', () => {
   });
   it('should skip bundling transient dependencies', async () => {
     const filePath = await bundle(
-      resolveModuleId('debug', resolve('debug', path.resolve('index.js')))
+      resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
     );
     const module = fs.readFileSync(filePath, 'utf8');
     expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));

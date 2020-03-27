@@ -16,8 +16,8 @@ function getRequest(url, headers = { accept: '*/*' }) {
     socket: {
       destroy() {
         this.destroyed = true;
-      }
-    }
+      },
+    },
   };
 }
 function getResponse() {
@@ -39,7 +39,7 @@ function getResponse() {
     },
     on() {},
     once() {},
-    emit() {}
+    emit() {},
   };
 }
 
@@ -73,11 +73,11 @@ describe('mock', () => {
     it('should handle search', () => {
       mocks.addResponse(
         { url: '/index.html?foo', ignoreSearch: true },
-        { body: '<body>hi</body>' }
+        { body: '<body>hi</body>' },
       );
       mocks.addResponse(
         { url: '/foo.html?foo', ignoreSearch: false },
-        { body: '<body>hi</body>' }
+        { body: '<body>hi</body>' },
       );
       const [mock1, mock2] = Array.from(mocks.cache);
       expect(mock1).to.have.property('ignoreSearch', true);
@@ -103,7 +103,7 @@ describe('mock', () => {
     it('should add a single EventSource event', () => {
       mocks.addPushEvents('http://localhost:8080/foo', {
         name: 'foo',
-        message: 'foo'
+        message: 'foo',
       });
       const mock = Array.from(mocks.cache)[0];
       expect(mock).to.have.property('type', 'es');
@@ -114,7 +114,7 @@ describe('mock', () => {
     it('should add a single WebSocket event', () => {
       mocks.addPushEvents('ws://localhost:8080/foo', {
         name: 'foo',
-        message: 'foo'
+        message: 'foo',
       });
       const mock = Array.from(mocks.cache)[0];
       expect(mock).to.have.property('type', 'ws');
@@ -126,12 +126,12 @@ describe('mock', () => {
       mocks.addPushEvents('http://localhost:8080/foo', [
         {
           name: 'foo',
-          message: 'foo'
+          message: 'foo',
         },
         {
           name: 'bar',
-          message: 'bar'
-        }
+          message: 'bar',
+        },
       ]);
       const mock = Array.from(mocks.cache)[0];
       expect(mock).to.have.property('type', 'es');
@@ -142,12 +142,12 @@ describe('mock', () => {
       mocks.addPushEvents('ws://localhost:8080/foo', [
         {
           name: 'foo',
-          message: 'foo'
+          message: 'foo',
         },
         {
           name: 'bar',
-          message: 'bar'
-        }
+          message: 'bar',
+        },
       ]);
       const mock = Array.from(mocks.cache)[0];
       expect(mock).to.have.property('type', 'ws');
@@ -156,7 +156,7 @@ describe('mock', () => {
     });
     it('should ignore events with no name', () => {
       mocks.addPushEvents('http://localhost:8080/foo', {
-        message: 'foo'
+        message: 'foo',
       });
       const mock = Array.from(mocks.cache)[0];
       expect(mock.events).to.deep.equal({});
@@ -180,7 +180,7 @@ describe('mock', () => {
     it('should remove an existing push event mock', () => {
       mocks.addPushEvents('http://localhost:8080/foo', {
         name: 'foo',
-        message: 'foo'
+        message: 'foo',
       });
       mocks.remove('http://localhost:8080/foo');
       expect(mocks.cache.size).to.equal(0);
@@ -195,7 +195,7 @@ describe('mock', () => {
     it('should load array of mock files', () => {
       mocks.load([
         'test/fixtures/mock/1234.json',
-        'test/fixtures/mock/5678.json'
+        'test/fixtures/mock/5678.json',
       ]);
       expect(mocks.cache.size).to.equal(2);
     });
@@ -210,7 +210,7 @@ describe('mock', () => {
     it('should load mock files from directory path and update client string', () => {
       mocks.load('test/fixtures/mock-push');
       expect(mocks.client).to.include(
-        '"pathRegex": "^\\\\/feed[\\\\/#\\\\?]?$"'
+        '"pathRegex": "^\\\\/feed[\\\\/#\\\\?]?$"',
       );
     });
   });
@@ -296,7 +296,7 @@ describe('mock', () => {
       mocks.addResponse(href, (req, res) => {
         expect(new URL(req.url, 'http://localhost')).to.have.property(
           'pathname',
-          href
+          href,
         );
         done();
       });
@@ -310,7 +310,7 @@ describe('mock', () => {
         (req, res) => {
           expect(req.params).to.deep.equal({ param1: 'foo', param2: 'bar' });
           done();
-        }
+        },
       );
       mocks.matchResponse(href, getRequest(href), res);
     });
@@ -367,14 +367,14 @@ describe('mock', () => {
 
     it('should return "false" if no match', () => {
       expect(
-        mocks.matchPushEvent('https://localhost:8888/foo', 'open', pushEvent)
+        mocks.matchPushEvent('https://localhost:8888/foo', 'open', pushEvent),
       ).to.equal(false);
       expect(
         mocks.matchPushEvent(
           'https://localhost:8888/feed',
           'opeeeen',
-          pushEvent
-        )
+          pushEvent,
+        ),
       ).to.equal(false);
     });
   });

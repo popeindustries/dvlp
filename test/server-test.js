@@ -35,7 +35,7 @@ describe('server', () => {
     it('should implicitly serve index.html', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
-        reload: false
+        reload: false,
       });
       const res = await fetch('http://localhost:8000/');
       expect(res.status).to.eql(200);
@@ -44,7 +44,7 @@ describe('server', () => {
     it('should rewrite request for missing html files to index.html ', async () => {
       server = await serverFactory('test/fixtures/www', { port: 8000 });
       const res = await fetch('http://localhost:8000/0', {
-        headers: { accept: 'text/html' }
+        headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('<!doctype html>');
@@ -60,7 +60,7 @@ describe('server', () => {
       const res = await fetch('http://localhost:8000/script.js');
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include(
-        'application/javascript'
+        'application/javascript',
       );
     });
     it('should serve a js file with missing extension with correct mime type', async () => {
@@ -68,7 +68,7 @@ describe('server', () => {
       const res = await fetch('http://localhost:8000/script');
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include(
-        'application/javascript'
+        'application/javascript',
       );
     });
     it('should serve a js package file with correct mime type', async () => {
@@ -76,17 +76,17 @@ describe('server', () => {
       const res = await fetch('http://localhost:8000/nested');
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include(
-        'application/javascript'
+        'application/javascript',
       );
     });
     it('should serve a bundled module js file with correct mime type', async () => {
       server = await serverFactory('test/fixtures/www', { port: 8000 });
       const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.10.js`
+        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.10.js`,
       );
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include(
-        'application/javascript'
+        'application/javascript',
       );
     });
     it('should serve a node_modules js file with correct mime type', async () => {
@@ -94,7 +94,7 @@ describe('server', () => {
       const res = await fetch(`http://localhost:8000/foo/foo.js`);
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include(
-        'application/javascript'
+        'application/javascript',
       );
       const body = await res.text();
       expect(body).to.contain("console.log('this is foo');");
@@ -114,13 +114,13 @@ describe('server', () => {
     it('should serve files from additional directories', async () => {
       server = await serverFactory(
         ['test/fixtures/www', path.resolve(__dirname, 'fixtures/assets')],
-        { port: 8000 }
+        { port: 8000 },
       );
       const res = await fetch('http://localhost:8000/index.css');
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include('text/css');
       expect(await res.text()).to.equal(
-        'body {\n  background-color: white;\n}'
+        'body {\n  background-color: white;\n}',
       );
     });
     it('should return 404 for missing file', async () => {
@@ -131,10 +131,10 @@ describe('server', () => {
     it('should start with custom Rollup config', async () => {
       config.rollupConfigPath = path.resolve('test/fixtures/rollup.config.js');
       server = await serverFactory('test/fixtures/www', {
-        port: 8000
+        port: 8000,
       });
       const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`
+        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`,
       );
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('/* this is a test */');
@@ -143,10 +143,10 @@ describe('server', () => {
     it('should inject the reload script into an html response', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
-        reload: true
+        reload: true,
       });
       const res = await fetch('http://localhost:8000/', {
-        headers: { accept: 'text/html' }
+        headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('sse = new EventSource');
@@ -163,19 +163,19 @@ describe('server', () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
         reload: false,
-        transpiler: 'test/fixtures/transpiler.js'
+        transpiler: 'test/fixtures/transpiler.js',
       });
       const res = await fetch('http://localhost:8000/style.css');
       expect(res.status).to.eql(200);
       expect(await res.text()).to.equal(
-        'this is transpiled content for: style.css'
+        'this is transpiled content for: style.css',
       );
     });
     it('should cache transpiled file content when using a transpiler', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
         reload: false,
-        transpiler: 'test/fixtures/transpiler.js'
+        transpiler: 'test/fixtures/transpiler.js',
       });
       let start = Date.now();
       let res = await fetch('http://localhost:8000/style.css');
@@ -190,7 +190,7 @@ describe('server', () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
         reload: false,
-        transpiler: 'test/fixtures/transpilerError.js'
+        transpiler: 'test/fixtures/transpilerError.js',
       });
       const res = await fetch('http://localhost:8000/style.css');
       expect(res.status).to.eql(500);
@@ -200,7 +200,7 @@ describe('server', () => {
       server = await serverFactory('test/fixtures/www', {
         mockPath: 'test/fixtures/mock/1234.json',
         port: 8000,
-        reload: false
+        reload: false,
       });
       const res = await fetch('http://localhost:8000/1234.jpg');
       expect(res.status).to.eql(200);
@@ -210,11 +210,11 @@ describe('server', () => {
       serverFactory('test/fixtures/www', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
-        reload: false
+        reload: false,
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed',
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -226,11 +226,11 @@ describe('server', () => {
       serverFactory('test/fixtures/www', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
-        reload: false
+        reload: false,
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed',
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -238,12 +238,12 @@ describe('server', () => {
             method: 'POST',
             headers: {
               Accept: 'application/json',
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               stream: 'http://localhost:8888/feed',
-              event: 'open'
-            })
+              event: 'open',
+            }),
           });
         };
         es.addEventListener('foo', (event) => {
@@ -256,11 +256,11 @@ describe('server', () => {
       serverFactory('test/fixtures/www', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
-        reload: false
+        reload: false,
       }).then((srvr) => {
         server = srvr;
         ws = new WebSocket(
-          'ws://localhost:8000?dvlpmock=ws%3A%2F%2Flocalhost%3A8888%2Fsocket'
+          'ws://localhost:8000?dvlpmock=ws%3A%2F%2Flocalhost%3A8888%2Fsocket',
         );
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
@@ -272,11 +272,11 @@ describe('server', () => {
       serverFactory('test/fixtures/www', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
-        reload: false
+        reload: false,
       }).then((srvr) => {
         server = srvr;
         ws = new WebSocket(
-          'ws://localhost:8000?dvlpmock=ws%3A%2F%2Flocalhost%3A8888%2Fsocket'
+          'ws://localhost:8000?dvlpmock=ws%3A%2F%2Flocalhost%3A8888%2Fsocket',
         );
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
@@ -284,12 +284,12 @@ describe('server', () => {
             method: 'POST',
             headers: {
               Accept: 'application/json',
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               stream: 'ws://localhost:8888/socket',
-              event: 'foo event'
-            })
+              event: 'foo event',
+            }),
           });
         });
         ws.on('message', (event) => {
@@ -304,10 +304,10 @@ describe('server', () => {
     it('should start a server', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
-        reload: false
+        reload: false,
       });
       const res = await fetch('http://localhost:8000/', {
-        headers: { accept: 'text/html' }
+        headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
@@ -322,20 +322,20 @@ describe('server', () => {
             })
             .listen(8000);
         },
-        { port: 8000, reload: false }
+        { port: 8000, reload: false },
       );
       const res = await fetch('http://localhost:8000/', {
-        headers: { accept: 'text/html' }
+        headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
     });
     it('should start an app server listening for "request" event', async () => {
       server = await serverFactory('test/fixtures/appListener.js', {
-        port: 8000
+        port: 8000,
       });
       const res = await fetch('http://localhost:8000/', {
-        headers: { Accept: 'text/html; charset=utf-8' }
+        headers: { Accept: 'text/html; charset=utf-8' },
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('ok');
@@ -343,7 +343,7 @@ describe('server', () => {
     it('should start an esm app server', async () => {
       server = await serverFactory('test/fixtures/appEsm.js', { port: 8000 });
       const res = await fetch('http://localhost:8000/', {
-        headers: { Accept: 'text/html; charset=utf-8' }
+        headers: { Accept: 'text/html; charset=utf-8' },
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
@@ -351,11 +351,11 @@ describe('server', () => {
     it('should polyfill process.env', async () => {
       server = await serverFactory('test/fixtures/appEsm.js', { port: 8000 });
       const res = await fetch('http://localhost:8000/', {
-        headers: { Accept: 'text/html; charset=utf-8' }
+        headers: { Accept: 'text/html; charset=utf-8' },
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain(
-        '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="test";\nwindow.DVLP=true;</script>'
+        '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="test";\nwindow.DVLP=true;</script>',
       );
     });
     it('should trigger exit handlers for clean up', async () => {
@@ -366,7 +366,7 @@ describe('server', () => {
     });
     it('should trigger exit handlers for clean up', async () => {
       server = await serverFactory('test/fixtures/appGlobals.js', {
-        port: 8000
+        port: 8000,
       });
       expect(global.foo).to.equal('foo');
       await server.destroy();
@@ -375,7 +375,7 @@ describe('server', () => {
     it('should serve a bundled module js file', async () => {
       server = await serverFactory('test/fixtures/app.js', { port: 8000 });
       const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.15.js`
+        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.15.js`,
       );
       expect(res.status).to.eql(200);
       const body = await res.text();
@@ -384,10 +384,10 @@ describe('server', () => {
     });
     it('should serve a bundled module js file from server listening for "request" event', async () => {
       server = await serverFactory('test/fixtures/appListener.js', {
-        port: 8000
+        port: 8000,
       });
       const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.15.js`
+        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.15.js`,
       );
       expect(res.status).to.eql(200);
       const body = await res.text();
@@ -410,10 +410,10 @@ describe('server', () => {
     it('should start with custom Rollup config', async () => {
       config.rollupConfigPath = path.resolve('test/fixtures/rollup.config.js');
       server = await serverFactory('test/fixtures/app.js', {
-        port: 8000
+        port: 8000,
       });
       const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`
+        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`,
       );
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('/* this is a test */');
@@ -422,10 +422,10 @@ describe('server', () => {
     it('should inject the reload script into an html response', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
-        reload: true
+        reload: true,
       });
       const res = await fetch('http://localhost:8000/', {
-        headers: { accept: 'text/html' }
+        headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('sse = new EventSource');
@@ -433,10 +433,10 @@ describe('server', () => {
     it('should start with initial error', async () => {
       server = await serverFactory('test/fixtures/appError.js', {
         port: 8000,
-        reload: false
+        reload: false,
       });
       const res = await fetch('http://localhost:8000/', {
-        headers: { accept: 'text/html' }
+        headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(500);
     });
@@ -444,19 +444,19 @@ describe('server', () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
         reload: false,
-        transpiler: 'test/fixtures/transpiler.js'
+        transpiler: 'test/fixtures/transpiler.js',
       });
       const res = await fetch('http://localhost:8000/www/style.css');
       expect(res.status).to.eql(200);
       expect(await res.text()).to.equal(
-        'this is transpiled content for: style.css'
+        'this is transpiled content for: style.css',
       );
     });
     it('should respond to mocked requests', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         mockPath: 'test/fixtures/mock/1234.json',
         port: 8000,
-        reload: false
+        reload: false,
       });
       const res = await fetch('http://localhost:8000/1234.jpg');
       expect(res.status).to.eql(200);
@@ -466,11 +466,11 @@ describe('server', () => {
       serverFactory('test/fixtures/app.js', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
-        reload: false
+        reload: false,
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed',
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -482,11 +482,11 @@ describe('server', () => {
       serverFactory('test/fixtures/app.js', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
-        reload: false
+        reload: false,
       }).then((srvr) => {
         server = srvr;
         es = new EventSource(
-          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed'
+          'http://localhost:8000?dvlpmock=http%3A%2F%2Flocalhost%3A8888%2Ffeed',
         );
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -494,12 +494,12 @@ describe('server', () => {
             method: 'POST',
             headers: {
               Accept: 'application/json',
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               stream: 'http://localhost:8888/feed',
-              event: 'open'
-            })
+              event: 'open',
+            }),
           });
         };
         es.addEventListener('foo', (event) => {
@@ -512,11 +512,11 @@ describe('server', () => {
       serverFactory('test/fixtures/app.js', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
-        reload: false
+        reload: false,
       }).then((srvr) => {
         server = srvr;
         ws = new WebSocket(
-          'ws://localhost:8000?dvlpmock=ws%3A%2F%2Flocalhost%3A8888%2Fsocket'
+          'ws://localhost:8000?dvlpmock=ws%3A%2F%2Flocalhost%3A8888%2Fsocket',
         );
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
@@ -528,11 +528,11 @@ describe('server', () => {
       serverFactory('test/fixtures/app.js', {
         mockPath: 'test/fixtures/mock-push',
         port: 8000,
-        reload: false
+        reload: false,
       }).then((srvr) => {
         server = srvr;
         ws = new WebSocket(
-          'ws://localhost:8000?dvlpmock=ws%3A%2F%2Flocalhost%3A8888%2Fsocket'
+          'ws://localhost:8000?dvlpmock=ws%3A%2F%2Flocalhost%3A8888%2Fsocket',
         );
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
@@ -540,12 +540,12 @@ describe('server', () => {
             method: 'POST',
             headers: {
               Accept: 'application/json',
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               stream: 'ws://localhost:8888/socket',
-              event: 'foo event'
-            })
+              event: 'foo event',
+            }),
           });
         });
         ws.on('message', (event) => {

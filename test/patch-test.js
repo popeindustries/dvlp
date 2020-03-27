@@ -15,7 +15,7 @@ function getBody(res) {
   const output = (res.output || res.outputData)
     .filter(
       (chunk) =>
-        typeof chunk === 'string' || (chunk.data && chunk.data.length > 0)
+        typeof chunk === 'string' || (chunk.data && chunk.data.length > 0),
     )
     .map((chunk) => chunk.data || chunk)
     .join('');
@@ -28,7 +28,7 @@ function getRequest(url, headers = { accept: '*/*' }) {
     httpVersionMajor: 1,
     httpVersionMinor: 1,
     method: 'GET',
-    url
+    url,
   };
 }
 function setNodePath(nodePath) {
@@ -50,7 +50,7 @@ describe('patch', () => {
       const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
-        footerScript: { string: 'test inject' }
+        footerScript: { string: 'test inject' },
       });
       res.end('</body>');
       expect(getBody(res)).to.equal('<script>test inject</script>\n</body>');
@@ -59,23 +59,23 @@ describe('patch', () => {
       const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
-        headerScript: { string: 'test inject' }
+        headerScript: { string: 'test inject' },
       });
       res.end('<head></head>');
       expect(getBody(res)).to.equal(
-        '<head>\n<script>test inject</script></head>'
+        '<head>\n<script>test inject</script></head>',
       );
     });
     it('should uncompress gzipped html response', () => {
       const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
-        headerScript: { string: 'test inject' }
+        headerScript: { string: 'test inject' },
       });
       res.setHeader('Content-Encoding', 'gzip');
       res.end(gzipSync(Buffer.from('<head></head>')));
       expect(getBody(res)).to.equal(
-        '<head>\n<script>test inject</script></head>'
+        '<head>\n<script>test inject</script></head>',
       );
     });
     it('should uncompress gzipped css response', () => {
@@ -90,7 +90,7 @@ describe('patch', () => {
       const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
-        footerScript: { string: 'test inject' }
+        footerScript: { string: 'test inject' },
       });
       res.write('</body>');
       res.end();
@@ -100,12 +100,12 @@ describe('patch', () => {
       const req = getRequest('/index.html', { accept: 'text/html' });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res, {
-        headerScript: { string: 'test inject' }
+        headerScript: { string: 'test inject' },
       });
       res.write('<head></head>');
       res.end();
       expect(getBody(res)).to.include(
-        '<head>\n<script>test inject</script></head>'
+        '<head>\n<script>test inject</script></head>',
       );
     });
     it('should inject csp header when connect-src', () => {
@@ -114,18 +114,18 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res, {
         footerScript: {
           string: 'test inject',
-          url: 'http://localhost:3529/dvlpreload'
+          url: 'http://localhost:3529/dvlpreload',
         },
         headerScript: {
-          string: 'test inject'
-        }
+          string: 'test inject',
+        },
       });
       res.setHeader(
         'Content-Security-Policy',
-        "default-src 'self'; connect-src 'self'"
+        "default-src 'self'; connect-src 'self'",
       );
       expect(res.getHeader('Content-Security-Policy')).to.equal(
-        "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; "
+        "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; ",
       );
     });
     it('should inject csp header when no connect-src', () => {
@@ -134,12 +134,12 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res, {
         footerScript: {
           string: 'test inject',
-          url: 'http://localhost:3529/dvlpreload'
-        }
+          url: 'http://localhost:3529/dvlpreload',
+        },
       });
       res.setHeader('Content-Security-Policy', "default-src 'self'");
       expect(res.getHeader('Content-Security-Policy')).to.equal(
-        "default-src 'self'; connect-src http://localhost:3529/dvlpreload; "
+        "default-src 'self'; connect-src http://localhost:3529/dvlpreload; ",
       );
     });
     it('should inject csp header with writeHead when connect-src', () => {
@@ -148,14 +148,14 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res, {
         footerScript: {
           string: 'test inject',
-          url: 'http://localhost:3529/dvlpreload'
-        }
+          url: 'http://localhost:3529/dvlpreload',
+        },
       });
       res.writeHead(200, {
-        'Content-Security-Policy': "default-src 'self'; connect-src 'self'"
+        'Content-Security-Policy': "default-src 'self'; connect-src 'self'",
       });
       expect(res._header).to.contain(
-        "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; "
+        "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; ",
       );
     });
     it('should inject csp header with writeHead when no connect-src', () => {
@@ -164,12 +164,12 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res, {
         footerScript: {
           string: 'test inject',
-          url: 'http://localhost:3529/dvlpreload'
-        }
+          url: 'http://localhost:3529/dvlpreload',
+        },
       });
       res.writeHead(200, { 'Content-Security-Policy': "default-src 'self'" });
       expect(res._header).to.contain(
-        "default-src 'self'; connect-src http://localhost:3529/dvlpreload; "
+        "default-src 'self'; connect-src http://localhost:3529/dvlpreload; ",
       );
     });
     it('should not inject script hash in csp header when no nonce/sha and unsafe-inline', () => {
@@ -178,15 +178,15 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res, {
         footerScript: {
           string: 'test inject',
-          url: 'http://localhost:3529/dvlpreload'
-        }
+          url: 'http://localhost:3529/dvlpreload',
+        },
       });
       res.setHeader(
         'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' 'unsafe-inline'"
+        "default-src 'self'; script-src 'self' 'unsafe-inline'",
       );
       expect(res.getHeader('Content-Security-Policy')).to.equal(
-        "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src http://localhost:3529/dvlpreload; "
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src http://localhost:3529/dvlpreload; ",
       );
     });
     it('should inject script hash in csp header when no nonce/sha and missing unsafe-inline', () => {
@@ -196,19 +196,19 @@ describe('patch', () => {
         footerScript: {
           hash: 'xxxxxx',
           string: 'test inject',
-          url: 'http://localhost:3529/dvlpreload'
+          url: 'http://localhost:3529/dvlpreload',
         },
         headerScript: {
           hash: 'yyyyyy',
-          string: 'test inject'
-        }
+          string: 'test inject',
+        },
       });
       res.setHeader(
         'Content-Security-Policy',
-        "default-src 'self'; script-src 'self'"
+        "default-src 'self'; script-src 'self'",
       );
       expect(res.getHeader('Content-Security-Policy')).to.equal(
-        "default-src 'self'; script-src 'self' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; "
+        "default-src 'self'; script-src 'self' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
       );
     });
     it('should inject script hash in csp header when nonce', () => {
@@ -218,19 +218,19 @@ describe('patch', () => {
         footerScript: {
           hash: 'xxxxxx',
           string: 'test inject',
-          url: 'http://localhost:3529/dvlpreload'
+          url: 'http://localhost:3529/dvlpreload',
         },
         headerScript: {
           hash: 'yyyyyy',
-          string: 'test inject'
-        }
+          string: 'test inject',
+        },
       });
       res.setHeader(
         'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo'"
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo'",
       );
       expect(res.getHeader('Content-Security-Policy')).to.equal(
-        "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; "
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
       );
     });
     it('should inject script hash in csp header when sha', () => {
@@ -240,19 +240,19 @@ describe('patch', () => {
         footerScript: {
           hash: 'xxxxxx',
           string: 'test inject',
-          url: 'http://localhost:3529/dvlpreload'
+          url: 'http://localhost:3529/dvlpreload',
         },
         headerScript: {
           hash: 'yyyyyy',
-          string: 'test inject'
-        }
+          string: 'test inject',
+        },
       });
       res.setHeader(
         'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' 'unsafe-inline' 'sha512-yyyyyy'"
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'sha512-yyyyyy'",
       );
       expect(res.getHeader('Content-Security-Policy')).to.equal(
-        "default-src 'self'; script-src 'self' 'unsafe-inline' 'sha512-yyyyyy' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; "
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'sha512-yyyyyy' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
       );
     });
     it('should disable cache-control headers for local files', () => {
@@ -262,7 +262,7 @@ describe('patch', () => {
       res.setHeader('Cache-Control', 'max-age=600');
       res.end('done');
       expect(res.getHeader('Cache-Control')).to.equal(
-        'no-cache, dvlp-disabled'
+        'no-cache, dvlp-disabled',
       );
     });
     it('should disable cache-control headers for local files when cache-control not set', () => {
@@ -271,7 +271,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('done');
       expect(res.getHeader('Cache-Control')).to.equal(
-        'no-cache, dvlp-disabled'
+        'no-cache, dvlp-disabled',
       );
     });
     it('should not disable cache-control headers for node_modules files', () => {
@@ -302,7 +302,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import lodash from "lodash";');
       expect(getBody(res)).to.equal(
-        `import lodash from "/${config.bundleDirName}/lodash-4.17.15.js";`
+        `import lodash from "/${config.bundleDirName}/lodash-4.17.15.js";`,
       );
     });
     it('should resolve multiple bare js import ids', () => {
@@ -310,10 +310,10 @@ describe('patch', () => {
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end(
-        'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";'
+        'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";',
       );
       expect(getBody(res)).to.equal(
-        `import lodashArr from "/${config.bundleDirName}/lodash__array-4.17.15.js";\nimport { foo } from "./foo.js";\nimport debug from "/${config.bundleDirName}/debug-4.1.1.js";`
+        `import lodashArr from "/${config.bundleDirName}/lodash__array-4.17.15.js";\nimport { foo } from "./foo.js";\nimport debug from "/${config.bundleDirName}/debug-4.1.1.js";`,
       );
     });
     it('should resolve bare js import id for es module', () => {
@@ -322,7 +322,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import { html } from "lit-html";');
       expect(getBody(res)).to.equal(
-        `import { html } from "${process.cwd()}/node_modules/lit-html/lit-html.js";`
+        `import { html } from "${process.cwd()}/node_modules/lit-html/lit-html.js";`,
       );
     });
     it('should resolve NODE_PATH js import id', () => {
@@ -332,7 +332,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "nested/index.js";');
       expect(getBody(res)).to.equal(
-        `import module from "${process.cwd()}/test/fixtures/www/nested/index.js";`
+        `import module from "${process.cwd()}/test/fixtures/www/nested/index.js";`,
       );
       setNodePath(NODE_PATH);
     });
@@ -343,7 +343,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "nested/foo";');
       expect(getBody(res)).to.equal(
-        `import module from "${process.cwd()}/test/fixtures/www/nested/foo.jsx";`
+        `import module from "${process.cwd()}/test/fixtures/www/nested/foo.jsx";`,
       );
       setNodePath(NODE_PATH);
     });
@@ -353,7 +353,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/module";');
       expect(getBody(res)).to.equal(
-        `import module from "${process.cwd()}/test/fixtures/www/module.js";`
+        `import module from "${process.cwd()}/test/fixtures/www/module.js";`,
       );
     });
     it('should resolve jsx import id missing extension', () => {
@@ -362,7 +362,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import component from "./test/fixtures/component";');
       expect(getBody(res)).to.equal(
-        `import component from "${process.cwd()}/test/fixtures/component.jsx";`
+        `import component from "${process.cwd()}/test/fixtures/component.jsx";`,
       );
     });
     it('should resolve ts import id missing extension', () => {
@@ -371,7 +371,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import route from "./test/fixtures/route";');
       expect(getBody(res)).to.equal(
-        `import route from "${process.cwd()}/test/fixtures/route.ts";`
+        `import route from "${process.cwd()}/test/fixtures/route.ts";`,
       );
     });
     it('should resolve js import id missing package index', () => {
@@ -380,7 +380,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/nested";');
       expect(getBody(res)).to.equal(
-        `import module from "${process.cwd()}/test/fixtures/www/nested/index.js";`
+        `import module from "${process.cwd()}/test/fixtures/www/nested/index.js";`,
       );
     });
     it('should resolve ts import id missing package index', () => {
@@ -389,7 +389,7 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res);
       res.end('import module from "./test/fixtures/www/nested-ts";');
       expect(getBody(res)).to.equal(
-        `import module from "${process.cwd()}/test/fixtures/www/nested-ts/index.ts";`
+        `import module from "${process.cwd()}/test/fixtures/www/nested-ts/index.ts";`,
       );
     });
     it('should ignore erroneous "import" string', () => {
@@ -401,24 +401,24 @@ describe('patch', () => {
     });
     it('should resolve js import with browser field', () => {
       const req = getRequest('/test/fixtures/index.js', {
-        accept: 'application/javascript'
+        accept: 'application/javascript',
       });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('import "bar";');
       expect(getBody(res)).to.equal(
-        `import "${process.cwd()}/test/fixtures/node_modules/bar/browser.js";`
+        `import "${process.cwd()}/test/fixtures/node_modules/bar/browser.js";`,
       );
     });
     it('should resolve js import with browser field map', () => {
       const req = getRequest('/test/fixtures/index.js', {
-        accept: 'application/javascript'
+        accept: 'application/javascript',
       });
       const res = new ServerResponse(req);
       patchResponse(req.filePath, req, res);
       res.end('import "bat";');
       expect(getBody(res)).to.equal(
-        `import "${process.cwd()}/test/fixtures/node_modules/bat/browser.js";`
+        `import "${process.cwd()}/test/fixtures/node_modules/bat/browser.js";`,
       );
     });
   });

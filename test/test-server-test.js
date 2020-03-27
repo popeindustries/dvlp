@@ -124,7 +124,7 @@ describe('testServer', () => {
     } catch (err) {
       expect(err).to.exist;
       expect(err.message).to.equal(
-        'network connections disabled. Unable to request http://www.google.com/'
+        'network connections disabled. Unable to request http://www.google.com/',
       );
     }
   });
@@ -241,7 +241,7 @@ describe('testServer', () => {
           expect(es.readyState).to.equal(1);
           server.pushEvent('http://localhost:8080', {
             message: 'hi',
-            options: { event: 'hello' }
+            options: { event: 'hello' },
           });
         };
         es.addEventListener('hello', (event) => {
