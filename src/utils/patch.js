@@ -36,7 +36,7 @@ module.exports = {
  * @param { string } filePath
  * @param { Req } req
  * @param { Res } res
- * @param { PatchResponseConfig } [options]
+ * @param { PatchResponseOptions } options
  */
 function patchResponse(
   filePath,

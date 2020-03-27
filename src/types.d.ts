@@ -22,7 +22,7 @@ declare module 'faye-websocket' {
       socket: object,
       body: string,
       protocols: Array<object>,
-      options: { extensions: Array<unknown> }
+      options: { extensions: Array<unknown> },
     );
   }
   export = WebSocket;
@@ -72,7 +72,7 @@ declare type Config = {
   };
 };
 
-declare type PatchResponseConfig = {
+declare type PatchResponseOptions = {
   directories?: Array<string>;
   rollupConfig?: {};
   footerScript?: {
@@ -87,9 +87,14 @@ declare type PatchResponseConfig = {
   };
 };
 
+declare type FindOptions = {
+  directories?: Array<string>;
+  type?: string;
+};
+
 declare type Transpiler = (
   filePath: string,
-  isServer: boolean
+  isServer: boolean,
 ) => Promise<string> | string | undefined;
 
 declare type TranspilerCache = Map<string, string>;
@@ -109,7 +114,7 @@ declare type BundleWorker = (
   id: string,
   outputPath: string,
   overrideOptions: import('rollup').RollupOptions | undefined,
-  fn: (err?: Error) => void
+  fn: (err?: Error) => void,
 ) => void;
 
 declare type Reloader = {
@@ -136,7 +141,7 @@ declare type InterceptFileReadCallback = (filePath: string) => void;
 
 declare type InterceptProcessOnCallback = (
   event: string,
-  callback: () => void
+  callback: () => void,
 ) => void;
 
 declare type MockResponseDataType = 'html' | 'file' | 'json';
@@ -187,22 +192,22 @@ declare type MockStreamData = {
     req: string | MockRequest,
     res: MockResponse | MockResponseHandler,
     once?: boolean,
-    onMock?: () => void
+    onMock?: () => void,
   ): () => void;
   addPushEvents(
     stream: string | MockPushStream,
-    events: MockPushEvent | Array<MockPushEvent>
+    events: MockPushEvent | Array<MockPushEvent>,
   ): () => void;
   load(filePaths: string | Array<string>): void;
   matchResponse(
     href: string,
     req?: Req,
-    res?: Res
+    res?: Res,
   ): boolean | MockResponseData | undefined;
   matchPushEvent(
     stream: string | MockPushStream,
     name: string,
-    push: (stream: string | PushStream, event: PushEvent) => void
+    push: (stream: string | PushStream, event: PushEvent) => void,
   ): boolean;
   hasMatch(
     reqOrMockData:
@@ -210,7 +215,7 @@ declare type MockStreamData = {
       | URL
       | { url: string }
       | MockResponseData
-      | MockStreamData
+      | MockStreamData,
   ): boolean;
   remove(
     reqOrMockData:
@@ -218,7 +223,7 @@ declare type MockStreamData = {
       | URL
       | { url: string }
       | MockResponseData
-      | MockStreamData
+      | MockStreamData,
   ): void;
   clean(): void;
 }
@@ -236,7 +241,7 @@ declare type MockResponseJSONSchema = {
 
 /* export */ declare type MockResponseHandler = (
   req: Req,
-  res: Res
+  res: Res,
 ) => undefined;
 
 /* export */ declare type MockResponse = {
@@ -339,7 +344,7 @@ declare interface PushClient {
 
 /* export */ declare function server(
   filePath: string | Array<string> | (() => void),
-  options: ServerOptions
+  options: ServerOptions,
 ): Promise<Server>;
 
 /* export */ declare type TestServerOptions = {
@@ -383,14 +388,14 @@ declare interface PushClient {
     request: string | MockRequest,
     response: MockResponse | MockResponseHandler,
     once?: boolean,
-    onMockCallback?: () => void
+    onMockCallback?: () => void,
   ): void;
   /**
    * Register mock push `events` for `stream`
    */
   mockPushEvents(
     stream: string | MockPushStream,
-    events: MockPushEvent | Array<MockPushEvent>
+    events: MockPushEvent | Array<MockPushEvent>,
   ): void;
   /**
    * Push data to WebSocket/EventSource clients
@@ -404,7 +409,7 @@ declare interface PushClient {
 }
 
 /* export */ declare function testServer(
-  options: TestServerOptions
+  options: TestServerOptions,
 ): Promise<TestServerInstance>;
 
 /* export */ declare namespace testServer {
@@ -423,7 +428,7 @@ declare interface PushClient {
   /* export */ function mockHangResponseHandler(
     url: URL,
     req: Req,
-    res: Res
+    res: Res,
   ): undefined;
   /**
    * Default mock response handler for 500 response
@@ -431,7 +436,7 @@ declare interface PushClient {
   /* export */ function mockErrorResponseHandler(
     url: URL,
     req: Req,
-    res: Res
+    res: Res,
   ): undefined;
   /**
    * Default mock response handler for 404 response
@@ -439,7 +444,7 @@ declare interface PushClient {
   /* export */ function mockMissingResponseHandler(
     url: URL,
     req: Req,
-    res: Res
+    res: Res,
   ): undefined;
   /**
    * Default mock response handler for offline
@@ -447,6 +452,6 @@ declare interface PushClient {
   /* export */ function mockOfflineResponseHandler(
     url: URL,
     req: Req,
-    res: Res
+    res: Res,
   ): undefined;
 }

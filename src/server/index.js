@@ -46,8 +46,8 @@ module.exports = async function serverFactory(
     const directories = [];
 
     for (let directory of [
-      process.cwd(),
       ...(Array.isArray(filePath) ? filePath : [filePath]),
+      process.cwd(),
     ]) {
       directory = path.resolve(directory);
       if (fs.statSync(directory).isFile()) {

@@ -114,9 +114,7 @@ function expandPath(filePath) {
  * Find filePath for 'req'
  *
  * @param { Req | string } req
- * @param { object } [options]
- * @param { Array<string> } [options.directories]
- * @param { string } [options.type]
+ * @param { FindOptions } options
  * @returns { string | undefined }
  */
 function find(req, { directories = config.directories, type } = {}) {
