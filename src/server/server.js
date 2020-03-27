@@ -2,6 +2,7 @@
 
 const { error, fatal, info, noisyInfo } = require('../utils/log.js');
 const {
+  favIcon,
   find,
   getProjectPath,
   getTypeFromRequest,
@@ -284,6 +285,7 @@ module.exports = class DvlpServer {
       res.url = req.url;
 
       if (
+        handleFavicon(req, res) ||
         handleMockResponse(req, res, server.mocks) ||
         handlePushEvent(req, res, server.mocks)
       ) {
@@ -473,6 +475,32 @@ module.exports = class DvlpServer {
     return this.stop();
   }
 };
+
+/**
+ * Handle request for favicon
+ * Returns 'true' if handled
+ *
+ * @param { Req } req
+ * @param { Res } res
+ * @returns { boolean }
+ */
+function handleFavicon(req, res) {
+  if (req.url.includes('/favicon.ico')) {
+    res.writeHead(200, {
+      'Content-Length': favIcon.length,
+      'Cache-Control': `public, max-age=${config.maxAge}`,
+      'Content-Type': 'image/x-icon;charset=UTF-8',
+    });
+    res.end(favIcon);
+    info(
+      `${stopwatch.stop(res.url, true, true)} handled request for ${chalk.green(
+        getProjectPath(req.url),
+      )}`,
+    );
+    return true;
+  }
+  return false;
+}
 
 /**
  * Handle mock responses, including EventSource connection

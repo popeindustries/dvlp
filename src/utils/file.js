@@ -17,6 +17,7 @@ const {
 } = require('./log.js');
 const { addHook } = require('pirates');
 const config = require('../config.js');
+const favicon = require('./favicon.js');
 const fs = require('fs');
 const glob = require('glob');
 // Work around @rollup/plugin-commonjs dynamic require
@@ -39,6 +40,7 @@ let revertHook;
 module.exports = {
   exists,
   expandPath,
+  favIcon: Buffer.from(favicon, 'base64'),
   find,
   getAbsoluteProjectPath,
   getProjectPath,
