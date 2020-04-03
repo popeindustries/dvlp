@@ -301,7 +301,7 @@ describe('server', () => {
   });
 
   describe('app', () => {
-    it('should start a server', async () => {
+    it('should start an app server', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
         reload: false,
@@ -329,6 +329,20 @@ describe('server', () => {
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
+    });
+    it('should start an app server with additional directories', async () => {
+      server = await serverFactory(
+        ['test/fixtures/www', 'test/fixtures/app.js'],
+        {
+          port: 8000,
+          reload: false,
+        },
+      );
+      const res = await fetch('http://localhost:8000/module.js', {
+        headers: { accept: 'text/html' },
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('main');
     });
     it('should start an app server listening for "request" event', async () => {
       server = await serverFactory('test/fixtures/appListener.js', {

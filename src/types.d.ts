@@ -72,6 +72,14 @@ declare type Config = {
   };
 };
 
+declare type Entry = {
+  directories: Array<string>;
+  isApp: boolean;
+  isFunction: boolean;
+  isStatic: boolean;
+  main: string | (() => void) | undefined;
+};
+
 declare type PatchResponseOptions = {
   directories?: Array<string>;
   rollupConfig?: {};

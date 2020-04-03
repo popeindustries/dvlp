@@ -26,44 +26,9 @@ module.exports = async function serverFactory(
   filePath = process.cwd(),
   { mockPath, port = config.port, reload = true, silent, transpiler } = {},
 ) {
-  const isFunction = typeof filePath === 'function';
-  let isStatic = false;
+  const entry = resolveEntry(filePath);
 
-  if (!isFunction) {
-    // @ts-ignore
-    filePath = expandPath(filePath);
-
-    if (Array.isArray(filePath) && filePath.length === 1) {
-      filePath = filePath[0];
-    }
-
-    exists(filePath);
-
-    isStatic =
-      Array.isArray(filePath) ||
-      fs.statSync(path.resolve(filePath)).isDirectory();
-    /** @type { Array<string> } */
-    const directories = [];
-
-    for (let directory of [
-      ...(Array.isArray(filePath) ? filePath : [filePath]),
-      process.cwd(),
-    ]) {
-      directory = path.resolve(directory);
-      if (fs.statSync(directory).isFile()) {
-        directory = path.dirname(directory);
-      }
-
-      const nodeModules = path.join(directory, 'node_modules');
-
-      directories.push(directory);
-      if (fs.existsSync(nodeModules)) {
-        directories.push(nodeModules);
-      }
-    }
-
-    config.directories = Array.from(new Set(directories));
-  }
+  config.directories = Array.from(new Set(entry.directories));
 
   if (mockPath) {
     mockPath = expandPath(mockPath);
@@ -99,14 +64,8 @@ module.exports = async function serverFactory(
     reloader = await reloadServer();
   }
 
-  const main = isStatic
-    ? undefined
-    : isFunction
-    ? filePath
-    : path.resolve(filePath);
-
   const server = new DvlpServer(
-    main,
+    entry.main,
     reloader,
     rollupConfig,
     transpilerPath,
@@ -120,13 +79,13 @@ module.exports = async function serverFactory(
   }
 
   const parentDir = path.resolve(process.cwd(), '..');
-  const paths = isStatic
+  const paths = entry.isStatic
     ? config.directories
         .map((dir) => path.relative(parentDir, dir) || path.basename(parentDir))
         .join(', ')
-    : isFunction
+    : entry.isFunction
     ? 'function'
-    : getProjectPath(filePath);
+    : getProjectPath(entry.main);
 
   info(
     `\n  💥 serving ${chalk.green(paths)} at ${chalk.green.underline(
@@ -154,3 +113,49 @@ module.exports = async function serverFactory(
     },
   };
 };
+
+/**
+ * Resolve entry data from "filePaths"
+ *
+ * @param { string | Array<string> | (() => void) } filePath
+ * @returns { Entry }
+ */
+function resolveEntry(filePath) {
+  /** @type { Entry } */
+  const entry = {
+    directories: [],
+    isApp: false,
+    isStatic: false,
+    isFunction: false,
+    main: undefined,
+  };
+
+  if (typeof filePath !== 'function') {
+    filePath = expandPath(filePath);
+    exists(filePath);
+
+    for (let directory of [...filePath, process.cwd()]) {
+      directory = path.resolve(directory);
+
+      if (fs.statSync(directory).isFile()) {
+        entry.isApp = true;
+        entry.main = directory;
+        directory = path.dirname(directory);
+      }
+
+      const nodeModules = path.join(directory, 'node_modules');
+
+      entry.directories.push(directory);
+      if (fs.existsSync(nodeModules)) {
+        entry.directories.push(nodeModules);
+      }
+    }
+
+    entry.isStatic = !entry.isApp;
+  } else {
+    entry.isFunction = true;
+    entry.main = filePath;
+  }
+
+  return entry;
+}
