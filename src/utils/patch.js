@@ -248,6 +248,7 @@ function rewriteImports(filePath, rollupConfig, code) {
   while ((match = RE_IMPORT.exec(code))) {
     const [context, pre, id, post] = match;
     const importPath = resolve(id, getAbsoluteProjectPath(filePath));
+
     if (importPath) {
       let newId = '';
 
@@ -269,8 +270,11 @@ function rewriteImports(filePath, rollupConfig, code) {
       }
 
       newId = filePathToUrl(newId);
-      debug(`rewrote import id from "${id}" to "${newId}"`);
-      rewritten[context] = `${pre}${newId}${post}`;
+
+      if (newId !== id) {
+        debug(`rewrote import id from "${id}" to "${newId}"`);
+        rewritten[context] = `${pre}${newId}${post}`;
+      }
     } else {
       warn(`⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`);
     }
