@@ -15,7 +15,6 @@ const {
 const {
   isModuleBundlerFilePath,
   isNodeModuleFilePath,
-  isProjectFilePath,
 } = require('../utils/is.js');
 const { bundle } = require('../bundler/index.js');
 const {
@@ -334,10 +333,7 @@ module.exports = class DvlpServer {
         }
 
         // Handle bundled, node_modules, and external files if not already handled by transpiler
-        if (
-          !res.finished &&
-          (!shouldTranspile || !isProjectFilePath(filePath))
-        ) {
+        if (!res.finished) {
           info(
             `${stopwatch.stop(res.url, true, true)} handled${
               isBundled ? ' bundled' : ''
