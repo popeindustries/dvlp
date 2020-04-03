@@ -16,7 +16,7 @@
     "@rollup/plugin-json": "^4.0.1",
     "@rollup/plugin-node-resolve": "^7.0.0",
     "@rollup/plugin-replace": "^2.3.0",
-    "chalk": "^3.0.0",
+    "chalk": "^4.0.0",
     "chokidar": "^3.1.0",
     "commander": "^5.0.0",
     "debug": "^4.1.1",
@@ -50,7 +50,7 @@
     "husky": "^4.2.3",
     "koa": "^2.11.0",
     "koa-send": "^5.0.0",
-    "lint-staged": "^10.0.9",
+    "lint-staged": "^10.1.1",
     "lit-html": "^1.2.1",
     "lodash": "^4.17.15",
     "mocha": "^7.1.1",
@@ -58,7 +58,7 @@
     "prettier": "^2.0.2",
     "react": "^16.13.1",
     "sass": "^1.26.3",
-    "terser": "^4.6.7",
+    "terser": "^4.6.10",
     "typescript": "^3.8.3"
   },
   "engines": {
