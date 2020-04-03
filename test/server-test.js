@@ -401,12 +401,6 @@ describe('server', () => {
       const body = await res.text();
       expect(body).to.contain("console.log('this is foo')");
     });
-    it('should pass requests through to app', async () => {
-      server = await serverFactory('test/fixtures/app.js', { port: 8000 });
-      const res = await fetch(`http://localhost:8000/www/script.js`);
-      expect(res.status).to.eql(200);
-      expect(res.headers.get('x-app')).to.equal('test');
-    });
     it('should start with custom Rollup config', async () => {
       config.rollupConfigPath = path.resolve('test/fixtures/rollup.config.js');
       server = await serverFactory('test/fixtures/app.js', {
