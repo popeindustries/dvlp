@@ -198,5 +198,5 @@ function resolveNodeModules(pkgPath) {
     dir = parent;
   }
 
-  return dirs;
+  return dirs.sort((a, b) => (a.length >= b.length ? -1 : 1));
 }
