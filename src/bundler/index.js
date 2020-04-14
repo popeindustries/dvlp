@@ -17,6 +17,9 @@ const { resolve } = require('../resolver/index.js');
 const stopwatch = require('../utils/stopwatch.js');
 const workerFarm = require('worker-farm');
 
+const SOURCE_PREFIX = '// source: ';
+const RE_SOURCE_PATH = /^\/\/ source: (.+)/;
+
 /** @type { Map<string, true | Promise<string>> } */
 const cache = new Map();
 /** @type { import('worker-farm').Workers | undefined } */
@@ -52,6 +55,7 @@ module.exports = {
   bundle,
   cleanBundles,
   destroyWorkers,
+  parseOriginalSourcePath,
   resolveModuleId,
   resolveModulePath,
 };
@@ -81,6 +85,18 @@ function resolveModuleId(id, filePath) {
  */
 function resolveModulePath(resolvedId) {
   return path.join(config.bundleDir, resolvedId);
+}
+
+/**
+ * Retrieve original source path from bundled source code
+ *
+ * @param { string } code
+ * @returns { string }
+ */
+function parseOriginalSourcePath(code) {
+  const match = RE_SOURCE_PATH.exec(code);
+
+  return match && match[1] ? match[1] : '';
 }
 
 /**
@@ -141,7 +157,7 @@ function doBundle(
   const promiseToCache = new Promise(async (resolve, reject) => {
     stopwatch.start(oringinalId);
 
-    getBundler()(inputPath, outputPath, rollupConfig, (err) => {
+    getBundler()(inputPath, outputPath, SOURCE_PREFIX, rollupConfig, (err) => {
       if (err) {
         error(`unable to bundle ${oringinalId}`);
         cache.delete(resolvedId);

@@ -15,7 +15,7 @@ const ROLLUP_INPUT_DEFAULTS = {
   // Only bundle local package files
   external: (id, parent, isResolved) => {
     // Skip if already handled by plugin
-    if (isResolved || parent.includes('?commonjs-proxy')) {
+    if (isResolved || (parent && parent.includes('?commonjs-proxy'))) {
       return false;
     }
     return /^[^./\0]/.test(id);
@@ -49,6 +49,7 @@ const ROLLUP_OUTPUT_DEFAULTS = {
  *
  * @param { string } inputPath
  * @param { string } outputPath
+ * @param { string } sourcePrefix
  * @param { RollupOptions } [overrideOptions]
  * @param { (err?: Error) => void } fn
  * @returns { Promise<void> }
@@ -56,19 +57,23 @@ const ROLLUP_OUTPUT_DEFAULTS = {
 module.exports = async function bundle(
   inputPath,
   outputPath,
+  sourcePrefix,
   overrideOptions,
   fn,
 ) {
-  const parsedOverrideOptions = parseOptions(overrideOptions);
+  const parsedOverrideOptions = parseOptions(
+    sourcePrefix + inputPath,
+    overrideOptions,
+  );
   const inputOptions = {
-    input: inputPath,
     ...ROLLUP_INPUT_DEFAULTS,
     ...parsedOverrideOptions.input,
+    input: inputPath,
   };
   const outputOptions = {
-    file: outputPath,
     ...ROLLUP_OUTPUT_DEFAULTS,
     ...parsedOverrideOptions.output,
+    file: outputPath,
   };
 
   try {
@@ -84,17 +89,25 @@ module.exports = async function bundle(
 /**
  * Parse override options
  *
+ * @param { string } banner
  * @param { RollupOptions } [options]
  * @returns { { input: object, output: object } }
  */
-function parseOptions(options) {
+function parseOptions(banner, options) {
   if (!options) {
-    return { input: {}, output: {} };
+    return { input: {}, output: { banner } };
   }
 
   const { input, treeshake, output = {}, watch, ...inputOverride } = options;
   // @ts-ignore
   const { file, format, sourcemap, ...outputOverride } = output;
+
+  if ('banner' in outputOverride) {
+    outputOverride.banner = banner + outputOverride.banner;
+  } else {
+    // @ts-ignore
+    outputOverride.banner = banner;
+  }
 
   return { input: inputOverride, output: outputOverride };
 }

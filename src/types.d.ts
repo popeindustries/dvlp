@@ -121,6 +121,7 @@ declare type Watcher = {
 declare type BundleWorker = (
   id: string,
   outputPath: string,
+  sourcePrefix: string,
   overrideOptions: import('rollup').RollupOptions | undefined,
   fn: (err?: Error) => void,
 ) => void;

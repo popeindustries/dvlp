@@ -1,6 +1,10 @@
 'use strict';
 
-const { bundle, resolveModuleId } = require('../bundler/index.js');
+const {
+  bundle,
+  parseOriginalSourcePath,
+  resolveModuleId,
+} = require('../bundler/index.js');
 const { getAbsoluteProjectPath, getProjectPath } = require('./file.js');
 const {
   isCssRequest,
@@ -239,6 +243,12 @@ function rewriteImports(filePath, rollupConfig, code) {
   const rewritten = {};
   let match;
 
+  // Retrieve original source path from bundled file to allow reference back to correct node_modules
+  if (isModuleBundlerFilePath(filePath)) {
+    filePath = parseOriginalSourcePath(code);
+  }
+
+  RE_IMPORT.lastIndex = 0;
   if (!RE_IMPORT.test(code)) {
     debug(`no imports to rewrite in "${projectFilePath}"`);
     return code;
