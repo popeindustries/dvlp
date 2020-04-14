@@ -1,6 +1,6 @@
 {
   "name": "dvlp",
-  "version": "8.0.0",
+  "version": "8.0.1",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
   "main": "dvlp.js",
   "types": "dvlp.d.ts",
