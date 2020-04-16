@@ -103,12 +103,12 @@ function parseOriginalSourcePath(code) {
  * Trigger bundle of 'resolvedId'
  *
  * @param { string } resolvedId
+ * @param { import("rollup").RollupOptions } rollupConfig
  * @param { string } [originalId]
  * @param { string } [inputPath]
- * @param { import("rollup").RollupOptions } [rollupConfig]
  * @returns { true | Promise<string> | undefined }
  */
-function bundle(resolvedId, originalId, inputPath, rollupConfig) {
+function bundle(resolvedId, rollupConfig, originalId, inputPath) {
   if (!resolvedId) {
     return;
   }
@@ -144,7 +144,7 @@ function bundle(resolvedId, originalId, inputPath, rollupConfig) {
  * @param { string } oringinalId
  * @param { string } inputPath
  * @param { string } outputPath
- * @param { import("rollup").RollupOptions } [rollupConfig]
+ * @param { import("rollup").RollupOptions } rollupConfig
  * @returns { Promise<string> }
  */
 function doBundle(

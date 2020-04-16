@@ -129,16 +129,15 @@ describe('server', () => {
       expect(res.status).to.eql(404);
     });
     it('should start with custom Rollup config', async () => {
-      config.rollupConfigPath = path.resolve('test/fixtures/rollup.config.js');
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
+        rollupConfigPath: 'test/fixtures/rollup.config.js',
       });
       const res = await fetch(
         `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`,
       );
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('/* this is a test */');
-      config.rollupConfigPath = undefined;
     });
     it('should inject the reload script into an html response', async () => {
       server = await serverFactory('test/fixtures/www', {
@@ -163,7 +162,7 @@ describe('server', () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
         reload: false,
-        transpiler: 'test/fixtures/transpiler.js',
+        transpilerPath: 'test/fixtures/transpiler.js',
       });
       const res = await fetch('http://localhost:8000/style.css');
       expect(res.status).to.eql(200);
@@ -175,7 +174,7 @@ describe('server', () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
         reload: false,
-        transpiler: 'test/fixtures/transpiler.js',
+        transpilerPath: 'test/fixtures/transpiler.js',
       });
       let start = Date.now();
       let res = await fetch('http://localhost:8000/style.css');
@@ -190,7 +189,7 @@ describe('server', () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
         reload: false,
-        transpiler: 'test/fixtures/transpilerError.js',
+        transpilerPath: 'test/fixtures/transpilerError.js',
       });
       const res = await fetch('http://localhost:8000/style.css');
       expect(res.status).to.eql(500);
@@ -416,16 +415,15 @@ describe('server', () => {
       expect(body).to.contain("console.log('this is foo')");
     });
     it('should start with custom Rollup config', async () => {
-      config.rollupConfigPath = path.resolve('test/fixtures/rollup.config.js');
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
+        rollupConfigPath: 'test/fixtures/rollup.config.js',
       });
       const res = await fetch(
         `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`,
       );
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('/* this is a test */');
-      config.rollupConfigPath = undefined;
     });
     it('should inject the reload script into an html response', async () => {
       server = await serverFactory('test/fixtures/app.js', {
@@ -452,7 +450,7 @@ describe('server', () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
         reload: false,
-        transpiler: 'test/fixtures/transpiler.js',
+        transpilerPath: 'test/fixtures/transpiler.js',
       });
       const res = await fetch('http://localhost:8000/www/style.css');
       expect(res.status).to.eql(200);

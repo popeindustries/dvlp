@@ -81,7 +81,6 @@ module.exports = {
   maxAge: '10m',
   maxModuleBundlerWorkers,
   port,
-  rollupConfigPath: path.join(dir, 'rollup.config.js'),
   testing: TESTING,
   typesByExtension: {
     '.css': 'css',

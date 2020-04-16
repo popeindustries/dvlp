@@ -36,21 +36,19 @@ $ npm install dvlp
 ```text
 $ dvlp --help
 
-Usage: dvlp [options] [path...]
-
-  Start a development server, restarting and reloading connected browsers on file changes.
+Start a development server, restarting and reloading connected browsers on file changes.
   Serves static files from one or more "path" directories, or a custom application
   server if "path" is a single file.
 
-  Options:
-
-    -p, --port <port>           port number
-    -m, --mock <path>           path to mock files (directory, file, glob pattern)
-    -t, --transpiler <path>     path to optional transpiler file
-    -s, --silent                suppress default logging
-    --no-reload                 disable reloading connected browsers on file change
-    -v, --version               output the version number
-    -h, --help                  output usage information
+Options:
+  -p, --port <port>           port number
+  -m, --mock <path>           path to mock files (directory, file, glob pattern)
+  -t, --transpiler <path>     path to optional transpiler file
+  -r, --rollup-config <path>  path to optional Rollup.js config file
+  -s, --silent                suppress default logging
+  --no-reload                 disable reloading connected browsers on file change
+  -v, --version               output the version number
+  -h, --help                  display help for command
 ```
 
 Add a script to your package.json `scripts`:
@@ -370,9 +368,9 @@ As mentioned in [How it works](#how-it-works), **dvlp** will bundle CommonJS pac
 
 <summary>Overriding default Rollup config</summary>
 
-In the rare case you need to configure Rollup.js to work with the packages you're importing, you can add a custom configuration file to the `.dvlp` directory (`.dvlp/rollup.config.js`).
+In the (rare) case you need to configure Rollup.js to work with the packages you're importing, you can pass the path to a custom configuration file with the `-r, --rollup-config` flag.
 
-**dvlp** will override/ignore the `input`, `treeshake`, and `watch` input options, as well as the `file`, `format`, and `sourcemap` output options. Here is the default configuration currently used:
+**dvlp** will override/ignore the `input`, `treeshake`, and `watch` options, as well as the `file`, `format`, and `sourcemap` output options. Here is the default configuration currently used:
 
 ```js
 {

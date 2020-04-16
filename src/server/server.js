@@ -1,5 +1,8 @@
 'use strict';
 
+/** @typedef {import("http").Server} Server */
+/** @typedef { import("rollup").RollupOptions } RollupOptions */
+
 const { error, fatal, info, noisyInfo } = require('../utils/log.js');
 const {
   favIcon,
@@ -42,8 +45,6 @@ const transpile = require('../utils/transpile.js');
 const watch = require('../utils/watch.js');
 const WebSocket = require('faye-websocket');
 
-/** @typedef {import("http").Server} Server */
-
 const START_TIMEOUT_DURATION = 2000;
 
 const { EventSource } = WebSocket;
@@ -58,12 +59,12 @@ module.exports = class DvlpServer {
    * Constructor
    *
    * @param { string | (() => void) | undefined } main
+   * @param { RollupOptions } rollupConfig
    * @param { Reloader } [reloader]
-   * @param { object } [rollupConfig]
    * @param { string } [transpilerPath]
    * @param { string | Array<string> } [mockPath]
    */
-  constructor(main, reloader, rollupConfig, transpilerPath, mockPath) {
+  constructor(main, rollupConfig, reloader, transpilerPath, mockPath) {
     // Listen for all upcoming file system reads (including require('*'))
     // Register early to catch all reads, including transpilers that patch fs.readFile
     this.watcher = this.createWatcher();
@@ -301,9 +302,9 @@ module.exports = class DvlpServer {
           if (isModuleBundlerFilePath(filePath)) {
             await bundle(
               path.basename(filePath),
-              undefined,
-              undefined,
               server.rollupConfig,
+              undefined,
+              undefined,
             );
           }
         } else {

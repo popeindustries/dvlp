@@ -7,6 +7,7 @@ const {
   resolveModuleId,
 } = require('../src/bundler/index.js');
 const config = require('../src/config.js');
+const defaultRollupConfig = require('../src/utils/default-rollup-config.js');
 const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
@@ -24,11 +25,14 @@ describe('bundle()', () => {
   });
 
   it('should return "undefined" if no module bundle found', () => {
-    expect(bundle(resolveModuleId('foofoo'))).to.equal(undefined);
+    expect(bundle(resolveModuleId('foofoo'), defaultRollupConfig)).to.equal(
+      undefined,
+    );
   });
   it('should bundle and return bundle filePath', async () => {
     const filePath = await bundle(
       resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
+      defaultRollupConfig,
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
@@ -36,18 +40,18 @@ describe('bundle()', () => {
     await bundle(resolveModuleId('lodash', resolve('index.js', 'lodash')));
     const filePath = await bundle(
       resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
+      defaultRollupConfig,
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
   it('should bundle with overridden config', async () => {
     const filePath = await bundle(
       resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
-      'debug',
-      undefined,
       {
         input: 'foo.js',
         output: { banner: '/* this is a test */', format: 'cjs' },
       },
+      'debug',
     );
     const module = fs.readFileSync(filePath, 'utf8');
     expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
@@ -56,6 +60,7 @@ describe('bundle()', () => {
   it('should skip bundling transient dependencies', async () => {
     const filePath = await bundle(
       resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
+      defaultRollupConfig,
     );
     const module = fs.readFileSync(filePath, 'utf8');
     expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));

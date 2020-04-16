@@ -1,48 +1,8 @@
 'use strict';
 
-const commonjsPlugin = require('@rollup/plugin-commonjs');
-const jsonPlugin = require('@rollup/plugin-json');
-const replacePlugin = require('@rollup/plugin-replace');
-const resolvePlugin = require('@rollup/plugin-node-resolve');
-const { rollup } = require('rollup');
-
-/** @typedef { import("rollup").InputOptions } InputOptions */
-/** @typedef { import("rollup").OutputOptions } OutputOptions */
 /** @typedef { import("rollup").RollupOptions } RollupOptions */
 
-/** @type { InputOptions } */
-const ROLLUP_INPUT_DEFAULTS = {
-  // Only bundle local package files
-  external: (id, parent, isResolved) => {
-    // Skip if already handled by plugin
-    if (isResolved || (parent && parent.includes('?commonjs-proxy'))) {
-      return false;
-    }
-    return /^[^./\0]/.test(id);
-  },
-  plugins: [
-    // @ts-ignore
-    replacePlugin({
-      'process.env.NODE_ENV': `"${process.env.NODE_ENV}"` || '"development"',
-    }),
-    // @ts-ignore
-    resolvePlugin({
-      mainFields: ['browser', 'module', 'main'],
-    }),
-    // @ts-ignore
-    jsonPlugin(),
-    // @ts-ignore
-    commonjsPlugin({
-      sourceMap: false,
-    }),
-  ],
-  treeshake: false,
-};
-/** @type { OutputOptions } */
-const ROLLUP_OUTPUT_DEFAULTS = {
-  format: 'es',
-  sourcemap: false,
-};
+const { rollup } = require('rollup');
 
 /**
  * Bundle package at 'id'
@@ -50,7 +10,7 @@ const ROLLUP_OUTPUT_DEFAULTS = {
  * @param { string } inputPath
  * @param { string } outputPath
  * @param { string } sourcePrefix
- * @param { RollupOptions } [overrideOptions]
+ * @param { RollupOptions } rollupOptions
  * @param { (err?: Error) => void } fn
  * @returns { Promise<void> }
  */
@@ -58,21 +18,16 @@ module.exports = async function bundle(
   inputPath,
   outputPath,
   sourcePrefix,
-  overrideOptions,
+  rollupOptions,
   fn,
 ) {
-  const parsedOverrideOptions = parseOptions(
-    sourcePrefix + inputPath,
-    overrideOptions,
-  );
+  const parsedOptions = parseOptions(sourcePrefix + inputPath, rollupOptions);
   const inputOptions = {
-    ...ROLLUP_INPUT_DEFAULTS,
-    ...parsedOverrideOptions.input,
+    ...parsedOptions.input,
     input: inputPath,
   };
   const outputOptions = {
-    ...ROLLUP_OUTPUT_DEFAULTS,
-    ...parsedOverrideOptions.output,
+    ...parsedOptions.output,
     file: outputPath,
   };
 
@@ -87,10 +42,10 @@ module.exports = async function bundle(
 };
 
 /**
- * Parse override options
+ * Parse Rollup options
  *
  * @param { string } banner
- * @param { RollupOptions } [options]
+ * @param { RollupOptions } options
  * @returns { { input: object, output: object } }
  */
 function parseOptions(banner, options) {

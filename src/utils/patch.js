@@ -46,7 +46,7 @@ function patchResponse(
   filePath,
   req,
   res,
-  { rollupConfig, footerScript, headerScript } = {},
+  { rollupConfig, footerScript, headerScript } = { rollupConfig: {} },
 ) {
   // req.filepath set after file.find(), filepath passed if cached
   filePath = req.filePath || filePath || req.url;
@@ -233,7 +233,7 @@ function injectCSPHeader(urls, hashes, key, value) {
  * Rewrite bare import references in 'data'
  *
  * @param { string } filePath
- * @param { object } [rollupConfig]
+ * @param { import("rollup").RollupOptions } rollupConfig
  * @param { string } code
  * @returns { string }
  */
@@ -267,7 +267,7 @@ function rewriteImports(filePath, rollupConfig, code) {
         const resolvedId = resolveModuleId(id, importPath);
 
         // Trigger bundling in background while waiting for eventual request
-        bundle(resolvedId, id, importPath, rollupConfig);
+        bundle(resolvedId, rollupConfig, id, importPath);
         newId = `/${path.join(config.bundleDirName, resolvedId)}`;
         warn(WARN_BARE_IMPORT, id);
       } else {
