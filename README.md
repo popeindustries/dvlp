@@ -36,9 +36,7 @@ $ npm install dvlp
 ```text
 $ dvlp --help
 
-Start a development server, restarting and reloading connected browsers on file changes.
-  Serves static files from one or more "path" directories, or a custom application
-  server if "path" is a single file.
+Start a development server, restarting and reloading connected browsers on file changes. Serves static files from one or more "path" directories, or a custom application server if "path" is a single file.
 
 Options:
   -p, --port <port>           port number
@@ -370,7 +368,7 @@ As mentioned in [How it works](#how-it-works), **dvlp** will bundle CommonJS pac
 
 In the (rare) case you need to configure Rollup.js to work with the packages you're importing, you can pass the path to a custom configuration file with the `-r, --rollup-config` flag.
 
-**dvlp** will override/ignore the `input`, `treeshake`, and `watch` options, as well as the `file`, `format`, and `sourcemap` output options. Here is the default configuration currently used:
+**dvlp** will override/ignore the `input`, `treeshake`, and `watch` options, as well as the `file`, `format`, and `sourcemap` output options. Here is the default configuration currently used (also available as a direct import: `import { defaultRollupConfig } from 'dvlp'`):
 
 ```js
 {
@@ -383,13 +381,19 @@ In the (rare) case you need to configure Rollup.js to work with the packages you
   },
   external: (id) => /^[^./]/.test(id),
   plugins: [
-    resolve({
-      browser: true
+    replacePlugin({
+      'process.env.NODE_ENV': `"${process.env.NODE_ENV}"` || '"development"',
     }),
-    json(),
-    commonjs({
-      sourceMap: false
-    })
+    resolvePlugin({
+      mainFields: ['browser', 'module', 'main'],
+    }),
+    jsonPlugin(),
+    commonjsPlugin({
+      namedExports: {
+        react: [/* all the names */],
+      },
+      sourceMap: false,
+    }),
   ]
 }
 ```
