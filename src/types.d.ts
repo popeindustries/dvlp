@@ -191,7 +191,7 @@ declare type MockStreamData = {
   events: { [name: string]: Array<MockStreamEventData> };
 };
 
-/* export */ declare class MockInstance {
+declare class MockInstance {
   cache: Set<MockResponseData | MockStreamData>;
   client: string;
 
@@ -380,7 +380,7 @@ declare interface PushClient {
   webroot?: string;
 };
 
-/* export */ declare class TestServerInstance {
+declare class TestServerInstance {
   latency: number;
   port: number;
   mocks: MockInstance;
@@ -467,3 +467,5 @@ declare interface PushClient {
     res: Res,
   ): undefined;
 }
+
+/* export */ declare const defaultRollupConfig: import('rollup').RollupOptions;

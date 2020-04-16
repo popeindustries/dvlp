@@ -181,11 +181,32 @@ function resolveEntry(filePath) {
  * @returns { RollupOptions }
  */
 function mergeRollupConfig(defaultConfig, newConfig) {
-  const { output: requiredOutput, ...defaultOptions } = defaultConfig;
-  const { output, ...options } = newConfig;
+  const {
+    output: requiredOutput,
+    plugins: defaultPlugins = [],
+    ...defaultOptions
+  } = defaultConfig;
+  const { output, plugins = [], ...options } = newConfig;
+  /** @type { { [name: string]: import('rollup').Plugin }}  */
+  const newPluginsByName = plugins.reduce((newPluginsByName, plugin) => {
+    // @ts-ignore
+    newPluginsByName[plugin.name] = plugin;
+    return newPluginsByName;
+  }, {});
+  let mergedPlugins = [];
+
+  // Replace default plugin with new if it has the same name
+  for (const plugin of defaultPlugins) {
+    const { name } = plugin;
+    mergedPlugins.push(
+      name in newPluginsByName ? newPluginsByName[name] : plugin,
+    );
+  }
+
   return {
     ...defaultOptions,
     ...options,
+    plugins: mergedPlugins,
     output: { ...output, ...requiredOutput },
   };
 }
