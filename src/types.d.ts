@@ -65,7 +65,6 @@ declare type Config = {
   maxAge: string;
   maxModuleBundlerWorkers: number;
   port: number;
-  rollupConfigPath: string;
   testing: boolean;
   typesByExtension: {
     [extension: string]: string;
@@ -81,8 +80,8 @@ declare type Entry = {
 };
 
 declare type PatchResponseOptions = {
+  rollupConfig: import('rollup').RollupOptions;
   directories?: Array<string>;
-  rollupConfig?: {};
   footerScript?: {
     hash?: string;
     string: string;
@@ -122,7 +121,7 @@ declare type BundleWorker = (
   id: string,
   outputPath: string,
   sourcePrefix: string,
-  overrideOptions: import('rollup').RollupOptions | undefined,
+  rollupOptions: import('rollup').RollupOptions,
   fn: (err?: Error) => void,
 ) => void;
 
@@ -330,13 +329,17 @@ declare interface PushClient {
    */
   reload?: boolean;
   /**
+   * The path to a custom Rollup config file
+   */
+  rollupConfigPath?: string;
+  /**
    * Disable/enable default logging (default `false`).
    */
   silent?: boolean;
   /**
    * The path to a custom transpiler script (default `''`).
    */
-  transpiler?: string;
+  transpilerPath?: string;
 };
 
 /* export */ declare type Server = {

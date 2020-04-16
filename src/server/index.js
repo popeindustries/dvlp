@@ -1,5 +1,7 @@
 'use strict';
 
+/** @typedef { import("rollup").RollupOptions } RollupOptions */
+
 const {
   exists,
   expandPath,
@@ -9,6 +11,7 @@ const {
 const { info, error } = require('../utils/log.js');
 const chalk = require('chalk');
 const config = require('../config.js');
+const defaultRollupConfig = require('../utils/default-rollup-config.js');
 const { destroyWorkers } = require('../bundler/index.js');
 const fs = require('fs');
 const path = require('path');
@@ -24,7 +27,14 @@ const DvlpServer = require('./server.js');
  */
 module.exports = async function serverFactory(
   filePath = process.cwd(),
-  { mockPath, port = config.port, reload = true, silent, transpiler } = {},
+  {
+    mockPath,
+    port = config.port,
+    reload = true,
+    rollupConfigPath,
+    silent,
+    transpilerPath,
+  } = {},
 ) {
   const entry = resolveEntry(filePath);
 
@@ -36,23 +46,26 @@ module.exports = async function serverFactory(
 
   /** @type { Reloader | undefined } */
   let reloader;
-  let rollupConfig;
-  let transpilerPath;
+  let rollupConfig = defaultRollupConfig;
 
   if (process.env.PORT === undefined) {
     process.env.PORT = String(port);
   }
 
-  if (fs.existsSync(config.rollupConfigPath)) {
-    rollupConfig = importModule(config.rollupConfigPath);
+  if (rollupConfigPath) {
+    rollupConfigPath = path.resolve(rollupConfigPath);
+    rollupConfig = mergeRollupConfig(
+      rollupConfig,
+      importModule(rollupConfigPath),
+    );
     info(
       `${chalk.green('✔')} registered custom Rollup.js config at ${chalk.green(
-        getProjectPath(config.rollupConfigPath),
+        getProjectPath(rollupConfigPath),
       )}`,
     );
   }
-  if (transpiler) {
-    transpilerPath = path.resolve(transpiler);
+  if (transpilerPath) {
+    transpilerPath = path.resolve(transpilerPath);
 
     info(
       `${chalk.green('✔')} loaded transpiler from ${chalk.green(
@@ -66,8 +79,8 @@ module.exports = async function serverFactory(
 
   const server = new DvlpServer(
     entry.main,
-    reloader,
     rollupConfig,
+    reloader,
     transpilerPath,
     mockPath,
   );
@@ -158,4 +171,21 @@ function resolveEntry(filePath) {
   }
 
   return entry;
+}
+
+/**
+ * Merge user rollup-config with default
+ *
+ * @param { RollupOptions } defaultConfig
+ * @param { RollupOptions } newConfig
+ * @returns { RollupOptions }
+ */
+function mergeRollupConfig(defaultConfig, newConfig) {
+  const { output: requiredOutput, ...defaultOptions } = defaultConfig;
+  const { output, ...options } = newConfig;
+  return {
+    ...defaultOptions,
+    ...options,
+    output: { ...output, ...requiredOutput },
+  };
 }

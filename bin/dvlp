@@ -41,9 +41,9 @@ async function boot(path = [process.cwd()]) {
       mockPath: program.mock,
       port: program.port,
       reload: program.reload,
-      rollupConfig: program.rollupConfig,
+      rollupConfigPath: program.rollupConfig,
       silent: program.silent,
-      transpiler: program.transpiler,
+      transpilerPath: program.transpiler,
     });
   } catch (err) {
     console.error(err);
