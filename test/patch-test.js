@@ -3,8 +3,10 @@
 const { cleanBundles, destroyWorkers } = require('../src/bundler/index.js');
 const { clearResolverCache } = require('../src/resolver/index.js');
 const config = require('../src/config.js');
-const defaultRollupConfig = require('../src/utils/default-rollup-config.js');
 const { expect } = require('chai');
+const {
+  getDefaultRollupConfig,
+} = require('../src/utils/default-rollup-config.js');
 const { gzipSync } = require('zlib');
 const { patchResponse } = require('../src/utils/patch.js');
 const path = require('path');
@@ -12,7 +14,7 @@ const { ServerResponse } = require('http');
 
 const NODE_PATH = process.env.NODE_PATH;
 const OPTIONS = {
-  rollupConfig: defaultRollupConfig,
+  rollupConfig: getDefaultRollupConfig(),
 };
 
 function getBody(res) {

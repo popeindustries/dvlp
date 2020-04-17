@@ -11,9 +11,9 @@ const {
 const { info, error } = require('../utils/log.js');
 const chalk = require('chalk');
 const config = require('../config.js');
-const defaultRollupConfig = require('../utils/default-rollup-config.js');
 const { destroyWorkers } = require('../bundler/index.js');
 const fs = require('fs');
+const { getDefaultRollupConfig } = require('../utils/default-rollup-config.js');
 const path = require('path');
 const reloadServer = require('../reloader/index.js');
 const DvlpServer = require('./server.js');
@@ -46,7 +46,7 @@ module.exports = async function serverFactory(
 
   /** @type { Reloader | undefined } */
   let reloader;
-  let rollupConfig = defaultRollupConfig;
+  let rollupConfig = getDefaultRollupConfig();
 
   if (process.env.PORT === undefined) {
     process.env.PORT = String(port);

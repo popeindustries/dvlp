@@ -468,4 +468,4 @@ declare class TestServerInstance {
   ): undefined;
 }
 
-/* export */ declare const defaultRollupConfig: import('rollup').RollupOptions;
+/* export */ declare function getDefaultRollupConfig(): import('rollup').RollupOptions;

@@ -7,7 +7,9 @@ const {
   resolveModuleId,
 } = require('../src/bundler/index.js');
 const config = require('../src/config.js');
-const defaultRollupConfig = require('../src/utils/default-rollup-config.js');
+const {
+  getDefaultRollupConfig,
+} = require('../src/utils/default-rollup-config.js');
 const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
@@ -25,14 +27,14 @@ describe('bundle()', () => {
   });
 
   it('should return "undefined" if no module bundle found', () => {
-    expect(bundle(resolveModuleId('foofoo'), defaultRollupConfig)).to.equal(
-      undefined,
-    );
+    expect(
+      bundle(resolveModuleId('foofoo'), getDefaultRollupConfig()),
+    ).to.equal(undefined);
   });
   it('should bundle and return bundle filePath', async () => {
     const filePath = await bundle(
       resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
-      defaultRollupConfig,
+      getDefaultRollupConfig(),
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
@@ -40,7 +42,7 @@ describe('bundle()', () => {
     await bundle(resolveModuleId('lodash', resolve('index.js', 'lodash')));
     const filePath = await bundle(
       resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
-      defaultRollupConfig,
+      getDefaultRollupConfig(),
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
@@ -60,7 +62,7 @@ describe('bundle()', () => {
   it('should skip bundling transient dependencies', async () => {
     const filePath = await bundle(
       resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
-      defaultRollupConfig,
+      getDefaultRollupConfig(),
     );
     const module = fs.readFileSync(filePath, 'utf8');
     expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
