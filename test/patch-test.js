@@ -12,6 +12,8 @@ const { patchResponse } = require('../src/utils/patch.js');
 const path = require('path');
 const { ServerResponse } = require('http');
 
+const DEBUG_VERSION = '4.1.1';
+const LODASH_VERSION = '4.17.15';
 const NODE_PATH = process.env.NODE_PATH;
 const OPTIONS = {
   rollupConfig: getDefaultRollupConfig(),
@@ -321,7 +323,16 @@ describe('patch', () => {
       patchResponse(req.filePath, req, res, OPTIONS);
       res.end('import lodash from "lodash";');
       expect(getBody(res)).to.equal(
-        `import lodash from "/${config.bundleDirName}/lodash-4.17.15.js";`,
+        `import lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
+      );
+    });
+    it('should escape "$" when resolving js import id', () => {
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res, OPTIONS);
+      res.end('import $$observable from "lodash";');
+      expect(getBody(res)).to.equal(
+        `import $$observable from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
       );
     });
     it('should resolve multiple bare js import ids', () => {
@@ -332,7 +343,7 @@ describe('patch', () => {
         'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";',
       );
       expect(getBody(res)).to.equal(
-        `import lodashArr from "/${config.bundleDirName}/lodash__array-4.17.15.js";\nimport { foo } from "./foo.js";\nimport debug from "/${config.bundleDirName}/debug-4.1.1.js";`,
+        `import lodashArr from "/${config.bundleDirName}/lodash__array-${LODASH_VERSION}.js";\nimport { foo } from "./foo.js";\nimport debug from "/${config.bundleDirName}/debug-${DEBUG_VERSION}.js";`,
       );
     });
     it('should resolve bare js import id for es module', () => {

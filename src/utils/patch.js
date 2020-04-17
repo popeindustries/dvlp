@@ -291,7 +291,11 @@ function rewriteImports(filePath, rollupConfig, code) {
   }
 
   for (const importString in rewritten) {
-    code = code.replace(importString, rewritten[importString]);
+    code = code.replace(
+      importString,
+      // Escape '$' to avoid special replacement patterns
+      rewritten[importString].replace(/\$/g, '$$$'),
+    );
   }
 
   return code;
