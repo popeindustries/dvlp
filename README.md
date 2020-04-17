@@ -368,7 +368,7 @@ As mentioned in [How it works](#how-it-works), **dvlp** will bundle CommonJS pac
 
 In the (rare) case you need to configure Rollup.js to work with the packages you're importing, you can pass the path to a custom configuration file with the `-r, --rollup-config` flag.
 
-**dvlp** will override/ignore the `input`, `treeshake`, and `watch` options, as well as the `file`, `format`, and `sourcemap` output options. Here is the default configuration currently used (also available as a direct import: `import { defaultRollupConfig } from 'dvlp'`):
+**dvlp** will override/ignore the `input`, `treeshake`, and `watch` options, as well as the `file`, `format`, and `sourcemap` output options. Here is the default configuration currently used (also available as a direct import: `import { getDefaultRollupConfig } from 'dvlp'`):
 
 ```js
 {
