@@ -24,7 +24,7 @@ const { resolve } = require('../resolver/index.js');
 const { unzipSync } = require('zlib');
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
-const RE_IMPORT = /((?:\bimport\b[^'"&;:-=()]+|\bexport\b[^'"&;:-=()]+\sfrom\s)['"])([^'"\n]+)(['"])/gm;
+const RE_IMPORT = /^((?:\bimport\b[^'"&;:-=()]+|\bexport\b[^'"&;:-=()]+\sfrom\s)['"])([^'"\n]+)(['"])/gm;
 const RE_NONCE_SHA = /nonce-|sha\d{3}-/;
 const RE_OPEN_HEAD_TAG = /<head>/i;
 
