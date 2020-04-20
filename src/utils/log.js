@@ -1,6 +1,7 @@
 'use strict';
 
 const chalk = require('chalk');
+const { testing } = require('../config.js');
 
 const SEG_LENGTH = 80;
 const WARN_BARE_IMPORT =
@@ -14,7 +15,6 @@ const WARN_PACKAGE_INDEX =
 const WARN_SERVER_TRANSPILE =
   '⚠️  ignoring async Promise returned when executing transpiler on a server file. Be sure to check the "isServer" argument before returning a transpiled value';
 
-const disabled = process.env.DVLP_LAUNCHER !== 'cmd';
 let maxBareImport = 1;
 let maxMissingExtension = 1;
 let maxNodePath = 1;
@@ -50,7 +50,7 @@ module.exports = {
  * @param { string } msg
  */
 function info(msg) {
-  if (!disabled && !silent) {
+  if (!testing && !silent) {
     console.log(truncate(' ' + msg));
   }
 }
@@ -61,7 +61,7 @@ function info(msg) {
  * @param { string } msg
  */
 function noisyInfo(msg) {
-  if (!disabled) {
+  if (!testing) {
     console.log(truncate(' ' + msg));
   }
 }
@@ -72,7 +72,7 @@ function noisyInfo(msg) {
  * @param { ...unknown } args
  */
 function warn(...args) {
-  if (!disabled) {
+  if (!testing && !silent) {
     const [warning] = args;
     let msg = '';
 
@@ -118,7 +118,7 @@ function warn(...args) {
  * @param { ...unknown } args
  */
 function error(...args) {
-  if (!disabled) {
+  if (!testing && !silent) {
     console.error(chalk.red.inverse(' error '), ...args);
   }
 }
@@ -129,7 +129,7 @@ function error(...args) {
  * @param { ...unknown } args
  */
 function fatal(...args) {
-  if (!disabled) {
+  if (!testing && !silent) {
     console.error(chalk.red.inverse(' fatal error '), ...args);
   }
 }
