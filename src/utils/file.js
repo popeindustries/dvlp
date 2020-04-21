@@ -179,7 +179,7 @@ function importModule(modulePath, transpiler) {
       ) {
         const transpiled = transpiler(filePath, true);
 
-        if (transpiled) {
+        if (transpiled !== undefined) {
           // Ignore async
           if (transpiled instanceof Promise) {
             warn(WARN_SERVER_TRANSPILE);
