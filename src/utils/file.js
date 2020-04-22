@@ -299,7 +299,11 @@ function resolveFilePath(filePath, type) {
       return resolveRealFilePath(filePath);
     }
   } catch (err) {
-    // Not found, possibly no extension or package
+    // Not found, possibly no extension, no package, or wrong extension.
+    // If unable to resolve a file that has an extension,
+    // we will ignore the existing extension and try all others.
+    // Since TypeScript allows adding ".js" to imports, but resolves to ".ts" files,
+    // this will allow us to resolve to a ".ts" file when looking for a (missing) ".js" one.
   }
 
   if (!type) {
@@ -341,6 +345,12 @@ function resolveFilePath(filePath, type) {
  * @returns { string }
  */
 function resolveFilePathExtension(filePath, extensions) {
+  const ext = path.extname(filePath);
+
+  if (ext && extensions.includes(ext)) {
+    filePath = filePath.replace(ext, '');
+  }
+
   for (const ext of extensions) {
     const fp = filePath + ext;
 

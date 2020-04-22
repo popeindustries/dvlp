@@ -170,6 +170,14 @@ describe('file', () => {
         }),
       ).to.equal(path.resolve('test/fixtures/www/nested/index.js'));
     });
+    it('should find TS file for JS string with .js extension', () => {
+      expect(
+        find('/ts.js', {
+          directories: [path.resolve('test/fixtures/www')],
+          type: 'js',
+        }),
+      ).to.equal(path.resolve('test/fixtures/www/ts.ts'));
+    });
   });
 
   describe('importModule()', () => {
