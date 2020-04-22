@@ -118,8 +118,8 @@ function warn(...args) {
  * @param { ...unknown } args
  */
 function error(...args) {
-  if (!testing && !silent) {
-    console.error(chalk.red.inverse(' error '), ...args);
+  if (!testing) {
+    console.error('/n', chalk.red.inverse(' error '), ...args);
   }
 }
 
@@ -129,8 +129,8 @@ function error(...args) {
  * @param { ...unknown } args
  */
 function fatal(...args) {
-  if (!testing && !silent) {
-    console.error(chalk.red.inverse(' fatal error '), ...args);
+  if (!testing) {
+    console.error('/n', chalk.red.inverse(' fatal error '), ...args);
   }
 }
 
