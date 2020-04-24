@@ -5,7 +5,7 @@
   }
   var sse;
   var retries;
-  var url = new URL(location.origin);
+  var url = new URL('localhost');
   url.port = $RELOAD_PORT;
   url.pathname = '/dvlpreload';
   connect();
