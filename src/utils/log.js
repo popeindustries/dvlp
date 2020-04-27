@@ -119,7 +119,7 @@ function warn(...args) {
  */
 function error(...args) {
   if (!testing) {
-    console.error('/n', chalk.red.inverse(' error '), ...args);
+    console.error('\n', chalk.red.inverse(' error '), ...args);
   }
 }
 
@@ -130,7 +130,7 @@ function error(...args) {
  */
 function fatal(...args) {
   if (!testing) {
-    console.error('/n', chalk.red.inverse(' fatal error '), ...args);
+    console.error('\n', chalk.red.inverse(' fatal error '), ...args);
   }
 }
 
