@@ -335,6 +335,54 @@ describe('patch', () => {
         `import $$observable from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
       );
     });
+    it('should resolve import at the start of a line', () => {
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res, OPTIONS);
+      res.end(`const foo = 'bar'\nimport lodash from "lodash";`);
+      expect(getBody(res)).to.equal(
+        `const foo = 'bar'\nimport lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
+      );
+    });
+    it('should resolve import following a semi-colon', () => {
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res, OPTIONS);
+      res.end(
+        `function foo(value) { return value; };import lodash from "lodash";`,
+      );
+      expect(getBody(res)).to.equal(
+        `function foo(value) { return value; };import lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
+      );
+    });
+    it('should resolve import following a closing curly bracket', () => {
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res, OPTIONS);
+      res.end(
+        `function foo(value) { return value; } import lodash from "lodash";`,
+      );
+      expect(getBody(res)).to.equal(
+        `function foo(value) { return value; } import lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
+      );
+    });
+    it('should resolve import following a closing parethesis', () => {
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      patchResponse(req.filePath, req, res, OPTIONS);
+      res.end(`const foo = ('bar') import lodash from "lodash";`);
+      expect(getBody(res)).to.equal(
+        `const foo = ('bar') import lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
+      );
+    });
+    it('should not resolve import following an invalid character', () => {
+      const req = getRequest('/index.js', { accept: 'application/javascript' });
+      const res = new ServerResponse(req);
+      const reactDomError = `error("It looks like you're using the wrong act() around your test interactions.\n" + 'Be sure to use the matching version of act() corresponding to your renderer:\n\n' + '// for react-dom:\n' + "import {act} from 'react-dom/test-utils';\n" + '// ...\n' + 'act(() => ...);\n\n' + '// for react-test-renderer:\n' + "import TestRenderer from 'react-test-renderer';\n" + 'const {act} = TestRenderer;\n' + '// ...\n' + 'act(() => ...);' + '%s', getStackByFiberInDevAndProd(fiber));`;
+      patchResponse(req.filePath, req, res, OPTIONS);
+      res.end(reactDomError);
+      expect(getBody(res)).to.equal(reactDomError);
+    });
     it('should resolve multiple bare js import ids', () => {
       const req = getRequest('/index.js', { accept: 'application/javascript' });
       const res = new ServerResponse(req);
