@@ -53,12 +53,12 @@
     "lint-staged": "^10.1.7",
     "lit-html": "^1.2.1",
     "lodash": "^4.17.15",
-    "mocha": "^7.1.1",
+    "mocha": "^7.1.2",
     "node-fetch": "^2.6.0",
     "prettier": "^2.0.5",
     "react": "^16.13.1",
-    "sass": "^1.26.3",
-    "terser": "^4.6.11",
+    "sass": "^1.26.5",
+    "terser": "^4.6.12",
     "typescript": "^3.8.3"
   },
   "engines": {
