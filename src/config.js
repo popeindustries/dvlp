@@ -9,7 +9,7 @@ const send = require('send');
 const JS_MIME_TYPES = {
   'application/javascript': ['js', 'jsx', 'ts', 'tsx'],
 };
-const TESTING = process.env.NODE_ENV === 'test';
+const TESTING = process.env.NODE_ENV === 'dvlptest';
 // Prevent parallel test runs from reading from same cache
 const DIR = `.dvlp${TESTING ? process.getuid() : ''}`;
 const VERSION = process.env.DVLP_VERSION;
