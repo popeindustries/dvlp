@@ -414,7 +414,7 @@ function proxyBodyWrite(res, action) {
       let [key, value] = args;
 
       if (key.toLowerCase() === 'content-length') {
-        debug(`prevented setting Content-Length to ${value}`);
+        // debug(`prevented setting Content-Length to ${value}`);
         return;
       }
 
@@ -429,11 +429,11 @@ function proxyBodyWrite(res, action) {
       if (args.length > 1) {
         for (const key in args[args.length - 1]) {
           if (key.toLowerCase() === 'content-length') {
-            debug(
-              `prevented setting Content-Length to ${
-                args[args.length - 1][key]
-              }`,
-            );
+            // debug(
+            //   `prevented setting Content-Length to ${
+            //     args[args.length - 1][key]
+            //   }`,
+            // );
             delete args[args.length - 1][key];
           }
         }
