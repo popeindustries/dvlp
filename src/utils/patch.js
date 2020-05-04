@@ -25,7 +25,6 @@ const { resolve } = require('../resolver/index.js');
 const { unzipSync } = require('zlib');
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
-// const RE_IMPORT = /((?:(?:^|[});]\s*)import\b[^'"&;:-=()]+|\bexport\b[^'"&;:-=()]+\sfrom\s)['"])([^'"\n]+)(['"])/gm;
 const RE_NONCE_SHA = /nonce-|sha\d{3}-/;
 const RE_OPEN_HEAD_TAG = /<head>/i;
 
@@ -239,18 +238,18 @@ function injectCSPHeader(urls, hashes, key, value) {
  * @returns { string }
  */
 function rewriteImports(filePath, rollupConfig, code) {
-  const projectFilePath = getProjectPath(filePath);
-  // /** @type { {[key: string]: string} } */
-  // const rewritten = {};
-  // let match;
-  let offset = 0;
-
-  // Retrieve original source path from bundled file to allow reference back to correct node_modules
+  // Retrieve original source path from bundled file
+  // to allow reference back to correct node_modules
   if (isModuleBundlerFilePath(filePath)) {
     filePath = parseOriginalSourcePath(code);
   }
 
+  // Track length delta between 'id' and 'newId' to adjust
+  // parsed indexes as we substitue during iteration
+  let offset = 0;
+
   try {
+    const projectFilePath = getProjectPath(filePath);
     const [imports] = parse(code);
 
     if (!imports.length) {
@@ -308,40 +307,6 @@ function rewriteImports(filePath, rollupConfig, code) {
   }
 
   return code;
-  // while ((match = RE_IMPORT.exec(code))) {
-  //   const [context, pre, id, post] = match;
-  //   const importPath = resolve(id, getAbsoluteProjectPath(filePath));
-
-  //   if (importPath) {
-  //     let newId = '';
-
-  //     // Bundle if in node_modules and not an es module
-  //     if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
-  //       const resolvedId = resolveModuleId(id, importPath);
-
-  //       // Trigger bundling in background while waiting for eventual request
-  //       bundle(resolvedId, rollupConfig, id, importPath);
-  //       newId = `/${path.join(config.bundleDirName, resolvedId)}`;
-  //       warn(WARN_BARE_IMPORT, id);
-  //     } else {
-  //       // Don't rewrite if no change after resolving
-  //       newId =
-  //         isRelativeFilePath(id) &&
-  //         path.join(path.dirname(filePath), id) === importPath
-  //           ? id
-  //           : importPath;
-  //     }
-
-  //     newId = filePathToUrl(newId);
-
-  //     if (newId !== id) {
-  //       debug(`rewrote import id from "${id}" to "${newId}"`);
-  //       rewritten[context] = `${pre}${newId}${post}`;
-  //     }
-  //   } else {
-  //     warn(`⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`);
-  //   }
-  // }
 }
 
 /**
