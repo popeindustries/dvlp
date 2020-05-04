@@ -20,6 +20,7 @@ const config = require('../config.js');
 const debug = require('debug')('dvlp:patch');
 const { filePathToUrl } = require('../utils/url.js');
 const path = require('path');
+const { performance } = require('perf_hooks');
 const { resolve } = require('../resolver/index.js');
 const { unzipSync } = require('zlib');
 
@@ -241,6 +242,7 @@ function rewriteImports(filePath, rollupConfig, code) {
   const projectFilePath = getProjectPath(filePath);
   /** @type { {[key: string]: string} } */
   const rewritten = {};
+  const start = performance.now();
   let match;
 
   // Retrieve original source path from bundled file to allow reference back to correct node_modules
@@ -297,6 +299,12 @@ function rewriteImports(filePath, rollupConfig, code) {
       rewritten[importString].replace(/\$/g, '$$$'),
     );
   }
+
+  debug(
+    `rewrote "${projectFilePath}" imports in ${
+      Math.floor((performance.now() - start) * 100) / 100
+    }ms`,
+  );
 
   return code;
 }
