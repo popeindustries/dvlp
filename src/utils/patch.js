@@ -21,6 +21,7 @@ const debug = require('debug')('dvlp:patch');
 const { filePathToUrl } = require('../utils/url.js');
 const path = require('path');
 const { parse } = require('es-module-lexer');
+const { performance } = require('perf_hooks');
 const { resolve } = require('../resolver/index.js');
 const { unzipSync } = require('zlib');
 
@@ -244,12 +245,13 @@ function rewriteImports(filePath, rollupConfig, code) {
     filePath = parseOriginalSourcePath(code);
   }
 
+  const start = performance.now();
+  const projectFilePath = getProjectPath(filePath);
   // Track length delta between 'id' and 'newId' to adjust
   // parsed indexes as we substitue during iteration
   let offset = 0;
 
   try {
-    const projectFilePath = getProjectPath(filePath);
     const [imports] = parse(code);
 
     if (!imports.length) {
@@ -306,6 +308,11 @@ function rewriteImports(filePath, rollupConfig, code) {
     // ignore error
   }
 
+  debug(
+    `rewrote "${projectFilePath}" imports in ${
+      Math.floor((performance.now() - start) * 100) / 100
+    }ms`,
+  );
   return code;
 }
 
