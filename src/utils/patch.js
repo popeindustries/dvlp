@@ -82,11 +82,14 @@ function patchResponse(
       }
       scripts.header = headerScript.string;
     }
-    proxySetHeader(res, injectCSPHeader.bind(injectCSPHeader, urls, hashes));
+    proxySetHeader(
+      res,
+      injectCSPHeader.bind(injectCSPHeader, res, urls, hashes),
+    );
     proxyBodyWrite(res, (html) => {
       enableCrossOriginHeader(res);
       disableCacheControlHeader(res, req.url);
-      return injectScripts(scripts, html);
+      return injectScripts(res, scripts, html);
     });
   } else if (isCssRequest(req)) {
     // Disable gzip
@@ -101,7 +104,7 @@ function patchResponse(
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
-      return rewriteImports(filePath, rollupConfig, code);
+      return rewriteImports(res, filePath, rollupConfig, code);
     });
   }
 }
@@ -154,11 +157,14 @@ function enableCrossOriginHeader(res) {
 /**
  * Inject header/footer script tags into 'data'
  *
+ * @param { Res } res
  * @param { { footer: string, header: string } } scripts
  * @param { string } html
  * @returns { string }
  */
-function injectScripts(scripts, html) {
+function injectScripts(res, scripts, html) {
+  res.metrics.recordEvent('inject HTML scripts');
+
   const { footer, header } = scripts;
 
   if (header && RE_OPEN_HEAD_TAG.test(html)) {
@@ -173,19 +179,22 @@ function injectScripts(scripts, html) {
     );
   }
 
+  res.metrics.recordEvent('inject HTML scripts');
   return html;
 }
 
 /**
  * Inject CSP headers allowing inline script tag
  *
+ * @param { Res } res
  * @param { Array<string> } urls
  * @param { Array<string> } hashes
  * @param { string } key
  * @param { string } value
  * @returns { string }
  */
-function injectCSPHeader(urls, hashes, key, value) {
+function injectCSPHeader(res, urls, hashes, key, value) {
+  res.metrics.recordEvent('inject CSP header');
   const lcKey = key.toLowerCase();
 
   if (
@@ -227,18 +236,23 @@ function injectCSPHeader(urls, hashes, key, value) {
     }, '');
   }
 
+  res.metrics.recordEvent('inject CSP header');
+
   return value;
 }
 
 /**
  * Rewrite bare import references in 'data'
  *
+ * @param { Res } res
  * @param { string } filePath
  * @param { import("rollup").RollupOptions } rollupConfig
  * @param { string } code
  * @returns { string }
  */
-function rewriteImports(filePath, rollupConfig, code) {
+function rewriteImports(res, filePath, rollupConfig, code) {
+  res.metrics.recordEvent('rewrite JS imports');
+
   const projectFilePath = getProjectPath(filePath);
   /** @type { {[key: string]: string} } */
   const rewritten = {};
@@ -253,6 +267,7 @@ function rewriteImports(filePath, rollupConfig, code) {
   RE_IMPORT.lastIndex = 0;
   if (!RE_IMPORT.test(code)) {
     debug(`no imports to rewrite in "${projectFilePath}"`);
+    res.metrics.recordEvent('rewrite JS imports');
     return code;
   }
 
@@ -305,6 +320,8 @@ function rewriteImports(filePath, rollupConfig, code) {
       Math.floor((performance.now() - start) * 100) / 100
     }ms`,
   );
+
+  res.metrics.recordEvent('rewrite JS imports');
 
   return code;
 }

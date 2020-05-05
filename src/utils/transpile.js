@@ -5,7 +5,6 @@ const chalk = require('chalk');
 const debug = require('debug')('dvlp:transpile');
 const { error, info } = require('./log.js');
 const mime = require('mime');
-const stopwatch = require('./stopwatch.js');
 
 /**
  * Transpile content for filePath
@@ -16,6 +15,8 @@ const stopwatch = require('./stopwatch.js');
  * @returns { Promise<void> }
  */
 module.exports = async function transpile(filePath, res, state) {
+  res.metrics.recordEvent('transpile file');
+
   const { transpilerCache, lastChanged, transpiler } = state;
   const relativeFilePath = getProjectPath(filePath);
   // Dependencies that are concatenated during transpile aren't cached,
@@ -61,13 +62,8 @@ module.exports = async function transpile(filePath, res, state) {
     res.end(content);
 
     info(
-      `${stopwatch.stop(
-        res.url,
-        true,
-        true,
-      )} handled transpiled request for ${chalk.green(
-        getProjectPath(res.url),
-      )}`,
+      `handled transpiled request for ${chalk.green(getProjectPath(res.url))}`,
     );
+    res.metrics.recordEvent('transpile file');
   }
 };

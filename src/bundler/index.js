@@ -14,7 +14,6 @@ const fs = require('fs');
 const { getCachedPackage } = require('../resolver/index.js');
 const path = require('path');
 const { resolve } = require('../resolver/index.js');
-const stopwatch = require('../utils/stopwatch.js');
 const workerFarm = require('worker-farm');
 
 const SOURCE_PREFIX = '// source: ';
@@ -155,8 +154,6 @@ function doBundle(
   rollupConfig,
 ) {
   const promiseToCache = new Promise(async (resolve, reject) => {
-    stopwatch.start(oringinalId);
-
     getBundler()(inputPath, outputPath, SOURCE_PREFIX, rollupConfig, (err) => {
       if (err) {
         error(`unable to bundle ${oringinalId}`);
@@ -166,9 +163,9 @@ function doBundle(
 
       // Can't use file.getProjectPath() here because of circular dependency
       info(
-        `${stopwatch.stop(oringinalId, true, true)} bundled ${chalk.green(
-          oringinalId,
-        )} as ${chalk.green(path.relative(process.cwd(), outputPath))}`,
+        `bundled ${chalk.green(oringinalId)} as ${chalk.green(
+          path.relative(process.cwd(), outputPath),
+        )}`,
       );
       cache.set(resolvedId, true);
       resolve(outputPath);

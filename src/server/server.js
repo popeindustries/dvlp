@@ -39,8 +39,8 @@ const Mock = require('../mock/index.js');
 const moduleCache = require('module')._cache;
 const path = require('path');
 const { patchResponse } = require('../utils/patch.js');
+const Metrics = require('../utils/metrics.js');
 const send = require('send');
-const stopwatch = require('../utils/stopwatch.js');
 const transpile = require('../utils/transpile.js');
 const watch = require('../utils/watch.js');
 const WebSocket = require('faye-websocket');
@@ -277,7 +277,7 @@ module.exports = class DvlpServer {
    */
   createRequestHandler(server, originalRequestHandler) {
     return async function requestHandler(req, res) {
-      stopwatch.start(req.url);
+      res.metrics = new Metrics(res);
 
       const type = getTypeFromRequest(req);
       let filePath = server.urlToFilePath.get(req.url);
@@ -300,12 +300,14 @@ module.exports = class DvlpServer {
           server.urlToFilePath.set(req.url, filePath);
 
           if (isModuleBundlerFilePath(filePath)) {
+            res.metrics.recordEvent('bundle JS file');
             await bundle(
               path.basename(filePath),
               server.rollupConfig,
               undefined,
               undefined,
             );
+            res.metrics.recordEvent('bundle JS file');
           }
         } else {
           // File not found. Clear previously known path
@@ -313,7 +315,7 @@ module.exports = class DvlpServer {
         }
       }
 
-      // Ignore unknow types
+      // Ignore unknown types
       if (type) {
         patchResponse(filePath, req, res, server.patchResponseOptions);
       }
@@ -325,7 +327,7 @@ module.exports = class DvlpServer {
         // Transpile all files that aren't bundled or node_modules
         // This ensures that all symlinked/workspace files are transpiled even though they are dependencies
         if (server.transpilerCache && server.transpiler && shouldTranspile) {
-          // Will respond if transpiler for this type
+          // Will respond if transpiler exists for this type
           await transpile(filePath, res, {
             transpilerCache: server.transpilerCache,
             lastChanged: server.lastChanged,
@@ -336,9 +338,9 @@ module.exports = class DvlpServer {
         // Handle bundled, node_modules, and external files if not already handled by transpiler
         if (!res.finished) {
           info(
-            `${stopwatch.stop(res.url, true, true)} handled${
-              isBundled ? ' bundled' : ''
-            } request for ${chalk.green(getProjectPath(req.url))}`,
+            `handled${isBundled ? ' bundled' : ''} request for ${chalk.green(
+              getProjectPath(req.url),
+            )}`,
           );
 
           return send(req, filePath, {
@@ -489,11 +491,7 @@ function handleFavicon(req, res) {
       'Content-Type': 'image/x-icon;charset=UTF-8',
     });
     res.end(favIcon);
-    info(
-      `${stopwatch.stop(res.url, true, true)} handled request for ${chalk.green(
-        getProjectPath(req.url),
-      )}`,
-    );
+    info(`handled request for ${chalk.green(getProjectPath(req.url))}`);
     return true;
   }
   return false;
@@ -527,13 +525,7 @@ function handleMockResponse(req, res, mocks) {
       );
       // Send 'connect' event if it exists
       mocks.matchPushEvent(mock, 'connect', pushEvent);
-      noisyInfo(
-        `${stopwatch.stop(
-          req.url,
-          true,
-          true,
-        )} connected to EventSource client at ${chalk.green(mock)}`,
-      );
+      noisyInfo(`connected to EventSource client at ${chalk.green(mock)}`);
     } else {
       mocks.matchResponse(mock, req, res);
     }
@@ -570,13 +562,7 @@ function handleMockWebSocket(req, socket, body, mocks) {
     );
     // Send 'connect' event if it exists
     mocks.matchPushEvent(mock, 'connect', pushEvent);
-    noisyInfo(
-      `${stopwatch.stop(
-        req.url,
-        true,
-        true,
-      )} connected to WebSocket client at ${chalk.green(mock)}`,
-    );
+    noisyInfo(`connected to WebSocket client at ${chalk.green(mock)}`);
   }
 }
 

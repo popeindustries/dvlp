@@ -7,7 +7,6 @@ const http = require('http');
 const { info } = require('../utils/log.js');
 const { isHtmlRequest } = require('../utils/is.js');
 const send = require('send');
-const stopwatch = require('../utils/stopwatch.js');
 
 /**
  * Create default file server instance
@@ -27,7 +26,6 @@ function createRequestHandler() {
     const url = req.url;
 
     res.once('finish', () => {
-      const duration = stopwatch.stop(url, true, true);
       const reroute =
         url !== req.url ? `(re-routed to ${chalk.green(req.url)})` : '';
 
@@ -35,10 +33,10 @@ function createRequestHandler() {
       if (!res.transpiled) {
         info(
           res.statusCode < 300
-            ? `${duration} handled request for ${chalk.green(url)} ${reroute}`
-            : `${duration} [${
-                res.statusCode
-              }] unhandled request for ${chalk.red(url)} ${reroute}`,
+            ? `handled request for ${chalk.green(url)} ${reroute}`
+            : `[${res.statusCode}] unhandled request for ${chalk.red(
+                url,
+              )} ${reroute}`,
         );
       }
     });
@@ -58,8 +56,8 @@ function createRequestHandler() {
     }
 
     debug(`sending "${filePath}"`);
-    // Prevent caching of project files
     return send(req, filePath, {
+      // Prevent caching of project files
       cacheControl: false,
       dotfiles: 'allow',
       etag: false,
