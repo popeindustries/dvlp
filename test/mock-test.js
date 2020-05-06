@@ -27,11 +27,17 @@ function getResponse() {
     end(body) {
       this.body = body;
     },
+    getHeader(name) {
+      return this.headers[name];
+    },
     setHeader(name, value) {
       this.headers[name] = value;
     },
-    getHeader(name) {
-      return this.headers[name];
+    metrics: {
+      getEvent() {
+        return 0;
+      },
+      recordEvent() {},
     },
     writeHead(statusCode, headers) {
       this.statusCode = statusCode;

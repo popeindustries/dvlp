@@ -12,6 +12,7 @@ const fs = require('fs');
 const http = require('http');
 const { interceptClientRequest } = require('../utils/intercept.js');
 const { isLocalhost } = require('../utils/is.js');
+const Metrics = require('../utils/metrics.js');
 const mime = require('mime');
 const Mock = require('../mock/index.js');
 const path = require('path');
@@ -173,6 +174,9 @@ class TestServer {
   _start() {
     return new Promise((resolve, reject) => {
       this._server = http.createServer(async (req, res) => {
+        // @ts-ignore
+        res.metrics = new Metrics(res);
+
         // @ts-ignore
         if (EventSource.isEventSource(req)) {
           connectClient(

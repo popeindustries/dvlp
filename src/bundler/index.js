@@ -101,13 +101,14 @@ function parseOriginalSourcePath(code) {
 /**
  * Trigger bundle of 'resolvedId'
  *
+ * @param { Res } res
  * @param { string } resolvedId
  * @param { import("rollup").RollupOptions } rollupConfig
  * @param { string } [originalId]
  * @param { string } [inputPath]
  * @returns { true | Promise<string> | undefined }
  */
-function bundle(resolvedId, rollupConfig, originalId, inputPath) {
+function bundle(res, resolvedId, rollupConfig, originalId, inputPath) {
   if (!resolvedId) {
     return;
   }
@@ -119,9 +120,11 @@ function bundle(resolvedId, rollupConfig, originalId, inputPath) {
   }
 
   const outputPath = resolveModulePath(resolvedId);
+  const cached = cache.get(resolvedId);
 
-  if (!cache.has(resolvedId)) {
+  if (!cached) {
     return doBundle(
+      res,
       resolvedId,
       originalId,
       // @ts-ignore
@@ -129,16 +132,15 @@ function bundle(resolvedId, rollupConfig, originalId, inputPath) {
       outputPath,
       rollupConfig,
     );
-  } else if (isPromise(cache.get(resolvedId))) {
-    return cache.get(resolvedId);
-  } else {
-    return Promise.resolve(outputPath);
   }
+
+  return isPromise(cached) ? cached : Promise.resolve(outputPath);
 }
 
 /**
  * Bundle module at 'oringinalId'
  *
+ * @param { Res } res
  * @param { string } resolvedId
  * @param { string } oringinalId
  * @param { string } inputPath
@@ -147,12 +149,15 @@ function bundle(resolvedId, rollupConfig, originalId, inputPath) {
  * @returns { Promise<string> }
  */
 function doBundle(
+  res,
   resolvedId,
   oringinalId,
   inputPath,
   outputPath,
   rollupConfig,
 ) {
+  res.metrics.recordEvent('bundle JS file');
+
   const promiseToCache = new Promise(async (resolve, reject) => {
     getBundler()(inputPath, outputPath, SOURCE_PREFIX, rollupConfig, (err) => {
       if (err) {
@@ -161,14 +166,16 @@ function doBundle(
         return reject(err);
       }
 
+      cache.set(resolvedId, true);
+      resolve(outputPath);
+      res.metrics.recordEvent('bundle JE file');
+
       // Can't use file.getProjectPath() here because of circular dependency
       info(
         `bundled ${chalk.green(oringinalId)} as ${chalk.green(
           path.relative(process.cwd(), outputPath),
         )}`,
       );
-      cache.set(resolvedId, true);
-      resolve(outputPath);
     });
   });
 
