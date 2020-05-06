@@ -284,7 +284,7 @@ function rewriteImports(res, filePath, rollupConfig, code) {
         const resolvedId = resolveModuleId(id, importPath);
 
         // Trigger bundling in background while waiting for eventual request
-        bundle(res, resolvedId, rollupConfig, id, importPath);
+        bundle(resolvedId, rollupConfig, id, importPath);
         newId = `/${path.join(config.bundleDirName, resolvedId)}`;
         warn(WARN_BARE_IMPORT, id);
       } else {

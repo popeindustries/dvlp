@@ -1,9 +1,8 @@
 'use strict';
 
 const { getProjectPath, getTypeFromPath } = require('./file.js');
-const chalk = require('chalk');
 const debug = require('debug')('dvlp:transpile');
-const { error, info } = require('./log.js');
+const { error } = require('./log.js');
 const mime = require('mime');
 
 /**
@@ -60,10 +59,6 @@ module.exports = async function transpile(filePath, res, state) {
       'Content-Type': mime.getType(getTypeFromPath(filePath) || filePath),
     });
     res.end(content);
-
-    info(
-      `handled transpiled request for ${chalk.green(getProjectPath(res.url))}`,
-    );
     res.metrics.recordEvent('transpile file');
   }
 };

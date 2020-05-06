@@ -262,6 +262,7 @@ module.exports = class Mock {
     }
 
     res.metrics.recordEvent('mock response');
+    res.mocked = true;
 
     if (mock.once) {
       this.remove(mock);
@@ -342,14 +343,7 @@ module.exports = class Mock {
       Date: new Date().toUTCString(),
     });
     res.end(content);
-
     res.metrics.recordEvent('mock response');
-
-    noisyInfo(
-      `${res.metrics.getEvent(
-        'mock response',
-      )} handled mocked request for ${chalk.green(decodeURIComponent(href))}`,
-    );
 
     return true;
   }

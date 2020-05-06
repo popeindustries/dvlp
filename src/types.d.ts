@@ -41,9 +41,12 @@ declare type Req = import('http').IncomingMessage & {
 };
 
 declare type Res = import('http').ServerResponse & {
+  bundled: boolean;
   encoding: string;
   metrics: Metrics;
+  mocked: boolean;
   transpiled: boolean;
+  unhandled: boolean;
   url: string;
   error?: Error;
 };

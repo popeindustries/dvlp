@@ -21,10 +21,11 @@ module.exports = class Perf {
         let results = '';
         for (const [name, times] of this.events) {
           if (times[1] > 0) {
-            results += `\n  ${name}: ${this.getEvent(name, true)}`;
+            results += `    ${name}: ${this.getEvent(name, true)}\n`;
           }
         }
-        debug(`metrics for "${getProjectPath(res.url)}": ${results}`);
+        debug(getProjectPath(res.url));
+        console.log(results);
       }
     });
   }
@@ -80,6 +81,10 @@ function format(duration) {
     duration < 1000
       ? `${duration}ms`
       : `${Math.floor((duration / 1000) * 100) / 100}s`;
+
+  if ('padStart' in String.prototype) {
+    formatted = formatted.padStart(8, ' ');
+  }
 
   return chalk[colour](formatted);
 }

@@ -279,6 +279,24 @@ module.exports = class DvlpServer {
     return async function requestHandler(req, res) {
       res.metrics = new Metrics(res);
 
+      res.once('finish', () => {
+        if (!res.unhandled) {
+          const duration = res.metrics.getEvent('response', true);
+          const modifier = res.bundled
+            ? ' bundled '
+            : res.mocked
+            ? ' mocked '
+            : res.transpiled
+            ? ' transpiled '
+            : ' ';
+          const msg = `${duration} handled${modifier}request for ${chalk.green(
+            getProjectPath(req.url),
+          )}`;
+
+          res.mocked ? noisyInfo(msg) : info(msg);
+        }
+      });
+
       const type = getTypeFromRequest(req);
       let filePath = server.urlToFilePath.get(req.url);
 
@@ -300,13 +318,15 @@ module.exports = class DvlpServer {
           server.urlToFilePath.set(req.url, filePath);
 
           if (isModuleBundlerFilePath(filePath)) {
+            res.bundled = true;
+            res.metrics.recordEvent('bundle JS file');
             await bundle(
-              res,
               path.basename(filePath),
               server.rollupConfig,
               undefined,
               undefined,
             );
+            res.metrics.recordEvent('bundle JS file');
           }
         } else {
           // File not found. Clear previously known path
@@ -336,12 +356,6 @@ module.exports = class DvlpServer {
 
         // Handle bundled, node_modules, and external files if not already handled by transpiler
         if (!res.finished) {
-          info(
-            `handled${isBundled ? ' bundled' : ''} request for ${chalk.green(
-              getProjectPath(req.url),
-            )}`,
-          );
-
           return send(req, filePath, {
             cacheControl: true,
             dotfiles: 'allow',
@@ -354,6 +368,7 @@ module.exports = class DvlpServer {
 
       // Pass through request to app
       if (!res.finished) {
+        res.unhandled = true;
         debug(`allowing app to handle "${req.url}"`);
         originalRequestHandler(req, res);
       }
@@ -490,7 +505,6 @@ function handleFavicon(req, res) {
       'Content-Type': 'image/x-icon;charset=UTF-8',
     });
     res.end(favIcon);
-    info(`handled request for ${chalk.green(getProjectPath(req.url))}`);
     return true;
   }
   return false;

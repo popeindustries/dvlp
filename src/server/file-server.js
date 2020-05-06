@@ -28,17 +28,15 @@ function createRequestHandler() {
     res.once('finish', () => {
       const reroute =
         url !== req.url ? `(re-routed to ${chalk.green(req.url)})` : '';
+      const duration = res.metrics.getEvent('response', true);
 
-      // 'transpiled' is added by transpile utility if handled there
-      if (!res.transpiled) {
-        info(
-          res.statusCode < 300
-            ? `handled request for ${chalk.green(url)} ${reroute}`
-            : `[${res.statusCode}] unhandled request for ${chalk.red(
-                url,
-              )} ${reroute}`,
-        );
-      }
+      info(
+        res.statusCode < 300
+          ? `${duration} handled request for ${chalk.green(url)} ${reroute}`
+          : `${duration} [${res.statusCode}] unhandled request for ${chalk.red(
+              url,
+            )} ${reroute}`,
+      );
     });
 
     let filePath = find(req);

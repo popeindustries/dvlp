@@ -18,12 +18,6 @@ const { resolve } = require('../src/resolver/index.js');
 const DEBUG = 'debug-4.1.1.js';
 const LODASH = 'lodash-4.17.15.js';
 
-const res = {
-  metrics: {
-    recordEvent() {},
-  },
-};
-
 describe('bundle()', () => {
   afterEach(() => {
     cleanBundles();
@@ -34,21 +28,19 @@ describe('bundle()', () => {
 
   it('should return "undefined" if no module bundle found', () => {
     expect(
-      bundle(res, resolveModuleId('foofoo'), getDefaultRollupConfig()),
+      bundle(resolveModuleId('foofoo'), getDefaultRollupConfig()),
     ).to.equal(undefined);
   });
   it('should bundle and return bundle filePath', async () => {
     const filePath = await bundle(
-      res,
       resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
       getDefaultRollupConfig(),
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
   it('should return cached bundle filePath', async () => {
-    await bundle(res, resolveModuleId('lodash', resolve('index.js', 'lodash')));
+    await bundle(resolveModuleId('lodash', resolve('index.js', 'lodash')));
     const filePath = await bundle(
-      res,
       resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
       getDefaultRollupConfig(),
     );
@@ -56,7 +48,6 @@ describe('bundle()', () => {
   });
   it('should bundle with overridden config', async () => {
     const filePath = await bundle(
-      res,
       resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
       {
         input: 'foo.js',
@@ -70,7 +61,6 @@ describe('bundle()', () => {
   });
   it('should skip bundling transient dependencies', async () => {
     const filePath = await bundle(
-      res,
       resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
       getDefaultRollupConfig(),
     );
