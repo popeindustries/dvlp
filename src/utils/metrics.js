@@ -5,7 +5,17 @@ const debug = require('debug')('dvlp:metrics');
 const { getProjectPath } = require('./file.js');
 const { performance } = require('perf_hooks');
 
-module.exports = class Perf {
+const EVENT_NAMES = {
+  bundle: 'bundle file',
+  csp: 'inject CSP header',
+  imports: 'rewrite imports',
+  mock: 'mock response',
+  response: 'response',
+  scripts: 'inject HTML scripts',
+  transpile: 'transpile file',
+};
+
+class Metrics {
   /**
    * Constructor
    *
@@ -14,9 +24,9 @@ module.exports = class Perf {
   constructor(res) {
     /** @type { Map<string, [number, number]> } */
     this.events = new Map();
-    this.recordEvent('response');
+    this.recordEvent(Metrics.EVENT_NAMES.response);
     res.once('finish', () => {
-      this.recordEvent('response');
+      this.recordEvent(Metrics.EVENT_NAMES.response);
       if (debug.enabled) {
         let results = '';
         for (const [name, times] of this.events) {
@@ -58,7 +68,11 @@ module.exports = class Perf {
 
     return formatted ? format(duration) : duration;
   }
-};
+}
+
+Metrics.EVENT_NAMES = EVENT_NAMES;
+
+module.exports = Metrics;
 
 /**
  * Retrieve rounded difference

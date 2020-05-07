@@ -3,6 +3,7 @@
 const { getProjectPath, getTypeFromPath } = require('./file.js');
 const debug = require('debug')('dvlp:transpile');
 const { error } = require('./log.js');
+const Metrics = require('./metrics.js');
 const mime = require('mime');
 
 /**
@@ -14,7 +15,7 @@ const mime = require('mime');
  * @returns { Promise<void> }
  */
 module.exports = async function transpile(filePath, res, state) {
-  res.metrics.recordEvent('transpile file');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.transpile);
 
   const { transpilerCache, lastChanged, transpiler } = state;
   const relativeFilePath = getProjectPath(filePath);
@@ -59,6 +60,6 @@ module.exports = async function transpile(filePath, res, state) {
       'Content-Type': mime.getType(getTypeFromPath(filePath) || filePath),
     });
     res.end(content);
-    res.metrics.recordEvent('transpile file');
+    res.metrics.recordEvent(Metrics.EVENT_NAMES.transpile);
   }
 };

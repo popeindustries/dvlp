@@ -18,7 +18,8 @@ const {
 const { warn, WARN_BARE_IMPORT } = require('./log.js');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:patch');
-const { filePathToUrl } = require('../utils/url.js');
+const { filePathToUrl } = require('./url.js');
+const Metrics = require('./metrics.js');
 const path = require('path');
 const { parse } = require('es-module-lexer');
 const { resolve } = require('../resolver/index.js');
@@ -162,7 +163,7 @@ function enableCrossOriginHeader(res) {
  * @returns { string }
  */
 function injectScripts(res, scripts, html) {
-  res.metrics.recordEvent('inject HTML scripts');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.scripts);
 
   const { footer, header } = scripts;
 
@@ -178,7 +179,7 @@ function injectScripts(res, scripts, html) {
     );
   }
 
-  res.metrics.recordEvent('inject HTML scripts');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.scripts);
   return html;
 }
 
@@ -193,7 +194,7 @@ function injectScripts(res, scripts, html) {
  * @returns { string }
  */
 function injectCSPHeader(res, urls, hashes, key, value) {
-  res.metrics.recordEvent('inject CSP header');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
   const lcKey = key.toLowerCase();
 
   if (
@@ -235,7 +236,7 @@ function injectCSPHeader(res, urls, hashes, key, value) {
     }, '');
   }
 
-  res.metrics.recordEvent('inject CSP header');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
 
   return value;
 }
@@ -250,7 +251,7 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  * @returns { string }
  */
 function rewriteImports(res, filePath, rollupConfig, code) {
-  res.metrics.recordEvent('rewrite JS imports');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
 
   // Retrieve original source path from bundled file
   // to allow reference back to correct node_modules file
@@ -322,7 +323,7 @@ function rewriteImports(res, filePath, rollupConfig, code) {
     // ignore error
   }
 
-  res.metrics.recordEvent('rewrite JS imports');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
   return code;
 }
 
