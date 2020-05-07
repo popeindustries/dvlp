@@ -1,7 +1,7 @@
 'use strict';
 
 const chalk = require('chalk');
-const { testing } = require('../config.js');
+const config = require('../config.js');
 
 const SEG_LENGTH = 80;
 const WARN_BARE_IMPORT =
@@ -50,7 +50,7 @@ module.exports = {
  * @param { string } msg
  */
 function info(msg) {
-  if (!testing && !silent) {
+  if (!config.testing && !silent) {
     console.log(truncate(' ' + msg));
   }
 }
@@ -61,7 +61,7 @@ function info(msg) {
  * @param { string } msg
  */
 function noisyInfo(msg) {
-  if (!testing) {
+  if (!config.testing) {
     console.log(truncate(' ' + msg));
   }
 }
@@ -72,7 +72,7 @@ function noisyInfo(msg) {
  * @param { ...unknown } args
  */
 function warn(...args) {
-  if (!testing && !silent) {
+  if (!config.testing && !silent) {
     const [warning] = args;
     let msg = '';
 
@@ -118,7 +118,7 @@ function warn(...args) {
  * @param { ...unknown } args
  */
 function error(...args) {
-  if (!testing) {
+  if (!config.testing) {
     console.error('\n', chalk.red.inverse(' error '), ...args);
   }
 }
@@ -129,7 +129,7 @@ function error(...args) {
  * @param { ...unknown } args
  */
 function fatal(...args) {
-  if (!testing) {
+  if (!config.testing) {
     console.error('\n', chalk.red.inverse(' fatal error '), ...args);
   }
 }

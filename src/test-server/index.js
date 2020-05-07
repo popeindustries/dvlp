@@ -43,6 +43,8 @@ module.exports = async function testServerFactory(options) {
   await server._start();
   // Make sure 'mock' has access to current active port
   config.activePort = server.port;
+  // Force testing mode to suppress logging
+  config.testing = true;
 
   instances.add(server);
 
