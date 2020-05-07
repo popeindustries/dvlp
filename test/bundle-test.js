@@ -1,16 +1,16 @@
 'use strict';
 
 const {
+  bundle,
   cleanBundles,
   destroyWorkers,
-  bundle,
   resolveModuleId,
 } = require('../src/bundler/index.js');
 const config = require('../src/config.js');
+const { expect } = require('chai');
 const {
   getDefaultRollupConfig,
 } = require('../src/utils/default-rollup-config.js');
-const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
 const { resolve } = require('../src/resolver/index.js');

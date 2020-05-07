@@ -41,8 +41,12 @@ declare type Req = import('http').IncomingMessage & {
 };
 
 declare type Res = import('http').ServerResponse & {
+  bundled: boolean;
   encoding: string;
+  metrics: Metrics;
+  mocked: boolean;
   transpiled: boolean;
+  unhandled: boolean;
   url: string;
   error?: Error;
 };
@@ -52,6 +56,14 @@ declare type RequestHandler = (req: Req, res: Res) => void;
 declare type DestroyableHttpServer = import('http').Server & {
   destroy?(): void;
 };
+
+declare class Metrics {
+  events: Map<string, [number, number]>;
+
+  constructor(res: Res);
+  recordEvent(name: string): void;
+  getEvent(name: string, formatted?: boolean): string | number;
+}
 
 declare type Config = {
   activePort: number;

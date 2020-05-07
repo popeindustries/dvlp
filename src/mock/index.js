@@ -13,7 +13,6 @@ const { interceptClientRequest } = require('../utils/intercept.js');
 const mime = require('mime');
 const path = require('path');
 const send = require('send');
-const stopwatch = require('../utils/stopwatch.js');
 
 const mockClient =
   global.$MOCK_CLIENT ||
@@ -261,6 +260,10 @@ module.exports = class Mock {
     if (!req || !res) {
       return mock;
     }
+
+    res.metrics.recordEvent('mock response');
+    res.mocked = true;
+
     if (mock.once) {
       this.remove(mock);
     }
@@ -340,14 +343,7 @@ module.exports = class Mock {
       Date: new Date().toUTCString(),
     });
     res.end(content);
-
-    noisyInfo(
-      `${stopwatch.stop(
-        res.url,
-        true,
-        true,
-      )} handled mocked request for ${chalk.green(decodeURIComponent(href))}`,
-    );
+    res.metrics.recordEvent('mock response');
 
     return true;
   }
@@ -373,15 +369,8 @@ module.exports = class Mock {
       return false;
     }
 
-    stopwatch.start(name);
     triggerEventSequence(stream, eventSequence, push).then(() => {
-      noisyInfo(
-        `${stopwatch.stop(
-          name,
-          true,
-          true,
-        )} triggered mocked push event ${chalk.green(name)}`,
-      );
+      noisyInfo(`triggered mocked push event ${chalk.green(name)}`);
     });
 
     return true;

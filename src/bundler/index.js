@@ -1,6 +1,5 @@
 'use strict';
 
-const { info, error } = require('../utils/log.js');
 const {
   isJsFilePath,
   isNodeModuleFilePath,
@@ -8,13 +7,12 @@ const {
 } = require('../utils/is.js');
 const bundler = require('./bundle-worker.js');
 const config = require('../config.js');
-const chalk = require('chalk');
 const debug = require('debug')('dvlp:module');
+const { error } = require('../utils/log.js');
 const fs = require('fs');
 const { getCachedPackage } = require('../resolver/index.js');
 const path = require('path');
 const { resolve } = require('../resolver/index.js');
-const stopwatch = require('../utils/stopwatch.js');
 const workerFarm = require('worker-farm');
 
 const SOURCE_PREFIX = '// source: ';
@@ -112,6 +110,7 @@ function bundle(resolvedId, rollupConfig, originalId, inputPath) {
   if (!resolvedId) {
     return;
   }
+
   if (!originalId) {
     originalId = decodeId(resolvedId.slice(0, resolvedId.lastIndexOf('-')));
   }
@@ -120,8 +119,9 @@ function bundle(resolvedId, rollupConfig, originalId, inputPath) {
   }
 
   const outputPath = resolveModulePath(resolvedId);
+  const cached = cache.get(resolvedId);
 
-  if (!cache.has(resolvedId)) {
+  if (!cached) {
     return doBundle(
       resolvedId,
       originalId,
@@ -130,11 +130,9 @@ function bundle(resolvedId, rollupConfig, originalId, inputPath) {
       outputPath,
       rollupConfig,
     );
-  } else if (isPromise(cache.get(resolvedId))) {
-    return cache.get(resolvedId);
-  } else {
-    return Promise.resolve(outputPath);
   }
+
+  return isPromise(cached) ? cached : Promise.resolve(outputPath);
 }
 
 /**
@@ -155,8 +153,6 @@ function doBundle(
   rollupConfig,
 ) {
   const promiseToCache = new Promise(async (resolve, reject) => {
-    stopwatch.start(oringinalId);
-
     getBundler()(inputPath, outputPath, SOURCE_PREFIX, rollupConfig, (err) => {
       if (err) {
         error(`unable to bundle ${oringinalId}`);
@@ -164,12 +160,6 @@ function doBundle(
         return reject(err);
       }
 
-      // Can't use file.getProjectPath() here because of circular dependency
-      info(
-        `${stopwatch.stop(oringinalId, true, true)} bundled ${chalk.green(
-          oringinalId,
-        )} as ${chalk.green(path.relative(process.cwd(), outputPath))}`,
-      );
       cache.set(resolvedId, true);
       resolve(outputPath);
     });

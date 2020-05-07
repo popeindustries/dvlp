@@ -1,6 +1,6 @@
 {
   "name": "dvlp",
-  "version": "8.2.3",
+  "version": "8.3.0",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
   "main": "dvlp.js",
   "types": "dvlp.d.ts",
@@ -30,7 +30,7 @@
     "permessage-deflate": "^0.1.7",
     "pirates": "^4.0.1",
     "rimraf": "^3.0.0",
-    "rollup": "^2.7.6",
+    "rollup": "^2.8.1",
     "send": "^0.17.1",
     "server-destroy": "^1.0.1",
     "sucrase": "^3.12.1",
