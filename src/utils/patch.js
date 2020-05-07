@@ -21,7 +21,6 @@ const debug = require('debug')('dvlp:patch');
 const { filePathToUrl } = require('../utils/url.js');
 const path = require('path');
 const { parse } = require('es-module-lexer');
-const { performance } = require('perf_hooks');
 const { resolve } = require('../resolver/index.js');
 const { unzipSync } = require('zlib');
 
@@ -254,79 +253,74 @@ function rewriteImports(res, filePath, rollupConfig, code) {
   res.metrics.recordEvent('rewrite JS imports');
 
   // Retrieve original source path from bundled file
-  // to allow reference back to correct node_modules
+  // to allow reference back to correct node_modules file
   if (isModuleBundlerFilePath(filePath)) {
     filePath = parseOriginalSourcePath(code);
   }
 
-  const start = performance.now();
-  const projectFilePath = getProjectPath(filePath);
-  // Track length delta between 'id' and 'newId' to adjust
-  // parsed indexes as we substitue during iteration
-  let offset = 0;
-
   try {
+    const projectFilePath = getProjectPath(filePath);
     const [imports] = parse(code);
 
-    if (!imports.length) {
-      debug(`no imports to rewrite in "${projectFilePath}"`);
-      return code;
-    }
+    if (imports.length > 0) {
+      // Track length delta between 'id' and 'newId' to adjust
+      // parsed indexes as we substitue during iteration
+      let offset = 0;
 
-    for (const imprt of imports) {
-      const id = code.substring(offset + imprt.s, offset + imprt.e);
-      const importPath = resolve(id, getAbsoluteProjectPath(filePath));
+      for (const imprt of imports) {
+        const id = code.substring(offset + imprt.s, offset + imprt.e);
+        const importPath = resolve(id, getAbsoluteProjectPath(filePath));
 
-      if (importPath) {
-        let newId = '';
+        if (importPath) {
+          let newId = '';
 
-        // Bundle if in node_modules and not an es module
-        if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
-          const resolvedId = resolveModuleId(id, importPath);
+          // Bundle if in node_modules and not an es module
+          if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
+            const resolvedId = resolveModuleId(id, importPath);
 
-          // Trigger bundling in background while waiting for eventual request
-          bundle(resolvedId, rollupConfig, id, importPath);
-          newId = `/${path.join(config.bundleDirName, resolvedId)}`;
-          warn(WARN_BARE_IMPORT, id);
+            // Trigger bundling in background while waiting for eventual request
+            bundle(resolvedId, rollupConfig, id, importPath);
+            newId = `/${path.join(config.bundleDirName, resolvedId)}`;
+            warn(WARN_BARE_IMPORT, id);
+          } else {
+            // Don't rewrite if no change after resolving
+            newId =
+              isRelativeFilePath(id) &&
+              path.join(path.dirname(filePath), id) === importPath
+                ? id
+                : importPath;
+          }
+
+          newId = filePathToUrl(newId);
+
+          if (newId !== id) {
+            debug(`rewrote import id from "${id}" to "${newId}"`);
+            const context = code.substring(
+              offset + imprt.ss,
+              offset + imprt.se,
+            );
+            const pre = code.substring(offset + imprt.ss, offset + imprt.s);
+            const post = code.substring(offset + imprt.e, offset + imprt.se);
+            const newContext = `${pre}${newId}${post}`;
+            code = code.replace(
+              context,
+              // Escape '$' to avoid special replacement patterns
+              newContext.replace(/\$/g, '$$$'),
+            );
+            offset += newId.length - id.length;
+          }
         } else {
-          // Don't rewrite if no change after resolving
-          newId =
-            isRelativeFilePath(id) &&
-            path.join(path.dirname(filePath), id) === importPath
-              ? id
-              : importPath;
-        }
-
-        newId = filePathToUrl(newId);
-
-        if (newId !== id) {
-          debug(`rewrote import id from "${id}" to "${newId}"`);
-          const context = code.substring(offset + imprt.ss, offset + imprt.se);
-          const pre = code.substring(offset + imprt.ss, offset + imprt.s);
-          const post = code.substring(offset + imprt.e, offset + imprt.se);
-          const newContext = `${pre}${newId}${post}`;
-          code = code.replace(
-            context,
-            // Escape '$' to avoid special replacement patterns
-            newContext.replace(/\$/g, '$$$'),
+          warn(
+            `⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`,
           );
-          offset += newId.length - id.length;
         }
-      } else {
-        warn(
-          `⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`,
-        );
       }
+    } else {
+      debug(`no imports to rewrite in "${projectFilePath}"`);
     }
   } catch (err) {
     // ignore error
   }
-
-  debug(
-    `rewrote "${projectFilePath}" imports in ${
-      Math.floor((performance.now() - start) * 100) / 100
-    }ms`,
-  );
 
   res.metrics.recordEvent('rewrite JS imports');
   return code;
