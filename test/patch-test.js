@@ -1,5 +1,6 @@
 'use strict';
 
+const { brotliCompressSync, gzipSync } = require('zlib');
 const { cleanBundles, destroyWorkers } = require('../src/bundler/index.js');
 const { clearResolverCache } = require('../src/resolver/index.js');
 const config = require('../src/config.js');
@@ -7,7 +8,6 @@ const { expect } = require('chai');
 const {
   getDefaultRollupConfig,
 } = require('../src/utils/default-rollup-config.js');
-const { gzipSync } = require('zlib');
 const { patchResponse } = require('../src/utils/patch.js');
 const path = require('path');
 const { ServerResponse } = require('http');
@@ -106,6 +106,19 @@ describe('patch', () => {
       res.setHeader('Content-Encoding', 'gzip');
       res.end(gzipSync(Buffer.from('body { backgroundColor: #fff; }')));
       expect(getBody(res)).to.equal('body { backgroundColor: #fff; }');
+    });
+    it('should uncompress brotli compressed html response', () => {
+      const req = getRequest('/index.html', { accept: 'text/html' });
+      const res = getResponse(req);
+      patchResponse(req.filePath, req, res, {
+        ...OPTIONS,
+        headerScript: { string: 'test inject' },
+      });
+      res.setHeader('Content-Encoding', 'br');
+      res.end(brotliCompressSync(Buffer.from('<head></head>')));
+      expect(getBody(res)).to.equal(
+        '<head>\n<script>test inject</script></head>',
+      );
     });
     it('should inject footer script into streamed html response', () => {
       const req = getRequest('/index.html', { accept: 'text/html' });
