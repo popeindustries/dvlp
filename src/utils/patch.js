@@ -26,6 +26,7 @@ const { resolve } = require('../resolver/index.js');
 const { unzipSync } = require('zlib');
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
+const RE_IMPORT = /((?:(?:^|[});]\s*)import\b[^'"&;:-=()]+|\bexport\b[^'"&;:-=()]+\sfrom\s)['"])([^'"\n]+)(['"])/gm;
 const RE_NONCE_SHA = /nonce-|sha\d{3}-/;
 const RE_OPEN_HEAD_TAG = /<head>/i;
 
@@ -242,7 +243,7 @@ function injectCSPHeader(res, urls, hashes, key, value) {
 }
 
 /**
- * Rewrite bare import references in 'data'
+ * Rewrite bare import references in 'code'
  *
  * @param { Res } res
  * @param { string } filePath
@@ -258,6 +259,11 @@ function rewriteImports(res, filePath, rollupConfig, code) {
   if (isModuleBundlerFilePath(filePath)) {
     filePath = parseOriginalSourcePath(code);
   }
+
+  code =
+    process.env.DVLP_IMPORTS_PARSE != null
+      ? rewriteImportsParse(filePath, rollupConfig, code)
+      : rewriteImportsRegexp(filePath, rollupConfig, code);
 
   try {
     const projectFilePath = getProjectPath(filePath);
@@ -324,6 +330,149 @@ function rewriteImports(res, filePath, rollupConfig, code) {
   }
 
   res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
+  return code;
+}
+
+/**
+ * Rewrite bare import references in 'code' with es-module-lexer
+ *
+ * @param { string } filePath
+ * @param { import("rollup").RollupOptions } rollupConfig
+ * @param { string } code
+ * @returns { string }
+ */
+function rewriteImportsParse(filePath, rollupConfig, code) {
+  try {
+    const projectFilePath = getProjectPath(filePath);
+    const [imports] = parse(code);
+
+    if (imports.length > 0) {
+      // Track length delta between 'id' and 'newId' to adjust
+      // parsed indexes as we substitue during iteration
+      let offset = 0;
+
+      for (const imprt of imports) {
+        const id = code.substring(offset + imprt.s, offset + imprt.e);
+        const importPath = resolve(id, getAbsoluteProjectPath(filePath));
+
+        if (importPath) {
+          let newId = '';
+
+          // Bundle if in node_modules and not an es module
+          if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
+            const resolvedId = resolveModuleId(id, importPath);
+
+            // Trigger bundling in background while waiting for eventual request
+            bundle(resolvedId, rollupConfig, id, importPath);
+            newId = `/${path.join(config.bundleDirName, resolvedId)}`;
+            warn(WARN_BARE_IMPORT, id);
+          } else {
+            // Don't rewrite if no change after resolving
+            newId =
+              isRelativeFilePath(id) &&
+              path.join(path.dirname(filePath), id) === importPath
+                ? id
+                : importPath;
+          }
+
+          newId = filePathToUrl(newId);
+
+          if (newId !== id) {
+            debug(`rewrote import id from "${id}" to "${newId}"`);
+            const context = code.substring(
+              offset + imprt.ss,
+              offset + imprt.se,
+            );
+            const pre = code.substring(offset + imprt.ss, offset + imprt.s);
+            const post = code.substring(offset + imprt.e, offset + imprt.se);
+            const newContext = `${pre}${newId}${post}`;
+            code = code.replace(
+              context,
+              // Escape '$' to avoid special replacement patterns
+              newContext.replace(/\$/g, '$$$'),
+            );
+            offset += newId.length - id.length;
+          }
+        } else {
+          warn(
+            `⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`,
+          );
+        }
+      }
+    } else {
+      debug(`no imports to rewrite in "${projectFilePath}"`);
+    }
+  } catch (err) {
+    // ignore error
+  }
+
+  return code;
+}
+
+/**
+ * Rewrite bare import references in 'code' with regexp
+ *
+ * @param { string } filePath
+ * @param { import("rollup").RollupOptions } rollupConfig
+ * @param { string } code
+ * @returns { string }
+ */
+function rewriteImportsRegexp(filePath, rollupConfig, code) {
+  const projectFilePath = getProjectPath(filePath);
+  /** @type { {[key: string]: string} } */
+  const rewritten = {};
+  let match;
+
+  RE_IMPORT.lastIndex = 0;
+  if (!RE_IMPORT.test(code)) {
+    debug(`no imports to rewrite in "${projectFilePath}"`);
+    return code;
+  }
+
+  RE_IMPORT.lastIndex = 0;
+  while ((match = RE_IMPORT.exec(code))) {
+    const [context, pre, id, post] = match;
+    const importPath = resolve(id, getAbsoluteProjectPath(filePath));
+
+    if (importPath) {
+      let newId = '';
+
+      // Bundle if in node_modules and not an es module
+      if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
+        const resolvedId = resolveModuleId(id, importPath);
+
+        // Trigger bundling in background while waiting for eventual request
+        bundle(resolvedId, rollupConfig, id, importPath);
+        newId = `/${path.join(config.bundleDirName, resolvedId)}`;
+        warn(WARN_BARE_IMPORT, id);
+      } else {
+        // Don't rewrite if no change after resolving
+        newId =
+          isRelativeFilePath(id) &&
+          path.join(path.dirname(filePath), id) === importPath
+            ? id
+            : importPath;
+      }
+
+      newId = filePathToUrl(newId);
+
+      if (newId !== id) {
+        debug(`rewrote import id from "${id}" to "${newId}"`);
+        rewritten[context] = `${pre}${newId}${post}`;
+      }
+    } else {
+      warn(`⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`);
+    }
+  }
+
+  for (const importString in rewritten) {
+    code = code.replace(
+      importString,
+      // Escape '$' to avoid special replacement patterns
+      rewritten[importString].replace(/\$/g, '$$$'),
+    );
+  }
+
   return code;
 }
 
