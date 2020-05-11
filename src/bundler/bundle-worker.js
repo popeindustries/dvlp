@@ -36,6 +36,7 @@ class BundleWorker {
     }
 
     if (threaded && isMainThread) {
+      // Load this file in Worker thread, passing `rollupConfigPath` as data
       this.worker = new Worker(__filename, { workerData: rollupConfigPath });
     }
   }
@@ -90,6 +91,7 @@ class BundleWorker {
 
 module.exports = BundleWorker;
 
+// Create instance if run in Worker thread
 if (!isMainThread && parentPort) {
   /** @type { string | undefined } */
   const rollupConfigPath = workerData;
