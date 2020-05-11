@@ -29,10 +29,10 @@
     "permessage-deflate": "^0.1.7",
     "pirates": "^4.0.1",
     "rimraf": "^3.0.0",
-    "rollup": "^2.8.1",
+    "rollup": "^2.9.1",
     "send": "^0.17.1",
     "server-destroy": "^1.0.1",
-    "sucrase": "^3.12.1",
+    "sucrase": "^3.14.0",
     "worker-farm": "^1.7.0"
   },
   "devDependencies": {
@@ -43,7 +43,7 @@
     "@types/send": "^0.14.5",
     "babel-eslint": "^10.1.0",
     "chai": "^4.2.0",
-    "eslint": "^6.8.0",
+    "eslint": "^7.0.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.3",
     "eventsource": "^1.0.7",
@@ -67,7 +67,9 @@
   "scripts": {
     "build": "rollup --config rollup.config.js",
     "format": "prettier --write './{src,test}/**/*.{js,json}'",
-    "lint": "tsc --noEmit && eslint './{src,test}/**/*.js'",
+    "lint": "npm run lint:types && npm run:lint:src",
+    "lint:src": "eslint './{src,test}/**/*.js'",
+    "lint:types":"tsc --noEmit",
     "prepublishOnly": "npm run build",
     "test": "NODE_ENV=dvlptest mocha test/*-test.js --reporter spec --bail --exit --timeout 10000 --require src/config.js",
     "test:browser": "npm run build && ./bin/dvlp --mock test-browser/fixtures/mock test-browser",
