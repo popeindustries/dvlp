@@ -17,7 +17,9 @@ const VERSION = process.env.DVLP_VERSION;
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
 const bundleDir = path.resolve(bundleDirName);
 const maxModuleBundlerWorkers =
-  (process.env.BUNDLE_WORKERS && parseInt(process.env.BUNDLE_WORKERS, 10)) || 0;
+  (process.env.DVLP_BUNDLE_WORKERS &&
+    parseInt(process.env.DVLP_BUNDLE_WORKERS, 10)) ||
+  0;
 const port = process.env.PORT ? Number(process.env.PORT) : 8080;
 
 mime.define(JS_MIME_TYPES, true);

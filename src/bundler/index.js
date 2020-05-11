@@ -1,11 +1,13 @@
 'use strict';
 
+/* eslint-disable */
+
 const {
   isJsFilePath,
   isNodeModuleFilePath,
   isPromise,
 } = require('../utils/is.js');
-const bundler = require('./bundle-worker.js');
+const BundleWorker = require('./bundle-worker.js');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:module');
 const { error } = require('../utils/log.js');
@@ -13,15 +15,14 @@ const fs = require('fs');
 const { getCachedPackage } = require('../resolver/index.js');
 const path = require('path');
 const { resolve } = require('../resolver/index.js');
-const workerFarm = require('worker-farm');
 
 const SOURCE_PREFIX = '// source: ';
 const RE_SOURCE_PATH = /^\/\/ source: (.+)/;
 
 /** @type { Map<string, true | Promise<string>> } */
 const cache = new Map();
-/** @type { import('worker-farm').Workers | undefined } */
-let workers;
+/** @type { Array<BundleWorker> } */
+const bundleWorkers = [];
 
 if (config.maxModuleBundlerWorkers) {
   debug(`bundling modules with ${config.maxModuleBundlerWorkers} workers`);
@@ -174,7 +175,7 @@ function doBundle(
  * Starts workers if config.maxModuleBundlerWorkers > 0,
  * otherwise uses bundler directly
  *
- * @returns { BundleWorker }
+ * @returns { Worker }
  */
 function getBundler() {
   if (!config.maxModuleBundlerWorkers) {
@@ -182,10 +183,9 @@ function getBundler() {
   }
 
   if (!workers) {
-    workers = workerFarm(
-      { maxConcurrentWorkers: config.maxModuleBundlerWorkers },
-      path.resolve(__dirname, './bundle-worker.js'),
-    );
+    for (let i = 0; i < config.maxModuleBundlerWorkers; i++) {
+      const worker = new Worker(path.resolve(__dirname, './bundle-worker.js'));
+    }
     debug(`spawned ${config.maxModuleBundlerWorkers} bundler workers`);
   }
 

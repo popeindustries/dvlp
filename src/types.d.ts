@@ -92,7 +92,7 @@ declare type Entry = {
 };
 
 declare type PatchResponseOptions = {
-  rollupConfig: import('rollup').RollupOptions;
+  rollupConfigPath: string;
   directories?: Array<string>;
   footerScript?: {
     hash?: string;
@@ -129,13 +129,11 @@ declare type Watcher = {
   close: () => void;
 };
 
-declare type BundleWorker = (
-  id: string,
-  outputPath: string,
-  sourcePrefix: string,
-  rollupOptions: import('rollup').RollupOptions,
-  fn: (err?: Error) => void,
-) => void;
+declare type BundleWorkerMessage = {
+  inputPath: string;
+  outputPath: string;
+  sourcePrefix: string;
+};
 
 declare type Reloader = {
   client: string;

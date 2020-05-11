@@ -2,18 +2,12 @@
 
 /** @typedef { import("rollup").RollupOptions } RollupOptions */
 
-const {
-  exists,
-  expandPath,
-  getProjectPath,
-  importModule,
-} = require('../utils/file.js');
+const { exists, expandPath, getProjectPath } = require('../utils/file.js');
 const { info, error } = require('../utils/log.js');
 const chalk = require('chalk');
 const config = require('../config.js');
 const { destroyWorkers } = require('../bundler/index.js');
 const fs = require('fs');
-const { getDefaultRollupConfig } = require('../utils/default-rollup-config.js');
 const path = require('path');
 const reloadServer = require('../reloader/index.js');
 const DvlpServer = require('./server.js');
@@ -46,7 +40,6 @@ module.exports = async function serverFactory(
 
   /** @type { Reloader | undefined } */
   let reloader;
-  let rollupConfig = getDefaultRollupConfig();
 
   if (process.env.PORT === undefined) {
     process.env.PORT = String(port);
@@ -54,10 +47,6 @@ module.exports = async function serverFactory(
 
   if (rollupConfigPath) {
     rollupConfigPath = path.resolve(rollupConfigPath);
-    rollupConfig = mergeRollupConfig(
-      rollupConfig,
-      importModule(rollupConfigPath),
-    );
     info(
       `${chalk.green('✔')} registered custom Rollup.js config at ${chalk.green(
         getProjectPath(rollupConfigPath),
@@ -79,7 +68,7 @@ module.exports = async function serverFactory(
 
   const server = new DvlpServer(
     entry.main,
-    rollupConfig,
+    rollupConfigPath,
     reloader,
     transpilerPath,
     mockPath,
@@ -168,42 +157,4 @@ function resolveEntry(filePath) {
   }
 
   return entry;
-}
-
-/**
- * Merge user rollup-config with default
- *
- * @param { RollupOptions } defaultConfig
- * @param { RollupOptions } newConfig
- * @returns { RollupOptions }
- */
-function mergeRollupConfig(defaultConfig, newConfig) {
-  const {
-    output: requiredOutput,
-    plugins: defaultPlugins = [],
-    ...defaultOptions
-  } = defaultConfig;
-  const { output, plugins = [], ...options } = newConfig;
-  /** @type { { [name: string]: import('rollup').Plugin }}  */
-  const newPluginsByName = plugins.reduce((newPluginsByName, plugin) => {
-    // @ts-ignore
-    newPluginsByName[plugin.name] = plugin;
-    return newPluginsByName;
-  }, {});
-  let mergedPlugins = [];
-
-  // Replace default plugin with new if it has the same name
-  for (const plugin of defaultPlugins) {
-    const { name } = plugin;
-    mergedPlugins.push(
-      name in newPluginsByName ? newPluginsByName[name] : plugin,
-    );
-  }
-
-  return {
-    ...defaultOptions,
-    ...options,
-    plugins: mergedPlugins,
-    output: { ...output, ...requiredOutput },
-  };
 }
