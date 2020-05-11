@@ -61,12 +61,12 @@
     "typescript": "^3.8.3"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=12"
   },
   "scripts": {
     "build": "rollup --config rollup.config.js",
     "format": "prettier --write './{src,test}/**/*.{js,json}'",
-    "lint": "npm run lint:types && npm run:lint:src",
+    "lint": "npm run lint:types && npm run lint:src",
     "lint:src": "eslint './{src,test}/**/*.js'",
     "lint:types": "tsc --noEmit",
     "prepublishOnly": "npm run build",

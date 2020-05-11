@@ -16,10 +16,6 @@ const VERSION = process.env.DVLP_VERSION;
 
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
 const bundleDir = path.resolve(bundleDirName);
-const maxModuleBundlerWorkers =
-  (process.env.DVLP_BUNDLE_WORKERS &&
-    parseInt(process.env.DVLP_BUNDLE_WORKERS, 10)) ||
-  0;
 const port = process.env.PORT ? Number(process.env.PORT) : 8080;
 
 mime.define(JS_MIME_TYPES, true);
@@ -81,7 +77,6 @@ module.exports = {
   },
   latency: 50,
   maxAge: '10m',
-  maxModuleBundlerWorkers,
   port,
   testing: TESTING,
   typesByExtension: {

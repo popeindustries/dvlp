@@ -59,7 +59,7 @@ module.exports = class DvlpServer {
    * Constructor
    *
    * @param { string | (() => void) | undefined } main
-   * @param { string } rollupConfigPath
+   * @param { string } [rollupConfigPath]
    * @param { Reloader } [reloader]
    * @param { string } [transpilerPath]
    * @param { string | Array<string> } [mockPath]

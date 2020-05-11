@@ -8,6 +8,7 @@ const {
   Worker,
   workerData,
 } = require('worker_threads');
+const { error } = require('../utils/log.js');
 const {
   getDefaultRollupConfig,
 } = require('../bundler/default-rollup-config.js');
@@ -18,15 +19,21 @@ class BundleWorker {
   /**
    * Constructor
    *
-   * @param { string } rollupConfigPath
    * @param { boolean } threaded
+   * @param { string } [rollupConfigPath]
    */
-  constructor(rollupConfigPath, threaded) {
-    this.rollupConfig = mergeRollupConfig(
-      getDefaultRollupConfig(),
-      importModule(rollupConfigPath),
-    );
-    this.worker;
+  constructor(threaded, rollupConfigPath) {
+    const defaultConfig = getDefaultRollupConfig();
+
+    try {
+      this.rollupConfig = rollupConfigPath
+        ? mergeRollupConfig(defaultConfig, importModule(rollupConfigPath))
+        : defaultConfig;
+      this.worker;
+    } catch (err) {
+      error(`error loading custom Rollup config "${rollupConfigPath}"`);
+      this.rollupConfig = defaultConfig;
+    }
 
     if (threaded && isMainThread) {
       this.worker = new Worker(__filename, { workerData: rollupConfigPath });
@@ -67,21 +74,26 @@ class BundleWorker {
     await bundled.write(outputOptions);
   }
 
+  /**
+   * Destroy instance
+   *
+   * @returns { Promise<void> }
+   */
   destroy() {
     if (this.worker) {
-      this.worker.terminate();
       // @ts-ignore
-      this.worker = null;
+      return this.worker.terminate();
     }
+    return Promise.resolve();
   }
 }
 
 module.exports = BundleWorker;
 
 if (!isMainThread && parentPort) {
-  /** @type { string } */
+  /** @type { string | undefined } */
   const rollupConfigPath = workerData;
-  const bundleWorker = new BundleWorker(rollupConfigPath, false);
+  const bundleWorker = new BundleWorker(false, rollupConfigPath);
 
   parentPort.on('message', async (
     /** @type { BundleWorkerMessage } */ message,

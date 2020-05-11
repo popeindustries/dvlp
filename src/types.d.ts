@@ -75,7 +75,6 @@ declare type Config = {
   };
   latency: number;
   maxAge: string;
-  maxModuleBundlerWorkers: number;
   port: number;
   testing: boolean;
   typesByExtension: {
@@ -92,7 +91,7 @@ declare type Entry = {
 };
 
 declare type PatchResponseOptions = {
-  rollupConfigPath: string;
+  rollupConfigPath?: string;
   directories?: Array<string>;
   footerScript?: {
     hash?: string;

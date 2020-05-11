@@ -81,12 +81,14 @@ module.exports = async function serverFactory(
   }
 
   const parentDir = path.resolve(process.cwd(), '..');
+  // prettier-ignore
   const paths = entry.isStatic
     ? config.directories
-        .map((dir) => path.relative(parentDir, dir) || path.basename(parentDir))
-        .join(', ')
+      .map((dir) => path.relative(parentDir, dir) || path.basename(parentDir))
+      .join(', ')
     : entry.isFunction
     ? 'function'
+    // @ts-ignore
     : getProjectPath(entry.main);
 
   info(`\n  💥 serving ${chalk.green(paths)}`);
