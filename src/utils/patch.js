@@ -1,5 +1,6 @@
 'use strict';
 
+const { brotliDecompressSync, unzipSync } = require('zlib');
 const {
   bundle,
   parseOriginalSourcePath,
@@ -23,7 +24,6 @@ const Metrics = require('./metrics.js');
 const path = require('path');
 const { parse } = require('es-module-lexer');
 const { resolve } = require('../resolver/index.js');
-const { unzipSync } = require('zlib');
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
 const RE_IMPORT = /((?:(?:^|[});]\s*)import\b[^'"&;:-=()]+|\bexport\b[^'"&;:-=()]+\sfrom\s)['"])([^'"\n]+)(['"])/gm;
@@ -550,6 +550,8 @@ function proxyBodyWrite(res, action) {
         if (Buffer.isBuffer(data)) {
           if (res.encoding === 'gzip') {
             data = unzipSync(data);
+          } else if (res.encoding === 'br') {
+            data = brotliDecompressSync(data);
           }
           data = data.toString();
         }
