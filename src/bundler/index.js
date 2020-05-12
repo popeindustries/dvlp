@@ -5,26 +5,30 @@ const {
   isNodeModuleFilePath,
   isPromise,
 } = require('../utils/is.js');
-const bundler = require('./bundle-worker.js');
+const BundleWorker = require('./bundle-worker.js');
 const config = require('../config.js');
+const { cpus } = require('os');
 const debug = require('debug')('dvlp:module');
 const { error } = require('../utils/log.js');
 const fs = require('fs');
 const { getCachedPackage } = require('../resolver/index.js');
 const path = require('path');
 const { resolve } = require('../resolver/index.js');
-const workerFarm = require('worker-farm');
 
 const SOURCE_PREFIX = '// source: ';
 const RE_SOURCE_PATH = /^\/\/ source: (.+)/;
 
-/** @type { Map<string, true | Promise<string>> } */
+/** @type { Map<string, string | Promise<string>> } */
 const cache = new Map();
-/** @type { import('worker-farm').Workers | undefined } */
-let workers;
+/** @type { Array<BundleWorker> } */
+let bundleWorkers = [];
+let bundleWorkersIndex = 0;
+let threads = 1;
 
-if (config.maxModuleBundlerWorkers) {
-  debug(`bundling modules with ${config.maxModuleBundlerWorkers} workers`);
+try {
+  threads = Math.max(cpus().length - 1, 1);
+} catch (err) {
+  // ignore
 }
 
 if (fs.existsSync(config.bundleDir)) {
@@ -36,7 +40,7 @@ if (fs.existsSync(config.bundleDir)) {
       const name = resolvedId.slice(0, resolvedId.lastIndexOf('-'));
 
       if (!names.has(name)) {
-        cache.set(resolvedId, true);
+        cache.set(resolvedId, path.join(config.bundleDir, resolvedId));
         names.set(name, resolvedId);
       } else {
         // Clear instances if duplicates with different versions
@@ -101,12 +105,12 @@ function parseOriginalSourcePath(code) {
  * Trigger bundle of 'resolvedId'
  *
  * @param { string } resolvedId
- * @param { import("rollup").RollupOptions } rollupConfig
+ * @param { string } [rollupConfigPath]
  * @param { string } [originalId]
  * @param { string } [inputPath]
  * @returns { true | Promise<string> | undefined }
  */
-function bundle(resolvedId, rollupConfig, originalId, inputPath) {
+function bundle(resolvedId, rollupConfigPath, originalId, inputPath) {
   if (!resolvedId) {
     return;
   }
@@ -128,7 +132,7 @@ function bundle(resolvedId, rollupConfig, originalId, inputPath) {
       // @ts-ignore
       inputPath,
       outputPath,
-      rollupConfig,
+      rollupConfigPath,
     );
   }
 
@@ -142,7 +146,7 @@ function bundle(resolvedId, rollupConfig, originalId, inputPath) {
  * @param { string } oringinalId
  * @param { string } inputPath
  * @param { string } outputPath
- * @param { import("rollup").RollupOptions } rollupConfig
+ * @param { string } [rollupConfigPath]
  * @returns { Promise<string> }
  */
 function doBundle(
@@ -150,23 +154,22 @@ function doBundle(
   oringinalId,
   inputPath,
   outputPath,
-  rollupConfig,
+  rollupConfigPath,
 ) {
-  const promiseToCache = new Promise(async (resolve, reject) => {
-    getBundler()(inputPath, outputPath, SOURCE_PREFIX, rollupConfig, (err) => {
-      if (err) {
-        error(`unable to bundle ${oringinalId}`);
-        cache.delete(resolvedId);
-        return reject(err);
-      }
-
-      cache.set(resolvedId, true);
-      resolve(outputPath);
+  const pendingBundle = getWorkerInstance(rollupConfigPath)
+    .bundle(inputPath, outputPath, SOURCE_PREFIX)
+    .then(() => {
+      cache.set(resolvedId, outputPath);
+      return outputPath;
+    })
+    .catch((err) => {
+      error(`unable to bundle ${oringinalId}`);
+      cache.delete(resolvedId);
+      return outputPath;
     });
-  });
 
-  cache.set(resolvedId, promiseToCache);
-  return promiseToCache;
+  cache.set(resolvedId, pendingBundle);
+  return pendingBundle;
 }
 
 /**
@@ -174,22 +177,23 @@ function doBundle(
  * Starts workers if config.maxModuleBundlerWorkers > 0,
  * otherwise uses bundler directly
  *
+ * @param { string | undefined } rollupConfigPath
  * @returns { BundleWorker }
  */
-function getBundler() {
-  if (!config.maxModuleBundlerWorkers) {
-    return bundler;
+function getWorkerInstance(rollupConfigPath) {
+  if (!bundleWorkers.length) {
+    const threaded = process.env.DVLP_BUNDLE_THREADS !== undefined;
+
+    for (let i = 0; i < threads; i++) {
+      bundleWorkers.push(new BundleWorker(threaded, rollupConfigPath));
+    }
+    if (threaded) {
+      debug(`spawned ${threads} bundler workers`);
+    }
   }
 
-  if (!workers) {
-    workers = workerFarm(
-      { maxConcurrentWorkers: config.maxModuleBundlerWorkers },
-      path.resolve(__dirname, './bundle-worker.js'),
-    );
-    debug(`spawned ${config.maxModuleBundlerWorkers} bundler workers`);
-  }
-
-  return workers;
+  // Round robin
+  return bundleWorkers[bundleWorkersIndex++ % threads];
 }
 
 /**
@@ -209,21 +213,19 @@ function cleanBundles() {
 
 /**
  * Terminate workers
+ *
+ * @returns { Promise<void> }
  */
 function destroyWorkers() {
-  return new Promise((resolve, reject) => {
-    if (!workers) {
-      return resolve();
-    }
-
-    workerFarm.end(workers, (/** @type { string } */ msg) => {
-      workers = undefined;
-      if (msg) {
-        return reject(Error(msg));
-      }
-      resolve();
+  return Promise.all(
+    bundleWorkers.map((bundleWorker) => bundleWorker.destroy()),
+  )
+    .then(() => {
+      bundleWorkers = [];
+    })
+    .catch((err) => {
+      console.error(err);
     });
-  });
 }
 
 /**

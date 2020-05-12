@@ -5,9 +5,6 @@ const { cleanBundles, destroyWorkers } = require('../src/bundler/index.js');
 const { clearResolverCache } = require('../src/resolver/index.js');
 const config = require('../src/config.js');
 const { expect } = require('chai');
-const {
-  getDefaultRollupConfig,
-} = require('../src/utils/default-rollup-config.js');
 const { patchResponse } = require('../src/utils/patch.js');
 const path = require('path');
 const { ServerResponse } = require('http');
@@ -15,9 +12,6 @@ const { ServerResponse } = require('http');
 const DEBUG_VERSION = '4.1.1';
 const LODASH_VERSION = '4.17.15';
 const NODE_PATH = process.env.NODE_PATH;
-const OPTIONS = {
-  rollupConfig: getDefaultRollupConfig(),
-};
 
 function getBody(res) {
   const output = (res.output || res.outputData)
@@ -69,7 +63,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          ...OPTIONS,
           footerScript: { string: 'test inject' },
         });
         res.end('</body>');
@@ -79,7 +72,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          ...OPTIONS,
           headerScript: { string: 'test inject' },
         });
         res.end('<head></head>');
@@ -91,7 +83,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          ...OPTIONS,
           footerScript: { string: 'test inject' },
         });
         res.write('</body>');
@@ -104,7 +95,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          ...OPTIONS,
           headerScript: { string: 'test inject' },
         });
         res.write('<head></head>');
@@ -120,7 +110,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          ...OPTIONS,
           footerScript: {
             string: 'test inject',
             url: 'http://localhost:3529/dvlpreload',
@@ -141,7 +130,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          ...OPTIONS,
           footerScript: {
             string: 'test inject',
             url: 'http://localhost:3529/dvlpreload',
@@ -156,7 +144,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          ...OPTIONS,
           footerScript: {
             string: 'test inject',
             url: 'http://localhost:3529/dvlpreload',
@@ -173,7 +160,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          ...OPTIONS,
           footerScript: {
             string: 'test inject',
             url: 'http://localhost:3529/dvlpreload',
@@ -188,7 +174,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          ...OPTIONS,
           footerScript: {
             string: 'test inject',
             url: 'http://localhost:3529/dvlpreload',
@@ -206,7 +191,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filepath, req, res, {
-          ...OPTIONS,
           footerScript: {
             hash: 'xxxxxx',
             string: 'test inject',
@@ -229,7 +213,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filepath, req, res, {
-          ...OPTIONS,
           footerScript: {
             hash: 'xxxxxx',
             string: 'test inject',
@@ -252,7 +235,6 @@ describe('patch', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filepath, req, res, {
-          ...OPTIONS,
           footerScript: {
             hash: 'xxxxxx',
             string: 'test inject',
@@ -274,7 +256,7 @@ describe('patch', () => {
       it('should disable cache-control headers for local files', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
         expect(res.getHeader('Cache-Control')).to.equal(
@@ -284,7 +266,7 @@ describe('patch', () => {
       it('should disable cache-control headers for local files when cache-control not set', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('done');
         expect(res.getHeader('Cache-Control')).to.equal(
           'no-cache, dvlp-disabled',
@@ -293,7 +275,7 @@ describe('patch', () => {
       it('should not disable cache-control headers for node_modules files', () => {
         const req = getRequest('/node_modules/foo');
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
         expect(res.getHeader('Cache-Control')).to.equal('max-age=600');
@@ -301,7 +283,7 @@ describe('patch', () => {
       it('should enable cross origin headers', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('done');
         expect(res.getHeader('Access-Control-Allow-Origin')).to.equal('*');
       });
@@ -313,7 +295,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import "./body.js";');
         expect(getBody(res)).to.equal(`import "./body.js";`);
       });
@@ -322,7 +304,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import lodash from "lodash";');
         expect(getBody(res)).to.equal(
           `import lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
@@ -333,7 +315,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import $$observable from "lodash";');
         expect(getBody(res)).to.equal(
           `import $$observable from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
@@ -344,7 +326,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end(`const foo = 'bar'\nimport lodash from "lodash";`);
         expect(getBody(res)).to.equal(
           `const foo = 'bar'\nimport lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
@@ -355,7 +337,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end(
           `function foo(value) { return value; };import lodash from "lodash";`,
         );
@@ -368,7 +350,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end(
           `function foo(value) { return value; } import lodash from "lodash";`,
         );
@@ -381,7 +363,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end(`const foo = ('bar') import lodash from "lodash";`);
         expect(getBody(res)).to.equal(
           `const foo = ('bar') import lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
@@ -393,7 +375,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         const reactDomError = `error("It looks like you're using the wrong act() around your test interactions.\n" + 'Be sure to use the matching version of act() corresponding to your renderer:\n\n' + '// for react-dom:\n' + "import {act} from 'react-dom/test-utils';\n" + '// ...\n' + 'act(() => ...);\n\n' + '// for react-test-renderer:\n' + "import TestRenderer from 'react-test-renderer';\n" + 'const {act} = TestRenderer;\n' + '// ...\n' + 'act(() => ...);' + '%s', getStackByFiberInDevAndProd(fiber));`;
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end(reactDomError);
         expect(getBody(res)).to.equal(reactDomError);
       });
@@ -402,7 +384,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end(
           'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";',
         );
@@ -415,7 +397,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import { html } from "lit-html";');
         expect(getBody(res)).to.equal(
           `import { html } from "${process.cwd()}/node_modules/lit-html/lit-html.js";`,
@@ -427,7 +409,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import module from "nested/index.js";');
         expect(getBody(res)).to.equal(
           `import module from "${process.cwd()}/test/fixtures/www/nested/index.js";`,
@@ -440,7 +422,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import module from "nested/foo";');
         expect(getBody(res)).to.equal(
           `import module from "${process.cwd()}/test/fixtures/www/nested/foo.jsx";`,
@@ -452,7 +434,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import module from "./test/fixtures/www/module";');
         expect(getBody(res)).to.equal(
           `import module from "${process.cwd()}/test/fixtures/www/module.js";`,
@@ -463,7 +445,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import component from "./test/fixtures/component";');
         expect(getBody(res)).to.equal(
           `import component from "${process.cwd()}/test/fixtures/component.jsx";`,
@@ -474,7 +456,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import route from "./test/fixtures/route";');
         expect(getBody(res)).to.equal(
           `import route from "${process.cwd()}/test/fixtures/route.ts";`,
@@ -485,7 +467,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import module from "./test/fixtures/www/nested";');
         expect(getBody(res)).to.equal(
           `import module from "${process.cwd()}/test/fixtures/www/nested/index.js";`,
@@ -496,7 +478,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import module from "./test/fixtures/www/nested-ts";');
         expect(getBody(res)).to.equal(
           `import module from "${process.cwd()}/test/fixtures/www/nested-ts/index.ts";`,
@@ -507,7 +489,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('"this is use of a fake import text"');
         expect(getBody(res)).to.equal(`"this is use of a fake import text"`);
       });
@@ -516,7 +498,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import "bar";');
         expect(getBody(res)).to.equal(
           `import "${process.cwd()}/test/fixtures/node_modules/bar/browser.js";`,
@@ -527,7 +509,7 @@ describe('patch', () => {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
-        patchResponse(req.filePath, req, res, OPTIONS);
+        patchResponse(req.filePath, req, res);
         res.end('import "bat";');
         expect(getBody(res)).to.equal(
           `import "${process.cwd()}/test/fixtures/node_modules/bat/browser.js";`,
@@ -539,7 +521,6 @@ describe('patch', () => {
       const req = getRequest('/index.html', { accept: 'text/html' });
       const res = getResponse(req);
       patchResponse(req.filePath, req, res, {
-        ...OPTIONS,
         headerScript: { string: 'test inject' },
       });
       res.setHeader('Content-Encoding', 'gzip');
@@ -551,7 +532,7 @@ describe('patch', () => {
     it('should uncompress gzipped css response', () => {
       const req = getRequest('/index.css');
       const res = getResponse(req);
-      patchResponse(req.filePath, req, res, OPTIONS);
+      patchResponse(req.filePath, req, res);
       res.setHeader('Content-Encoding', 'gzip');
       res.end(gzipSync(Buffer.from('body { backgroundColor: #fff; }')));
       expect(getBody(res)).to.equal('body { backgroundColor: #fff; }');
@@ -560,7 +541,6 @@ describe('patch', () => {
       const req = getRequest('/index.html', { accept: 'text/html' });
       const res = getResponse(req);
       patchResponse(req.filePath, req, res, {
-        ...OPTIONS,
         headerScript: { string: 'test inject' },
       });
       res.setHeader('Content-Encoding', 'br');

@@ -59,12 +59,12 @@ module.exports = class DvlpServer {
    * Constructor
    *
    * @param { string | (() => void) | undefined } main
-   * @param { RollupOptions } rollupConfig
+   * @param { string } [rollupConfigPath]
    * @param { Reloader } [reloader]
    * @param { string } [transpilerPath]
    * @param { string | Array<string> } [mockPath]
    */
-  constructor(main, rollupConfig, reloader, transpilerPath, mockPath) {
+  constructor(main, rollupConfigPath, reloader, transpilerPath, mockPath) {
     // Listen for all upcoming file system reads (including require('*'))
     // Register early to catch all reads, including transpilers that patch fs.readFile
     this.watcher = this.createWatcher();
@@ -94,7 +94,7 @@ module.exports = class DvlpServer {
     ]);
 
     this.patchResponseOptions = {
-      rollupConfig,
+      rollupConfigPath,
       footerScript: {
         hash: reloader && hashScript(reloader.client),
         string: reloader ? reloader.client : '',
@@ -108,7 +108,7 @@ module.exports = class DvlpServer {
     this.origin = '';
     this.port = Number(process.env.PORT);
     this.reloader = reloader;
-    this.rollupConfig = rollupConfig;
+    this.rollupConfigPath = rollupConfigPath;
     /** @type { Server | null } */
     this.server = null;
     /** @type { Transpiler | undefined } */
@@ -322,7 +322,7 @@ module.exports = class DvlpServer {
             res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
             await bundle(
               path.basename(filePath),
-              server.rollupConfig,
+              server.rollupConfigPath,
               undefined,
               undefined,
             );

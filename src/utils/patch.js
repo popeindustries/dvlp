@@ -48,7 +48,7 @@ function patchResponse(
   filePath,
   req,
   res,
-  { rollupConfig, footerScript, headerScript } = { rollupConfig: {} },
+  { rollupConfigPath, footerScript, headerScript } = { rollupConfigPath: '' },
 ) {
   // req.filepath set after file.find(), filepath passed if cached
   filePath = req.filePath || filePath || req.url;
@@ -105,7 +105,7 @@ function patchResponse(
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
-      return rewriteImports(res, filePath, rollupConfig, code);
+      return rewriteImports(res, filePath, rollupConfigPath, code);
     });
   }
 }
@@ -247,12 +247,12 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  *
  * @param { Res } res
  * @param { string } filePath
- * @param { import("rollup").RollupOptions } rollupConfig
+ * @param { string } [rollupConfigPath]
  * @param { string } code
  * @returns { string }
  */
-function rewriteImports(res, filePath, rollupConfig, code) {
-  res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
+function rewriteImports(res, filePath, rollupConfigPath, code) {
+  res.metrics.recordEvent('rewrite JS imports');
 
   // Retrieve original source path from bundled file
   // to allow reference back to correct node_modules file
@@ -262,72 +262,8 @@ function rewriteImports(res, filePath, rollupConfig, code) {
 
   code =
     process.env.DVLP_IMPORTS_PARSE != null
-      ? rewriteImportsParse(filePath, rollupConfig, code)
-      : rewriteImportsRegexp(filePath, rollupConfig, code);
-
-  try {
-    const projectFilePath = getProjectPath(filePath);
-    const [imports] = parse(code);
-
-    if (imports.length > 0) {
-      // Track length delta between 'id' and 'newId' to adjust
-      // parsed indexes as we substitue during iteration
-      let offset = 0;
-
-      for (const imprt of imports) {
-        const id = code.substring(offset + imprt.s, offset + imprt.e);
-        const importPath = resolve(id, getAbsoluteProjectPath(filePath));
-
-        if (importPath) {
-          let newId = '';
-
-          // Bundle if in node_modules and not an es module
-          if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
-            const resolvedId = resolveModuleId(id, importPath);
-
-            // Trigger bundling in background while waiting for eventual request
-            bundle(resolvedId, rollupConfig, id, importPath);
-            newId = `/${path.join(config.bundleDirName, resolvedId)}`;
-            warn(WARN_BARE_IMPORT, id);
-          } else {
-            // Don't rewrite if no change after resolving
-            newId =
-              isRelativeFilePath(id) &&
-              path.join(path.dirname(filePath), id) === importPath
-                ? id
-                : importPath;
-          }
-
-          newId = filePathToUrl(newId);
-
-          if (newId !== id) {
-            debug(`rewrote import id from "${id}" to "${newId}"`);
-            const context = code.substring(
-              offset + imprt.ss,
-              offset + imprt.se,
-            );
-            const pre = code.substring(offset + imprt.ss, offset + imprt.s);
-            const post = code.substring(offset + imprt.e, offset + imprt.se);
-            const newContext = `${pre}${newId}${post}`;
-            code = code.replace(
-              context,
-              // Escape '$' to avoid special replacement patterns
-              newContext.replace(/\$/g, '$$$'),
-            );
-            offset += newId.length - id.length;
-          }
-        } else {
-          warn(
-            `⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`,
-          );
-        }
-      }
-    } else {
-      debug(`no imports to rewrite in "${projectFilePath}"`);
-    }
-  } catch (err) {
-    // ignore error
-  }
+      ? rewriteImportsParse(filePath, rollupConfigPath, code)
+      : rewriteImportsRegexp(filePath, rollupConfigPath, code);
 
   res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
   return code;
@@ -337,11 +273,11 @@ function rewriteImports(res, filePath, rollupConfig, code) {
  * Rewrite bare import references in 'code' with es-module-lexer
  *
  * @param { string } filePath
- * @param { import("rollup").RollupOptions } rollupConfig
+ * @param { string } [rollupConfigPath]
  * @param { string } code
  * @returns { string }
  */
-function rewriteImportsParse(filePath, rollupConfig, code) {
+function rewriteImportsParse(filePath, rollupConfigPath, code) {
   try {
     const projectFilePath = getProjectPath(filePath);
     const [imports] = parse(code);
@@ -363,7 +299,7 @@ function rewriteImportsParse(filePath, rollupConfig, code) {
             const resolvedId = resolveModuleId(id, importPath);
 
             // Trigger bundling in background while waiting for eventual request
-            bundle(resolvedId, rollupConfig, id, importPath);
+            bundle(resolvedId, rollupConfigPath, id, importPath);
             newId = `/${path.join(config.bundleDirName, resolvedId)}`;
             warn(WARN_BARE_IMPORT, id);
           } else {
@@ -413,11 +349,11 @@ function rewriteImportsParse(filePath, rollupConfig, code) {
  * Rewrite bare import references in 'code' with regexp
  *
  * @param { string } filePath
- * @param { import("rollup").RollupOptions } rollupConfig
+ * @param { string } [rollupConfigPath]
  * @param { string } code
  * @returns { string }
  */
-function rewriteImportsRegexp(filePath, rollupConfig, code) {
+function rewriteImportsRegexp(filePath, rollupConfigPath, code) {
   const projectFilePath = getProjectPath(filePath);
   /** @type { {[key: string]: string} } */
   const rewritten = {};
@@ -442,7 +378,7 @@ function rewriteImportsRegexp(filePath, rollupConfig, code) {
         const resolvedId = resolveModuleId(id, importPath);
 
         // Trigger bundling in background while waiting for eventual request
-        bundle(resolvedId, rollupConfig, id, importPath);
+        bundle(resolvedId, rollupConfigPath, id, importPath);
         newId = `/${path.join(config.bundleDirName, resolvedId)}`;
         warn(WARN_BARE_IMPORT, id);
       } else {
