@@ -412,7 +412,8 @@ $ DEBUG=dvlp* npm run dev
 
 ## Experimental
 
-- **Bundle modules in multiple, separate processes**: launch with `BUNDLE_WORKERS=n` (where `n` is number of background processes) to run module bundling operations in separate background processes (default is `0`)
+- **Bundle modules in multiple, separate threads**: launch with `DVLP_BUNDLE_THREADS=true` to run module bundling operations in separate worker threads (default is `false`)
+- **Parse JS imports with es-module-lexer**: launch with `DVLP_IMPORTS_PARSE=true` to parse JS imports with an AST instead of the default RegExp (default is `false`)
 
 ## JS API
 
