@@ -8,7 +8,7 @@ process.env.DVLP_LAUNCHER = 'cmd';
 process.env.DVLP_VERSION = pkg.version;
 
 const program = require('commander');
-const { server } = require('../src/index.js');
+const { server } = require('../dvlp.js');
 
 program
   .usage('[options] [path...]')
