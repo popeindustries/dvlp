@@ -4,4 +4,5 @@
 .dvlp
 /bundle-worker.js
 /dvlp.js
+/dvlp-browser.js
 /dvlp.d.ts

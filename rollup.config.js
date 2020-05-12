@@ -17,7 +17,11 @@ fs.writeFileSync(
   path.resolve('dvlp.d.ts'),
   fs
     .readFileSync(path.resolve('src/types.d.ts'), 'utf8')
-    .replace(/\/\* export \*\//g, 'export'),
+    .replace(/\/\*\s+export\s+\*\//g, 'export'),
+);
+fs.copyFileSync(
+  path.resolve('src/test-browser/index.js'),
+  path.resolve('dvlp-browser.js'),
 );
 
 module.exports = [

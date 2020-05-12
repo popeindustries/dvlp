@@ -487,4 +487,37 @@ declare class TestServerInstance {
   ): undefined;
 }
 
+/* export  */ declare namespace testBrowser {
+  /**
+   * Disable all external network connections,
+   * and optionally reroute all external requests to this server with `rerouteAllRequests=true`
+   */
+  /* export  */ function disableNetwork(rerouteAllRequests?: boolean): void;
+  /**
+   * Re-enable all external network connections
+   */
+  /* export  */ function enableNetwork(): void;
+  /**
+   * Add mock response for "req"
+   */
+  /* export  */ function addResponse(
+    req: string | MockRequest,
+    res: MockResponse | MockResponseHandler,
+    once?: boolean,
+    onMock?: () => void,
+  ): () => void;
+  /**
+   * Push data to WebSocket/EventSource clients
+   * A string passed as `event` will be handled as a named mock push event
+   */
+  /* export  */ function pushEvent(
+    stream: string,
+    event?: string | PushEvent,
+  ): void;
+}
+
+interface Window {
+  dvlp: typeof testBrowser;
+}
+
 /* export */ declare function getDefaultRollupConfig(): import('rollup').RollupOptions;

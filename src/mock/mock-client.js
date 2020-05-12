@@ -87,6 +87,7 @@
         },
       });
     }
+
     if (typeof EventSource !== 'undefined') {
       window.EventSource = new Proxy(window.EventSource, {
         construct: function (target, args) {
@@ -95,6 +96,7 @@
         },
       });
     }
+
     if (typeof WebSocket !== 'undefined') {
       window.WebSocket = new Proxy(window.WebSocket, {
         construct: function (target, args) {
@@ -104,16 +106,6 @@
       });
     }
   }
-
-  var css = {
-    h1:
-      'color: hotpink; font-size: 14px; font-weight: bold; text-decoration: underline dotted',
-    h2: 'color: hotpink; font-weight: bold; text-decoration: underline dotted',
-    h3: 'color: grey; font-weight: bold',
-    p: 'color: grey',
-    code: 'color: grey; font-style: italic',
-    codeHeavy: 'color: grey; font-style: italic; font-weight: bold',
-  };
 
   window.dvlp = {
     events: events,
@@ -203,224 +195,6 @@
     },
   };
 
-  Object.defineProperty(window.dvlp, 'help', {
-    get: function () {
-      console.log(
-        '\n%cWelcome to the dvlp client command-line interface!\n\n' +
-          '%cUsage:' +
-          '%c dvlp.<command>\n\n' +
-          '%cCommands:\n' +
-          '%c  disableNetwork' +
-          '%c - disable all external network connections (' +
-          '%cdvlp.disableNetwork.help' +
-          '%c for more)\n' +
-          '%c  enableNetwork' +
-          '%c - re-enable previously disabled external network connections (' +
-          '%cdvlp.enableNetwork.help' +
-          '%c for more)\n' +
-          '%c  addResponse' +
-          '%c - add mock response (' +
-          '%cdvlp.addResponse.help' +
-          '%c for more)\n' +
-          '%c  pushEvent' +
-          '%c - trigger EventSource/WebSocket event when mocking (' +
-          '%cdvlp.pushEvent.help' +
-          '%c for more)\n',
-        css.h1,
-        css.h2,
-        css.codeHeavy,
-        css.h2,
-        css.h3,
-        css.p,
-        css.code,
-        css.p,
-        css.h3,
-        css.p,
-        css.code,
-        css.p,
-        css.h3,
-        css.p,
-        css.code,
-        css.p,
-        css.h3,
-        css.p,
-        css.code,
-        css.p,
-      );
-      return undefined;
-    },
-  });
-  Object.defineProperty(window.dvlp.disableNetwork, 'help', {
-    get: function () {
-      console.log(
-        '\n%cdisableNetwork: disable all external network connections\n\n' +
-          '%cUsage:' +
-          '%c dvlp.disableNetwork(rerouteAllRequests:' +
-          '%c boolean' +
-          '%c)\n\n' +
-          '%cArguments:\n' +
-          '%c  rerouteAllRequests:' +
-          '%c boolean' +
-          '%c - flag to reroute all external requests to this server\n\n',
-        css.h1,
-        css.h2,
-        css.codeHeavy,
-        css.code,
-        css.codeHeavy,
-        css.h2,
-        css.codeHeavy,
-        css.code,
-        css.p,
-      );
-      return undefined;
-    },
-  });
-  Object.defineProperty(window.dvlp.enableNetwork, 'help', {
-    get: function () {
-      console.log(
-        '\n%cenableNetwork: re-enable previously disabled external network connections\n\n' +
-          '%cUsage:' +
-          '%c dvlp.enableNetwork()\n\n',
-        css.h1,
-        css.h2,
-        css.codeHeavy,
-      );
-      return undefined;
-    },
-  });
-  Object.defineProperty(window.dvlp.addResponse, 'help', {
-    get: function () {
-      console.log(
-        '\n%caddResponse: add mock response\n\n' +
-          '%cUsage:' +
-          '%c dvlp.addResponse(req:' +
-          '%c string|MockRequest' +
-          '%c, res:' +
-          '%c MockResponse' +
-          '%c, once?:' +
-          '%c boolean' +
-          '%c): () => void\n\n' +
-          '%cArguments:\n' +
-          '%c  req:' +
-          '%c string|MockRequest' +
-          '%c - the request href string or MockRequest object\n' +
-          '%c  res:' +
-          '%c MockResponse' +
-          '%c - the MockResponse object\n' +
-          '%c  [once]:' +
-          '%c boolean' +
-          '%c - flag to automatically remove mock after first use\n\n' +
-          '%cReturns:\n' +
-          '%c  a remove function\n\n' +
-          '%cExamples:\n' +
-          '%c  // Add mock json api response \n' +
-          '  dvlp.addResponse("http://someapi.com", { body: { text: "hi" } }, false);\n\n' +
-          '  // Add one-time mock error response \n' +
-          '  dvlp.addResponse("http://someapi.com", { body: {}, error: true }, true);\n\n',
-        css.h1,
-        css.h2,
-        css.codeHeavy,
-        css.code,
-        css.codeHeavy,
-        css.code,
-        css.codeHeavy,
-        css.code,
-        css.codeHeavy,
-        css.h3,
-        css.codeHeavy,
-        css.code,
-        css.p,
-        css.codeHeavy,
-        css.code,
-        css.p,
-        css.codeHeavy,
-        css.code,
-        css.p,
-        css.h3,
-        css.p,
-        css.h3,
-        css.code,
-      );
-      return undefined;
-    },
-  });
-  Object.defineProperty(window.dvlp.pushEvent, 'help', {
-    get: function () {
-      console.log(
-        '\n%cpushEvent: trigger EventSource/WebSocket event when mocking\n\n' +
-          '%cUsage:' +
-          '%c dvlp.pushEvent(stream:' +
-          '%c string' +
-          '%c, event:' +
-          '%c string|object' +
-          '%c)\n\n' +
-          '%cArguments:\n' +
-          '%c  stream:' +
-          '%c string' +
-          '%c - the mocked EventSource/WebSocket connection endpoint\n' +
-          '%c  event:' +
-          '%c string' +
-          '%c - the "name" of a mocked event\n' +
-          '%c  event:' +
-          '%c {message, options}' +
-          '%c - event object\n' +
-          '%c    message:' +
-          '%c string|object' +
-          '%c - the event payload as string or JSON object\n' +
-          '%c    [options]:' +
-          '%c {event: string, id: string}' +
-          '%c - optional EventSource "event" name and "id"\n\n' +
-          '%cExamples:\n' +
-          '%c  // Push mock event named "newsfeed with 9 items"\n' +
-          '  dvlp.pushEvent("http://localhost:8000/feed", "newsfeed with 9 items");\n\n' +
-          '  // Push event with string message payload\n' +
-          '  dvlp.pushEvent("http://localhost:8000/feed", {message: "some news"});\n\n' +
-          '  // Push event with object message payload and EventSource event name\n' +
-          '  dvlp.pushEvent("http://localhost:8000/feed", {\n    message: {item: "some news"},\n    options: {event: "news"}\n  });\n\n' +
-          '%cSee:' +
-          '%c https://github.com/popeindustries/dvlp#mocking\n\n' +
-          '%cCurrently mocked events:\n' +
-          '%c' +
-          Object.keys(events)
-            .map(function (url) {
-              return '  ' + url + '\n    ' + events[url].join('\n    ');
-            })
-            .join('\n') +
-          '\n',
-        css.h1,
-        css.h2,
-        css.codeHeavy,
-        css.code,
-        css.codeHeavy,
-        css.code,
-        css.codeHeavy,
-        css.h2,
-        css.codeHeavy,
-        css.code,
-        css.p,
-        css.codeHeavy,
-        css.code,
-        css.p,
-        css.codeHeavy,
-        css.code,
-        css.p,
-        css.codeHeavy,
-        css.code,
-        css.p,
-        css.codeHeavy,
-        css.code,
-        css.p,
-        css.h2,
-        css.code,
-        css.h2,
-        css.h3,
-        css.h2,
-        css.codeHeavy,
-      );
-      return undefined;
-    },
-  });
-
   /**
    * Retrieve resolved href and mock data for "href"
    *
@@ -439,7 +213,9 @@
 
       if (
         !mock.originRegex.test(origin) ||
-        (mock.search && !isEqualSearch(url.search, mock.search))
+        (!mock.ignoreSearch &&
+          mock.search &&
+          !isEqualSearch(url.search, mock.search))
       ) {
         continue;
       }
@@ -458,6 +234,7 @@
         (RE_WEB_SOCKET_PROTOCOL.test(url.protocol)
           ? 'ws:'
           : location.protocol) +
+        '//' +
         location.host +
         location.pathname +
         '?dvlpmock=' +
