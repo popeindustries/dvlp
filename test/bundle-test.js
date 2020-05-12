@@ -8,9 +8,6 @@ const {
 } = require('../src/bundler/index.js');
 const config = require('../src/config.js');
 const { expect } = require('chai');
-const {
-  getDefaultRollupConfig,
-} = require('../src/utils/default-rollup-config.js');
 const fs = require('fs');
 const path = require('path');
 const { resolve } = require('../src/resolver/index.js');
@@ -19,22 +16,17 @@ const DEBUG = 'debug-4.1.1.js';
 const LODASH = 'lodash-4.17.15.js';
 
 describe('bundle()', () => {
-  afterEach(() => {
+  afterEach(async () => {
     cleanBundles();
-  });
-  after(async () => {
     await destroyWorkers();
   });
 
   it('should return "undefined" if no module bundle found', () => {
-    expect(
-      bundle(resolveModuleId('foofoo'), getDefaultRollupConfig()),
-    ).to.equal(undefined);
+    expect(bundle(resolveModuleId('foofoo'))).to.equal(undefined);
   });
   it('should bundle and return bundle filePath', async () => {
     const filePath = await bundle(
       resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
-      getDefaultRollupConfig(),
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
@@ -42,30 +34,59 @@ describe('bundle()', () => {
     await bundle(resolveModuleId('lodash', resolve('index.js', 'lodash')));
     const filePath = await bundle(
       resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
-      getDefaultRollupConfig(),
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
-  it('should bundle with overridden config', async () => {
+  it('should bundle with custom Rollup config', async () => {
     const filePath = await bundle(
       resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
-      {
-        input: 'foo.js',
-        output: { banner: '/* this is a test */', format: 'cjs' },
-      },
+      path.resolve('test/fixtures/rollup.config.js'),
       'debug',
     );
     const module = fs.readFileSync(filePath, 'utf8');
     expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
     expect(module).to.contain('/* this is a test */');
   });
+  it('should handle custom Rollup load errors', async () => {
+    const filePath = await bundle(
+      resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
+      path.resolve('test/fixtures/rollup-error-load.config.js'),
+      'debug',
+    );
+    expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
+  });
   it('should skip bundling transient dependencies', async () => {
     const filePath = await bundle(
       resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
-      getDefaultRollupConfig(),
     );
     const module = fs.readFileSync(filePath, 'utf8');
     expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
     expect(module).to.contain("import ms from 'ms';");
+  });
+
+  describe('threaded', () => {
+    before(() => {
+      process.env.DVLP_BUNDLE_THREADS = true;
+    });
+    after(() => {
+      delete process.env.DVLP_BUNDLE_THREADS;
+    });
+
+    it('should bundle and return bundle filePath', async () => {
+      const filePath = await bundle(
+        resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
+      );
+      expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
+    });
+    it('should bundle with custom Rollup config', async () => {
+      const filePath = await bundle(
+        resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
+        path.resolve('test/fixtures/rollup.config.js'),
+        'debug',
+      );
+      const module = fs.readFileSync(filePath, 'utf8');
+      expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
+      expect(module).to.contain('/* this is a test */');
+    });
   });
 });

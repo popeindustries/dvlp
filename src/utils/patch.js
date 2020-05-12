@@ -47,7 +47,7 @@ function patchResponse(
   filePath,
   req,
   res,
-  { rollupConfig, footerScript, headerScript } = { rollupConfig: {} },
+  { rollupConfigPath, footerScript, headerScript } = { rollupConfigPath: '' },
 ) {
   // req.filepath set after file.find(), filepath passed if cached
   filePath = req.filePath || filePath || req.url;
@@ -104,7 +104,7 @@ function patchResponse(
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
-      return rewriteImports(res, filePath, rollupConfig, code);
+      return rewriteImports(res, filePath, rollupConfigPath, code);
     });
   }
 }
@@ -246,11 +246,11 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  *
  * @param { Res } res
  * @param { string } filePath
- * @param { import("rollup").RollupOptions } rollupConfig
+ * @param { string } [rollupConfigPath]
  * @param { string } code
  * @returns { string }
  */
-function rewriteImports(res, filePath, rollupConfig, code) {
+function rewriteImports(res, filePath, rollupConfigPath, code) {
   res.metrics.recordEvent('rewrite JS imports');
 
   const projectFilePath = getProjectPath(filePath);
@@ -284,7 +284,7 @@ function rewriteImports(res, filePath, rollupConfig, code) {
         const resolvedId = resolveModuleId(id, importPath);
 
         // Trigger bundling in background while waiting for eventual request
-        bundle(resolvedId, rollupConfig, id, importPath);
+        bundle(resolvedId, rollupConfigPath, id, importPath);
         newId = `/${path.join(config.bundleDirName, resolvedId)}`;
         warn(WARN_BARE_IMPORT, id);
       } else {

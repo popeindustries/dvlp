@@ -32,8 +32,7 @@
     "rollup": "^2.9.1",
     "send": "^0.17.1",
     "server-destroy": "^1.0.1",
-    "sucrase": "^3.14.0",
-    "worker-farm": "^1.7.0"
+    "sucrase": "^3.14.0"
   },
   "devDependencies": {
     "@types/debug": "^4.1.5",
@@ -62,12 +61,12 @@
     "typescript": "^3.8.3"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=12"
   },
   "scripts": {
     "build": "rollup --config rollup.config.js",
     "format": "prettier --write './{src,test}/**/*.{js,json}'",
-    "lint": "npm run lint:types && npm run:lint:src",
+    "lint": "npm run lint:types && npm run lint:src",
     "lint:src": "eslint './{src,test}/**/*.js'",
     "lint:types": "tsc --noEmit",
     "prepublishOnly": "npm run build",
