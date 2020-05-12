@@ -18,12 +18,13 @@ export const testBrowser = {
    * Add mock response for "req"
    *
    * @param { string | MockRequest } req
-   * @param { MockResponse } res
+   * @param { MockResponse } [res]
    * @param { boolean } [once]
+   * @param { () => void } [onMockCallback]
    * @returns { () => void } remove mock instance
    */
-  addResponse(req, res, once) {
-    return window.dvlp.addResponse(req, res, once);
+  mockResponse(req, res, once, onMockCallback) {
+    return window.dvlp.mockResponse(req, res, once, onMockCallback);
   },
   /**
    * Trigger EventSource/WebSocket event

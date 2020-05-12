@@ -538,7 +538,11 @@ function handleMockResponse(req, res, mocks) {
       );
       // Send 'connect' event if it exists
       mocks.matchPushEvent(mock, 'connect', pushEvent);
-      noisyInfo(`connected to EventSource client at ${chalk.green(mock)}`);
+      noisyInfo(
+        `${chalk.green(
+          '     0ms',
+        )} connected to EventSource client at ${chalk.green(mock)}`,
+      );
     } else {
       mocks.matchResponse(mock, req, res);
     }
@@ -575,7 +579,11 @@ function handleMockWebSocket(req, socket, body, mocks) {
     );
     // Send 'connect' event if it exists
     mocks.matchPushEvent(mock, 'connect', pushEvent);
-    noisyInfo(`connected to WebSocket client at ${chalk.green(mock)}`);
+    noisyInfo(
+      `${chalk.green(
+        '     0ms',
+      )} connected to WebSocket client at ${chalk.green(mock)}`,
+    );
   }
 }
 

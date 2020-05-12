@@ -269,7 +269,7 @@ module.exports = class Mock {
       this.remove(mock);
     }
     if (mock.callback) {
-      mock.callback();
+      process.nextTick(mock.callback);
     }
     if (typeof mock.response === 'function') {
       const url = getUrl(href);
@@ -371,7 +371,11 @@ module.exports = class Mock {
     }
 
     triggerEventSequence(stream, eventSequence, push).then(() => {
-      noisyInfo(`triggered mocked push event ${chalk.green(name)}`);
+      noisyInfo(
+        `${chalk.green('     0ms')} triggered mocked push event ${chalk.green(
+          name,
+        )}`,
+      );
     });
 
     return true;

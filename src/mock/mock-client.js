@@ -25,9 +25,10 @@
     href = hrefAndMock[0];
     var mockData = hrefAndMock[1];
 
+    // Handle mock registered in browser
     if (mockData && mockData.response) {
       var xhr = this;
-      var mockResponse = resolveMockResponse(mockData.response);
+      var mockResponse = resolveMockResponse(mockData);
 
       this.send = function send() {
         // Hang
@@ -64,8 +65,9 @@
           var href = hrefAndMock[0];
           var mockData = hrefAndMock[1];
 
+          // Handle mock registered in browser
           if (mockData && mockData.response) {
-            var mockResponse = resolveMockResponse(mockData.response);
+            var mockResponse = resolveMockResponse(mockData);
 
             // Hang
             if (mockResponse.status === 0) {
@@ -79,6 +81,7 @@
               headers: mockResponse.headers,
               status: mockResponse.status,
             });
+
             return Promise.resolve(res);
           }
 
@@ -134,11 +137,12 @@
      * Add mock response for "req"
      *
      * @param { string | MockRequest } req
-     * @param { MockResponse } res
+     * @param { MockResponse | MockResponseHandler } [res]
      * @param { boolean } [once]
+     * @param { () => void } [onMockCallback]
      * @returns { () => void } remove mock instance
      */
-    addResponse: function addResponse(req, res, once) {
+    mockResponse: function mockResponse(req, res, once, onMockCallback) {
       var ignoreSearch =
         (req &&
           typeof req === 'object' &&
@@ -156,12 +160,13 @@
       var pathRegex = new RegExp(url.pathname.replace(/\//g, '\\/'));
 
       if (typeof res !== 'function') {
-        if (!res.body) {
+        if (res && !res.body) {
           res = { body: res, headers: {} };
         }
       }
 
       var mock = {
+        callback: onMockCallback,
         href: url.href,
         ignoreSearch: ignoreSearch,
         once: once || false,
@@ -230,6 +235,10 @@
       if (mockData.once) {
         remove(mockData);
       }
+      if (mockData.callback) {
+        // Ensure called after response, so delay if remote response
+        setTimeout(mockData.callback, mockData.response ? 10 : 60);
+      }
       href =
         (RE_WEB_SOCKET_PROTOCOL.test(url.protocol)
           ? 'ws:'
@@ -244,7 +253,7 @@
       if (reroute) {
         url.host = location.host;
         href = url.href;
-      } else if (networkDisabled) {
+      } else if (networkDisabled && url.pathname !== 'dvlpreload') {
         throw Error('network connections disabled. Unable to request ' + href);
       }
     }
@@ -255,17 +264,39 @@
   /**
    * Resolve response from "mockData"
    *
-   * @param { MockResponse } mockResponse
-   * @returns { { body: string, status: number }}
+   * @param { MockResponseData } mockData
+   * @returns { { body: string, status: number } }
    */
-  function resolveMockResponse(mockResponse) {
+  function resolveMockResponse(mockData) {
+    var mockResponse = mockData.response;
     var resolved = {
       body: '',
-      headers: mockResponse.headers || {},
+      headers: mockData.response.headers || {},
       status: 0,
     };
 
-    if (mockResponse.error) {
+    if (typeof mockResponse === 'function') {
+      mockResponse(
+        { url: mockData.href },
+        {
+          end: function end(data) {
+            resolved.body = data;
+          },
+          setHeader: function setHeader(name, value) {
+            resolved.headers[name] = value;
+          },
+          write: function write(chunk) {
+            resolved.body += chunk;
+          },
+          writeHead: function writeHead(statusCode, headers) {
+            resolved.status = statusCode;
+            if (headers) {
+              resolved.headers = headers;
+            }
+          },
+        },
+      );
+    } else if (mockResponse.error) {
       resolved.body = 'error';
       resolved.status = 500;
     } else if (mockResponse.missing) {

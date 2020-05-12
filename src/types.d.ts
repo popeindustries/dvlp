@@ -266,10 +266,7 @@ declare type MockResponseJSONSchema = {
   ignoreSearch?: boolean;
 };
 
-/* export */ declare type MockResponseHandler = (
-  req: Req,
-  res: Res,
-) => undefined;
+/* export */ declare type MockResponseHandler = (req: Req, res: Res) => void;
 
 /* export */ declare type MockResponse = {
   body: string | { [key: string]: any };
@@ -500,11 +497,11 @@ declare class TestServerInstance {
   /**
    * Add mock response for "req"
    */
-  /* export  */ function addResponse(
+  /* export  */ function mockResponse(
     req: string | MockRequest,
-    res: MockResponse | MockResponseHandler,
+    res?: MockResponse | MockResponseHandler,
     once?: boolean,
-    onMock?: () => void,
+    onMockCallback?: () => void,
   ): () => void;
   /**
    * Push data to WebSocket/EventSource clients
