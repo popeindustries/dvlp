@@ -319,14 +319,14 @@ module.exports = class DvlpServer {
 
           if (isModuleBundlerFilePath(filePath)) {
             res.bundled = true;
-            res.metrics.recordEvent('bundle JS file');
+            res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
             await bundle(
               path.basename(filePath),
               server.rollupConfigPath,
               undefined,
               undefined,
             );
-            res.metrics.recordEvent('bundle JS file');
+            res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
           }
         } else {
           // File not found. Clear previously known path

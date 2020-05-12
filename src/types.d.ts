@@ -64,7 +64,17 @@ declare class Metrics {
   recordEvent(name: string): void;
   getEvent(name: string, formatted?: boolean): string | number;
 }
-
+declare namespace Metrics {
+  export enum EVENT_NAMES {
+    bundle = 'bundle file',
+    csp = 'inject CSP header',
+    imports = 'rewrite imports',
+    mock = 'mock response',
+    response = 'response',
+    scripts = 'inject HTML scripts',
+    transpile = 'transpile file',
+  }
+}
 declare type Config = {
   activePort: number;
   bundleDir: string;

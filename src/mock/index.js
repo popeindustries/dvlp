@@ -10,6 +10,7 @@ const fs = require('fs');
 const { getProjectPath } = require('../utils/file.js');
 const { getUrl } = require('../utils/url.js');
 const { interceptClientRequest } = require('../utils/intercept.js');
+const Metrics = require('../utils/metrics.js');
 const mime = require('mime');
 const path = require('path');
 const send = require('send');
@@ -261,7 +262,7 @@ module.exports = class Mock {
       return mock;
     }
 
-    res.metrics.recordEvent('mock response');
+    res.metrics.recordEvent(Metrics.EVENT_NAMES.mock);
     res.mocked = true;
 
     if (mock.once) {
@@ -343,7 +344,7 @@ module.exports = class Mock {
       Date: new Date().toUTCString(),
     });
     res.end(content);
-    res.metrics.recordEvent('mock response');
+    res.metrics.recordEvent(Metrics.EVENT_NAMES.mock);
 
     return true;
   }

@@ -19,9 +19,10 @@ const {
 const { warn, WARN_BARE_IMPORT } = require('./log.js');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:patch');
-const { filePathToUrl } = require('../utils/url.js');
+const { filePathToUrl } = require('./url.js');
+const Metrics = require('./metrics.js');
 const path = require('path');
-const { performance } = require('perf_hooks');
+const { parse } = require('es-module-lexer');
 const { resolve } = require('../resolver/index.js');
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
@@ -163,7 +164,7 @@ function enableCrossOriginHeader(res) {
  * @returns { string }
  */
 function injectScripts(res, scripts, html) {
-  res.metrics.recordEvent('inject HTML scripts');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.scripts);
 
   const { footer, header } = scripts;
 
@@ -179,7 +180,7 @@ function injectScripts(res, scripts, html) {
     );
   }
 
-  res.metrics.recordEvent('inject HTML scripts');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.scripts);
   return html;
 }
 
@@ -194,7 +195,7 @@ function injectScripts(res, scripts, html) {
  * @returns { string }
  */
 function injectCSPHeader(res, urls, hashes, key, value) {
-  res.metrics.recordEvent('inject CSP header');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
   const lcKey = key.toLowerCase();
 
   if (
@@ -236,13 +237,13 @@ function injectCSPHeader(res, urls, hashes, key, value) {
     }, '');
   }
 
-  res.metrics.recordEvent('inject CSP header');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
 
   return value;
 }
 
 /**
- * Rewrite bare import references in 'data'
+ * Rewrite bare import references in 'code'
  *
  * @param { Res } res
  * @param { string } filePath
@@ -253,21 +254,114 @@ function injectCSPHeader(res, urls, hashes, key, value) {
 function rewriteImports(res, filePath, rollupConfigPath, code) {
   res.metrics.recordEvent('rewrite JS imports');
 
-  const projectFilePath = getProjectPath(filePath);
-  /** @type { {[key: string]: string} } */
-  const rewritten = {};
-  const start = performance.now();
-  let match;
-
-  // Retrieve original source path from bundled file to allow reference back to correct node_modules
+  // Retrieve original source path from bundled file
+  // to allow reference back to correct node_modules file
   if (isModuleBundlerFilePath(filePath)) {
     filePath = parseOriginalSourcePath(code);
   }
 
+  code =
+    process.env.DVLP_IMPORTS_PARSE != null
+      ? rewriteImportsParse(filePath, rollupConfigPath, code)
+      : rewriteImportsRegexp(filePath, rollupConfigPath, code);
+
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
+  return code;
+}
+
+/**
+ * Rewrite bare import references in 'code' with es-module-lexer
+ *
+ * @param { string } filePath
+ * @param { string } [rollupConfigPath]
+ * @param { string } code
+ * @returns { string }
+ */
+function rewriteImportsParse(filePath, rollupConfigPath, code) {
+  try {
+    const projectFilePath = getProjectPath(filePath);
+    const [imports] = parse(code);
+
+    if (imports.length > 0) {
+      // Track length delta between 'id' and 'newId' to adjust
+      // parsed indexes as we substitue during iteration
+      let offset = 0;
+
+      for (const imprt of imports) {
+        const id = code.substring(offset + imprt.s, offset + imprt.e);
+        const importPath = resolve(id, getAbsoluteProjectPath(filePath));
+
+        if (importPath) {
+          let newId = '';
+
+          // Bundle if in node_modules and not an es module
+          if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
+            const resolvedId = resolveModuleId(id, importPath);
+
+            // Trigger bundling in background while waiting for eventual request
+            bundle(resolvedId, rollupConfigPath, id, importPath);
+            newId = `/${path.join(config.bundleDirName, resolvedId)}`;
+            warn(WARN_BARE_IMPORT, id);
+          } else {
+            // Don't rewrite if no change after resolving
+            newId =
+              isRelativeFilePath(id) &&
+              path.join(path.dirname(filePath), id) === importPath
+                ? id
+                : importPath;
+          }
+
+          newId = filePathToUrl(newId);
+
+          if (newId !== id) {
+            debug(`rewrote import id from "${id}" to "${newId}"`);
+            const context = code.substring(
+              offset + imprt.ss,
+              offset + imprt.se,
+            );
+            const pre = code.substring(offset + imprt.ss, offset + imprt.s);
+            const post = code.substring(offset + imprt.e, offset + imprt.se);
+            const newContext = `${pre}${newId}${post}`;
+            code = code.replace(
+              context,
+              // Escape '$' to avoid special replacement patterns
+              newContext.replace(/\$/g, '$$$'),
+            );
+            offset += newId.length - id.length;
+          }
+        } else {
+          warn(
+            `⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`,
+          );
+        }
+      }
+    } else {
+      debug(`no imports to rewrite in "${projectFilePath}"`);
+    }
+  } catch (err) {
+    // ignore error
+  }
+
+  return code;
+}
+
+/**
+ * Rewrite bare import references in 'code' with regexp
+ *
+ * @param { string } filePath
+ * @param { string } [rollupConfigPath]
+ * @param { string } code
+ * @returns { string }
+ */
+function rewriteImportsRegexp(filePath, rollupConfigPath, code) {
+  const projectFilePath = getProjectPath(filePath);
+  /** @type { {[key: string]: string} } */
+  const rewritten = {};
+  let match;
+
   RE_IMPORT.lastIndex = 0;
   if (!RE_IMPORT.test(code)) {
     debug(`no imports to rewrite in "${projectFilePath}"`);
-    res.metrics.recordEvent('rewrite JS imports');
     return code;
   }
 
@@ -314,14 +408,6 @@ function rewriteImports(res, filePath, rollupConfigPath, code) {
       rewritten[importString].replace(/\$/g, '$$$'),
     );
   }
-
-  debug(
-    `rewrote "${projectFilePath}" imports in ${
-      Math.floor((performance.now() - start) * 100) / 100
-    }ms`,
-  );
-
-  res.metrics.recordEvent('rewrite JS imports');
 
   return code;
 }
