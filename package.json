@@ -22,7 +22,6 @@
     "debug": "^4.1.1",
     "es-module-lexer": "^0.3.18",
     "faye-websocket": "^0.11.3",
-    "get-port": "^5.1.1",
     "glob": "^7.1.5",
     "is-module": "^1.0.0",
     "mime": "^2.4.5",

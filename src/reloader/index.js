@@ -5,7 +5,6 @@ const debug = require('debug')('dvlp:reload');
 const decorateWithServerDestroy = require('server-destroy');
 const { EventSource } = require('faye-websocket');
 const fs = require('fs');
-const getPort = require('get-port');
 const { getTypeFromPath } = require('../utils/file.js');
 const http = require('http');
 const { noisyInfo } = require('../utils/log.js');
@@ -16,7 +15,6 @@ const DEFAULT_CLIENT_CONFIG = {
   ping: 15,
   retry: 10,
 };
-const DEFAULT_PORT = 3529;
 const ENDPOINT = '/dvlpreload';
 
 const reloadClient =
@@ -29,13 +27,11 @@ const reloadClient =
  * @returns { Promise<Reloader> }
  */
 module.exports = async function reloadServer() {
-  const port = await getPort({
-    port: getPort.makeRange(DEFAULT_PORT, DEFAULT_PORT + 100),
-  });
-  const server = new ReloadServer(port);
-  const client = reloadClient.replace(/\$RELOAD_PORT/g, String(port));
+  const server = new ReloadServer();
 
   await server.start();
+
+  const client = reloadClient.replace(/\$RELOAD_PORT/g, String(server.port));
 
   return {
     client,
@@ -46,15 +42,11 @@ module.exports = async function reloadServer() {
 };
 
 class ReloadServer {
-  /**
-   * Constructor
-   *
-   * @param { number } port
-   */
-  constructor(port) {
+  constructor() {
     /** @type { Set<EventSource> } */
     this.clients = new Set();
-    this.port = port;
+    // Trigger random port number (reset after listen)
+    this.port = 0;
     this.server;
   }
 
@@ -90,7 +82,11 @@ class ReloadServer {
       this.server.timeout = this.server.keepAliveTimeout = 0;
       this.server.unref();
       this.server.on('error', reject);
-      this.server.on('listening', resolve);
+      this.server.on('listening', () => {
+        // @ts-ignore
+        this.port = this.server.address().port;
+        resolve();
+      });
 
       this.server.listen(this.port);
     });
