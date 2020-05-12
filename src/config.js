@@ -73,6 +73,7 @@ module.exports = {
       '.html',
       '.htm',
     ],
+    // Sync with utils/module.js
     js: ['.ts', '.tsx', '.mjs', '.jsx', '.js', '.json'],
   },
   latency: 50,

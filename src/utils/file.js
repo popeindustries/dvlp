@@ -5,7 +5,6 @@ const {
   isCssRequest,
   isHtmlRequest,
   isJsRequest,
-  isModule,
   isModuleBundlerFilePath,
   isNodeModuleFilePath,
 } = require('./is.js');
@@ -13,29 +12,17 @@ const {
   warn,
   WARN_MISSING_EXTENSION,
   WARN_PACKAGE_INDEX,
-  WARN_SERVER_TRANSPILE,
 } = require('./log.js');
-const { addHook } = require('pirates');
 const config = require('../config.js');
 const favicon = require('./favicon.js');
 const fs = require('fs');
 const glob = require('glob');
-// Work around @rollup/plugin-commonjs dynamic require
-// @ts-ignore
-const loadModule = require('module')._load;
 const path = require('path');
-const sucrase = require('sucrase');
 const { URL } = require('url');
 
 const FILE_TYPES = ['html', 'js', 'css'];
-const IMPORT_EXTS = ['.js', '.mjs'];
-const IMPORT_EXTS_TRANSPILER = ['.js', '.jsx', '.mjs', '.ts', '.tsx'];
 const RE_GLOB = /[*[{]/;
-const RE_TRANSPILER_HANDLES_SERVER = /\(\s?[a-zA-Z]+,\s?[a-zA-Z]+\s?\)/;
 const RE_SEPARATOR = /[,;]\s?|\s/g;
-
-/** @type { () => void } */
-let revertHook;
 
 module.exports = {
   exists,
@@ -46,7 +33,6 @@ module.exports = {
   getProjectPath,
   getTypeFromPath,
   getTypeFromRequest,
-  importModule,
   resolveRealFilePath,
 };
 
@@ -156,61 +142,6 @@ function find(req, { directories = config.directories, type } = {}) {
   }
 
   return filePath;
-}
-
-/**
- * Import esm/cjs module, transpiling if necessary (via require hook)
- *
- * @param { string } modulePath
- * @param { Transpiler } [transpiler]
- * @returns { any }
- */
-function importModule(modulePath, transpiler) {
-  if (revertHook !== undefined) {
-    revertHook();
-  }
-
-  revertHook = addHook(
-    (code, filePath) => {
-      // Determine if transpiler supports transpiling server modules by checking number of arguments (filePath, isServer) handled
-      if (
-        transpiler !== undefined &&
-        RE_TRANSPILER_HANDLES_SERVER.test(transpiler.toString())
-      ) {
-        const transpiled = transpiler(filePath, true);
-
-        if (transpiled !== undefined) {
-          // Ignore async
-          if (transpiled instanceof Promise) {
-            warn(WARN_SERVER_TRANSPILE);
-          } else {
-            code = transpiled;
-          }
-        }
-      }
-
-      if (!isModule(code)) {
-        return code;
-      }
-
-      return sucrase.transform(code, {
-        transforms: ['imports'],
-        filePath,
-      }).code;
-    },
-    {
-      exts: transpiler ? IMPORT_EXTS_TRANSPILER : IMPORT_EXTS,
-      ignoreNodeModules: false,
-    },
-  );
-  let mod = loadModule(modulePath, module, false);
-
-  // Return default if only exported key
-  if ('default' in mod && Object.keys(mod).length === 1) {
-    mod = mod.default;
-  }
-
-  return mod;
 }
 
 /**

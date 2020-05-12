@@ -2,8 +2,6 @@
 
 const config = require('../config.js');
 const fs = require('fs');
-// @ts-ignore
-const isModuleLib = require('is-module');
 const path = require('path');
 const util = require('util');
 
@@ -30,7 +28,6 @@ module.exports = {
   isJsonFilePath,
   isLocalhost,
   isNodeModuleFilePath,
-  isModule,
   isModuleBundlerFilePath,
   isProjectFilePath,
   isPromise,
@@ -186,19 +183,6 @@ function isNodeModuleFilePath(filePath) {
   } catch (err) {
     return true;
   }
-}
-
-/**
- * Determine if filePath or code is es module
- *
- * @param { string } filePathOrCode
- * @returns { boolean }
- */
-function isModule(filePathOrCode) {
-  if (isJsFilePath(filePathOrCode)) {
-    filePathOrCode = fs.readFileSync(filePathOrCode, 'utf8');
-  }
-  return isModuleLib(filePathOrCode);
 }
 
 /**

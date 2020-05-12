@@ -13,10 +13,6 @@ const mockClient = terser
   .minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'))
   .code.replace(/(["\\])/g, '\\$1');
 
-function external(id) {
-  return /^[^./\0]/.test(id);
-}
-
 fs.writeFileSync(
   path.resolve('dvlp.d.ts'),
   fs
@@ -26,7 +22,7 @@ fs.writeFileSync(
 
 module.exports = [
   {
-    external,
+    external: (id) => /^[^./\0]/.test(id),
     input: './src/bundler/bundle-worker.js',
     plugins: [commonjs(), resolve(), json()],
     output: {
@@ -35,7 +31,7 @@ module.exports = [
     },
   },
   {
-    external,
+    external: (id) => id.includes('bundle-worker') || /^[^./\0]/.test(id),
     input: './src/index.js',
     plugins: [
       replace({
@@ -50,6 +46,9 @@ module.exports = [
       exports: 'named',
       file: 'dvlp.js',
       format: 'cjs',
+      paths: {
+        [path.resolve('src/bundler/bundle-worker.js')]: './bundle-worker.js',
+      },
     },
   },
 ];

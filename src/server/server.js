@@ -9,7 +9,6 @@ const {
   find,
   getProjectPath,
   getTypeFromRequest,
-  importModule,
 } = require('../utils/file.js');
 const {
   interceptFileRead,
@@ -33,6 +32,7 @@ const createFileServer = require('./file-server.js');
 const debug = require('debug')('dvlp:server');
 const fs = require('fs');
 const http = require('http');
+const { importModule } = require('../utils/module.js');
 const Mock = require('../mock/index.js');
 // Work around @rollup/plugin-commonjs require.cache
 // @ts-ignore

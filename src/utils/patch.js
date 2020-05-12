@@ -12,7 +12,6 @@ const {
   isHtmlRequest,
   isJsRequest,
   isNodeModuleFilePath,
-  isModule,
   isModuleBundlerFilePath,
   isRelativeFilePath,
 } = require('./is.js');
@@ -20,6 +19,7 @@ const { warn, WARN_BARE_IMPORT } = require('./log.js');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:patch');
 const { filePathToUrl } = require('./url.js');
+const { isModule } = require('./module.js');
 const Metrics = require('./metrics.js');
 const path = require('path');
 const { parse } = require('es-module-lexer');

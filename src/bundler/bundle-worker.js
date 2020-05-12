@@ -8,11 +8,10 @@ const {
   Worker,
   workerData,
 } = require('worker_threads');
-const { error } = require('../utils/log.js');
 const {
   getDefaultRollupConfig,
 } = require('../bundler/default-rollup-config.js');
-const { importModule } = require('../utils/file.js');
+const { importModule } = require('../utils/module.js');
 const { rollup } = require('rollup');
 
 class BundleWorker {
@@ -25,15 +24,10 @@ class BundleWorker {
   constructor(threaded, rollupConfigPath) {
     const defaultConfig = getDefaultRollupConfig();
 
-    try {
-      this.rollupConfig = rollupConfigPath
-        ? mergeRollupConfig(defaultConfig, importModule(rollupConfigPath))
-        : defaultConfig;
-      this.worker;
-    } catch (err) {
-      error(`error loading custom Rollup config "${rollupConfigPath}"`);
-      this.rollupConfig = defaultConfig;
-    }
+    this.rollupConfig = rollupConfigPath
+      ? mergeRollupConfig(defaultConfig, importModule(rollupConfigPath))
+      : defaultConfig;
+    this.worker;
 
     if (threaded && isMainThread) {
       // Load this file in Worker thread, passing `rollupConfigPath` as data
