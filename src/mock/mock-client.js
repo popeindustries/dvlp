@@ -253,7 +253,7 @@
       if (reroute) {
         url.host = location.host;
         href = url.href;
-      } else if (networkDisabled && url.pathname !== 'dvlpreload') {
+      } else if (networkDisabled && url.pathname !== '/dvlpreload') {
         throw Error('network connections disabled. Unable to request ' + href);
       }
     }
