@@ -84,7 +84,7 @@ const RE_JS = /\.jsx?$/;
 const RE_SASS = /\.s[ac]ss$/;
 
 /**
- * Transpile server and client files
+ * Transpile server and browser files
  *
  * @param { string } filePath
  * @param { boolean } isServer
@@ -126,7 +126,7 @@ In order to keep things snappy, **dvlp** will cache transpiled content and only 
 
 ### Mocking
 
-When developing locally, it's often useful to mock responses for requests made by your server or client application, especially when working with an external API. **dvlp** lets you quickly and easily mock endpoints by intercepting requests that match those registered with the `-m, --mock` flag.
+When developing locally, it's often useful to mock responses for requests made by your server or browser application, especially when working with an external API. **dvlp** lets you quickly and easily mock endpoints by intercepting requests that match those registered with the `-m, --mock` flag.
 
 <details>
 
@@ -351,12 +351,38 @@ Once registered, mocked stream events may be triggerd from your browser's consol
 dvlp.pushEvent('ws://www.somesocket.com/stream', 'hello Ernie');
 ```
 
-See the full documentation by writing `dvlp.help` and `dvlp.pushEvent.help` in your browser's console:
-
-![dvlp.help](docs/dvlp.help.png)
-![dvlp.pushEvent.help](docs/dvlp.pushEvent.help.png)
-
 </details>
+
+#### Mocking in the browser
+
+All mocks registered with the `-m, --mock` flag are also enabled by default in the browser. In addition, similar to the [`testServer` API](https://github.com/popeindustries/dvlp#testserveroptions-promisetestserver), you can register mocks programatically:
+
+```js
+import { testBrowser } from 'dvlp';
+
+describe('some test', () => {
+  before(() => {
+    testBrowser.disableNetwork();
+  });
+  after(() => {
+    testBrowser.enableNetwork();
+  });
+
+  it('should fetch mock data', async () => {
+    const href = 'https://www.google.com';
+    testBrowser.mockResponse(
+      href,
+      (req, res) => {
+        res.writeHead(500);
+        res.end('error');
+      },
+      true,
+    );
+    const res = await fetch(href);
+    assert.equal(res.status, 500);
+  });
+});
+```
 
 ### Bundling
 
@@ -476,7 +502,7 @@ const res = await fetch('http://www.someapi.com/v1/id/101010');
 console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 ```
 
-- **`mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMock: () => void): () => void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
+- **`mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): () => void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
 
 ```js
 server.mockResponse(
@@ -560,3 +586,21 @@ await fetch('https://github.com/popeindustries/dvlp');
 ### `testServer.enableNetwork(): void`
 
 Re-enables all previously disabled external network requests for the current Node.js process.
+
+## JS API (browser)
+
+#### `testBrowser.mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): () => void`
+
+Add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
+
+#### `testBrowser.pushEvent(stream: string|object, event: string|object’):void`
+
+Push data to WebSocket/EventSource clients. A string passed as 'event' will be handled as a named mock push event (see [mocking](#mocking)).
+
+#### `testBrowser.disableNetwork(rerouteAllRequests: boolean): void`
+
+Disable all network requests with origin that is not `localhost`. Prevents all external AJAX/Fetch/EventSource/WebSocket requests originating from the current browser window. If `rerouteAllRequests` is set to `true`, all external requests will be re-routed to the running **dvlp** service.
+
+#### `testServer.enableNetwork(): void`
+
+Re-enables all previously disabled requests originating from the current browser window.
