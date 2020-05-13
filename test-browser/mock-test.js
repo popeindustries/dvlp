@@ -122,6 +122,36 @@ describe('Mock', function () {
       xhr.open('GET', 'http://www.google.com/bar');
       xhr.send();
     });
+    it('should respond to locally mocked AJAX request with ignoreSearch=true', function (done) {
+      window.dvlp.mockResponse(
+        { url: 'http://www.google.com/bar', ignoreSearch: true },
+        { body: { name: 'bar' } },
+        true,
+      );
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        const json = JSON.parse(xhr.response);
+        expect(json).to.eql({ name: 'bar' });
+        done();
+      };
+      xhr.open('GET', 'http://www.google.com/bar?foo=1');
+      xhr.send();
+    });
+    it('should respond to locally mocked AJAX request with search', function (done) {
+      window.dvlp.mockResponse(
+        'http://www.google.com/bar?foo=1',
+        { body: { name: 'bar' } },
+        true,
+      );
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        const json = JSON.parse(xhr.response);
+        expect(json).to.eql({ name: 'bar' });
+        done();
+      };
+      xhr.open('GET', 'http://www.google.com/bar?foo=1');
+      xhr.send();
+    });
   });
 
   if (typeof fetch !== 'undefined') {
