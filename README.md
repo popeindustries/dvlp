@@ -353,9 +353,11 @@ dvlp.pushEvent('ws://www.somesocket.com/stream', 'hello Ernie');
 
 </details>
 
-#### Mocking in the browser
+<details>
 
-All mocks registered with the `-m, --mock` flag are also enabled by default in the browser. In addition, similar to the [`testServer` API](https://github.com/popeindustries/dvlp#testserveroptions-promisetestserver), you can register mocks programatically:
+<summary>Mocking in the browser</summary>
+
+All mocks registered with the `-m, --mock` flag are also enabled by default in the browser. In addition, similar to the [`testServer`](https://github.com/popeindustries/dvlp#testserveroptions-promisetestserver), you can register mocks programatically:
 
 ```js
 import { testBrowser } from 'dvlp';
@@ -383,6 +385,8 @@ describe('some test', () => {
   });
 });
 ```
+
+</details>
 
 ### Bundling
 
