@@ -33,6 +33,12 @@ declare module 'permessage-deflate' {
   export = deflate;
 }
 
+declare module 'es-module-lexer' {
+  function parse(
+    code: string,
+  ): Array<Array<{ e: number; s: number; se: number; ss: number }>>;
+}
+
 declare type Req = import('http').IncomingMessage & {
   filePath: string;
   type: string;
@@ -210,7 +216,7 @@ declare type MockStreamData = {
   events: { [name: string]: Array<MockStreamEventData> };
 };
 
-declare class MockInstance {
+declare class Mock {
   cache: Set<MockResponseData | MockStreamData>;
   client: string;
 
@@ -230,7 +236,7 @@ declare class MockInstance {
     href: string,
     req?: Req,
     res?: Res,
-  ): boolean | MockResponseData | undefined;
+  ): boolean | MockResponseData | undefined | void;
   matchPushEvent(
     stream: string | MockPushStream,
     name: string,
@@ -396,10 +402,10 @@ declare interface PushClient {
   webroot?: string;
 };
 
-declare class TestServerInstance {
+declare class TestServer {
   latency: number;
   port: number;
-  mocks: MockInstance;
+  mocks: Mock;
   webroot: string;
 
   constructor(options: TestServerOptions);
@@ -438,7 +444,7 @@ declare class TestServerInstance {
 
 /* export */ declare function testServer(
   options: TestServerOptions,
-): Promise<TestServerInstance>;
+): Promise<TestServer>;
 
 /* export */ declare namespace testServer {
   /**

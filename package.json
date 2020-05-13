@@ -59,7 +59,7 @@
     "react": "^16.13.1",
     "sass": "^1.26.5",
     "terser": "^4.6.13",
-    "typescript": "^3.8.3"
+    "typescript": "^3.9.2"
   },
   "engines": {
     "node": ">=12"

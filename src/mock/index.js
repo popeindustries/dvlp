@@ -23,7 +23,6 @@ module.exports = class Mock {
   /**
    * Constructor
    *
-   * @implements { MockInstance }
    * @param { string | Array<string> } [filePaths]
    */
   constructor(filePaths) {
@@ -36,10 +35,6 @@ module.exports = class Mock {
     if (filePaths) {
       this.load(filePaths);
     }
-
-    // Until tsc adds @implements support, assert that Mock is MockInstance.
-    /** @type { MockInstance } */
-    const mock = this; // eslint-disable-line no-unused-vars
   }
 
   /**
@@ -249,7 +244,7 @@ module.exports = class Mock {
    * @param { string } href
    * @param { Req } [req]
    * @param { Res } [res]
-   * @returns { boolean | MockResponseData | undefined }
+   * @returns { boolean | MockResponseData | undefined | void }
    */
   matchResponse(href, req, res) {
     const mock = this.getMockData(href);

@@ -20,7 +20,7 @@ const { URL } = require('url');
 const WebSocket = require('faye-websocket');
 
 const { EventSource } = WebSocket;
-/** @type { Set<TestServerInstance> } */
+/** @type { Set<TestServer> } */
 const instances = new Set();
 let reroute = false;
 let networkDisabled = false;
@@ -31,12 +31,11 @@ let uninterceptClientRequest;
  * Create test server
  *
  * @param { TestServerOptions } [options]
- * @returns { Promise<TestServerInstance> }
+ * @returns { Promise<TestServer> }
  */
 module.exports = async function testServerFactory(options) {
   enableRequestIntercept();
 
-  /** @type { TestServerInstance } */
   const server = new TestServer(options || {});
 
   // @ts-ignore: private
@@ -143,7 +142,6 @@ class TestServer {
   /**
    * Constructor
    *
-   * @implements { TestServerInstance }
    * @param { TestServerOptions } options
    */
   constructor(options) {
@@ -155,16 +153,11 @@ class TestServer {
     } = options;
 
     this.latency = latency;
-    /** @type { MockInstance } */
     this.mocks = new Mock();
     this.webroot = webroot;
     this._autorespond = autorespond;
     this.port = port;
     this._server = null;
-
-    // Until tsc adds @implements support, assert that Mock is MockInstance.
-    /** @type { TestServerInstance } */
-    const server = this; // eslint-disable-line no-unused-vars
   }
 
   /**
