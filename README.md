@@ -447,7 +447,7 @@ $ DEBUG=dvlp* npm run dev
 
 ## JS API
 
-### `server(filePath: string|[string]|() => void, [options]): Promise<{ destroy: () => void }>`
+#### - `server(filePath: string|[string]|() => void, [options]): Promise<{ destroy: () => void }>`
 
 Serve files at `filePath`, starting static file server if one or more directories, or app server if a single file or function (which starts an application server when imported/called).
 
@@ -464,7 +464,7 @@ const { server } = require('dvlp');
 const appServer = await server('path/to/app.js', { port: 8080 });
 ```
 
-### `testServer([options]): Promise<TestServer>`
+#### - `testServer([options]): Promise<TestServer>`
 
 Create a server for handling network requests during testing.
 
@@ -477,7 +477,7 @@ Create a server for handling network requests during testing.
 
 ```js
 const { testServer } = require('dvlp');
-const server = await testServer({ port: 8080, latency: 20, webroot: 'src' });
+const mockApi = await testServer({ port: 8080, latency: 20, webroot: 'src' });
 ```
 
 Returns a **`TestServer`** instance with the following methods:
@@ -501,7 +501,7 @@ Returns a **`TestServer`** instance with the following methods:
 ```
 
 ```js
-server.loadMockFiles('path/to/mock/101010.json');
+mockApi.loadMockFiles('path/to/mock/101010.json');
 const res = await fetch('http://www.someapi.com/v1/id/101010');
 console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 ```
@@ -509,7 +509,7 @@ console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 - **`mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): () => void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
 
 ```js
-server.mockResponse(
+mockApi.mockResponse(
   '/api/user/1234',
   {
     body: {
@@ -526,7 +526,7 @@ console.log(await res.json()); // => { id: "1234", name: "bob" }
 Or pass a response handler:
 
 ```js
-const removeMock = server.mockResponse(
+const removeMock = mockApi.mockResponse(
   '/api/user/1234',
   (req, res) => {
     res.writeHead(200, {
@@ -544,7 +544,7 @@ removeMock();
 - **`mockPushEvents(stream: string|object, events: object|[object]): () => void`** add one or more mock `events` for a WebSocket/EventSource `stream` (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
 
 ```js
-const removeMock = server.mockPushEvents('ws://www.somesocket.com/stream', [
+const removeMock = mockApi.mockPushEvents('ws://www.somesocket.com/stream', [
   {
     name: 'hi',
     message: 'hi!',
@@ -561,10 +561,10 @@ ws.addEventListener('message', (event) => {
 });
 ```
 
--**`pushEvent(stream: string|object, event: string|object’):void`** push data to WebSocket/EventSource clients. A string passed as 'event' will be handled as a named mock push event (see [mocking](#mocking))
+- **`pushEvent(stream: string|object, event: string|object’):void`** push data to WebSocket/EventSource clients. A string passed as 'event' will be handled as a named mock push event (see [mocking](#mocking))
 
 ```js
-server.pushEvent('ws://www.somesocket.com/stream', 'so scary');
+mockApi.pushEvent('ws://www.somesocket.com/stream', 'so scary');
 ```
 
 - **`destroy(): Promise<void>`** stop and clean up running server
@@ -577,7 +577,7 @@ In addition, `testServer` supports the following special query parameters:
 - **`maxage=value`** configure `Cache-Control: public, max-age={value}` cache header (`fetch('http://localhost:3333/foo.js?maxage=10')`)
 - **`hang`** hold connection open without responding (`fetch('http://localhost:3333/foo.js?hang')`)
 
-### `testServer.disableNetwork(rerouteAllRequests: boolean): void`
+#### - `testServer.disableNetwork(rerouteAllRequests: boolean): void`
 
 Disable all network requests with origin that is not `localhost`. Prevents all external network requests for the current Node.js process. If `rerouteAllRequests` is set to `true`, all external requests will be re-routed to the current running server.
 
@@ -587,24 +587,50 @@ await fetch('https://github.com/popeindustries/dvlp');
 // => Error "network connections disabled"
 ```
 
-### `testServer.enableNetwork(): void`
+#### - `testServer.enableNetwork(): void`
 
 Re-enables all previously disabled external network requests for the current Node.js process.
 
 ## JS API (browser)
 
-#### `testBrowser.mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): () => void`
+#### - `testBrowser.mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): () => void`
 
 Add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
 
-#### `testBrowser.pushEvent(stream: string|object, event: string|object’):void`
+```js
+// Also available as "window.dvlp"
+import { testBrowser } from 'dvlp';
+
+testBrowser.mockResponse(
+  'http://localhost:8080/api/user/1234',
+  {
+    body: {
+      id: '1234',
+      name: 'bob',
+    },
+  },
+  true,
+);
+```
+
+#### - `testBrowser.pushEvent(stream: string|object, event: string|object’):void`
 
 Push data to WebSocket/EventSource clients. A string passed as 'event' will be handled as a named mock push event (see [mocking](#mocking)).
 
-#### `testBrowser.disableNetwork(rerouteAllRequests: boolean): void`
+```js
+testBrowser.pushEvent('ws://www.somesocket.com/stream', 'so scary');
+```
+
+#### - `testBrowser.disableNetwork(rerouteAllRequests: boolean): void`
 
 Disable all network requests with origin that is not `localhost`. Prevents all external AJAX/Fetch/EventSource/WebSocket requests originating from the current browser window. If `rerouteAllRequests` is set to `true`, all external requests will be re-routed to the running **dvlp** service.
 
-#### `testServer.enableNetwork(): void`
+```js
+testBrowser.disableNetwork();
+await fetch('https://github.com/popeindustries/dvlp');
+// => Error "network connections disabled"
+```
+
+#### - `testServer.enableNetwork(): void`
 
 Re-enables all previously disabled requests originating from the current browser window.
