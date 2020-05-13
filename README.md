@@ -21,7 +21,7 @@ In addition, when working with JS modules, **dvlp** will ensure that so-called _
 
 ### Bonus!
 
-**dvlp** also includes a [`testServer`](#testserveroptions-promisetestserver) for handling various network request scenarios (mocking, latency, errors, offline, etc.) during testing.
+**dvlp** also includes a [`testServer`](#--testserveroptions-promisetestserver) for handling various network request scenarios (mocking, latency, errors, offline, etc.) during testing.
 
 ## Installation
 
@@ -357,7 +357,7 @@ dvlp.pushEvent('ws://www.somesocket.com/stream', 'hello Ernie');
 
 <summary>Mocking in the browser</summary>
 
-All mocks registered with the `-m, --mock` flag are also enabled by default in the browser. In addition, similar to the [`testServer`](https://github.com/popeindustries/dvlp#testserveroptions-promisetestserver), you can register mocks programatically:
+All mocks registered with the `-m, --mock` flag are also enabled by default in the browser. In addition, similar to the [`testServer`](#--testserveroptions-promisetestserver), you can register mocks programatically:
 
 ```js
 import { testBrowser } from 'dvlp';
