@@ -378,7 +378,7 @@ declare interface PushClient {
 
 /* export */ declare function server(
   filePath: string | Array<string> | (() => void),
-  options: ServerOptions,
+  options?: ServerOptions,
 ): Promise<Server>;
 
 /* export */ declare type TestServerOptions = {
@@ -408,7 +408,7 @@ declare class TestServer {
   mocks: Mock;
   webroot: string;
 
-  constructor(options: TestServerOptions);
+  constructor(options?: TestServerOptions);
   /**
    * Load mock files at `filePath`
    */
