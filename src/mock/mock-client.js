@@ -208,6 +208,11 @@
    */
   function matchHref(href) {
     var url = getUrl(href);
+
+    if (url.pathname === '/dvlpreload') {
+      return [href];
+    }
+
     // Fix Edge URL.origin
     var origin =
       url.origin.indexOf(url.host) === -1 ? url.origin + url.host : url.origin;
@@ -247,13 +252,12 @@
         location.host +
         location.pathname +
         '?dvlpmock=' +
-        encodeURIComponent(href) +
-        (location.search ? '&' + location.search.slice(1) : '');
+        encodeURIComponent(url.href);
     } else if (location.host !== url.host) {
       if (reroute) {
         url.host = location.host;
         href = url.href;
-      } else if (networkDisabled && url.pathname !== '/dvlpreload') {
+      } else if (networkDisabled) {
         throw Error('network connections disabled. Unable to request ' + href);
       }
     }
