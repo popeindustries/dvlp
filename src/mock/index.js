@@ -569,6 +569,9 @@ function getUrlSegmentsForMatching(req, ignoreSearch) {
       pathname = pathname.replace(match[0], '');
     }
   }
+  if (pathname.endsWith('/')) {
+    pathname = pathname.slice(0, -1);
+  }
 
   return [
     url,
