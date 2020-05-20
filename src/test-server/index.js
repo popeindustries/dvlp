@@ -347,6 +347,13 @@ class TestServer {
   }
 
   /**
+   * Clear all mock data
+   */
+  clearMockFiles() {
+    this.mocks.clear();
+  }
+
+  /**
    * Stop running server
    *
    * @returns { Promise<void> }

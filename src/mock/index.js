@@ -414,10 +414,16 @@ module.exports = class Mock {
 
   /**
    * Clear all mock data
-   *
-   * @returns { void }
+   * @deprecated - use clear()
    */
   clean() {
+    this.clear();
+  }
+
+  /**
+   * Clear all mock data
+   */
+  clear() {
     this.cache.clear();
     this._uninterceptClientRequest && this._uninterceptClientRequest();
   }

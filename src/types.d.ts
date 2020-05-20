@@ -258,6 +258,8 @@ declare class Mock {
       | MockResponseData
       | MockStreamData,
   ): void;
+  clear(): void;
+  /** @deprecated */
   clean(): void;
 }
 
@@ -436,6 +438,10 @@ declare class TestServer {
    * A string passed as `event` will be handled as a named mock push event
    */
   pushEvent(stream: string | PushStream, event?: string | PushEvent): void;
+  /**
+   * Clear all mock data
+   */
+  clearMockFiles(): void;
   /**
    * Destroy server instance
    */
