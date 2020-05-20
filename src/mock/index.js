@@ -448,7 +448,8 @@ module.exports = class Mock {
   getMockData(req) {
     const url = getUrl(req);
 
-    for (const mock of this.cache) {
+    // Iterate in reverse insertion order (newer first)
+    for (const mock of Array.from(this.cache).reverse()) {
       if (
         !mock.originRegex.test(url.origin) ||
         (!mock.ignoreSearch &&
