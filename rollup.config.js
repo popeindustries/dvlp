@@ -5,6 +5,7 @@ const path = require('path');
 const replace = require('@rollup/plugin-replace');
 const resolve = require('@rollup/plugin-node-resolve').default;
 const terser = require('terser');
+const pkg = require('./package.json');
 
 const reloadClient = terser.minify(
   fs.readFileSync('src/reloader/reload-client.js', 'utf8'),
@@ -41,6 +42,7 @@ module.exports = [
       replace({
         'global.$RELOAD_CLIENT': `'${reloadClient}'`,
         'global.$MOCK_CLIENT': `"${mockClient}"`,
+        'global.$VERSION': `'${pkg.version}'`,
       }),
       commonjs(),
       resolve(),

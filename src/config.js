@@ -12,7 +12,9 @@ const JS_MIME_TYPES = {
 const TESTING = process.env.NODE_ENV === 'dvlptest';
 // Prevent parallel test runs from reading from same cache
 const DIR = `.dvlp${TESTING ? process.getuid() : ''}`;
-const VERSION = process.env.DVLP_VERSION;
+
+// @ts-ignore
+const VERSION = global.$VERSION;
 
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
 const bundleDir = path.resolve(bundleDirName);
