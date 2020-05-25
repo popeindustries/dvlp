@@ -3,7 +3,7 @@ const fs = require('fs');
 const json = require('@rollup/plugin-json');
 const path = require('path');
 const replace = require('@rollup/plugin-replace');
-const resolve = require('@rollup/plugin-node-resolve');
+const resolve = require('@rollup/plugin-node-resolve').default;
 const terser = require('terser');
 
 const reloadClient = terser.minify(
