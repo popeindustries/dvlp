@@ -15,7 +15,7 @@ const TESTING =
 const DIR = `.dvlp${TESTING ? process.getuid() : ''}`;
 
 // @ts-ignore
-const VERSION = global.$VERSION;
+const VERSION = global.$VERSION || 'dev';
 
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
 const bundleDir = path.resolve(bundleDirName);
