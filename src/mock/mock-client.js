@@ -25,33 +25,43 @@
     href = hrefAndMock[0];
     var mockData = hrefAndMock[1];
 
-    // Handle mock registered in browser
-    if (mockData && mockData.response) {
-      var xhr = this;
-      var mockResponse = resolveMockResponse(mockData);
+    if (mockData) {
+      // Handle mock registered in browser
+      if (mockData.response) {
+        var xhr = this;
+        var mockResponse = resolveMockResponse(mockData);
 
-      this.send = function send() {
-        // Hang
-        if (mockResponse.status === 0) {
-          return;
-        }
+        this.send = function send() {
+          // Hang
+          if (mockResponse.status === 0) {
+            return;
+          }
 
-        Object.defineProperties(xhr, {
-          response: {
-            get: function () {
-              return xhr.responseType === 'json'
-                ? mockResponse.body
-                : JSON.stringify(mockResponse.body);
+          Object.defineProperties(xhr, {
+            response: {
+              get: function () {
+                if (mockData.callback) {
+                  setTimeout(mockData.callback, 0);
+                }
+                return xhr.responseType === 'json'
+                  ? mockResponse.body
+                  : JSON.stringify(mockResponse.body);
+              },
             },
-          },
-          status: {
-            get: function () {
-              return mockResponse.status;
+            status: {
+              get: function () {
+                return mockResponse.status;
+              },
             },
-          },
+          });
+          xhr.onload();
+        };
+      } else if (mockData.callback) {
+        // Triggered on load/error/abort
+        this.addEventListener('loadend', function () {
+          mockData.callback();
         });
-        xhr.onload();
-      };
+      }
     }
 
     return originalXMLHttpRequestOpen.call(this, method, href);
@@ -65,27 +75,44 @@
           var href = hrefAndMock[0];
           var mockData = hrefAndMock[1];
 
-          // Handle mock registered in browser
-          if (mockData && mockData.response) {
-            var mockResponse = resolveMockResponse(mockData);
+          args[0] = href;
 
-            // Hang
-            if (mockResponse.status === 0) {
-              return new Promise(
-                function () {},
-                function () {},
-              );
+          if (mockData) {
+            // Handle mock registered in browser
+            if (mockData.response) {
+              var mockResponse = resolveMockResponse(mockData);
+
+              // Hang
+              if (mockResponse.status === 0) {
+                return new Promise(
+                  function () {},
+                  function () {},
+                );
+              }
+
+              var res = new Response(JSON.stringify(mockResponse.body), {
+                headers: mockResponse.headers,
+                status: mockResponse.status,
+              });
+
+              if (mockData.callback) {
+                setTimeout(mockData.callback, 0);
+              }
+
+              return Promise.resolve(res);
+            } else if (mockData.callback) {
+              return Reflect.apply(target, ctx, args)
+                .then(function (response) {
+                  setTimeout(mockData.callback, 0);
+                  return response;
+                })
+                .catch(function (err) {
+                  setTimeout(mockData.callback, 0);
+                  throw err;
+                });
             }
-
-            var res = new Response(JSON.stringify(mockResponse.body), {
-              headers: mockResponse.headers,
-              status: mockResponse.status,
-            });
-
-            return Promise.resolve(res);
           }
 
-          args[0] = href;
           return Reflect.apply(target, ctx, args);
         },
       });
@@ -239,10 +266,6 @@
     if (mockData) {
       if (mockData.once) {
         remove(mockData);
-      }
-      if (mockData.callback) {
-        // Ensure called after response, so delay if remote response
-        setTimeout(mockData.callback, mockData.response ? 10 : 60);
       }
       href =
         (RE_WEB_SOCKET_PROTOCOL.test(url.protocol)

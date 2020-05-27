@@ -12,6 +12,16 @@ describe('Mock', function () {
       xhr.open('GET', 'http://www.google.com/foo');
       xhr.send();
     });
+    it('should respond to mocked AJAX request using event listeners', function (done) {
+      const xhr = new XMLHttpRequest();
+      xhr.addEventListener('load', function () {
+        const json = JSON.parse(xhr.response);
+        expect(json).to.eql({ name: 'foo' });
+        done();
+      });
+      xhr.open('GET', 'http://www.google.com/foo');
+      xhr.send();
+    });
     it('should respond to locally mocked AJAX request', function (done) {
       window.dvlp.mockResponse(
         'http://www.google.com/bar',
@@ -86,6 +96,21 @@ describe('Mock', function () {
         done();
       }
       window.dvlp.enableNetwork();
+    });
+    it('should trigger callback when handling mocked AJAX request', function (done) {
+      window.dvlp.mockResponse(
+        'http://www.google.com/foo',
+        undefined,
+        true,
+        done,
+      );
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        const json = JSON.parse(xhr.response);
+        expect(json).to.eql({ name: 'foo' });
+      };
+      xhr.open('GET', 'http://www.google.com/foo');
+      xhr.send();
     });
     it('should trigger callback when handling locally mocked AJAX request', function (done) {
       window.dvlp.mockResponse(
@@ -243,6 +268,24 @@ describe('Mock', function () {
           done();
         }
         window.dvlp.enableNetwork();
+      });
+      it('trigger callback when handling mocked fetch request', function (done) {
+        var remove = window.dvlp.mockResponse(
+          'http://www.google.com/foo',
+          undefined,
+          false,
+          done,
+        );
+        expect(window.dvlp.cache).to.have.length(4);
+        fetch('http://www.google.com/foo', {
+          mode: 'cors',
+        }).then(function (res) {
+          res.json().then(function (json) {
+            expect(json).to.eql({ name: 'foo' });
+            remove();
+            expect(window.dvlp.cache).to.have.length(3);
+          });
+        });
       });
       it('trigger callback when handling locally mocked fetch request', function (done) {
         var remove = window.dvlp.mockResponse(
