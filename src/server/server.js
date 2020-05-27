@@ -289,9 +289,16 @@ module.exports = class DvlpServer {
             : res.transpiled
             ? ' transpiled '
             : ' ';
-          const msg = `${duration} handled${modifier}request for ${chalk.green(
-            getProjectPath(req.url),
-          )}`;
+          let url = getProjectPath(req.url);
+
+          if (res.mocked) {
+            // Decode query param and strip "?dvlpmock=" prefix
+            url = decodeURIComponent(url.slice(10));
+          }
+
+          const msg = `${duration} handled${chalk.italic(
+            modifier,
+          )}request for ${chalk.green(url)}`;
 
           res.mocked ? noisyInfo(msg) : info(msg);
         }
