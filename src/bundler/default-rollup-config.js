@@ -3,7 +3,12 @@
 const commonjsPlugin = require('@rollup/plugin-commonjs');
 const jsonPlugin = require('@rollup/plugin-json');
 const replacePlugin = require('@rollup/plugin-replace');
-const resolvePlugin = require('@rollup/plugin-node-resolve').default;
+let resolvePlugin = require('@rollup/plugin-node-resolve');
+
+if ('default' in resolvePlugin) {
+  // @ts-ignore
+  resolvePlugin = resolvePlugin.default;
+}
 
 const plugins = [
   // @ts-ignore
