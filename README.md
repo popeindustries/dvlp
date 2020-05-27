@@ -419,9 +419,6 @@ In the (rare) case you need to configure Rollup.js to work with the packages you
     }),
     jsonPlugin(),
     commonjsPlugin({
-      namedExports: {
-        react: [/* all the names */],
-      },
       sourceMap: false,
     }),
   ]
