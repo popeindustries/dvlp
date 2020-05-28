@@ -18,10 +18,9 @@ class BundleWorker {
   /**
    * Constructor
    *
-   * @param { boolean } threaded
    * @param { string } [rollupConfigPath]
    */
-  constructor(threaded, rollupConfigPath) {
+  constructor(rollupConfigPath) {
     const defaultConfig = getDefaultRollupConfig();
 
     this.rollupConfig = rollupConfigPath
@@ -29,7 +28,7 @@ class BundleWorker {
       : defaultConfig;
     this.worker;
 
-    if (threaded && isMainThread) {
+    if (isMainThread) {
       // Load this file in Worker thread, passing `rollupConfigPath` as data
       this.worker = new Worker(__filename, { workerData: rollupConfigPath });
     }
@@ -89,7 +88,7 @@ module.exports = BundleWorker;
 if (!isMainThread && parentPort) {
   /** @type { string | undefined } */
   const rollupConfigPath = workerData;
-  const bundleWorker = new BundleWorker(false, rollupConfigPath);
+  const bundleWorker = new BundleWorker(rollupConfigPath);
 
   parentPort.on('message', async (
     /** @type { BundleWorkerMessage } */ message,

@@ -437,11 +437,6 @@ All supported options are listed in the Rollup.js [documentation](https://rollup
 $ DEBUG=dvlp* npm run dev
 ```
 
-## Experimental
-
-- **Bundle modules in multiple, separate threads**: launch with `DVLP_BUNDLE_THREADS=true` to run module bundling operations in separate worker threads (default is `false`)
-- **Parse JS imports with es-module-lexer**: launch with `DVLP_IMPORTS_PARSE=true` to parse JS imports with an AST instead of the default RegExp (default is `false`)
-
 ## JS API
 
 #### - `server(filePath: string|[string]|() => void, [options]): Promise<{ destroy: () => void }>`

@@ -63,30 +63,4 @@ describe('bundle()', () => {
     expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
     expect(module).to.contain("import ms from 'ms';");
   });
-
-  describe('threaded', () => {
-    before(() => {
-      process.env.DVLP_BUNDLE_THREADS = true;
-    });
-    after(() => {
-      delete process.env.DVLP_BUNDLE_THREADS;
-    });
-
-    it('should bundle and return bundle filePath', async () => {
-      const filePath = await bundle(
-        resolveModuleId('lodash', resolve('lodash', path.resolve('index.js'))),
-      );
-      expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
-    });
-    it('should bundle with custom Rollup config', async () => {
-      const filePath = await bundle(
-        resolveModuleId('debug', resolve('debug', path.resolve('index.js'))),
-        path.resolve('test/fixtures/rollup.config.js'),
-        'debug',
-      );
-      const module = fs.readFileSync(filePath, 'utf8');
-      expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
-      expect(module).to.contain('/* this is a test */');
-    });
-  });
 });

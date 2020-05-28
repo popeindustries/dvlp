@@ -182,14 +182,10 @@ function doBundle(
  */
 function getWorkerInstance(rollupConfigPath) {
   if (!bundleWorkers.length) {
-    const threaded = process.env.DVLP_BUNDLE_THREADS !== undefined;
-
     for (let i = 0; i < threads; i++) {
-      bundleWorkers.push(new BundleWorker(threaded, rollupConfigPath));
+      bundleWorkers.push(new BundleWorker(rollupConfigPath));
     }
-    if (threaded) {
-      debug(`spawned ${threads} bundler workers`);
-    }
+    debug(`spawned ${threads} bundler workers`);
   }
 
   // Round robin

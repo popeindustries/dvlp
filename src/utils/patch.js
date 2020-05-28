@@ -26,7 +26,6 @@ const { parse } = require('es-module-lexer');
 const { resolve } = require('../resolver/index.js');
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
-const RE_IMPORT = /((?:(?:^|[});]\s*)import\b[^'"&;:-=()]+|\bexport\b[^'"&;:-=()]+\sfrom\s)['"])([^'"\n]+)(['"])/gm;
 const RE_NONCE_SHA = /nonce-|sha\d{3}-/;
 const RE_OPEN_HEAD_TAG = /<head>/i;
 
@@ -260,24 +259,6 @@ function rewriteImports(res, filePath, rollupConfigPath, code) {
     filePath = parseOriginalSourcePath(code);
   }
 
-  code =
-    process.env.DVLP_IMPORTS_PARSE != null
-      ? rewriteImportsParse(filePath, rollupConfigPath, code)
-      : rewriteImportsRegexp(filePath, rollupConfigPath, code);
-
-  res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
-  return code;
-}
-
-/**
- * Rewrite bare import references in 'code' with es-module-lexer
- *
- * @param { string } filePath
- * @param { string } [rollupConfigPath]
- * @param { string } code
- * @returns { string }
- */
-function rewriteImportsParse(filePath, rollupConfigPath, code) {
   try {
     const projectFilePath = getProjectPath(filePath);
     const [imports] = parse(code);
@@ -342,73 +323,7 @@ function rewriteImportsParse(filePath, rollupConfigPath, code) {
     // ignore error
   }
 
-  return code;
-}
-
-/**
- * Rewrite bare import references in 'code' with regexp
- *
- * @param { string } filePath
- * @param { string } [rollupConfigPath]
- * @param { string } code
- * @returns { string }
- */
-function rewriteImportsRegexp(filePath, rollupConfigPath, code) {
-  const projectFilePath = getProjectPath(filePath);
-  /** @type { {[key: string]: string} } */
-  const rewritten = {};
-  let match;
-
-  RE_IMPORT.lastIndex = 0;
-  if (!RE_IMPORT.test(code)) {
-    debug(`no imports to rewrite in "${projectFilePath}"`);
-    return code;
-  }
-
-  RE_IMPORT.lastIndex = 0;
-  while ((match = RE_IMPORT.exec(code))) {
-    const [context, pre, id, post] = match;
-    const importPath = resolve(id, getAbsoluteProjectPath(filePath));
-
-    if (importPath) {
-      let newId = '';
-
-      // Bundle if in node_modules and not an es module
-      if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
-        const resolvedId = resolveModuleId(id, importPath);
-
-        // Trigger bundling in background while waiting for eventual request
-        bundle(resolvedId, rollupConfigPath, id, importPath);
-        newId = `/${path.join(config.bundleDirName, resolvedId)}`;
-        warn(WARN_BARE_IMPORT, id);
-      } else {
-        // Don't rewrite if no change after resolving
-        newId =
-          isRelativeFilePath(id) &&
-          path.join(path.dirname(filePath), id) === importPath
-            ? id
-            : importPath;
-      }
-
-      newId = filePathToUrl(newId);
-
-      if (newId !== id) {
-        debug(`rewrote import id from "${id}" to "${newId}"`);
-        rewritten[context] = `${pre}${newId}${post}`;
-      }
-    } else {
-      warn(`⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`);
-    }
-  }
-
-  for (const importString in rewritten) {
-    code = code.replace(
-      importString,
-      // Escape '$' to avoid special replacement patterns
-      rewritten[importString].replace(/\$/g, '$$$'),
-    );
-  }
-
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
   return code;
 }
 
