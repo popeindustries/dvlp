@@ -61,6 +61,7 @@ if (TESTING || process.env.DVLP_LAUNCHER === 'cmd') {
  */
 module.exports = {
   activePort: port,
+  brokenNamedExportsPackages: ['react'],
   bundleDir,
   bundleDirName,
   directories: [],

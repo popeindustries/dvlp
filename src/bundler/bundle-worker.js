@@ -40,21 +40,25 @@ class BundleWorker {
    * @param { string } inputPath
    * @param { string } outputPath
    * @param { string } sourcePrefix
+   * @param { boolean } [fixNamedExports]
    */
-  async bundle(inputPath, outputPath, sourcePrefix) {
+  async bundle(inputPath, outputPath, sourcePrefix, fixNamedExports = false) {
     if (this.worker) {
       return new Promise((resolve, reject) => {
-        this.worker.postMessage({ inputPath, outputPath, sourcePrefix });
+        this.worker.postMessage({
+          inputPath,
+          outputPath,
+          sourcePrefix,
+          fixNamedExports,
+        });
         this.worker.once('message', (err) => {
           err ? reject(err) : resolve();
         });
       });
     }
 
-    const parsedOptions = parseRollupOptions(
-      sourcePrefix + inputPath,
-      this.rollupConfig,
-    );
+    const banner = sourcePrefix + inputPath;
+    const parsedOptions = parseRollupOptions(banner, this.rollupConfig);
     const inputOptions = {
       ...parsedOptions.input,
       input: inputPath,
@@ -93,10 +97,15 @@ if (!isMainThread && parentPort) {
   parentPort.on('message', async (
     /** @type { BundleWorkerMessage } */ message,
   ) => {
-    const { inputPath, outputPath, sourcePrefix } = message;
+    const { inputPath, outputPath, sourcePrefix, fixNamedExports } = message;
 
     try {
-      await bundleWorker.bundle(inputPath, outputPath, sourcePrefix);
+      await bundleWorker.bundle(
+        inputPath,
+        outputPath,
+        sourcePrefix,
+        fixNamedExports,
+      );
       parentPort.postMessage(false);
     } catch (err) {
       parentPort.postMessage(err);
@@ -105,7 +114,7 @@ if (!isMainThread && parentPort) {
 }
 
 /**
- * Merge user rollup-config with default
+ * Merge user rollup.config with default
  *
  * @param { RollupOptions } defaultConfig
  * @param { RollupOptions } newConfig

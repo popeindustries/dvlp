@@ -30,6 +30,13 @@ describe('bundle()', () => {
     );
     expect(filePath).to.equal(path.join(config.bundleDir, LODASH));
   });
+  it.only('should bundle and fix named exports', async () => {
+    const filePath = await bundle(
+      resolveModuleId('react', resolve('react', path.resolve('index.js'))),
+    );
+    const module = fs.readFileSync(filePath, 'utf8');
+    console.log(module);
+  });
   it('should return cached bundle filePath', async () => {
     await bundle(resolveModuleId('lodash', resolve('index.js', 'lodash')));
     const filePath = await bundle(

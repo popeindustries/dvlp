@@ -83,6 +83,7 @@ declare namespace Metrics {
 }
 declare type Config = {
   activePort: number;
+  brokenNamedExportsPackages: Array<string>;
   bundleDir: string;
   bundleDirName: string;
   directories: Array<string>;
@@ -148,6 +149,7 @@ declare type BundleWorkerMessage = {
   inputPath: string;
   outputPath: string;
   sourcePrefix: string;
+  fixNamedExports: boolean;
 };
 
 declare type Reloader = {
