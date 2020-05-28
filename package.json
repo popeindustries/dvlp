@@ -21,7 +21,7 @@
     "chokidar": "^3.1.0",
     "commander": "^5.0.0",
     "debug": "^4.1.1",
-    "es-module-lexer": "^0.3.19",
+    "es-module-lexer": "^0.3.20",
     "faye-websocket": "^0.11.3",
     "glob": "^7.1.5",
     "is-module": "^1.0.0",
@@ -30,7 +30,7 @@
     "permessage-deflate": "^0.1.7",
     "pirates": "^4.0.1",
     "rimraf": "^3.0.0",
-    "rollup": "^2.10.9",
+    "rollup": "^2.11.2",
     "send": "^0.17.1",
     "server-destroy": "^1.0.1",
     "sucrase": "^3.15.0"
