@@ -1,3 +1,7 @@
+declare type RollupOptions = import('rollup').RollupOptions;
+declare type RollupInputOptions = import('rollup').InputOptions;
+declare type RollupOutputOptions = import('rollup').OutputOptions;
+
 declare module 'server-destroy' {
   function destroy(server: import('http').Server): void;
   export = destroy;
@@ -83,7 +87,7 @@ declare namespace Metrics {
 }
 declare type Config = {
   activePort: number;
-  brokenNamedExportsPackages: Array<string>;
+  brokenNamedExportsPackages: Record<string, Array<string>>;
   bundleDir: string;
   bundleDirName: string;
   directories: Array<string>;
@@ -149,7 +153,7 @@ declare type BundleWorkerMessage = {
   inputPath: string;
   outputPath: string;
   sourcePrefix: string;
-  fixNamedExports: boolean;
+  namedExports: Array<string> | undefined;
 };
 
 declare type Reloader = {

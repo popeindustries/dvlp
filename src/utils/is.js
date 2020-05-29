@@ -213,7 +213,7 @@ function isProxy(obj) {
  * Determine if 'obj' is Promise instance
  *
  * @param { any } obj
- * @returns { obj is Promise }
+ * @returns { obj is Promise<T> }
  */
 function isPromise(obj) {
   if (HAS_UTIL_IS_PROXY) {

@@ -1,7 +1,5 @@
 'use strict';
 
-/** @typedef { import("rollup").RollupOptions } RollupOptions */
-
 const {
   isMainThread,
   parentPort,
@@ -13,6 +11,8 @@ const {
 } = require('../bundler/default-rollup-config.js');
 const { importModule } = require('../utils/module.js');
 const { rollup } = require('rollup');
+// @ts-ignore
+const virtual = require('@rollup/plugin-virtual');
 
 class BundleWorker {
   /**
@@ -40,16 +40,16 @@ class BundleWorker {
    * @param { string } inputPath
    * @param { string } outputPath
    * @param { string } sourcePrefix
-   * @param { boolean } [fixNamedExports]
+   * @param { Array<string> } [namedExports]
    */
-  async bundle(inputPath, outputPath, sourcePrefix, fixNamedExports = false) {
+  async bundle(inputPath, outputPath, sourcePrefix, namedExports) {
     if (this.worker) {
       return new Promise((resolve, reject) => {
         this.worker.postMessage({
           inputPath,
           outputPath,
           sourcePrefix,
-          fixNamedExports,
+          namedExports,
         });
         this.worker.once('message', (err) => {
           err ? reject(err) : resolve();
@@ -67,6 +67,17 @@ class BundleWorker {
       ...parsedOptions.output,
       file: outputPath,
     };
+
+    if (namedExports && inputOptions.plugins) {
+      inputOptions.plugins.unshift(
+        virtual({
+          entry: `import entry from '${inputPath}';
+        export default entry;
+        export {${namedExports.join(', ')}} from '${inputPath}';`,
+        }),
+      );
+      inputOptions.input = 'entry';
+    }
 
     const bundled = await rollup(inputOptions);
     await bundled.write(outputOptions);
@@ -97,14 +108,14 @@ if (!isMainThread && parentPort) {
   parentPort.on('message', async (
     /** @type { BundleWorkerMessage } */ message,
   ) => {
-    const { inputPath, outputPath, sourcePrefix, fixNamedExports } = message;
+    const { inputPath, outputPath, sourcePrefix, namedExports } = message;
 
     try {
       await bundleWorker.bundle(
         inputPath,
         outputPath,
         sourcePrefix,
-        fixNamedExports,
+        namedExports,
       );
       parentPort.postMessage(false);
     } catch (err) {
@@ -156,22 +167,30 @@ function mergeRollupConfig(defaultConfig, newConfig) {
  *
  * @param { string } banner
  * @param { RollupOptions } options
- * @returns { { input: object, output: object } }
+ * @returns { { input: RollupInputOptions, output: RollupOutputOptions } }
  */
 function parseRollupOptions(banner, options) {
   if (!options) {
     return { input: {}, output: { banner } };
   }
 
-  const { input, treeshake, output = {}, watch, ...inputOverride } = options;
-  // @ts-ignore
+  let { input, treeshake, output = {}, watch, ...inputOverride } = options;
+
+  if (Array.isArray(output)) {
+    output = output[0];
+  }
+
   const { file, format, sourcemap, ...outputOverride } = output;
 
   if ('banner' in outputOverride) {
     outputOverride.banner = banner + outputOverride.banner;
   } else {
-    // @ts-ignore
     outputOverride.banner = banner;
+  }
+
+  // Shallow copy plugins
+  if (inputOverride.plugins) {
+    inputOverride.plugins = [...inputOverride.plugins];
   }
 
   return { input: inputOverride, output: outputOverride };

@@ -133,7 +133,7 @@ function bundle(resolvedId, rollupConfigPath, originalId, inputPath) {
       inputPath,
       outputPath,
       rollupConfigPath,
-      originalId in config.brokenNamedExportsPackages,
+      config.brokenNamedExportsPackages[originalId],
     );
   }
 
@@ -148,7 +148,7 @@ function bundle(resolvedId, rollupConfigPath, originalId, inputPath) {
  * @param { string } inputPath
  * @param { string } outputPath
  * @param { string } [rollupConfigPath]
- * @param { boolean } [fixNamedExports]
+ * @param { Array<string> | undefined } [namedExports]
  * @returns { Promise<string> }
  */
 function doBundle(
@@ -157,10 +157,10 @@ function doBundle(
   inputPath,
   outputPath,
   rollupConfigPath,
-  fixNamedExports,
+  namedExports,
 ) {
   const pendingBundle = getWorkerInstance(rollupConfigPath)
-    .bundle(inputPath, outputPath, SOURCE_PREFIX, fixNamedExports)
+    .bundle(inputPath, outputPath, SOURCE_PREFIX, namedExports)
     .then(() => {
       cache.set(resolvedId, outputPath);
       return outputPath;
