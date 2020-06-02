@@ -251,6 +251,11 @@ describe('resolver', () => {
           ),
         ).to.equal(path.resolve('node_modules/@popeindustries/test/test.js'));
       });
+      it('should resolve a main file with self-referencing alias via "browser" hash', () => {
+        expect(resolve('alias', path.resolve('index.js'))).to.equal(
+          path.resolve('node_modules/alias/index.ts'),
+        );
+      });
       it('should resolve an aliased native module via a "browser" hash', () => {
         expect(
           resolve('net', path.resolve('node_modules/browser-hash/bar.js')),

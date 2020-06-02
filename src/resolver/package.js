@@ -66,8 +66,7 @@ function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
             if (path.extname(value) || isRelativeFilePath(value)) {
               value = find(value, findOptions);
             }
-
-            if (key !== undefined && value !== undefined) {
+            if (key !== undefined && value !== undefined && key !== value) {
               if (key === main) {
                 main = value;
               }
