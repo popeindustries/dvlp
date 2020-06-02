@@ -68,7 +68,7 @@ module.exports = {
   directories: [],
   // Ordered to trigger transpiling if necessary
   extensionsByType: {
-    css: ['.sass', '.scss', '.less', '.styl', '.stylus', '.css'],
+    css: ['.pcss', '.sass', '.scss', '.less', '.styl', '.stylus', '.css'],
     html: [
       '.nunjs',
       '.nunjucks',
@@ -87,6 +87,7 @@ module.exports = {
   testing: TESTING,
   typesByExtension: {
     '.css': 'css',
+    '.pcss': 'css',
     '.sass': 'css',
     '.scss': 'css',
     '.less': 'css',
