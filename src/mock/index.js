@@ -211,29 +211,31 @@ module.exports = class Mock {
       }
     }
 
+    const stringifiedCache = JSON.stringify(
+      Array.from(this.cache).map((mockData) => {
+        const data = {
+          href: mockData.url.href,
+          originRegex: mockData.originRegex.source,
+          pathRegex: mockData.pathRegex.source,
+          search: mockData.searchParams.toString(),
+          ignoreSearch: mockData.ignoreSearch,
+        };
+
+        if (isMockStreamData(mockData)) {
+          // @ts-ignore
+          data.events = Object.keys(mockData.events);
+        }
+
+        return data;
+      }),
+      undefined,
+      2,
+    );
+
     // Client mocking only relevant for loaded mocks
     this.client = mockClient.replace(
-      /\$MOCKS/g,
-      JSON.stringify(
-        Array.from(this.cache).map((mockData) => {
-          const data = {
-            href: mockData.url.href,
-            originRegex: mockData.originRegex.source,
-            pathRegex: mockData.pathRegex.source,
-            search: mockData.searchParams.toString(),
-            ignoreSearch: mockData.ignoreSearch,
-          };
-
-          if (isMockStreamData(mockData)) {
-            // @ts-ignore
-            data.events = Object.keys(mockData.events);
-          }
-
-          return data;
-        }),
-        undefined,
-        2,
-      ),
+      /cache\s?=\s?\[\]/g,
+      `cache=${stringifiedCache}`,
     );
   }
 

@@ -219,6 +219,12 @@ describe('mock', () => {
         '"pathRegex": "^\\\\/feed[\\\\/#\\\\?]?$"',
       );
     });
+    it('should prepare inlineable client string', () => {
+      mocks.load('test/fixtures/mock');
+      expect(mocks.client).to.include(
+        '"pathRegex": "^\\\\/1234\\\\.jpg[\\\\/#\\\\?]?$"',
+      );
+    });
   });
 
   describe('matchResponse()', () => {

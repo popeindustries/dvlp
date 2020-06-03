@@ -1,11 +1,15 @@
 // @ts-nocheck
 (function () {
+  if (window.dvlp) {
+    return;
+  }
+
   var RE_WEB_SOCKET_PROTOCOL = /wss?:/;
 
   var originalXMLHttpRequestOpen = window.XMLHttpRequest.prototype.open;
   var originalFetch = window.fetch;
   /** @type {Array<MockResponseData | MockStreamData>} */
-  var cache = $MOCKS.map(function (mockData) {
+  var cache = [].map(function (mockData) {
     mockData.originRegex = new RegExp(mockData.originRegex);
     mockData.pathRegex = new RegExp(mockData.pathRegex);
     return mockData;

@@ -11,7 +11,10 @@ const reloadClient = terser.minify(
   fs.readFileSync('src/reloader/reload-client.js', 'utf8'),
 ).code;
 const mockClient = terser
-  .minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'))
+  .minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
+    // Preserve 'cache' var for regex replacement
+    mangle: { reserved: ['cache'] },
+  })
   .code.replace(/(["\\])/g, '\\$1');
 
 fs.writeFileSync(
@@ -20,12 +23,15 @@ fs.writeFileSync(
     .readFileSync(path.resolve('src/types.d.ts'), 'utf8')
     .replace(/\/\*\s+export\s+\*\//g, 'export'),
 );
-fs.copyFileSync(
-  path.resolve('src/test-browser/index.js'),
-  path.resolve('dvlp-browser.js'),
-);
 
 module.exports = [
+  {
+    input: './src/test-browser/index.js',
+    output: {
+      file: 'dvlp-browser.js',
+      format: 'esm',
+    },
+  },
   {
     external: (id) => /^[^./\0]/.test(id),
     input: './src/bundler/bundle-worker.js',

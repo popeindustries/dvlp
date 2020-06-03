@@ -1,3 +1,5 @@
+import '../mock/mock-client.js';
+
 export const testBrowser = {
   /**
    * Disable all external network connections
