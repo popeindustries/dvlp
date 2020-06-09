@@ -292,8 +292,10 @@ module.exports = class DvlpServer {
           let url = getProjectPath(req.url);
 
           if (res.mocked) {
-            // Decode query param and strip "?dvlpmock=" prefix
-            url = decodeURIComponent(url.slice(10));
+            // Decode query param and strip "?dvlpmock=" prefix (sometimes double encoded if coming from client)
+            url = decodeURIComponent(
+              decodeURIComponent(url.slice(url.indexOf('?dvlpmock=') + 10)),
+            );
           }
 
           const msg = `${duration} handled${chalk.italic(
