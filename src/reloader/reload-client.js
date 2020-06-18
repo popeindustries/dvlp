@@ -4,7 +4,8 @@
     return;
   }
   var sse;
-  var retries;
+  var retries = 8;
+  var hostnames = ['localhost', location.hostname];
   var url = new URL('http://localhost');
   url.port = $RELOAD_PORT;
   url.pathname = '/dvlpreload';
@@ -13,11 +14,13 @@
   function connect() {
     sse = new EventSource(url.href);
     sse.onopen = function () {
-      retries = 5;
+      retries = 8;
     };
-    sse.onerror = function () {
+    sse.onerror = function (error) {
       sse.close();
       if (retries--) {
+        // Try with alternate hostname
+        url.hostname = hostnames[retries % 2];
         connect();
       }
     };
