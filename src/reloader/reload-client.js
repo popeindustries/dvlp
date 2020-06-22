@@ -6,7 +6,6 @@
   var sse;
   var retries = 4;
   var opened = false;
-  // var disconnected = false;
   var hostnames = ['localhost', location.hostname];
   var url = new URL('http://localhost');
   url.port = $RELOAD_PORT;
@@ -16,10 +15,13 @@
   function connect() {
     sse = new EventSource(url.href);
     sse.onopen = function () {
+      // Reconnected after server restart
+      if (opened) {
+        location.reload();
+      }
       opened = true;
     };
-    sse.onerror = function (error) {
-      console.log(error);
+    sse.onerror = function () {
       if (!opened) {
         if (retries-- >= 0) {
           sse.close();
@@ -27,8 +29,6 @@
           url.hostname = hostnames[retries % 2];
           connect();
         }
-        // } else {
-        // disconnected = true;
       }
     };
     sse.addEventListener('reload', function () {
