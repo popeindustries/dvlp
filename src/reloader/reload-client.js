@@ -5,7 +5,7 @@
   }
   var sse;
   var retries = 4;
-  var opened = false;
+  var connected = false;
   var hostnames = ['localhost', location.hostname];
   var url = new URL('http://localhost');
   url.port = $RELOAD_PORT;
@@ -15,14 +15,14 @@
   function connect() {
     sse = new EventSource(url.href);
     sse.onopen = function () {
-      // Reconnected after server restart
-      if (opened) {
+      // Force reload after server restart
+      if (connected) {
         location.reload();
       }
-      opened = true;
+      connected = true;
     };
     sse.onerror = function () {
-      if (!opened) {
+      if (!connected) {
         sse.close();
         if (retries-- >= 0) {
           // Try with alternate hostname
