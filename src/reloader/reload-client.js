@@ -23,8 +23,8 @@
     };
     sse.onerror = function () {
       if (!opened) {
+        sse.close();
         if (retries-- >= 0) {
-          sse.close();
           // Try with alternate hostname
           url.hostname = hostnames[retries % 2];
           connect();
