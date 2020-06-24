@@ -4,7 +4,8 @@
     return;
   }
   var sse;
-  var retries = 8;
+  var retries = 4;
+  var connected = false;
   var hostnames = ['localhost', location.hostname];
   var url = new URL('http://localhost');
   url.port = $RELOAD_PORT;
@@ -14,14 +15,20 @@
   function connect() {
     sse = new EventSource(url.href);
     sse.onopen = function () {
-      retries = 8;
+      // Force reload after server restart
+      if (connected) {
+        location.reload();
+      }
+      connected = true;
     };
-    sse.onerror = function (error) {
-      sse.close();
-      if (retries--) {
-        // Try with alternate hostname
-        url.hostname = hostnames[retries % 2];
-        connect();
+    sse.onerror = function () {
+      if (!connected) {
+        sse.close();
+        if (retries-- >= 0) {
+          // Try with alternate hostname
+          url.hostname = hostnames[retries % 2];
+          connect();
+        }
       }
     };
     sse.addEventListener('reload', function () {
