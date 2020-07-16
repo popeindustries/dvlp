@@ -65,9 +65,16 @@ function doResolve(id, fromDirPath) {
     return;
   }
 
+  const isIdRelative = isRelativeFilePath(id);
+
+  // Handle self-referential package reference
+  if (!isIdRelative && id.split('/')[0] === pkg.name) {
+    id = path.join(pkg.path, id.replace(pkg.name, '.'));
+  }
+
   /** @type { string | undefined } */
   let filePath = resolveAliasPath(
-    isRelativeFilePath(id) ? path.join(fromDirPath, id) : id,
+    isIdRelative ? path.join(fromDirPath, id) : id,
     pkg,
   );
 
