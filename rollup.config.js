@@ -37,6 +37,7 @@ module.exports = [
     input: './src/bundler/bundle-worker.js',
     plugins: [commonjs(), resolve(), json()],
     output: {
+      exports: 'default',
       file: 'bundle-worker.js',
       format: 'cjs',
     },
