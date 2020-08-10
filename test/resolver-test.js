@@ -257,8 +257,13 @@ describe('resolver', () => {
         path.resolve('linked/index.js'),
       );
     });
-    it('should resolve self-referential package reference', () => {
+    it('should resolve self-referential package source reference', () => {
       expect(resolve('project/foo.js', path.resolve('baz.js'))).to.equal(
+        path.resolve('foo.js'),
+      );
+    });
+    it('should resolve self-referential package reference', () => {
+      expect(resolve('project', path.resolve('baz.js'))).to.equal(
         path.resolve('foo.js'),
       );
     });
