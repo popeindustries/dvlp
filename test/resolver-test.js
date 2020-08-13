@@ -98,6 +98,20 @@ describe('resolver', () => {
           path.resolve('node_modules/@popeindustries/test/test.js'),
         );
       });
+      it('should correctly resolve "main" details property for a package with "module" field', () => {
+        const pkg = getPackage(path.resolve('node_modules/module'));
+        expect(pkg).to.have.property(
+          'main',
+          path.resolve('node_modules/module/index.mjs'),
+        );
+      });
+      it('should correctly resolve "main" details property for a package with "module" and "browser" fields', () => {
+        const pkg = getPackage(path.resolve('node_modules/module-browser'));
+        expect(pkg).to.have.property(
+          'main',
+          path.resolve('node_modules/module-browser/index.mjs'),
+        );
+      });
     });
   });
 
