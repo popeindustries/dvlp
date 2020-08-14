@@ -10,7 +10,7 @@ const path = require('path');
 const { ServerResponse } = require('http');
 
 const DEBUG_VERSION = '4.1.1';
-const LODASH_VERSION = '4.17.19';
+const LODASH_VERSION = '4.17.20';
 const NODE_PATH = process.env.NODE_PATH;
 
 function getBody(res) {

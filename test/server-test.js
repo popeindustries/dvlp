@@ -388,7 +388,7 @@ describe('server', () => {
     it('should serve a bundled module js file', async () => {
       server = await serverFactory('test/fixtures/app.js', { port: 8000 });
       const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.19.js`,
+        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.20.js`,
       );
       expect(res.status).to.eql(200);
       const body = await res.text();
@@ -400,7 +400,7 @@ describe('server', () => {
         port: 8000,
       });
       const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.19.js`,
+        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.20.js`,
       );
       expect(res.status).to.eql(200);
       const body = await res.text();
