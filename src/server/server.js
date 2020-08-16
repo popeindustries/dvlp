@@ -61,10 +61,18 @@ module.exports = class DvlpServer {
    * @param { string | (() => void) | undefined } main
    * @param { string } [rollupConfigPath]
    * @param { Reloader } [reloader]
+   * @param { string } [hooksPath]
    * @param { string } [transpilerPath]
    * @param { string | Array<string> } [mockPath]
    */
-  constructor(main, rollupConfigPath, reloader, transpilerPath, mockPath) {
+  constructor(
+    main,
+    rollupConfigPath,
+    reloader,
+    hooksPath,
+    transpilerPath,
+    mockPath,
+  ) {
     // Listen for all upcoming file system reads (including require('*'))
     // Register early to catch all reads, including transpilers that patch fs.readFile
     this.watcher = this.createWatcher();

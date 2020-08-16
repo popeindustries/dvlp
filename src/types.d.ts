@@ -346,6 +346,10 @@ declare interface PushClient {
 
 /* export */ declare type ServerOptions = {
   /**
+   * The path to a custom hooks registration file (default `''`).
+   */
+  hooksPath?: string;
+  /**
    * The path(s) to load mock files from.
    */
   mockPath?: string | Array<string>;

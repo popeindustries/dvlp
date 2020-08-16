@@ -22,6 +22,7 @@ const DvlpServer = require('./server.js');
 module.exports = async function serverFactory(
   filePath = process.cwd(),
   {
+    hooksPath,
     mockPath,
     port = config.port,
     reload = true,
@@ -53,7 +54,15 @@ module.exports = async function serverFactory(
       )}`,
     );
   }
-  if (transpilerPath) {
+  if (hooksPath) {
+    hooksPath = path.resolve(hooksPath);
+
+    info(
+      `${chalk.green('✔')} registered hooks at ${chalk.green(
+        getProjectPath(hooksPath),
+      )}`,
+    );
+  } else if (transpilerPath) {
     transpilerPath = path.resolve(transpilerPath);
 
     info(
@@ -70,6 +79,7 @@ module.exports = async function serverFactory(
     entry.main,
     rollupConfigPath,
     reloader,
+    hooksPath,
     transpilerPath,
     mockPath,
   );
