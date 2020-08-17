@@ -131,6 +131,15 @@ declare type FindOptions = {
   type?: string;
 };
 
+declare type Hook = {
+  onTransform(
+    filePath: string,
+    code: string,
+  ): Promise<string> | string | undefined;
+  onSend(filePath: string, code: string): Promise<string> | string | undefined;
+  onServerTransform(filePath: string, code: string): string;
+};
+
 declare type Transpiler = (
   filePath: string,
   isServer: boolean,

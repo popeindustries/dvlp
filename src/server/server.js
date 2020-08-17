@@ -122,7 +122,7 @@ module.exports = class DvlpServer {
     /** @type { Transpiler | undefined } */
     this.transpiler = transpilerPath ? importModule(transpilerPath) : undefined;
     /** @type { TranspilerCache | undefined } */
-    this.transpilerCache = this.transpiler ? new Map() : undefined;
+    this.transformerCache = this.transpiler ? new Map() : undefined;
     this.urlToFilePath = new Map();
   }
 
@@ -358,14 +358,14 @@ module.exports = class DvlpServer {
 
       if (filePath) {
         const isBundled = isModuleBundlerFilePath(filePath);
-        const shouldTranspile = !isBundled && !isNodeModuleFilePath(filePath);
+        const shouldTransform = !isBundled && !isNodeModuleFilePath(filePath);
 
         // Transpile all files that aren't bundled or node_modules
-        // This ensures that all symlinked/workspace files are transpiled even though they are dependencies
-        if (server.transpilerCache && server.transpiler && shouldTranspile) {
+        // This ensures that all symlinked workspace files are transpiled even though they are dependencies
+        if (server.transformerCache && server.transpiler && shouldTransform) {
           // Will respond if transpiler exists for this type
           await transpile(filePath, res, {
-            transpilerCache: server.transpilerCache,
+            transpilerCache: server.transformerCache,
             lastChanged: server.lastChanged,
             transpiler: server.transpiler,
           });

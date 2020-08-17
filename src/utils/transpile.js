@@ -23,7 +23,7 @@ module.exports = async function transpile(filePath, res, state) {
   // but they are watched when read from file system during transpilation,
   // so transpile again if same type
   const lastChangedIsDependency =
-    !!lastChanged &&
+    lastChanged &&
     !transpilerCache.has(lastChanged) &&
     getTypeFromPath(lastChanged) === getTypeFromPath(filePath);
   let content = transpilerCache.get(filePath);
