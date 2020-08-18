@@ -15,7 +15,7 @@ const mime = require('mime');
  * @returns { Promise<void> }
  */
 module.exports = async function transpile(filePath, res, state) {
-  res.metrics.recordEvent(Metrics.EVENT_NAMES.transpile);
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
 
   const { transpilerCache, lastChanged, transpiler } = state;
   const relativeFilePath = getProjectPath(filePath);
@@ -51,7 +51,7 @@ module.exports = async function transpile(filePath, res, state) {
         transpiled ? 'transpiled content for' : 'skipping transpile for'
       } "${relativeFilePath}"`,
     );
-    res.transpiled = true;
+    res.transformed = true;
     // @ts-ignore
     res.writeHead(200, {
       'Access-Control-Allow-Origin': '*',
@@ -60,6 +60,6 @@ module.exports = async function transpile(filePath, res, state) {
       'Content-Type': mime.getType(getTypeFromPath(filePath) || filePath),
     });
     res.end(content);
-    res.metrics.recordEvent(Metrics.EVENT_NAMES.transpile);
+    res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
   }
 };

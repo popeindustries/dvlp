@@ -55,7 +55,7 @@ declare type Res = import('http').ServerResponse & {
   encoding: string;
   metrics: Metrics;
   mocked: boolean;
-  transpiled: boolean;
+  transformed: boolean;
   unhandled: boolean;
   url: string;
   error?: Error;
