@@ -47,7 +47,9 @@ function patchResponse(
   filePath,
   req,
   res,
-  { rollupConfigPath, footerScript, headerScript } = { rollupConfigPath: '' },
+  { footerScript, headerScript, rollupConfigPath, sendHook } = {
+    rollupConfigPath: '',
+  },
 ) {
   // req.filepath set after file.find(), filepath passed if cached
   filePath = req.filePath || filePath || req.url;
@@ -89,14 +91,29 @@ function patchResponse(
     proxyBodyWrite(res, (html) => {
       enableCrossOriginHeader(res);
       disableCacheControlHeader(res, req.url);
+
+      if (sendHook) {
+        const transformed = sendHook(filePath, html);
+        if (transformed !== undefined) {
+          html = transformed;
+        }
+      }
+
       return injectScripts(res, scripts, html);
     });
   } else if (isCssRequest(req)) {
-    // Disable gzip
     proxyBodyWrite(res, (css) => {
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
+
+      if (sendHook) {
+        const transformed = sendHook(filePath, css);
+        if (transformed !== undefined) {
+          css = transformed;
+        }
+      }
+
       return css;
     });
   } else if (isJsRequest(req)) {
@@ -104,7 +121,16 @@ function patchResponse(
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
-      return rewriteImports(res, filePath, rollupConfigPath, code);
+      code = rewriteImports(res, filePath, rollupConfigPath, code);
+
+      if (sendHook) {
+        const transformed = sendHook(filePath, code);
+        if (transformed !== undefined) {
+          code = transformed;
+        }
+      }
+
+      return code;
     });
   }
 }

@@ -112,7 +112,6 @@ declare type Entry = {
 };
 
 declare type PatchResponseOptions = {
-  rollupConfigPath?: string;
   directories?: Array<string>;
   footerScript?: {
     hash?: string;
@@ -124,6 +123,8 @@ declare type PatchResponseOptions = {
     string: string;
     url?: string;
   };
+  sendHook?: (filePath: string, code: string) => string | undefined;
+  rollupConfigPath?: string;
 };
 
 declare type FindOptions = {
@@ -131,13 +132,13 @@ declare type FindOptions = {
   type?: string;
 };
 
-declare type Hook = {
+declare type Hooks = {
   onTransform(
     filePath: string,
     code: string,
   ): Promise<string> | string | undefined;
-  onSend(filePath: string, code: string): Promise<string> | string | undefined;
-  onServerTransform(filePath: string, code: string): string;
+  onSend(filePath: string, code: string): string | undefined;
+  onServerTransform(filePath: string, code: string): string | undefined;
 };
 
 declare type Transpiler = (

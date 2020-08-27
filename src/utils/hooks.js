@@ -8,14 +8,18 @@ const Metrics = require('./metrics.js');
 const mime = require('mime');
 const { readFileSync } = require('fs');
 
-module.exports = class Hooks {
+const RE_TRANSPILER_HANDLES_SERVER = /\(\s?[a-zA-Z]+,\s?[a-zA-Z]+\s?\)/;
+
+module.exports = class Hooker {
   /**
    * Constructor
    *
-   * @param { String } [hooksPath]
+   * @param { string } [hooksPath]
+   * @param { string } [transpilerPath]
    */
-  constructor(hooksPath) {
+  constructor(hooksPath, transpilerPath) {
     if (hooksPath) {
+      /** @type { Hooks } */
       const module = importModule(hooksPath);
 
       if (module.onTransform) {
@@ -27,10 +31,37 @@ module.exports = class Hooks {
       if (module.onServerTransform) {
         this._onServerTransform = module.onServerTransform;
       }
+    } else if (transpilerPath) {
+      /** @type { Transpiler } */
+      const transpiler = importModule(transpilerPath);
+      const hasServerTranspiler = RE_TRANSPILER_HANDLES_SERVER.test(
+        transpiler.toString(),
+      );
+
+      /**
+       * @param { string } filePath
+       * @param { string } code
+       */
+      this._onTransform = function onTransform(filePath, code) {
+        return transpiler(filePath, false);
+      };
+
+      if (hasServerTranspiler) {
+        /**
+         * @param { string } filePath
+         * @param { string } code
+         */
+        this._onTransformServer = function onTransformServer(filePath, code) {
+          return transpiler(filePath, true);
+        };
+      }
     }
 
     /** @type { Map<string, string> } */
     this.transformCache = new Map();
+    this.transform = this.transform.bind(this);
+    this.send = this.send.bind(this);
+    this.serverTransform = this.serverTransform.bind(this);
   }
 
   /**
@@ -97,44 +128,53 @@ module.exports = class Hooks {
    * Allow modification of 'filePath' content before sending the request
    *
    * @param { string } filePath
-   * @returns { Promise<void> }
+   * @param { string } code
+   * @returns { string | undefined }
    */
-  async send(filePath) {
-    await this._onSend(filePath, readFileSync(filePath, 'utf8'));
+  send(filePath, code) {
+    return this._onSend(filePath, code);
   }
 
-  serverTransform() {}
+  /**
+   * Transform content for 'filePath' import
+   *
+   * @param { string } filePath
+   * @returns { string | undefined }
+   */
+  serverTransform(filePath) {
+    return this._onServerTransform(filePath, readFileSync(filePath, 'utf8'));
+  }
 
   /**
    * Transform code hook
    *
-   * @param { String } filePath
-   * @param { String } code
+   * @param { string } filePath
+   * @param { string } code
    * @returns { Promise<string> | string | undefined }
    */
   _onTransform(filePath, code) {
-    return code;
+    return;
   }
 
   /**
    * Send hook
    *
-   * @param { String } filePath
-   * @param { String } code
-   * @returns { Promise<string> | string | undefined }
+   * @param { string } filePath
+   * @param { string } code
+   * @returns { string | undefined }
    */
   _onSend(filePath, code) {
-    return code;
+    return;
   }
 
   /**
    * Transform server code hook
    *
-   * @param { String } filePath
-   * @param { String } code
-   * @returns { string }
+   * @param { string } filePath
+   * @param { string } code
+   * @returns { string | undefined }
    */
   _onServerTransform(filePath, code) {
-    return code;
+    return;
   }
 };
