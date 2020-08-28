@@ -31,6 +31,7 @@ const config = require('../config.js');
 const createFileServer = require('./file-server.js');
 const debug = require('debug')('dvlp:server');
 const fs = require('fs');
+const Hooks = require('../utils/hooks.js');
 const http = require('http');
 const { importModule } = require('../utils/module.js');
 const Mock = require('../mock/index.js');
@@ -41,7 +42,6 @@ const path = require('path');
 const { patchResponse } = require('../utils/patch.js');
 const Metrics = require('../utils/metrics.js');
 const send = require('send');
-const transpile = require('../utils/transpile.js');
 const watch = require('../utils/watch.js');
 const WebSocket = require('faye-websocket');
 
@@ -61,12 +61,20 @@ module.exports = class DvlpServer {
    * @param { string | (() => void) | undefined } main
    * @param { string } [rollupConfigPath]
    * @param { Reloader } [reloader]
+   * @param { string } [hooksPath]
    * @param { string } [transpilerPath]
    * @param { string | Array<string> } [mockPath]
    */
-  constructor(main, rollupConfigPath, reloader, transpilerPath, mockPath) {
+  constructor(
+    main,
+    rollupConfigPath,
+    reloader,
+    hooksPath,
+    transpilerPath,
+    mockPath,
+  ) {
     // Listen for all upcoming file system reads (including require('*'))
-    // Register early to catch all reads, including transpilers that patch fs.readFile
+    // Register early to catch all reads, including transformers that patch fs.readFile
     this.watcher = this.createWatcher();
     this.unlistenForFileRead = interceptFileRead((filePath) => {
       this.addWatchFiles(filePath);
@@ -93,8 +101,16 @@ module.exports = class DvlpServer {
       (this.mocks && this.mocks.client) || '',
     ]);
 
+    this.origin = '';
+    this.port = Number(process.env.PORT);
+    this.reloader = reloader;
+    this.rollupConfigPath = rollupConfigPath;
+    /** @type { Server | null } */
+    this.server = null;
+    this.hooks = new Hooks(hooksPath, transpilerPath);
+    this.urlToFilePath = new Map();
+    /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
-      rollupConfigPath,
       footerScript: {
         hash: reloader && hashScript(reloader.client),
         string: reloader ? reloader.client : '',
@@ -104,18 +120,9 @@ module.exports = class DvlpServer {
         hash: hashScript(headerScript),
         string: headerScript,
       },
+      rollupConfigPath,
+      sendHook: this.hooks.send,
     };
-    this.origin = '';
-    this.port = Number(process.env.PORT);
-    this.reloader = reloader;
-    this.rollupConfigPath = rollupConfigPath;
-    /** @type { Server | null } */
-    this.server = null;
-    /** @type { Transpiler | undefined } */
-    this.transpiler = transpilerPath ? importModule(transpilerPath) : undefined;
-    /** @type { TranspilerCache | undefined } */
-    this.transpilerCache = this.transpiler ? new Map() : undefined;
-    this.urlToFilePath = new Map();
   }
 
   /**
@@ -286,8 +293,8 @@ module.exports = class DvlpServer {
             ? ' bundled '
             : res.mocked
             ? ' mocked '
-            : res.transpiled
-            ? ' transpiled '
+            : res.transformed
+            ? ' transformed '
             : ' ';
           let url = getProjectPath(req.url);
 
@@ -350,20 +357,16 @@ module.exports = class DvlpServer {
 
       if (filePath) {
         const isBundled = isModuleBundlerFilePath(filePath);
-        const shouldTranspile = !isBundled && !isNodeModuleFilePath(filePath);
+        const shouldTransform = !isBundled && !isNodeModuleFilePath(filePath);
 
-        // Transpile all files that aren't bundled or node_modules
-        // This ensures that all symlinked/workspace files are transpiled even though they are dependencies
-        if (server.transpilerCache && server.transpiler && shouldTranspile) {
-          // Will respond if transpiler exists for this type
-          await transpile(filePath, res, {
-            transpilerCache: server.transpilerCache,
-            lastChanged: server.lastChanged,
-            transpiler: server.transpiler,
-          });
+        // Transform all files that aren't bundled or node_modules
+        // This ensures that all symlinked workspace files are transformed even though they are dependencies
+        if (shouldTransform) {
+          // Will respond if transformer exists for this type
+          await server.hooks.transform(filePath, server.lastChanged, res);
         }
 
-        // Handle bundled, node_modules, and external files if not already handled by transpiler
+        // Handle bundled, node_modules, and external files if not already handled by transformer
         if (!res.finished) {
           return send(req, filePath, {
             cacheControl: true,
@@ -406,7 +409,7 @@ module.exports = class DvlpServer {
     } else if (typeof this.main === 'function') {
       this.main();
     } else {
-      importModule(this.main, this.transpiler);
+      importModule(this.main, this.hooks.serverTransform);
     }
   }
 

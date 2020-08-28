@@ -13,7 +13,7 @@ const path = require('path');
 const { resolve } = require('../src/resolver/index.js');
 
 const DEBUG = 'debug-4.1.1.js';
-const LODASH = 'lodash-4.17.19.js';
+const LODASH = 'lodash-4.17.20.js';
 
 describe('bundle()', () => {
   afterEach(async () => {

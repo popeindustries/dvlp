@@ -3,7 +3,7 @@
 /** @typedef { import("rollup").RollupOptions } RollupOptions */
 
 const { exists, expandPath, getProjectPath } = require('../utils/file.js');
-const { info, error } = require('../utils/log.js');
+const { info, error, warn } = require('../utils/log.js');
 const chalk = require('chalk');
 const config = require('../config.js');
 const { destroyWorkers } = require('../bundler/index.js');
@@ -22,6 +22,7 @@ const DvlpServer = require('./server.js');
 module.exports = async function serverFactory(
   filePath = process.cwd(),
   {
+    hooksPath,
     mockPath,
     port = config.port,
     reload = true,
@@ -53,13 +54,24 @@ module.exports = async function serverFactory(
       )}`,
     );
   }
-  if (transpilerPath) {
+  if (hooksPath) {
+    hooksPath = path.resolve(hooksPath);
+
+    info(
+      `${chalk.green('✔')} registered hooks at ${chalk.green(
+        getProjectPath(hooksPath),
+      )}`,
+    );
+  } else if (transpilerPath) {
     transpilerPath = path.resolve(transpilerPath);
 
     info(
       `${chalk.green('✔')} loaded transpiler from ${chalk.green(
         getProjectPath(transpilerPath),
       )}`,
+    );
+    warn(
+      '⚠️  --transpiler option is deprecated. Use --hooks option and onTransform/onServerTransform hooks instead',
     );
   }
   if (reload) {
@@ -70,6 +82,7 @@ module.exports = async function serverFactory(
     entry.main,
     rollupConfigPath,
     reloader,
+    hooksPath,
     transpilerPath,
     mockPath,
   );

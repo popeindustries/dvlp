@@ -10,7 +10,7 @@ const path = require('path');
 const { ServerResponse } = require('http');
 
 const DEBUG_VERSION = '4.1.1';
-const LODASH_VERSION = '4.17.19';
+const LODASH_VERSION = '4.17.20';
 const NODE_PATH = process.env.NODE_PATH;
 
 function getBody(res) {
@@ -513,6 +513,19 @@ describe('patch', () => {
         res.end('import "bat";');
         expect(getBody(res)).to.equal(
           `import "${process.cwd()}/test/fixtures/node_modules/bat/browser.js";`,
+        );
+      });
+      it('should resolve dynamic import()', () => {
+        const req = getRequest('/index.js', {
+          accept: 'application/javascript',
+        });
+        const res = getResponse(req);
+        patchResponse(req.filePath, req, res);
+        res.end(
+          'import lodashArr from "lodash/array";\nimport(foo);\nimport("debug");\n',
+        );
+        expect(getBody(res)).to.equal(
+          `import lodashArr from "/${config.bundleDirName}/lodash__array-${LODASH_VERSION}.js";\nimport(foo);\nimport("/${config.bundleDirName}/debug-${DEBUG_VERSION}.js");\n`,
         );
       });
     });

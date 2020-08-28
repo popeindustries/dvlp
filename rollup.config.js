@@ -1,3 +1,5 @@
+'use strict';
+
 const commonjs = require('@rollup/plugin-commonjs');
 const fs = require('fs');
 const json = require('@rollup/plugin-json');
@@ -37,6 +39,7 @@ module.exports = [
     input: './src/bundler/bundle-worker.js',
     plugins: [commonjs(), resolve(), json()],
     output: {
+      exports: 'default',
       file: 'bundle-worker.js',
       format: 'cjs',
     },

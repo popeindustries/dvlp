@@ -10,11 +10,9 @@ const loadModule = require('module')._load;
 const path = require('path');
 const sucrase = require('sucrase');
 
-const IMPORT_EXTS = ['.js', '.mjs'];
-const IMPORT_EXTS_TRANSPILER = ['.js', '.jsx', '.mjs', '.ts', '.tsx'];
+const IMPORT_EXTS = ['.js', '.jsx', '.mjs', '.ts', '.tsx'];
 // Sync with config.js#extensionsByType
 const JS_EXTENSIONS = ['.ts', '.tsx', '.mjs', '.jsx', '.js', '.json'];
-const RE_TRANSPILER_HANDLES_SERVER = /\(\s?[a-zA-Z]+,\s?[a-zA-Z]+\s?\)/;
 
 /** @type { () => void } */
 let revertHook;
@@ -44,29 +42,20 @@ function isModule(filePathOrCode) {
  * Import esm/cjs module, transpiling if necessary (via require hook)
  *
  * @param { string } modulePath
- * @param { Transpiler } [transpiler]
+ * @param { (filePath: string) => string | undefined } transform
  * @returns { any }
  */
-function importModule(modulePath, transpiler) {
+function importModule(modulePath, transform = (filePath) => undefined) {
   if (revertHook !== undefined) {
     revertHook();
   }
 
   revertHook = addHook(
     (code, filePath) => {
-      // Determine if transpiler supports transpiling server modules by checking number of arguments (filePath, isServer) handled
-      if (
-        transpiler !== undefined &&
-        RE_TRANSPILER_HANDLES_SERVER.test(transpiler.toString())
-      ) {
-        const transpiled = transpiler(filePath, true);
+      const transformed = transform(filePath);
 
-        if (transpiled !== undefined) {
-          // Ignore async
-          if (!(transpiled instanceof Promise)) {
-            code = transpiled;
-          }
-        }
+      if (transformed !== undefined) {
+        code = transformed;
       }
 
       if (!isModule(code)) {
@@ -79,7 +68,7 @@ function importModule(modulePath, transpiler) {
       }).code;
     },
     {
-      exts: transpiler ? IMPORT_EXTS_TRANSPILER : IMPORT_EXTS,
+      exts: IMPORT_EXTS,
       ignoreNodeModules: false,
     },
   );

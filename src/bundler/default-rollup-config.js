@@ -17,7 +17,7 @@ const plugins = [
   }),
   // @ts-ignore
   resolvePlugin({
-    mainFields: ['browser', 'module', 'main'],
+    mainFields: ['module', 'browser', 'main'],
   }),
   // @ts-ignore
   jsonPlugin(),

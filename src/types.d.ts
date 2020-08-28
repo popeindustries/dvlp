@@ -2,6 +2,13 @@ declare type RollupOptions = import('rollup').RollupOptions;
 declare type RollupInputOptions = import('rollup').InputOptions;
 declare type RollupOutputOptions = import('rollup').OutputOptions;
 
+declare namespace NodeJS {
+  interface Global {
+    $MOCK_CLIENT?: string;
+    $RELOAD_CLIENT?: string;
+  }
+}
+
 declare module 'server-destroy' {
   function destroy(server: import('http').Server): void;
   export = destroy;
@@ -40,7 +47,7 @@ declare module 'permessage-deflate' {
 declare module 'es-module-lexer' {
   function parse(
     code: string,
-  ): Array<Array<{ e: number; s: number; se: number; ss: number }>>;
+  ): Array<Array<{ d: number; e: number; s: number }>>;
 }
 
 declare type Req = import('http').IncomingMessage & {
@@ -55,7 +62,7 @@ declare type Res = import('http').ServerResponse & {
   encoding: string;
   metrics: Metrics;
   mocked: boolean;
-  transpiled: boolean;
+  transformed: boolean;
   unhandled: boolean;
   url: string;
   error?: Error;
@@ -112,7 +119,6 @@ declare type Entry = {
 };
 
 declare type PatchResponseOptions = {
-  rollupConfigPath?: string;
   directories?: Array<string>;
   footerScript?: {
     hash?: string;
@@ -124,11 +130,22 @@ declare type PatchResponseOptions = {
     string: string;
     url?: string;
   };
+  sendHook?: (filePath: string, code: string) => string | undefined;
+  rollupConfigPath?: string;
 };
 
 declare type FindOptions = {
   directories?: Array<string>;
   type?: string;
+};
+
+declare type Hooks = {
+  onTransform(
+    filePath: string,
+    fileContents: string,
+  ): Promise<string> | string | undefined;
+  onSend(filePath: string, responseBody: string): string | undefined;
+  onServerTransform(filePath: string, fileContents: string): string | undefined;
 };
 
 declare type Transpiler = (
@@ -346,6 +363,10 @@ declare interface PushClient {
 
 /* export */ declare type ServerOptions = {
   /**
+   * The path to a custom hooks registration file (default `''`).
+   */
+  hooksPath?: string;
+  /**
    * The path(s) to load mock files from.
    */
   mockPath?: string | Array<string>;
@@ -368,6 +389,7 @@ declare interface PushClient {
   silent?: boolean;
   /**
    * The path to a custom transpiler script (default `''`).
+   * @deprecated
    */
   transpilerPath?: string;
 };

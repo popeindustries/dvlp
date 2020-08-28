@@ -170,11 +170,48 @@ describe('server', () => {
         'this is transpiled content for: style.css',
       );
     });
+    it('should transform file content when using an onTransform hook', async () => {
+      server = await serverFactory('test/fixtures/www', {
+        port: 8000,
+        reload: false,
+        hooksPath: 'test/fixtures/hooks-transform.js',
+      });
+      const res = await fetch('http://localhost:8000/style.css');
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.equal(
+        'this is transformed content for: style.css',
+      );
+    });
+    it('should transform file content when using an onSend hook', async () => {
+      server = await serverFactory('test/fixtures/www', {
+        port: 8000,
+        reload: false,
+        hooksPath: 'test/fixtures/hooks-send.js',
+      });
+      const res = await fetch('http://localhost:8000/style.css');
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.equal('this is sent content for: style.css');
+    });
     it('should cache transpiled file content when using a transpiler', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
         reload: false,
         transpilerPath: 'test/fixtures/transpiler.js',
+      });
+      let start = Date.now();
+      let res = await fetch('http://localhost:8000/style.css');
+      expect(res.status).to.eql(200);
+      expect(Date.now() - start).to.be.above(200);
+      start = Date.now();
+      res = await fetch('http://localhost:8000/style.css');
+      expect(res.status).to.eql(200);
+      expect(Date.now() - start).to.be.below(10);
+    });
+    it('should cache transformed file content when using an onTransform hook', async () => {
+      server = await serverFactory('test/fixtures/www', {
+        port: 8000,
+        reload: false,
+        hooksPath: 'test/fixtures/hooks-transform.js',
       });
       let start = Date.now();
       let res = await fetch('http://localhost:8000/style.css');
@@ -194,6 +231,16 @@ describe('server', () => {
       const res = await fetch('http://localhost:8000/style.css');
       expect(res.status).to.eql(500);
       expect(await res.text()).to.equal('transpiler error style.css');
+    });
+    it('should return error when hooks onTransform error', async () => {
+      server = await serverFactory('test/fixtures/www', {
+        port: 8000,
+        reload: false,
+        hooksPath: 'test/fixtures/hooksError.js',
+      });
+      const res = await fetch('http://localhost:8000/style.css');
+      expect(res.status).to.eql(500);
+      expect(await res.text()).to.equal('transform error style.css');
     });
     it('should respond to mocked requests', async () => {
       server = await serverFactory('test/fixtures/www', {
@@ -388,7 +435,7 @@ describe('server', () => {
     it('should serve a bundled module js file', async () => {
       server = await serverFactory('test/fixtures/app.js', { port: 8000 });
       const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.19.js`,
+        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.20.js`,
       );
       expect(res.status).to.eql(200);
       const body = await res.text();
@@ -400,7 +447,7 @@ describe('server', () => {
         port: 8000,
       });
       const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.19.js`,
+        `http://localhost:8000/${config.bundleDirName}/lodash__array-4.17.20.js`,
       );
       expect(res.status).to.eql(200);
       const body = await res.text();
@@ -456,6 +503,18 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.equal(
         'this is transpiled content for: style.css',
+      );
+    });
+    it('should transpile file content when using a transpiler', async () => {
+      server = await serverFactory('test/fixtures/app.js', {
+        port: 8000,
+        reload: false,
+        hooksPath: 'test/fixtures/hooks-transform.js',
+      });
+      const res = await fetch('http://localhost:8000/www/style.css');
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.equal(
+        'this is transformed content for: style.css',
       );
     });
     it('should respond to mocked requests', async () => {

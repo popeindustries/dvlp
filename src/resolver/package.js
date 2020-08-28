@@ -47,11 +47,16 @@ function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
 
   try {
     const json = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    const hasModuleField = json.module !== undefined;
     let main = find(json.module || json.main || 'index.js', findOptions);
 
-    // Resolve "browser" aliasing
+    /**
+     * Resolve "main" and resource aliases.
+     * A "module" field takes precedence over aliases for "main" in "browser".
+     */
     if (json.browser) {
-      if (typeof json.browser === 'string') {
+      // Illegal to overwrite "module" via "browser"
+      if (!hasModuleField && typeof json.browser === 'string') {
         main = find(json.browser, findOptions);
       } else {
         for (let key in json.browser) {
@@ -67,7 +72,8 @@ function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
               value = find(value, findOptions);
             }
             if (key !== undefined && value !== undefined && key !== value) {
-              if (key === main) {
+              // Illegal to overwrite "module" via "browser"
+              if (!hasModuleField && key === main) {
                 main = value;
               }
               pkg.aliases[key] = value;
