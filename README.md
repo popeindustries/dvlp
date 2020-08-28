@@ -3,7 +3,7 @@
 
 # 💥 dvlp
 
-**dvlp** is a no-configuration, no-conditionals, no-middleware, no-nonsense (no-vowels!) **dev server toolkit** to help you develop quickly and easily for the web. You shouldn't have to jump through hoops to get a development environment up and running, and you definitely shouldn't have to include development-only stuff in your high-quality production code! **dvlp** is full of hacks so your code doesn't have to be!
+**dvlp** is a no-configuration, no-conditionals, no-middleware, no-nonsense (no-vowels!) **_dev server toolkit_** to help you develop quickly and easily for the web. You shouldn't have to jump through hoops to get a development environment up and running, and you definitely shouldn't have to include development-only stuff in your high-quality production code! **dvlp** is full of hacks so your code doesn't have to be!
 
 ### Philosophy
 
@@ -36,12 +36,15 @@ $ npm install dvlp
 ```text
 $ dvlp --help
 
-Start a development server, restarting and reloading connected browsers on file changes. Serves static files from one or more "path" directories, or a custom application server if "path" is a single file.
+Start a development server, restarting and reloading connected browsers on file changes.
+  Serves static files from one or more "path" directories, or a custom application
+  server if "path" is a single file.
 
 Options:
   -p, --port <port>           port number
   -m, --mock <path>           path to mock files (directory, file, glob pattern)
-  -t, --transpiler <path>     path to optional transpiler file
+  -t, --transpiler <path>     [deprecated] path to optional transpiler file
+  -k, --hooks <path>          path to optional hooks registration file
   -r, --rollup-config <path>  path to optional Rollup.js config file
   -s, --silent                suppress default logging
   --no-reload                 disable reloading connected browsers on file change
@@ -65,42 +68,67 @@ Add a script to your package.json `scripts`:
 $ npm run dev
 ```
 
-### Transpiling
+### Hooks
 
-In some cases, you may want to write CSS/JS in a non-standard, higher-order language like SASS (for CSS), or JSX (for JS). In these cases, you can pass **dvlp** a `transpile` function to convert file contents on the fly when imported by an application server or requested by the browser.
+In some cases, you may want to write source code in a non-standard, higher-order language like SASS (for CSS) or JSX (for JS), or modify a response body before sending to the browser. In these cases, you can register `hooks` to convert file contents on the fly when imported by an application server or requested by the browser.
 
 <details>
-<summary>Writing a transpiler</summary>
+<summary>Registering hooks</summary>
 
-The `transpile` function should accept a `filePath` string and `isServer` boolean, and return a content string (or a string resolving Promise if **not** transpiling a server file) if the file has be transpiled. If nothing is returned, **dvlp** will handle the file normally:
+Create a Node.js module that exposes one or more of the supported lifecycle hooks functions:
 
 ```js
-// scripts/transpile.js
-const fs = require('fs');
+// scripts/hooks.js
 const sass = require('sass');
 const sucrase = require('sucrase');
 
 const RE_JS = /\.jsx?$/;
 const RE_SASS = /\.s[ac]ss$/;
 
-/**
- * Transpile server and browser files
- *
- * @param { string } filePath
- * @param { boolean } isServer
- */
-module.exports = function transpile(filePath, isServer) {
-  const jsTransforms = isServer ? ['imports', 'jsx'] : ['jsx'];
+module.exports = {
+  /**
+   * Transform file contents for file requested by the browser
+   *
+   * @param { string } filePath
+   * @param { string } fileContents
+   */
+  onTransform(filePath, fileContents) {
+    if (RE_SASS.test(filePath)) {
+      return sass.renderSync({
+        file: filePath,
+      }).css;
+    } else if (RE_JS.test(filePath)) {
+      return sucrase.transform(fileContents, {
+        transforms: ['jsx'],
+      }).code;
+    }
+  },
 
-  if (RE_SASS.test(filePath)) {
-    return sass.renderSync({
-      file: filePath,
-    }).css;
-  } else if (RE_JS.test(filePath)) {
-    return sucrase.transform(fs.readFileSync(filePath, 'utf8'), {
-      transforms: jsTransforms,
-    }).code;
-  }
+  /**
+   * Transform file contents for file imported by Node.js application server
+   *
+   * @param { string } filePath
+   * @param { string } fileContents
+   */
+  onServerTransform(filePath, fileContents) {
+    if (RE_JS.test(filePath)) {
+      return sucrase.transform(fileContents, {
+        transforms: ['imports', 'jsx'],
+      }).code;
+    }
+  },
+
+  /**
+   * Modify response body before sending to the browser
+   *
+   * @param { string } filePath
+   * @param { string } responseBody
+   */
+  onSend(filePath, responseBody) {
+    if (RE_JS.test(filePath)) {
+      return responseBody.replace(/import\(/g, 'dynamicImportPolyfill(');
+    }
+  },
 };
 ```
 
@@ -110,19 +138,19 @@ module.exports = function transpile(filePath, isServer) {
 <link rel="stylesheet" href="src/index.sass" />
 ```
 
-...and pass a reference to the `transpile.js` file with the `-t, --transpiler` flag:
+...and pass a reference to the `hooks.js` file with the `-k, --hooks` flag:
 
 ```json
 {
   "scripts": {
-    "dev": "dvlp --transpiler scripts/transpile.js --port 8000 src/app.js"
+    "dev": "dvlp --hooks scripts/hooks.js --port 8000 src/app.js"
   }
 }
 ```
 
 </details>
 
-In order to keep things snappy, **dvlp** will cache transpiled content and only re-transpile single files when the original contents have changed.
+In order to keep things snappy, **dvlp** will cache transformed content and only re-transform single files when the original contents have changed.
 
 ### Mocking
 
@@ -445,11 +473,12 @@ Serve files at `filePath`, starting static file server if one or more directorie
 
 `options` include:
 
+- **`hooksPath: string`**: the path to a hooks registration file (default `''`)
 - **`mockPath: string|[string]`** the path(s) to load mock files from (default `''`)
 - **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 - **`reload: boolean`**: enable/disable browser reloading (default `true`)
+- **`rollupConfigPath: string`**: the path to the custom Rollup config to use for bundling CommonJS dependencies (default `''`)
 - **`silent: boolean`**: disable/enable default logging (default `false`)
-- **`transpiler: string`**: the path to a custom transpiler script (default `''`)
 
 ```js
 const { server } = require('dvlp');

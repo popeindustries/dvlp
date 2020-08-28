@@ -32,6 +32,8 @@ module.exports = class Hooker {
         this._onServerTransform = module.onServerTransform;
       }
     } else if (transpilerPath) {
+      // Create backwards compatible hook from transpiler.
+
       /** @type { Transpiler } */
       const transpiler = importModule(transpilerPath);
       const hasServerTranspiler = RE_TRANSPILER_HANDLES_SERVER.test(
@@ -40,18 +42,21 @@ module.exports = class Hooker {
 
       /**
        * @param { string } filePath
-       * @param { string } code
+       * @param { string } fileContents
        */
-      this._onTransform = function onTransform(filePath, code) {
+      this._onTransform = function onTransform(filePath, fileContents) {
         return transpiler(filePath, false);
       };
 
       if (hasServerTranspiler) {
         /**
          * @param { string } filePath
-         * @param { string } code
+         * @param { string } fileContents
          */
-        this._onTransformServer = function onTransformServer(filePath, code) {
+        this._onTransformServer = function onTransformServer(
+          filePath,
+          fileContents,
+        ) {
           return transpiler(filePath, true);
         };
       }
@@ -146,35 +151,38 @@ module.exports = class Hooker {
   }
 
   /**
-   * Transform code hook
+   * Transform file contents hook.
+   * Return new file contents or `undefined` if no change.
    *
    * @param { string } filePath
-   * @param { string } code
+   * @param { string } fileContents
    * @returns { Promise<string> | string | undefined }
    */
-  _onTransform(filePath, code) {
+  _onTransform(filePath, fileContents) {
     return;
   }
 
   /**
-   * Send hook
+   * Send file response hook.
+   * Return new response body or `undefined` if no change.
    *
    * @param { string } filePath
-   * @param { string } code
+   * @param { string } responseBody
    * @returns { string | undefined }
    */
-  _onSend(filePath, code) {
+  _onSend(filePath, responseBody) {
     return;
   }
 
   /**
-   * Transform server code hook
+   * Transform file contents hook for server import/require.
+   * Return new file contents or `undefined` if no change.
    *
    * @param { string } filePath
-   * @param { string } code
+   * @param { string } fileContents
    * @returns { string | undefined }
    */
-  _onServerTransform(filePath, code) {
+  _onServerTransform(filePath, fileContents) {
     return;
   }
 };

@@ -142,10 +142,10 @@ declare type FindOptions = {
 declare type Hooks = {
   onTransform(
     filePath: string,
-    code: string,
+    fileContents: string,
   ): Promise<string> | string | undefined;
-  onSend(filePath: string, code: string): string | undefined;
-  onServerTransform(filePath: string, code: string): string | undefined;
+  onSend(filePath: string, responseBody: string): string | undefined;
+  onServerTransform(filePath: string, fileContents: string): string | undefined;
 };
 
 declare type Transpiler = (
@@ -389,6 +389,7 @@ declare interface PushClient {
   silent?: boolean;
   /**
    * The path to a custom transpiler script (default `''`).
+   * @deprecated
    */
   transpilerPath?: string;
 };

@@ -3,7 +3,7 @@
 /** @typedef { import("rollup").RollupOptions } RollupOptions */
 
 const { exists, expandPath, getProjectPath } = require('../utils/file.js');
-const { info, error } = require('../utils/log.js');
+const { info, error, warn } = require('../utils/log.js');
 const chalk = require('chalk');
 const config = require('../config.js');
 const { destroyWorkers } = require('../bundler/index.js');
@@ -69,6 +69,9 @@ module.exports = async function serverFactory(
       `${chalk.green('✔')} loaded transpiler from ${chalk.green(
         getProjectPath(transpilerPath),
       )}`,
+    );
+    warn(
+      '⚠️  --transpiler option is deprecated. Use --hooks option and onTransform/onServerTransform hooks instead',
     );
   }
   if (reload) {
