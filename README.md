@@ -75,7 +75,7 @@ In some cases, you may want to write source code in a non-standard, higher-order
 <details>
 <summary>Registering hooks</summary>
 
-Create a Node.js module that exposes one or more of the supported lifecycle hooks functions:
+Create a Node.js module that exposes one or more supported lifecycle hook functions:
 
 ```js
 // scripts/hooks.js
