@@ -45,15 +45,19 @@ class BundleWorker {
   async bundle(inputPath, outputPath, sourcePrefix, namedExports) {
     if (this.worker) {
       return new Promise((resolve, reject) => {
-        this.worker.postMessage({
-          inputPath,
-          outputPath,
-          sourcePrefix,
-          namedExports,
-        });
-        this.worker.once('message', (err) => {
-          err ? reject(err) : resolve();
-        });
+        if (this.worker) {
+          this.worker.postMessage({
+            inputPath,
+            outputPath,
+            sourcePrefix,
+            namedExports,
+          });
+          this.worker.once('message', (err) => {
+            err ? reject(err) : resolve();
+          });
+        } else {
+          reject(Error('No bundle worker instance found'));
+        }
       });
     }
 

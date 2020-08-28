@@ -21,7 +21,11 @@ program
     '-m, --mock <path>',
     'path to mock files (directory, file, glob pattern)',
   )
-  .option('-t, --transpiler <path>', 'path to optional transpiler file')
+  .option(
+    '-t, --transpiler <path>',
+    '[deprecated] path to optional transpiler file',
+  )
+  .option('-k, --hooks <path>', 'path to optional hooks registration file')
   .option(
     '-r, --rollup-config <path>',
     'path to optional Rollup.js config file',
@@ -37,6 +41,7 @@ program.parse(process.argv);
 async function boot(path = [process.cwd()]) {
   try {
     await server(path, {
+      hooksPath: program.hooks,
       mockPath: program.mock,
       port: program.port,
       reload: program.reload,

@@ -1,3 +1,5 @@
+'use strict';
+
 const commonjs = require('@rollup/plugin-commonjs');
 const fs = require('fs');
 const json = require('@rollup/plugin-json');

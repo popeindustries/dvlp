@@ -47,7 +47,9 @@ function patchResponse(
   filePath,
   req,
   res,
-  { rollupConfigPath, footerScript, headerScript } = { rollupConfigPath: '' },
+  { footerScript, headerScript, rollupConfigPath, sendHook } = {
+    rollupConfigPath: '',
+  },
 ) {
   // req.filepath set after file.find(), filepath passed if cached
   filePath = req.filePath || filePath || req.url;
@@ -89,14 +91,29 @@ function patchResponse(
     proxyBodyWrite(res, (html) => {
       enableCrossOriginHeader(res);
       disableCacheControlHeader(res, req.url);
+
+      if (sendHook) {
+        const transformed = sendHook(filePath, html);
+        if (transformed !== undefined) {
+          html = transformed;
+        }
+      }
+
       return injectScripts(res, scripts, html);
     });
   } else if (isCssRequest(req)) {
-    // Disable gzip
     proxyBodyWrite(res, (css) => {
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
+
+      if (sendHook) {
+        const transformed = sendHook(filePath, css);
+        if (transformed !== undefined) {
+          css = transformed;
+        }
+      }
+
       return css;
     });
   } else if (isJsRequest(req)) {
@@ -104,7 +121,16 @@ function patchResponse(
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
-      return rewriteImports(res, filePath, rollupConfigPath, code);
+      code = rewriteImports(res, filePath, rollupConfigPath, code);
+
+      if (sendHook) {
+        const transformed = sendHook(filePath, code);
+        if (transformed !== undefined) {
+          code = transformed;
+        }
+      }
+
+      return code;
     });
   }
 }
@@ -246,7 +272,7 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  *
  * @param { Res } res
  * @param { string } filePath
- * @param { string } [rollupConfigPath]
+ * @param { string | undefined } rollupConfigPath
  * @param { string } code
  * @returns { string }
  */
@@ -268,8 +294,24 @@ function rewriteImports(res, filePath, rollupConfigPath, code) {
       // parsed indexes as we substitue during iteration
       let offset = 0;
 
-      for (const imprt of imports) {
-        const id = code.substring(offset + imprt.s, offset + imprt.e);
+      for (const { d, e, s } of imports) {
+        const isDynamic = d > -1;
+        let start = offset + s;
+        let end = offset + e;
+        let id = code.substring(start, end);
+
+        if (isDynamic) {
+          // Dynamic import indexes include quotes if strings, so strip from id before resolving
+          if (/^['"]/.test(id)) {
+            id = id.slice(1, -1);
+            start++;
+            end--;
+          } else {
+            // Unable to resolve non-string id, so skip
+            continue;
+          }
+        }
+
         const importPath = resolve(id, getAbsoluteProjectPath(filePath));
 
         if (importPath) {
@@ -295,19 +337,12 @@ function rewriteImports(res, filePath, rollupConfigPath, code) {
           newId = filePathToUrl(newId);
 
           if (newId !== id) {
-            debug(`rewrote import id from "${id}" to "${newId}"`);
-            const context = code.substring(
-              offset + imprt.ss,
-              offset + imprt.se,
+            debug(
+              `rewrote ${
+                isDynamic ? 'dynamic' : ''
+              } import id from "${id}" to "${newId}"`,
             );
-            const pre = code.substring(offset + imprt.ss, offset + imprt.s);
-            const post = code.substring(offset + imprt.e, offset + imprt.se);
-            const newContext = `${pre}${newId}${post}`;
-            code = code.replace(
-              context,
-              // Escape '$' to avoid special replacement patterns
-              newContext.replace(/\$/g, '$$$'),
-            );
+            code = code.substring(0, start) + newId + code.substring(end);
             offset += newId.length - id.length;
           }
         } else {

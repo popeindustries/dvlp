@@ -12,7 +12,7 @@ const EVENT_NAMES = {
   mock: 'mock response',
   response: 'response',
   scripts: 'inject HTML scripts',
-  transpile: 'transpile file',
+  transform: 'transform file',
 };
 
 class Metrics {
