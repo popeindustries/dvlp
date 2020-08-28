@@ -272,7 +272,7 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  *
  * @param { Res } res
  * @param { string } filePath
- * @param { string } [rollupConfigPath]
+ * @param { string | undefined } rollupConfigPath
  * @param { string } code
  * @returns { string }
  */

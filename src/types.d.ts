@@ -2,6 +2,13 @@ declare type RollupOptions = import('rollup').RollupOptions;
 declare type RollupInputOptions = import('rollup').InputOptions;
 declare type RollupOutputOptions = import('rollup').OutputOptions;
 
+declare namespace NodeJS {
+  interface Global {
+    $MOCK_CLIENT?: string;
+    $RELOAD_CLIENT?: string;
+  }
+}
+
 declare module 'server-destroy' {
   function destroy(server: import('http').Server): void;
   export = destroy;
