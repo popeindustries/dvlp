@@ -87,7 +87,8 @@ const RE_SASS = /\.s[ac]ss$/;
 
 module.exports = {
   /**
-   * Transform file contents for file requested by the browser
+   * Transform file contents for file requested by the browser.
+   * This hook is run after file read, and before any modifications by dvlp.
    *
    * @param { string } filePath
    * @param { string } fileContents
@@ -105,7 +106,8 @@ module.exports = {
   },
 
   /**
-   * Transform file contents for file imported by Node.js application server
+   * Transform file contents for file imported by Node.js application server.
+   * This hook is run after file read.
    *
    * @param { string } filePath
    * @param { string } fileContents
@@ -119,7 +121,8 @@ module.exports = {
   },
 
   /**
-   * Modify response body before sending to the browser
+   * Modify response body before sending to the browser.
+   * This hook is run after all modifications by dvlp, and before sending to the browser.
    *
    * @param { string } filePath
    * @param { string } responseBody
