@@ -294,8 +294,24 @@ function rewriteImports(res, filePath, rollupConfigPath, code) {
       // parsed indexes as we substitue during iteration
       let offset = 0;
 
-      for (const imprt of imports) {
-        const id = code.substring(offset + imprt.s, offset + imprt.e);
+      for (const { d, e, s } of imports) {
+        const isDynamic = d > -1;
+        let start = offset + s;
+        let end = offset + e;
+        let id = code.substring(start, end);
+
+        if (isDynamic) {
+          // Dynamic import indexes include quotes if strings, so strip from id before resolving
+          if (/^['"]/.test(id)) {
+            id = id.slice(1, -1);
+            start++;
+            end--;
+          } else {
+            // Unable to resolve non-string id, so skip
+            continue;
+          }
+        }
+
         const importPath = resolve(id, getAbsoluteProjectPath(filePath));
 
         if (importPath) {
@@ -321,19 +337,12 @@ function rewriteImports(res, filePath, rollupConfigPath, code) {
           newId = filePathToUrl(newId);
 
           if (newId !== id) {
-            debug(`rewrote import id from "${id}" to "${newId}"`);
-            const context = code.substring(
-              offset + imprt.ss,
-              offset + imprt.se,
+            debug(
+              `rewrote ${
+                isDynamic ? 'dynamic' : ''
+              } import id from "${id}" to "${newId}"`,
             );
-            const pre = code.substring(offset + imprt.ss, offset + imprt.s);
-            const post = code.substring(offset + imprt.e, offset + imprt.se);
-            const newContext = `${pre}${newId}${post}`;
-            code = code.replace(
-              context,
-              // Escape '$' to avoid special replacement patterns
-              newContext.replace(/\$/g, '$$$'),
-            );
+            code = code.substring(0, start) + newId + code.substring(end);
             offset += newId.length - id.length;
           }
         } else {

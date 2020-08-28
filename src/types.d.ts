@@ -47,7 +47,7 @@ declare module 'permessage-deflate' {
 declare module 'es-module-lexer' {
   function parse(
     code: string,
-  ): Array<Array<{ e: number; s: number; se: number; ss: number }>>;
+  ): Array<Array<{ d: number; e: number; s: number }>>;
 }
 
 declare type Req = import('http').IncomingMessage & {
