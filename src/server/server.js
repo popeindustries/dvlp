@@ -223,7 +223,6 @@ module.exports = class DvlpServer {
             });
           });
           server.on('error', (err) => {
-            console.log(err);
             instance.stop();
             reject(err);
           });
