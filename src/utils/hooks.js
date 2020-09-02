@@ -1,14 +1,20 @@
 'use strict';
 
+const { error, warn } = require('./log.js');
 const { getProjectPath, getTypeFromPath } = require('./file.js');
 const debug = require('debug')('dvlp:hooks');
-const { error } = require('./log.js');
 const { importModule } = require('./module.js');
 const Metrics = require('./metrics.js');
 const mime = require('mime');
 const { readFileSync } = require('fs');
 
 const RE_TRANSPILER_HANDLES_SERVER = /\(\s?[a-zA-Z]+,\s?[a-zA-Z]+\s?\)/;
+const HOOK_NAMES = [
+  'onTransform',
+  'onServerTransform',
+  'onResolveImport',
+  'onSend',
+];
 
 module.exports = class Hooker {
   /**
@@ -25,14 +31,24 @@ module.exports = class Hooker {
       if (module.onTransform) {
         this._onTransform = module.onTransform;
       }
-      if (module.onImportResolve) {
-        this._onImportResolve = module.onImportResolve;
+      if (module.onResolveImport) {
+        this._onResolveImport = module.onResolveImport;
       }
       if (module.onSend) {
         this._onSend = module.onSend;
       }
       if (module.onServerTransform) {
         this._onServerTransform = module.onServerTransform;
+      }
+
+      for (const name of Object.keys(module)) {
+        if (!HOOK_NAMES.includes(name)) {
+          warn(
+            `⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(
+              ', ',
+            )}`,
+          );
+        }
       }
     } else if (transpilerPath) {
       // Create backwards compatible hook from transpiler.
@@ -134,14 +150,14 @@ module.exports = class Hooker {
   }
 
   /**
-   * Resolve module import specifier
+   * Resolve module import "specifier"
    *
    * @param { string } specifier
    * @param { HookContext } context
    * @param { DefaultResolve } defaultResolve
    */
   resolveImport(specifier, context, defaultResolve) {
-    return this._onImportResolve(specifier, context, defaultResolve);
+    return this._onResolveImport(specifier, context, defaultResolve);
   }
 
   /**
@@ -188,7 +204,7 @@ module.exports = class Hooker {
    * @param { DefaultResolve } defaultResolve
    * @returns { string | false | undefined }
    */
-  _onImportResolve(specifier, context, defaultResolve) {
+  _onResolveImport(specifier, context, defaultResolve) {
     return;
   }
 

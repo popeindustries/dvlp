@@ -340,7 +340,7 @@ declare class TestServer {
     filePath: string,
     fileContents: string,
   ): Promise<string> | string | undefined;
-  onImportResolve(
+  onResolveImport(
     specifier: string,
     context: HookContext,
     defaultResolve: DefaultResolve,
