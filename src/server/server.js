@@ -121,6 +121,7 @@ module.exports = class DvlpServer {
         string: headerScript,
       },
       rollupConfigPath,
+      resolveHook: this.hooks.resolveImport,
       sendHook: this.hooks.send,
     };
   }

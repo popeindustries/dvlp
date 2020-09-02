@@ -18,6 +18,7 @@ const {
 const { warn, WARN_BARE_IMPORT } = require('./log.js');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:patch');
+const { existsSync } = require('fs');
 const { filePathToUrl } = require('./url.js');
 const { isModule } = require('./module.js');
 const Metrics = require('./metrics.js');
@@ -26,6 +27,7 @@ const { parse } = require('es-module-lexer');
 const { resolve } = require('../resolver/index.js');
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
+const RE_DYNAMIC_IMPORT = /(^[^(]+\(['"])([^'"]+)(['"][^)]+\))/;
 const RE_NONCE_SHA = /nonce-|sha\d{3}-/;
 const RE_OPEN_HEAD_TAG = /<head>/i;
 
@@ -47,7 +49,7 @@ function patchResponse(
   filePath,
   req,
   res,
-  { footerScript, headerScript, rollupConfigPath, sendHook } = {
+  { footerScript, headerScript, rollupConfigPath, resolveHook, sendHook } = {
     rollupConfigPath: '',
   },
 ) {
@@ -121,7 +123,7 @@ function patchResponse(
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
-      code = rewriteImports(res, filePath, rollupConfigPath, code);
+      code = rewriteImports(res, filePath, rollupConfigPath, code, resolveHook);
 
       if (sendHook) {
         const transformed = sendHook(filePath, code);
@@ -274,9 +276,10 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  * @param { string } filePath
  * @param { string | undefined } rollupConfigPath
  * @param { string } code
+ * @param { PatchResponseOptions["resolveHook"] } resolveHook
  * @returns { string }
  */
-function rewriteImports(res, filePath, rollupConfigPath, code) {
+function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
   res.metrics.recordEvent('rewrite JS imports');
 
   // Retrieve original source path from bundled file
@@ -287,6 +290,7 @@ function rewriteImports(res, filePath, rollupConfigPath, code) {
 
   try {
     const projectFilePath = getProjectPath(filePath);
+    const importer = getAbsoluteProjectPath(filePath);
     const [imports] = parse(code);
 
     if (imports.length > 0) {
@@ -298,12 +302,15 @@ function rewriteImports(res, filePath, rollupConfigPath, code) {
         const isDynamic = d > -1;
         let start = offset + s;
         let end = offset + e;
-        let id = code.substring(start, end);
+        let specifier = code.substring(start, end);
+        let after = '';
+        let before = '';
+        let importPath;
 
         if (isDynamic) {
           // Dynamic import indexes include quotes if strings, so strip from id before resolving
-          if (/^['"]/.test(id)) {
-            id = id.slice(1, -1);
+          if (/^['"]/.test(specifier)) {
+            specifier = specifier.slice(1, -1);
             start++;
             end--;
           } else {
@@ -312,42 +319,79 @@ function rewriteImports(res, filePath, rollupConfigPath, code) {
           }
         }
 
-        const importPath = resolve(id, getAbsoluteProjectPath(filePath));
+        if (resolveHook) {
+          const hookResult = resolveHook(
+            specifier,
+            {
+              isDynamic,
+              importer,
+            },
+            resolve,
+          );
 
-        if (importPath) {
+          if (hookResult === false) {
+            // Force ignored by hook
+            continue;
+          } else if (hookResult !== undefined) {
+            // Handle import statement substitution
+            if (isDynamic && hookResult.includes('(')) {
+              const match = hookResult.match(RE_DYNAMIC_IMPORT);
+              if (match) {
+                [, before, importPath, after] = match;
+                start -= 8;
+                end += 2;
+              } else {
+                // Error parsing substitution;
+                continue;
+              }
+            } else {
+              importPath = hookResult;
+              importPath = path.resolve(importPath);
+            }
+          }
+        } else {
+          importPath = resolve(specifier, importer);
+        }
+
+        if (importPath && existsSync(importPath)) {
           let newId = '';
 
           // Bundle if in node_modules and not an es module
           if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
-            const resolvedId = resolveModuleId(id, importPath);
+            const resolvedId = resolveModuleId(specifier, importPath);
 
             // Trigger bundling in background while waiting for eventual request
-            bundle(resolvedId, rollupConfigPath, id, importPath);
+            bundle(resolvedId, rollupConfigPath, specifier, importPath);
             newId = `/${path.join(config.bundleDirName, resolvedId)}`;
-            warn(WARN_BARE_IMPORT, id);
+            warn(WARN_BARE_IMPORT, specifier);
           } else {
             // Don't rewrite if no change after resolving
             newId =
-              isRelativeFilePath(id) &&
-              path.join(path.dirname(filePath), id) === importPath
-                ? id
+              isRelativeFilePath(specifier) &&
+              path.join(path.dirname(filePath), specifier) === importPath
+                ? specifier
                 : importPath;
           }
 
           newId = filePathToUrl(newId);
 
-          if (newId !== id) {
+          if (newId !== specifier) {
             debug(
               `rewrote ${
                 isDynamic ? 'dynamic' : ''
-              } import id from "${id}" to "${newId}"`,
+              } import id from "${specifier}" to "${newId}"`,
             );
-            code = code.substring(0, start) + newId + code.substring(end);
-            offset += newId.length - id.length;
+            code =
+              code.substring(0, start) +
+              before +
+              newId +
+              after +
+              code.substring(end);
+            offset += newId.length - specifier.length;
           }
         } else {
           warn(
-            `⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`,
+            `⚠️  unable to resolve path for "${specifier}" from "${projectFilePath}"`,
           );
         }
       }

@@ -290,14 +290,16 @@ describe('patch', () => {
     });
 
     describe('rewrite imports', () => {
-      it('should not resolve valid relative js import id', () => {
+      it('should resolve valid relative js import id', () => {
         const req = getRequest('/index.js', {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res);
-        res.end('import "./body.js";');
-        expect(getBody(res)).to.equal(`import "./body.js";`);
+        res.end('import "./test/fixtures/www/module.js";');
+        expect(getBody(res)).to.equal(
+          `import "${process.cwd()}/test/fixtures/www/module.js";`,
+        );
       });
       it('should resolve bare js import id', () => {
         const req = getRequest('/index.js', {
@@ -515,7 +517,7 @@ describe('patch', () => {
           `import "${process.cwd()}/test/fixtures/node_modules/bat/browser.js";`,
         );
       });
-      it('should resolve dynamic import()', () => {
+      it('should resolve js dynamic import()', () => {
         const req = getRequest('/index.js', {
           accept: 'application/javascript',
         });
@@ -526,6 +528,68 @@ describe('patch', () => {
         );
         expect(getBody(res)).to.equal(
           `import lodashArr from "/${config.bundleDirName}/lodash__array-${LODASH_VERSION}.js";\nimport(foo);\nimport("/${config.bundleDirName}/debug-${DEBUG_VERSION}.js");\n`,
+        );
+      });
+      it('should resolve js import with resolve hook', () => {
+        const req = getRequest('/index.js', {
+          accept: 'application/javascript',
+        });
+        const res = getResponse(req);
+        patchResponse(req.filePath, req, res, {
+          resolveHook: (specifier, context, defaultResolve) => {
+            expect(context.isDynamic).to.equal(false);
+            return `test/fixtures/www/${specifier}.js`;
+          },
+        });
+        res.end('import "module"');
+        expect(getBody(res)).to.equal(
+          `import "${process.cwd()}/test/fixtures/www/module.js"`,
+        );
+      });
+      it('should resolve js import with resolve hook using defaultResolve', () => {
+        const req = getRequest('/test/fixtures/www/index.js', {
+          accept: 'application/javascript',
+        });
+        const res = getResponse(req);
+        patchResponse(req.filePath, req, res, {
+          resolveHook: (specifier, context, defaultResolve) => {
+            return defaultResolve(specifier, context.importer);
+          },
+        });
+        res.end('import "./module.js"');
+        expect(getBody(res)).to.equal(
+          `import "${process.cwd()}/test/fixtures/www/module.js"`,
+        );
+      });
+      it('should resolve js dynamic import with resolve hook', () => {
+        const req = getRequest('/index.js', {
+          accept: 'application/javascript',
+        });
+        const res = getResponse(req);
+        patchResponse(req.filePath, req, res, {
+          resolveHook: (specifier, context, defaultResolve) => {
+            expect(context.isDynamic).to.equal(true);
+            return `./test/fixtures/www/${specifier}.js`;
+          },
+        });
+        res.end('import("module");');
+        expect(getBody(res)).to.equal(
+          `import("${process.cwd()}/test/fixtures/www/module.js");`,
+        );
+      });
+      it('should resolve js dynamic import expression with resolve hook', () => {
+        const req = getRequest('/index.js', {
+          accept: 'application/javascript',
+        });
+        const res = getResponse(req);
+        patchResponse(req.filePath, req, res, {
+          resolveHook: (specifier, context, defaultResolve) => {
+            return `dynamicImport('./test/fixtures/www/${specifier}.js', '/index.js')`;
+          },
+        });
+        res.end('import("module");');
+        expect(getBody(res)).to.equal(
+          `dynamicImport('./test/fixtures/www/module.js', '/index.js');`,
         );
       });
     });

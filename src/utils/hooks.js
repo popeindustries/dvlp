@@ -25,6 +25,9 @@ module.exports = class Hooker {
       if (module.onTransform) {
         this._onTransform = module.onTransform;
       }
+      if (module.onImportResolve) {
+        this._onImportResolve = module.onImportResolve;
+      }
       if (module.onSend) {
         this._onSend = module.onSend;
       }
@@ -65,6 +68,7 @@ module.exports = class Hooker {
     /** @type { Map<string, string> } */
     this.transformCache = new Map();
     this.transform = this.transform.bind(this);
+    this.resolveImport = this.resolveImport.bind(this);
     this.send = this.send.bind(this);
     this.serverTransform = this.serverTransform.bind(this);
   }
@@ -130,6 +134,17 @@ module.exports = class Hooker {
   }
 
   /**
+   * Resolve module import specifier
+   *
+   * @param { string } specifier
+   * @param { HookContext } context
+   * @param { DefaultResolve } defaultResolve
+   */
+  resolveImport(specifier, context, defaultResolve) {
+    return this._onImportResolve(specifier, context, defaultResolve);
+  }
+
+  /**
    * Allow modification of 'filePath' content before sending the request
    *
    * @param { string } filePath
@@ -152,7 +167,7 @@ module.exports = class Hooker {
 
   /**
    * Transform file contents hook.
-   * Return new file contents or `undefined` if no change.
+   * Return new file contents or "undefined" if no change.
    *
    * @param { string } filePath
    * @param { string } fileContents
@@ -163,8 +178,23 @@ module.exports = class Hooker {
   }
 
   /**
+   * Resolve import specifier hook.
+   * Return new specifier, "false" to ignore resolving, or "undefined" if relying on default behaviour.
+   * When "context.isDynamic", the returned value may include surrounding context:
+   * "dynamicImport('resolved-path-to-module', 'parent-path')".
+   *
+   * @param { string } specifier
+   * @param { HookContext } context
+   * @param { DefaultResolve } defaultResolve
+   * @returns { string | false | undefined }
+   */
+  _onImportResolve(specifier, context, defaultResolve) {
+    return;
+  }
+
+  /**
    * Send file response hook.
-   * Return new response body or `undefined` if no change.
+   * Return new response body or "undefined" if no change.
    *
    * @param { string } filePath
    * @param { string } responseBody
@@ -176,7 +206,7 @@ module.exports = class Hooker {
 
   /**
    * Transform file contents hook for server import/require.
-   * Return new file contents or `undefined` if no change.
+   * Return new file contents or "undefined" if no change.
    *
    * @param { string } filePath
    * @param { string } fileContents
