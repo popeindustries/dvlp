@@ -18,7 +18,6 @@ const {
 const { warn, WARN_BARE_IMPORT } = require('./log.js');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:patch');
-const { existsSync } = require('fs');
 const { filePathToUrl } = require('./url.js');
 const { isModule } = require('./module.js');
 const Metrics = require('./metrics.js');
@@ -345,15 +344,16 @@ function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
                 continue;
               }
             } else {
-              importPath = hookResult;
-              importPath = path.resolve(importPath);
+              importPath = path.resolve(hookResult);
             }
           }
-        } else {
+        }
+
+        if (!importPath) {
           importPath = resolve(specifier, importer);
         }
 
-        if (importPath && existsSync(importPath)) {
+        if (importPath) {
           let newId = '';
 
           // Bundle if in node_modules and not an es module
