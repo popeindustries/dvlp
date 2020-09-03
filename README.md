@@ -132,7 +132,9 @@ module.exports = {
    * @param { (specifier: string, importer: string) => string | undefined } defaultResolve
    */
   onResolveImport(specifier, context, defaultResolve) {
-    return `dynamicImport('/some-path-prefix/${specifier}.js', '${context.importer}')`;
+    if (context.isDynamic) {
+      return `dynamicImport('./some-path-prefix/${specifier}.js', '${context.importer}')`;
+    }
   },
 
   /**
