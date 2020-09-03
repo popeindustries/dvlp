@@ -130,7 +130,12 @@ declare type PatchResponseOptions = {
     string: string;
     url?: string;
   };
-  sendHook?: (filePath: string, code: string) => string | undefined;
+  sendHook?: (filePath: string, fileContents: string) => string | undefined;
+  resolveHook?: (
+    specifier: string,
+    context: HookContext,
+    defaultResolve: DefaultResolve,
+  ) => string | false | undefined;
   rollupConfigPath?: string;
 };
 
@@ -139,13 +144,14 @@ declare type FindOptions = {
   type?: string;
 };
 
-declare type Hooks = {
-  onTransform(
-    filePath: string,
-    fileContents: string,
-  ): Promise<string> | string | undefined;
-  onSend(filePath: string, responseBody: string): string | undefined;
-  onServerTransform(filePath: string, fileContents: string): string | undefined;
+declare type DefaultResolve = (
+  specifier: string,
+  importer: string,
+) => string | undefined;
+
+declare type HookContext = {
+  importer: string;
+  isDynamic: boolean;
 };
 
 declare type Transpiler = (
@@ -154,12 +160,6 @@ declare type Transpiler = (
 ) => Promise<string> | string | undefined;
 
 declare type TranspilerCache = Map<string, string>;
-
-declare type TranspilerState = {
-  transpilerCache: TranspilerCache;
-  lastChanged: string;
-  transpiler: Transpiler;
-};
 
 declare type Watcher = {
   add: (filePath: string) => void;
@@ -289,6 +289,64 @@ declare class Mock {
 declare type MockResponseJSONSchema = {
   request: MockRequest;
   response: MockResponse;
+};
+
+declare class TestServer {
+  latency: number;
+  port: number;
+  mocks: Mock;
+  webroot: string;
+
+  constructor(options?: TestServerOptions);
+  /**
+   * Load mock files at `filePath`
+   */
+  loadMockFiles(filePath: string | Array<string>): void;
+  /**
+   * Register mock `response` for `request`.
+   * If `once`, mock will be unregistered after first use.
+   * If `onMock`, callback when response is mocked
+   */
+  mockResponse(
+    request: string | MockRequest,
+    response: MockResponse | MockResponseHandler,
+    once?: boolean,
+    onMockCallback?: () => void,
+  ): void;
+  /**
+   * Register mock push `events` for `stream`
+   */
+  mockPushEvents(
+    stream: string | MockPushStream,
+    events: MockPushEvent | Array<MockPushEvent>,
+  ): void;
+  /**
+   * Push data to WebSocket/EventSource clients
+   * A string passed as `event` will be handled as a named mock push event
+   */
+  pushEvent(stream: string | PushStream, event?: string | PushEvent): void;
+  /**
+   * Clear all mock data
+   */
+  clearMockFiles(): void;
+  /**
+   * Destroy server instance
+   */
+  destroy(): Promise<void>;
+}
+
+/* export */ declare type Hooks = {
+  onTransform(
+    filePath: string,
+    fileContents: string,
+  ): Promise<string> | string | undefined;
+  onResolveImport(
+    specifier: string,
+    context: HookContext,
+    defaultResolve: DefaultResolve,
+  ): string | false | undefined;
+  onSend(filePath: string, responseBody: string): string | undefined;
+  onServerTransform(filePath: string, fileContents: string): string | undefined;
 };
 
 /* export */ declare type MockRequest = {
@@ -431,50 +489,6 @@ declare interface PushClient {
    */
   webroot?: string;
 };
-
-declare class TestServer {
-  latency: number;
-  port: number;
-  mocks: Mock;
-  webroot: string;
-
-  constructor(options?: TestServerOptions);
-  /**
-   * Load mock files at `filePath`
-   */
-  loadMockFiles(filePath: string | Array<string>): void;
-  /**
-   * Register mock `response` for `request`.
-   * If `once`, mock will be unregistered after first use.
-   * If `onMock`, callback when response is mocked
-   */
-  mockResponse(
-    request: string | MockRequest,
-    response: MockResponse | MockResponseHandler,
-    once?: boolean,
-    onMockCallback?: () => void,
-  ): void;
-  /**
-   * Register mock push `events` for `stream`
-   */
-  mockPushEvents(
-    stream: string | MockPushStream,
-    events: MockPushEvent | Array<MockPushEvent>,
-  ): void;
-  /**
-   * Push data to WebSocket/EventSource clients
-   * A string passed as `event` will be handled as a named mock push event
-   */
-  pushEvent(stream: string | PushStream, event?: string | PushEvent): void;
-  /**
-   * Clear all mock data
-   */
-  clearMockFiles(): void;
-  /**
-   * Destroy server instance
-   */
-  destroy(): Promise<void>;
-}
 
 /* export */ declare function testServer(
   options: TestServerOptions,

@@ -1,14 +1,20 @@
 'use strict';
 
+const { error, warn } = require('./log.js');
 const { getProjectPath, getTypeFromPath } = require('./file.js');
 const debug = require('debug')('dvlp:hooks');
-const { error } = require('./log.js');
 const { importModule } = require('./module.js');
 const Metrics = require('./metrics.js');
 const mime = require('mime');
 const { readFileSync } = require('fs');
 
 const RE_TRANSPILER_HANDLES_SERVER = /\(\s?[a-zA-Z]+,\s?[a-zA-Z]+\s?\)/;
+const HOOK_NAMES = [
+  'onTransform',
+  'onServerTransform',
+  'onResolveImport',
+  'onSend',
+];
 
 module.exports = class Hooker {
   /**
@@ -25,11 +31,24 @@ module.exports = class Hooker {
       if (module.onTransform) {
         this._onTransform = module.onTransform;
       }
+      if (module.onResolveImport) {
+        this._onResolveImport = module.onResolveImport;
+      }
       if (module.onSend) {
         this._onSend = module.onSend;
       }
       if (module.onServerTransform) {
         this._onServerTransform = module.onServerTransform;
+      }
+
+      for (const name of Object.keys(module)) {
+        if (!HOOK_NAMES.includes(name)) {
+          warn(
+            `⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(
+              ', ',
+            )}`,
+          );
+        }
       }
     } else if (transpilerPath) {
       // Create backwards compatible hook from transpiler.
@@ -65,6 +84,7 @@ module.exports = class Hooker {
     /** @type { Map<string, string> } */
     this.transformCache = new Map();
     this.transform = this.transform.bind(this);
+    this.resolveImport = this.resolveImport.bind(this);
     this.send = this.send.bind(this);
     this.serverTransform = this.serverTransform.bind(this);
   }
@@ -130,6 +150,17 @@ module.exports = class Hooker {
   }
 
   /**
+   * Resolve module import "specifier"
+   *
+   * @param { string } specifier
+   * @param { HookContext } context
+   * @param { DefaultResolve } defaultResolve
+   */
+  resolveImport(specifier, context, defaultResolve) {
+    return this._onResolveImport(specifier, context, defaultResolve);
+  }
+
+  /**
    * Allow modification of 'filePath' content before sending the request
    *
    * @param { string } filePath
@@ -152,7 +183,7 @@ module.exports = class Hooker {
 
   /**
    * Transform file contents hook.
-   * Return new file contents or `undefined` if no change.
+   * Return new file contents or "undefined" if no change.
    *
    * @param { string } filePath
    * @param { string } fileContents
@@ -163,8 +194,23 @@ module.exports = class Hooker {
   }
 
   /**
+   * Resolve import specifier hook.
+   * Return new specifier, "false" to ignore resolving, or "undefined" if relying on default behaviour.
+   * When "context.isDynamic", the returned value may include surrounding context:
+   * "dynamicImport('resolved-path-to-module', 'parent-path')".
+   *
+   * @param { string } specifier
+   * @param { HookContext } context
+   * @param { DefaultResolve } defaultResolve
+   * @returns { string | false | undefined }
+   */
+  _onResolveImport(specifier, context, defaultResolve) {
+    return;
+  }
+
+  /**
    * Send file response hook.
-   * Return new response body or `undefined` if no change.
+   * Return new response body or "undefined" if no change.
    *
    * @param { string } filePath
    * @param { string } responseBody
@@ -176,7 +222,7 @@ module.exports = class Hooker {
 
   /**
    * Transform file contents hook for server import/require.
-   * Return new file contents or `undefined` if no change.
+   * Return new file contents or "undefined" if no change.
    *
    * @param { string } filePath
    * @param { string } fileContents

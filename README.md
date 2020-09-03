@@ -121,6 +121,23 @@ module.exports = {
   },
 
   /**
+   * Manually resolve import specifier.
+   * This hook is run for each import statement.
+   * If returns "false", import re-writing is skipped.
+   * If returns "undefined", import specifier is re-written using default resolver.
+   * If "context.isDynamic", also possible to return replacement for whole expression.
+   *
+   * @param { string } specifier
+   * @param { { importer: string, isDynamic: boolean} } context
+   * @param { (specifier: string, importer: string) => string | undefined } defaultResolve
+   */
+  onResolveImport(specifier, context, defaultResolve) {
+    if (context.isDynamic) {
+      return `dynamicImport('./some-path-prefix/${specifier}.js', '${context.importer}')`;
+    }
+  },
+
+  /**
    * Modify response body before sending to the browser.
    * This hook is run after all modifications by dvlp, and before sending to the browser.
    *
@@ -129,7 +146,7 @@ module.exports = {
    */
   onSend(filePath, responseBody) {
     if (RE_JS.test(filePath)) {
-      return responseBody.replace(/import\(/g, 'dynamicImportPolyfill(');
+      return responseBody.replace('__VERSION__', '1.0.0');
     }
   },
 };

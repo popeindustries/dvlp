@@ -121,6 +121,7 @@ module.exports = class DvlpServer {
         string: headerScript,
       },
       rollupConfigPath,
+      resolveHook: this.hooks.resolveImport,
       sendHook: this.hooks.send,
     };
   }
@@ -331,6 +332,7 @@ module.exports = class DvlpServer {
         filePath = find(req, { type });
 
         if (filePath) {
+          server.addWatchFiles(filePath);
           server.urlToFilePath.set(req.url, filePath);
 
           if (isModuleBundlerFilePath(filePath)) {

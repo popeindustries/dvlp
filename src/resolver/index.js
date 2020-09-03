@@ -23,25 +23,26 @@ module.exports = {
 };
 
 /**
- * Resolve file path for "id" relative to "fromFilePath",
- * where "id" can be an absolute path, relative path, or npm package id
+ * Resolve absolute file path for "specifier" relative to "importer",
+ * where "specifier" can be an absolute path, relative path, or npm package id
  *
- * @param { string } id
- * @param { string } [fromFilePath]
+ * @param { string } specifier
+ * @param { string } [importer]
  * @returns { string | undefined }
  */
-function resolve(id, fromFilePath = path.resolve('index.js')) {
-  if (!id) {
+function resolve(specifier, importer = 'index.js') {
+  if (!specifier) {
     return;
   }
 
-  const key = getCacheKey(fromFilePath, id);
+  importer = path.resolve(importer);
+  const key = getCacheKey(importer, specifier);
 
   if (cache.has(key)) {
     return cache.get(key);
   }
 
-  const filePath = doResolve(id, path.dirname(fromFilePath));
+  const filePath = doResolve(specifier, path.dirname(importer));
 
   if (!filePath) {
     return;
@@ -52,29 +53,29 @@ function resolve(id, fromFilePath = path.resolve('index.js')) {
 }
 
 /**
- * Retrieve file path for "id" relative to "fromDirPath"
+ * Retrieve file path for "specifier" relative to "fromDirPath"
  *
- * @param { string } id
- * @param { string } fromDirPath
+ * @param { string } specifier
+ * @param { string } importerDirPath
  * @returns { string | undefined }
  */
-function doResolve(id, fromDirPath) {
-  const pkg = getCachedPackage(fromDirPath);
+function doResolve(specifier, importerDirPath) {
+  const pkg = getCachedPackage(importerDirPath);
 
   if (!pkg) {
     return;
   }
 
-  const isIdRelative = isRelativeFilePath(id);
+  const isIdRelative = isRelativeFilePath(specifier);
 
   // Handle self-referential package reference
-  if (!isIdRelative && id.split('/')[0] === pkg.name) {
-    id = path.join(pkg.path, id.replace(pkg.name, '.'));
+  if (!isIdRelative && specifier.split('/')[0] === pkg.name) {
+    specifier = path.join(pkg.path, specifier.replace(pkg.name, '.'));
   }
 
   /** @type { string | undefined } */
   let filePath = resolveAliasPath(
-    isIdRelative ? path.join(fromDirPath, id) : id,
+    isIdRelative ? path.join(importerDirPath, specifier) : specifier,
     pkg,
   );
 
@@ -89,11 +90,11 @@ function doResolve(id, fromDirPath) {
   }
 
   // filePath must be a package reference, so restart search from each package dir working upwards
-  id = filePath;
+  specifier = filePath;
 
   for (const packageDirPath of pkg.paths) {
-    if (fromDirPath !== packageDirPath) {
-      filePath = path.join(packageDirPath, id);
+    if (importerDirPath !== packageDirPath) {
+      filePath = path.join(packageDirPath, specifier);
       filePath = doResolve(filePath, filePath);
 
       if (filePath) {
@@ -106,12 +107,12 @@ function doResolve(id, fromDirPath) {
 /**
  * Retrieve cache key
  *
- * @param { string } fromPath
- * @param { string } id
+ * @param { string } importerFilePath
+ * @param { string } specifier
  * @returns { string }
  */
-function getCacheKey(fromPath, id) {
-  return `${getProjectPath(fromPath)}:${id}`;
+function getCacheKey(importerFilePath, specifier) {
+  return `${getProjectPath(importerFilePath)}:${specifier}`;
 }
 
 /**
