@@ -577,7 +577,20 @@ describe('patch', () => {
           `import("${process.cwd()}/test/fixtures/www/module.js");`,
         );
       });
-      it('should resolve js dynamic import expression with resolve hook', () => {
+      it('should replace js dynamic import expression with resolve hook return value', () => {
+        const req = getRequest('/index.js', {
+          accept: 'application/javascript',
+        });
+        const res = getResponse(req);
+        patchResponse(req.filePath, req, res, {
+          resolveHook: (specifier, context, defaultResolve) => {
+            return `dynamicImport('${specifier}')`;
+          },
+        });
+        res.end('import("module");');
+        expect(getBody(res)).to.equal(`dynamicImport('module');`);
+      });
+      it('should replace js dynamic import expression with resolve hook return value, including optional arguments', () => {
         const req = getRequest('/index.js', {
           accept: 'application/javascript',
         });

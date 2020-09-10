@@ -6,6 +6,7 @@ const {
   parseOriginalSourcePath,
   resolveModuleId,
 } = require('../bundler/index.js');
+const { fatal, warn, WARN_BARE_IMPORT } = require('./log.js');
 const { getAbsoluteProjectPath, getProjectPath } = require('./file.js');
 const {
   isCssRequest,
@@ -15,7 +16,6 @@ const {
   isModuleBundlerFilePath,
   isRelativeFilePath,
 } = require('./is.js');
-const { warn, WARN_BARE_IMPORT } = require('./log.js');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:patch');
 const { filePathToUrl } = require('./url.js');
@@ -26,7 +26,7 @@ const { parse } = require('es-module-lexer');
 const { resolve } = require('../resolver/index.js');
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
-const RE_DYNAMIC_IMPORT = /(^[^(]+\(['"])([^'"]+)(['"][^)]+\))/;
+const RE_DYNAMIC_IMPORT = /(^[^(]+\(['"])([^'"]+)(['"][^)]*\))/;
 const RE_NONCE_SHA = /nonce-|sha\d{3}-/;
 const RE_OPEN_HEAD_TAG = /<head>/i;
 
@@ -319,14 +319,21 @@ function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
         }
 
         if (resolveHook) {
-          const hookResult = resolveHook(
-            specifier,
-            {
-              isDynamic,
-              importer,
-            },
-            resolve,
-          );
+          let hookResult;
+
+          try {
+            hookResult = resolveHook(
+              specifier,
+              {
+                isDynamic,
+                importer,
+              },
+              resolve,
+            );
+          } catch (err) {
+            err.hooked;
+            throw err;
+          }
 
           if (hookResult === false) {
             // Force ignored by hook
@@ -375,7 +382,7 @@ function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
 
           newId = filePathToUrl(newId);
 
-          if (newId !== specifier) {
+          if (newId !== specifier || before || after) {
             debug(
               `rewrote ${
                 isDynamic ? 'dynamic' : ''
@@ -387,7 +394,8 @@ function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
               newId +
               after +
               code.substring(end);
-            offset += newId.length - specifier.length;
+            offset +=
+              before.length + newId.length + after.length - specifier.length;
           }
         } else {
           warn(
@@ -399,7 +407,9 @@ function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
       debug(`no imports to rewrite in "${projectFilePath}"`);
     }
   } catch (err) {
-    // ignore error
+    if (err.hooked) {
+      fatal(err);
+    }
   }
 
   res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
