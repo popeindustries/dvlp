@@ -12,7 +12,7 @@
   "bin": {
     "dvlp": "./bin/dvlp"
   },
-  "dependenciesNotes": {
+  "**NOTES-ON-DEPENDENCY-VERSIONS**": {
     "@rollup/plugin-commonjs": "error with external import on 15.0.0",
     "terser": "async api incompatible with Rollup build on 5.0.0"
   },
