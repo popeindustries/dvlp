@@ -241,7 +241,7 @@ describe('Mock', function () {
           expect(res.status).to.equal(500);
           expect(res.ok).to.be.false;
           res.text().then(function (text) {
-            expect(text).to.equal('"error"');
+            expect(text).to.equal('error');
             done();
           });
         });
@@ -310,7 +310,7 @@ describe('Mock', function () {
           'http://www.google.com/bar',
           function (req, res) {
             res.writeHead(200);
-            res.end({ name: 'bar' });
+            res.end(JSON.stringify({ name: 'bar' }));
           },
           false,
         );

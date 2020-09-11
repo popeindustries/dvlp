@@ -94,7 +94,11 @@
                 );
               }
 
-              var res = new Response(JSON.stringify(mockResponse.body), {
+              var body =
+                typeof mockResponse.body === 'string'
+                  ? mockResponse.body
+                  : JSON.stringify(mockResponse.body);
+              var res = new Response(body, {
                 headers: mockResponse.headers,
                 status: mockResponse.status,
               });
