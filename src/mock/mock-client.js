@@ -41,16 +41,30 @@
             return;
           }
 
+          var body =
+            typeof mockResponse.body === 'string'
+              ? mockResponse.body
+              : JSON.stringify(mockResponse.body);
+
           Object.defineProperties(xhr, {
+            readyState: {
+              value: 4,
+            },
             response: {
               get: function () {
                 if (mockData.callback) {
                   setTimeout(mockData.callback, 0);
                 }
-                return xhr.responseType === 'json'
-                  ? mockResponse.body
-                  : JSON.stringify(mockResponse.body);
+                return body;
               },
+            },
+            responseText: {
+              get: function () {
+                return this.response;
+              },
+            },
+            responseURL: {
+              value: href,
             },
             status: {
               get: function () {
@@ -58,7 +72,9 @@
               },
             },
           });
-          xhr.onload();
+
+          xhr.onreadystatechange({ currentTarget: xhr });
+          xhr.onload({ currentTarget: xhr });
         };
       } else if (mockData.callback) {
         // Triggered on load/error/abort
@@ -300,7 +316,7 @@
    * Resolve response from "mockData"
    *
    * @param { MockResponseData } mockData
-   * @returns { { body: string, status: number } }
+   * @returns { { body: string, headers: {}, status: number } }
    */
   function resolveMockResponse(mockData) {
     var mockResponse = mockData.response;
