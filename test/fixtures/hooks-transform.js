@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-  async onTransform(filePath, code) {
+  async onTransform(filePath, code, context) {
     await sleep(200);
     return `this is transformed content for: ${path.basename(filePath)}`;
   },

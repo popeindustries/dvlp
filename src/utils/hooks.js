@@ -95,9 +95,10 @@ module.exports = class Hooker {
    * @param { string } filePath
    * @param { string } lastChangedFilePath
    * @param { Res } res
+   * @param { TransformHookContext["client"] } clientPlatform
    * @returns { Promise<void> }
    */
-  async transform(filePath, lastChangedFilePath, res) {
+  async transform(filePath, lastChangedFilePath, res, clientPlatform) {
     res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
 
     const relativeFilePath = getProjectPath(filePath);
@@ -116,6 +117,7 @@ module.exports = class Hooker {
         code = await this._onTransform(
           filePath,
           readFileSync(filePath, 'utf8'),
+          { client: clientPlatform },
         );
         if (code !== undefined) {
           transformed = true;
@@ -153,7 +155,7 @@ module.exports = class Hooker {
    * Resolve module import "specifier"
    *
    * @param { string } specifier
-   * @param { HookContext } context
+   * @param { ResolveHookContext } context
    * @param { DefaultResolve } defaultResolve
    */
   resolveImport(specifier, context, defaultResolve) {
@@ -187,9 +189,10 @@ module.exports = class Hooker {
    *
    * @param { string } filePath
    * @param { string } fileContents
+   * @param { TransformHookContext } context
    * @returns { Promise<string> | string | undefined }
    */
-  _onTransform(filePath, fileContents) {
+  _onTransform(filePath, fileContents, context) {
     return;
   }
 
@@ -200,7 +203,7 @@ module.exports = class Hooker {
    * "dynamicImport('resolved-path-to-module', 'parent-path')".
    *
    * @param { string } specifier
-   * @param { HookContext } context
+   * @param { ResolveHookContext } context
    * @param { DefaultResolve } defaultResolve
    * @returns { string | false | undefined }
    */

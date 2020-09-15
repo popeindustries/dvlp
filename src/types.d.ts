@@ -133,7 +133,7 @@ declare type PatchResponseOptions = {
   sendHook?: (filePath: string, fileContents: string) => string | undefined;
   resolveHook?: (
     specifier: string,
-    context: HookContext,
+    context: ResolveHookContext,
     defaultResolve: DefaultResolve,
   ) => string | false | undefined;
   rollupConfigPath?: string;
@@ -144,12 +144,21 @@ declare type FindOptions = {
   type?: string;
 };
 
+declare type TransformHookContext = {
+  client: {
+    manufacturer?: string;
+    name?: string;
+    ua?: string;
+    version?: string;
+  };
+};
+
 declare type DefaultResolve = (
   specifier: string,
   importer: string,
 ) => string | undefined;
 
-declare type HookContext = {
+declare type ResolveHookContext = {
   importer: string;
   isDynamic: boolean;
 };
@@ -339,10 +348,11 @@ declare class TestServer {
   onTransform(
     filePath: string,
     fileContents: string,
+    context: TransformHookContext,
   ): Promise<string> | string | undefined;
   onResolveImport(
     specifier: string,
-    context: HookContext,
+    context: ResolveHookContext,
     defaultResolve: DefaultResolve,
   ): string | false | undefined;
   onSend(filePath: string, responseBody: string): string | undefined;

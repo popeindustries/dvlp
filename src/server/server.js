@@ -1,7 +1,6 @@
 'use strict';
 
 /** @typedef {import("http").Server} Server */
-/** @typedef { import("rollup").RollupOptions } RollupOptions */
 
 const { error, fatal, info, noisyInfo } = require('../utils/log.js');
 const {
@@ -34,13 +33,14 @@ const fs = require('fs');
 const Hooks = require('../utils/hooks.js');
 const http = require('http');
 const { importModule } = require('../utils/module.js');
+const Metrics = require('../utils/metrics.js');
 const Mock = require('../mock/index.js');
 // Work around @rollup/plugin-commonjs require.cache
 // @ts-ignore
 const moduleCache = require('module')._cache;
 const path = require('path');
 const { patchResponse } = require('../utils/patch.js');
-const Metrics = require('../utils/metrics.js');
+const platform = require('platform');
 const send = require('send');
 const watch = require('../utils/watch.js');
 const WebSocket = require('faye-websocket');
@@ -364,8 +364,29 @@ module.exports = class DvlpServer {
         // Transform all files that aren't bundled or node_modules
         // This ensures that all symlinked workspace files are transformed even though they are dependencies
         if (shouldTransform) {
+          const userAgent = req.headers['user-agent'];
+          let clientPlatform;
+
+          if (userAgent) {
+            const { manufacturer, name, ua, version } = platform.parse(
+              userAgent,
+            );
+            clientPlatform = { manufacturer, name, ua, version };
+          } else {
+            clientPlatform = {
+              manufacturer: '',
+              name: '',
+              ua: 'dvlp/',
+              version: '',
+            };
+          }
           // Will respond if transformer exists for this type
-          await server.hooks.transform(filePath, server.lastChanged, res);
+          await server.hooks.transform(
+            filePath,
+            server.lastChanged,
+            res,
+            clientPlatform,
+          );
         }
 
         // Handle bundled, node_modules, and external files if not already handled by transformer

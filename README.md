@@ -92,8 +92,9 @@ module.exports = {
    *
    * @param { string } filePath
    * @param { string } fileContents
+   * @param { { client: { manufacturer: string, name: string, ua: string, version: string } } } context
    */
-  onTransform(filePath, fileContents) {
+  onTransform(filePath, fileContents, context) {
     if (RE_SASS.test(filePath)) {
       return sass.renderSync({
         file: filePath,
@@ -128,7 +129,7 @@ module.exports = {
    * If "context.isDynamic", also possible to return replacement for whole expression.
    *
    * @param { string } specifier
-   * @param { { importer: string, isDynamic: boolean} } context
+   * @param { { importer: string, isDynamic: boolean } } context
    * @param { (specifier: string, importer: string) => string | undefined } defaultResolve
    */
   onResolveImport(specifier, context, defaultResolve) {
