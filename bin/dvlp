@@ -14,7 +14,7 @@ program
   .description(
     `Start a development server, restarting and reloading connected browsers on file changes.
   Serves static files from one or more "path" directories, or a custom application
-  server if "path" is a single file.`,
+  server if "path" is a single application server file.`,
   )
   .option('-p, --port <port>', 'port number', parseInt)
   .option(
