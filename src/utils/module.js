@@ -9,10 +9,7 @@ const isModuleLib = require('is-module');
 const loadModule = require('module')._load;
 const path = require('path');
 const sucrase = require('sucrase');
-
-const IMPORT_EXTS = ['.js', '.jsx', '.mjs', '.ts', '.tsx'];
-// Sync with config.js#extensionsByType
-const JS_EXTENSIONS = ['.ts', '.tsx', '.mjs', '.jsx', '.js', '.json'];
+const { extensionsByType } = require('../config.js');
 
 /** @type { () => void } */
 let revertHook;
@@ -31,7 +28,7 @@ module.exports = {
 function isModule(filePathOrCode) {
   if (
     !filePathOrCode.includes('\n') &&
-    JS_EXTENSIONS.includes(path.extname(filePathOrCode))
+    extensionsByType.js.includes(path.extname(filePathOrCode))
   ) {
     filePathOrCode = fs.readFileSync(filePathOrCode, 'utf8');
   }
@@ -68,7 +65,7 @@ function importModule(modulePath, transform = (filePath) => undefined) {
       }).code;
     },
     {
-      exts: IMPORT_EXTS,
+      exts: extensionsByType.js,
       ignoreNodeModules: false,
     },
   );

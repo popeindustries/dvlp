@@ -555,7 +555,7 @@ function handleFavicon(req, res) {
  * @returns { boolean }
  */
 function handleMockResponse(req, res, mocks) {
-  const url = new URL(req.url, `http://localhost:${config.activePort}`);
+  const url = new URL(req.url, `http://localhost:${config.applicationPort}`);
   let mock = url.searchParams.get('dvlpmock');
 
   if (mocks && mock) {
@@ -598,7 +598,7 @@ function handleMockResponse(req, res, mocks) {
  * @returns { void }
  */
 function handleMockWebSocket(req, socket, body, mocks) {
-  const url = new URL(req.url, `http://localhost:${config.activePort}`);
+  const url = new URL(req.url, `http://localhost:${config.applicationPort}`);
   let mock = url.searchParams.get('dvlpmock');
 
   if (mocks && mock && WebSocket.isWebSocket(req)) {

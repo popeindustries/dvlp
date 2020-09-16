@@ -440,7 +440,7 @@ module.exports = class Mock {
       if (this.hasMatch(url.href)) {
         url.searchParams.append('dvlpmock', encodeURIComponent(url.href));
         // Reroute to active server
-        url.host = `localhost:${config.activePort}`;
+        url.host = `localhost:${config.applicationPort}`;
       }
       return true;
     });
@@ -554,7 +554,7 @@ function getUrlSegmentsForMatching(req, ignoreSearch) {
     href = href.replace('127.0.0.1', 'localhost');
   }
 
-  const url = new URL(href, `http://localhost:${config.activePort}`);
+  const url = new URL(href, `http://localhost:${config.applicationPort}`);
   // Allow matching of both secure/unsecure protocols
   const origin = new RegExp(
     url.origin

@@ -33,7 +33,7 @@ function getUrl(req) {
     req = new URL(
       // @ts-ignore
       typeof req === 'string' ? decodeURIComponent(req) : req.url,
-      `http://localhost:${config.activePort}`,
+      `http://localhost:${config.applicationPort}`,
     );
   }
   // Map loopback address to localhost

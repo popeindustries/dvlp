@@ -6,10 +6,10 @@
   var sse;
   var retries = 4;
   var connected = false;
-  var hostnames = ['localhost', location.hostname];
-  var url = new URL('http://localhost');
+  var hostnames = [location.hostname, 'localhost'];
+  var url = new URL(location.protocol + '//' + location.hostname);
   url.port = $RELOAD_PORT;
-  url.pathname = '/dvlpreload';
+  url.pathname = '$RELOAD_PATHNAME';
   connect();
 
   function connect() {

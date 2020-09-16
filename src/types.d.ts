@@ -74,6 +74,10 @@ declare type DestroyableHttpServer = import('http').Server & {
   destroy?(): void;
 };
 
+declare type DestroyableHttpsServer = import('https').Server & {
+  destroy?(): void;
+};
+
 declare class Metrics {
   events: Map<string, [number, number]>;
 
@@ -93,7 +97,7 @@ declare namespace Metrics {
   }
 }
 declare type Config = {
-  activePort: number;
+  applicationPort: number;
   brokenNamedExportsPackages: Record<string, Array<string>>;
   bundleDir: string;
   bundleDirName: string;
@@ -104,6 +108,8 @@ declare type Config = {
   latency: number;
   maxAge: string;
   port: number;
+  reloadEndpoint: string;
+  reloadPort: number;
   testing: boolean;
   typesByExtension: {
     [extension: string]: string;
@@ -185,8 +191,14 @@ declare type BundleWorkerMessage = {
 declare type Reloader = {
   client: string;
   url: string;
+  port: number;
   destroy: () => Promise<void>;
   send: (filePath: string) => void;
+};
+
+declare type SecureProxy = {
+  commonName?: string;
+  destroy: () => Promise<void>;
 };
 
 declare type Package = {
@@ -430,6 +442,11 @@ declare interface PushClient {
 };
 
 /* export */ declare type ServerOptions = {
+  /**
+   * The path to a directory containing ".crt" and ".key" files.
+   * This enables secure https mode by proxying all requests through a secure server (default `''`).
+   */
+  certsPath?: string;
   /**
    * The path to a custom hooks registration file (default `''`).
    */

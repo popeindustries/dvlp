@@ -7,10 +7,11 @@ const { info, error, warn } = require('../utils/log.js');
 const chalk = require('chalk');
 const config = require('../config.js');
 const { destroyWorkers } = require('../bundler/index.js');
+const DvlpServer = require('./server.js');
 const fs = require('fs');
 const path = require('path');
-const reloadServer = require('../reloader/index.js');
-const DvlpServer = require('./server.js');
+const { reloadServer } = require('../reloader/index.js');
+const secureProxyServer = require('../secure-proxy/index.js');
 
 /**
  * Server instance factory
@@ -22,9 +23,10 @@ const DvlpServer = require('./server.js');
 module.exports = async function serverFactory(
   filePath = process.cwd(),
   {
+    certsPath,
     hooksPath,
     mockPath,
-    port = config.port,
+    port = config.applicationPort,
     reload = true,
     rollupConfigPath,
     silent,
@@ -41,6 +43,8 @@ module.exports = async function serverFactory(
 
   /** @type { Reloader | undefined } */
   let reloader;
+  /** @type { SecureProxy | undefined } */
+  let secureProxy;
 
   if (process.env.PORT === undefined) {
     process.env.PORT = String(port);
@@ -75,7 +79,11 @@ module.exports = async function serverFactory(
     );
   }
   if (reload) {
-    reloader = await reloadServer();
+    reloader = await reloadServer(certsPath !== undefined);
+    config.reloadPort = reloader.port;
+  }
+  if (certsPath) {
+    secureProxy = await secureProxyServer(certsPath);
   }
 
   const server = new DvlpServer(
@@ -93,6 +101,7 @@ module.exports = async function serverFactory(
     error(err);
   }
 
+  config.applicationPort = server.port;
   const parentDir = path.resolve(process.cwd(), '..');
   // prettier-ignore
   const paths = entry.isStatic
@@ -103,12 +112,13 @@ module.exports = async function serverFactory(
     ? 'function'
     // @ts-ignore
     : getProjectPath(entry.main);
+  const origin =
+    secureProxy && secureProxy.commonName
+      ? `https://${secureProxy.commonName}`
+      : server.origin;
 
   info(`\n  💥 serving ${chalk.green(paths)}`);
-  info(`    ...at ${chalk.green.underline(server.origin)}`);
-
-  config.activePort = server.port;
-
+  info(`    ...at ${chalk.green.underline(origin)}`);
   info(' 👀 watching for changes...\n');
 
   if (silent) {
@@ -121,6 +131,7 @@ module.exports = async function serverFactory(
     destroy() {
       return Promise.all([
         reloader && reloader.destroy(),
+        secureProxy && secureProxy.destroy(),
         server.destroy(),
         destroyWorkers(),
       ]).then();

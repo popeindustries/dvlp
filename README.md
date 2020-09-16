@@ -36,18 +36,22 @@ $ npm install dvlp
 ```text
 $ dvlp --help
 
+Usage: dvlp [options] [path...]
+
 Start a development server, restarting and reloading connected browsers on file changes.
   Serves static files from one or more "path" directories, or a custom application
-  server if "path" is a single file.
+  server if "path" is a single application server file.
 
 Options:
   -p, --port <port>           port number
   -m, --mock <path>           path to mock files (directory, file, glob pattern)
-  -t, --transpiler <path>     [deprecated] path to optional transpiler file
   -k, --hooks <path>          path to optional hooks registration file
+  --ssl <path>                enable https mode by specifying path to directory
+                              containing ".crt" and ".key" files
   -r, --rollup-config <path>  path to optional Rollup.js config file
   -s, --silent                suppress default logging
   --no-reload                 disable reloading connected browsers on file change
+  -t, --transpiler <path>     [deprecated] path to optional transpiler file
   -v, --version               output the version number
   -h, --help                  display help for command
 ```
@@ -159,7 +163,7 @@ module.exports = {
 <link rel="stylesheet" href="src/index.sass" />
 ```
 
-...and pass a reference to the `hooks.js` file with the `-k, --hooks` flag:
+...and pass a reference to the `hooks.js` file with the `-k, --hooks` option:
 
 ```json
 {
@@ -175,7 +179,7 @@ In order to keep things snappy, **dvlp** will cache transformed content and only
 
 ### Mocking
 
-When developing locally, it's often useful to mock responses for requests made by your server or browser application, especially when working with an external API. **dvlp** lets you quickly and easily mock endpoints by intercepting requests that match those registered with the `-m, --mock` flag.
+When developing locally, it's often useful to mock responses for requests made by your server or browser application, especially when working with an external API. **dvlp** lets you quickly and easily mock endpoints by intercepting requests that match those registered with the `-m, --mock` option.
 
 <details>
 
@@ -257,7 +261,7 @@ Though JSON responses are probably the most common, it's also possible to mock o
 
 (_File paths referenced in `response.body` are relative to the mock file, not the web/project root_)
 
-Register mocked responses with the command-line flag `-m, --mock` and a path to your mock files:
+Register mocked responses with the command-line option `-m, --mock` and a path to your mock files:
 
 ```json
 {
@@ -368,7 +372,7 @@ A sequence of events may also be described by nesting events under the `sequence
 }
 ```
 
-Register mocked responses with the command-line flag `-m, --mock` and a path to your mock files:
+Register mocked responses with the command-line option `-m, --mock` and a path to your mock files:
 
 ```json
 {
@@ -406,7 +410,7 @@ dvlp.pushEvent('ws://www.somesocket.com/stream', 'hello Ernie');
 
 <summary>Mocking in the browser</summary>
 
-All mocks registered with the `-m, --mock` flag are also enabled by default in the browser. In addition, similar to the [`testServer`](#--testserveroptions-promisetestserver), you can register mocks programatically:
+All mocks registered with the `-m, --mock` option are also enabled by default in the browser. In addition, similar to the [`testServer`](#--testserveroptions-promisetestserver), you can register mocks programatically:
 
 ```js
 import { testBrowser } from 'dvlp';
@@ -445,7 +449,7 @@ As mentioned in [How it works](#how-it-works), **dvlp** will bundle CommonJS pac
 
 <summary>Overriding default Rollup config</summary>
 
-In the (rare) case you need to configure Rollup.js to work with the packages you're importing, you can pass the path to a custom configuration file with the `-r, --rollup-config` flag.
+In the (rare) case you need to configure Rollup.js to work with the packages you're importing, you can pass the path to a custom configuration file with the `-r, --rollup-config` option.
 
 **dvlp** will override/ignore the `input`, `treeshake`, and `watch` options, as well as the `file`, `format`, and `sourcemap` output options. Here is the default configuration currently used (also available as a direct import: `import { getDefaultRollupConfig } from 'dvlp'`):
 
@@ -477,6 +481,12 @@ In the (rare) case you need to configure Rollup.js to work with the packages you
 All supported options are listed in the Rollup.js [documentation](https://rollupjs.org/guide/en#big-list-of-options).
 
 </details>
+
+### SSL
+
+Enable development against a secure server by passing the path to a directory containing your `.crt` and `.key` files with the `--ssl` option.
+
+> Follow the directions [here](https://deliciousbrains.com/ssl-certificate-authority-for-local-https-development/) to generate a self-signed certificate for local development
 
 ## Debugging
 

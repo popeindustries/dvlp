@@ -1,6 +1,7 @@
 'use strict';
 
 const chalk = require('chalk');
+const config = require('../config.js');
 const debug = require('debug')('dvlp:reload');
 const decorateWithServerDestroy = require('server-destroy');
 const { EventSource } = require('faye-websocket');
@@ -16,31 +17,40 @@ const DEFAULT_CLIENT_CONFIG = {
   ping: 15,
   retry: 10,
 };
-const ENDPOINT = '/dvlpreload';
 const PORT_FINGERPRINT = `${process.cwd()} ${process.argv.slice(2).join(' ')}`;
 
 const reloadClient =
   global.$RELOAD_CLIENT ||
   fs.readFileSync(path.resolve(__dirname, 'reload-client.js'), 'utf8');
 
-/**
- * Create reload server
- *
- * @returns { Promise<Reloader> }
- */
-module.exports = async function reloadServer() {
-  const server = new ReloadServer();
+module.exports = {
+  /**
+   * Create reload server
+   *
+   * @param { boolean } isBehindSecureProxy
+   * @returns { Promise<Reloader> }
+   */
+  async reloadServer(isBehindSecureProxy = false) {
+    const server = new ReloadServer();
 
-  await server.start();
+    await server.start();
 
-  const client = reloadClient.replace(/\$RELOAD_PORT/g, String(server.port));
+    const client = reloadClient
+      .replace(
+        /\$RELOAD_PORT/g,
+        String(isBehindSecureProxy ? 443 : server.port),
+      )
+      .replace(/\$RELOAD_PATHNAME/g, config.reloadEndpoint);
 
-  return {
-    client,
-    destroy: server.destroy.bind(server),
-    send: server.send.bind(server),
-    url: `http://localhost:${server.port}${ENDPOINT}`,
-  };
+    return {
+      client,
+      destroy: server.destroy.bind(server),
+      port: server.port,
+      send: server.send.bind(server),
+      url: `http://localhost:${server.port}${config.reloadEndpoint}`,
+    };
+  },
+  isReloadRequest,
 };
 
 class ReloadServer {
@@ -61,7 +71,7 @@ class ReloadServer {
       /** @type { DestroyableHttpServer } */
       this.server = http.createServer(async (req, res) => {
         // @ts-ignore
-        if (req.url !== ENDPOINT || !EventSource.isEventSource(req)) {
+        if (!isReloadRequest(req)) {
           res.writeHead(404);
           res.end();
           return;
@@ -147,4 +157,18 @@ class ReloadServer {
     this.clients.clear();
     return this.stop();
   }
+}
+
+/**
+ * Determine if "req" should be handled by reload server
+ *
+ * @param { Req } req
+ * @returns { boolean }
+ */
+function isReloadRequest(req) {
+  return (
+    req.url.startsWith(config.reloadEndpoint) ||
+    // @ts-ignore
+    EventSource.isEventSource(req)
+  );
 }
