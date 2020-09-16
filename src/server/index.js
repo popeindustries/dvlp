@@ -114,7 +114,11 @@ module.exports = async function serverFactory(
     : getProjectPath(entry.main);
 
   info(`\n  💥 serving ${chalk.green(paths)}`);
-  info(`    ...at ${chalk.green.underline(server.origin)}`);
+  info(
+    `    ...at ${chalk.green.underline(
+      secureProxy ? `https://${secureProxy.commonName}` : server.origin,
+    )}`,
+  );
   info(' 👀 watching for changes...\n');
 
   if (silent) {
