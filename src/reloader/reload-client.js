@@ -9,7 +9,7 @@
   var hostnames = ['localhost', location.hostname];
   var url = new URL('http://localhost');
   url.port = $RELOAD_PORT;
-  url.pathname = '/dvlpreload';
+  url.pathname = $RELOAD_PATHNAME;
   connect();
 
   function connect() {

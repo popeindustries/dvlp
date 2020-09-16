@@ -61,7 +61,7 @@ if (TESTING || process.env.DVLP_LAUNCHER === 'cmd') {
  * @type { Config }
  */
 module.exports = {
-  activePort: port,
+  applicationPort: port,
   brokenNamedExportsPackages,
   bundleDir,
   bundleDirName,
@@ -78,12 +78,13 @@ module.exports = {
       '.html',
       '.htm',
     ],
-    // Sync with utils/module.js
-    js: ['.ts', '.tsx', '.mjs', '.jsx', '.js', '.json'],
+    js: ['.ts', '.tsx', '.jsx', '.mjs', '.js', '.json'],
   },
   latency: 50,
   maxAge: '10m',
   port,
+  reloadEndpoint: '/dvlpreload',
+  reloadPort: 0,
   testing: TESTING,
   typesByExtension: {
     '.css': 'css',

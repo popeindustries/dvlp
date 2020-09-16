@@ -21,17 +21,21 @@ program
     '-m, --mock <path>',
     'path to mock files (directory, file, glob pattern)',
   )
-  .option(
-    '-t, --transpiler <path>',
-    '[deprecated] path to optional transpiler file',
-  )
   .option('-k, --hooks <path>', 'path to optional hooks registration file')
+  .option(
+    '--ssl <path>',
+    `enable https mode by specifying path to directory containing ".crt" and ".key" files`,
+  )
   .option(
     '-r, --rollup-config <path>',
     'path to optional Rollup.js config file',
   )
   .option('-s, --silent', 'suppress default logging')
   .option('--no-reload', 'disable reloading connected browsers on file change')
+  .option(
+    '-t, --transpiler <path>',
+    '[deprecated] path to optional transpiler file',
+  )
   .arguments('[path...]')
   .action(boot)
   .version(pkg.version, '-v, --version');
@@ -41,6 +45,7 @@ program.parse(process.argv);
 async function boot(path = [process.cwd()]) {
   try {
     await server(path, {
+      certsPath: program.ssl,
       hooksPath: program.hooks,
       mockPath: program.mock,
       port: program.port,

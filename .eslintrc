@@ -9,7 +9,8 @@
   "extends": ["eslint:recommended", "prettier"],
   "globals": {
     "$MOCKS": "readonly",
-    "$RELOAD_PORT": "readonly"
+    "$RELOAD_PORT": "readonly",
+    "$RELOAD_PATHNAME": "readonly"
   },
   "parser": "babel-eslint",
   "parserOptions": {
