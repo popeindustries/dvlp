@@ -58,7 +58,6 @@ class SecureProxyServer {
 
         const originRequest = http.request(originOptions, (originResponse) => {
           const { statusCode } = originResponse;
-
           res.writeHead(statusCode || 200, originResponse.headers);
           originResponse.pipe(res);
         });
