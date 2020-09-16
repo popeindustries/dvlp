@@ -621,58 +621,60 @@ describe('server', () => {
     });
   });
 
-  describe.only('ssl', () => {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-    describe('static', () => {
-      it('should implicitly serve index.html over https', async () => {
-        server = await serverFactory('test/fixtures/www', {
-          certsPath: 'test/fixtures/certificates',
-          port: 8000,
-          reload: false,
+  if (!process.env.CI) {
+    describe('ssl', () => {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+      describe('static', () => {
+        it('should implicitly serve index.html over https', async () => {
+          server = await serverFactory('test/fixtures/www', {
+            certsPath: 'test/fixtures/certificates',
+            port: 8000,
+            reload: false,
+          });
+          const res = await fetch('https://localhost:443/');
+          expect(res.status).to.eql(200);
+          expect(await res.text()).to.contain('<!doctype html>');
         });
-        const res = await fetch('https://localhost:443/');
-        expect(res.status).to.eql(200);
-        expect(await res.text()).to.contain('<!doctype html>');
+        it('should serve a js file with correct mime type over https', async () => {
+          server = await serverFactory('test/fixtures/www', {
+            certsPath: 'test/fixtures/certificates',
+            port: 8000,
+            reload: false,
+          });
+          const res = await fetch('https://localhost:443/script.js');
+          expect(res.status).to.eql(200);
+          expect(res.headers.get('Content-type')).to.include(
+            'application/javascript',
+          );
+        });
       });
-      it('should serve a js file with correct mime type over https', async () => {
-        server = await serverFactory('test/fixtures/www', {
-          certsPath: 'test/fixtures/certificates',
-          port: 8000,
-          reload: false,
+      describe('application', () => {
+        it('should start an app server over https', async () => {
+          server = await serverFactory('test/fixtures/app.js', {
+            certsPath: 'test/fixtures/certificates',
+            port: 8000,
+            reload: false,
+          });
+          const res = await fetch('https://localhost:443/', {
+            headers: { accept: 'text/html' },
+          });
+          expect(res.status).to.eql(200);
+          expect(await res.text()).to.contain('hi');
         });
-        const res = await fetch('https://localhost:443/script.js');
-        expect(res.status).to.eql(200);
-        expect(res.headers.get('Content-type')).to.include(
-          'application/javascript',
-        );
+        it('should serve a node_modules module js file over https', async () => {
+          server = await serverFactory('test/fixtures/app.js', {
+            certsPath: 'test/fixtures/certificates',
+            port: 8000,
+            reload: false,
+          });
+          const res = await fetch(
+            `https://localhost:443/node_modules/foo/foo.js`,
+          );
+          expect(res.status).to.eql(200);
+          const body = await res.text();
+          expect(body).to.contain("console.log('this is foo')");
+        });
       });
     });
-    describe('application', () => {
-      it('should start an app server over https', async () => {
-        server = await serverFactory('test/fixtures/app.js', {
-          certsPath: 'test/fixtures/certificates',
-          port: 8000,
-          reload: false,
-        });
-        const res = await fetch('https://localhost:443/', {
-          headers: { accept: 'text/html' },
-        });
-        expect(res.status).to.eql(200);
-        expect(await res.text()).to.contain('hi');
-      });
-      it('should serve a node_modules module js file over https', async () => {
-        server = await serverFactory('test/fixtures/app.js', {
-          certsPath: 'test/fixtures/certificates',
-          port: 8000,
-          reload: false,
-        });
-        const res = await fetch(
-          `https://localhost:443/node_modules/foo/foo.js`,
-        );
-        expect(res.status).to.eql(200);
-        const body = await res.text();
-        expect(body).to.contain("console.log('this is foo')");
-      });
-    });
-  });
+  }
 });
