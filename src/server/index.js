@@ -112,13 +112,13 @@ module.exports = async function serverFactory(
     ? 'function'
     // @ts-ignore
     : getProjectPath(entry.main);
+  const origin =
+    secureProxy && secureProxy.commonName
+      ? `https://${secureProxy.commonName}`
+      : server.origin;
 
   info(`\n  💥 serving ${chalk.green(paths)}`);
-  info(
-    `    ...at ${chalk.green.underline(
-      secureProxy ? `https://${secureProxy.commonName}` : server.origin,
-    )}`,
-  );
+  info(`    ...at ${chalk.green.underline(origin)}`);
   info(' 👀 watching for changes...\n');
 
   if (silent) {
