@@ -3,9 +3,6 @@
 process.env.NODE_NO_WARNINGS = '1';
 
 const pkg = require('../package.json');
-
-process.env.DVLP_LAUNCHER = 'cmd';
-
 const program = require('commander');
 const { server } = require('../dvlp.js');
 

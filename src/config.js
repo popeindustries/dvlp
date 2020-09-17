@@ -2,20 +2,19 @@
 
 const brokenNamedExportsPackages = require('./utils/broken-named-exports.js');
 const fs = require('fs');
+const { isMainThread } = require('worker_threads');
 const mime = require('mime');
 const path = require('path');
 const rimraf = require('rimraf');
 const send = require('send');
 
+const DIR = '.dvlp';
 const JS_MIME_TYPES = {
   'application/javascript': ['js', 'jsx', 'ts', 'tsx'],
 };
 const TESTING =
   process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefined;
-// Prevent parallel test runs from reading from same cache
-const DIR = `.dvlp${TESTING ? process.getuid() : ''}`;
-
-// @ts-ignore
+// Replaced during build
 const VERSION = global.$VERSION || 'dev';
 
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
@@ -25,10 +24,9 @@ const port = process.env.PORT ? Number(process.env.PORT) : 8080;
 mime.define(JS_MIME_TYPES, true);
 send.mime.define(JS_MIME_TYPES, true);
 
-const dir = path.resolve(DIR);
-
-// Work around @rollup/plugin-commonjs require.main.filename
-if (TESTING || process.env.DVLP_LAUNCHER === 'cmd') {
+// Guard against multiple workers performing the same file operations
+if (isMainThread) {
+  const dir = path.resolve(DIR);
   const bundleDirExists = fs.existsSync(bundleDir);
   const dirExists = fs.existsSync(dir);
   const rm = dirExists && !bundleDirExists;
