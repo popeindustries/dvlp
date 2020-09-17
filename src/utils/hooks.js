@@ -101,15 +101,17 @@ module.exports = class Hooker {
   async transform(filePath, lastChangedFilePath, res, clientPlatform) {
     res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
 
+    // Segment cache by user agent to support different transforms based on client
+    const cacheKey = `${clientPlatform.ua}:${filePath}`;
     const relativeFilePath = getProjectPath(filePath);
     // Dependencies that are concatenated during transform aren't cached,
     // but they are watched when read from file system during transformation,
     // so transform again if changed file is of same type
     const lastChangedIsDependency =
       lastChangedFilePath &&
-      !this.transformCache.has(lastChangedFilePath) &&
+      !this.transformCache.has(`${clientPlatform.ua}:${lastChangedFilePath}`) &&
       getTypeFromPath(lastChangedFilePath) === getTypeFromPath(filePath);
-    let code = this.transformCache.get(filePath);
+    let code = this.transformCache.get(cacheKey);
     let transformed = false;
 
     if (lastChangedIsDependency || lastChangedFilePath === filePath || !code) {
@@ -121,7 +123,7 @@ module.exports = class Hooker {
         );
         if (code !== undefined) {
           transformed = true;
-          this.transformCache.set(filePath, code);
+          this.transformCache.set(cacheKey, code);
         }
       } catch (err) {
         debug(`error transforming "${relativeFilePath}"`);

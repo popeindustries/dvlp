@@ -114,6 +114,7 @@ declare type Config = {
   typesByExtension: {
     [extension: string]: string;
   };
+  version: string;
 };
 
 declare type Entry = {
@@ -154,7 +155,7 @@ declare type TransformHookContext = {
   client: {
     manufacturer?: string;
     name?: string;
-    ua?: string;
+    ua: string;
     version?: string;
   };
 };

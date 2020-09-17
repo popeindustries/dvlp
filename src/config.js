@@ -108,4 +108,5 @@ module.exports = {
     '.ts': 'js',
     '.tsx': 'js',
   },
+  version: VERSION,
 };

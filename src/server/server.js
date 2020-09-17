@@ -365,10 +365,11 @@ module.exports = class DvlpServer {
         // This ensures that all symlinked workspace files are transformed even though they are dependencies
         if (shouldTransform) {
           const userAgent = req.headers['user-agent'];
+          const dvlpUA = `dvlp/${config.version}`;
           let clientPlatform;
 
           if (userAgent) {
-            const { manufacturer, name, ua, version } = platform.parse(
+            const { manufacturer, name, ua = dvlpUA, version } = platform.parse(
               userAgent,
             );
             clientPlatform = { manufacturer, name, ua, version };
@@ -376,7 +377,7 @@ module.exports = class DvlpServer {
             clientPlatform = {
               manufacturer: '',
               name: '',
-              ua: 'dvlp/',
+              ua: dvlpUA,
               version: '',
             };
           }
