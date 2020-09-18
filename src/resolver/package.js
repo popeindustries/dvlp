@@ -1,6 +1,6 @@
 'use strict';
 
-const { find } = require('../utils/file.js');
+const { find, resolveNodeModulesDirectories } = require('../utils/file.js');
 const { isRelativeFilePath } = require('../utils/is.js');
 const fs = require('fs');
 const path = require('path');
@@ -28,7 +28,7 @@ function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
 
   const manifestPath = path.join(packagePath, 'package.json');
   const isNodeModule = packagePath !== process.cwd();
-  const paths = resolveNodeModules(packagePath);
+  const paths = resolveNodeModulesDirectories(packagePath);
   /** @type { Package } */
   const pkg = {
     aliases: {},
@@ -164,44 +164,4 @@ function resolvePackagePath(filePath) {
     // Walk
     dir = parent;
   }
-}
-
-/**
- * Gather all node_modules directories reachable from "pkgPath"
- *
- * @param { string } pkgPath
- * @returns { Array<string> }
- */
-function resolveNodeModules(pkgPath) {
-  let dir = pkgPath;
-  /** @type { Array<string> } */
-  let dirs = [];
-  let depth = MAX_FILE_SYSTEM_DEPTH;
-  let parent;
-
-  if (process.env.NODE_PATH !== undefined) {
-    dirs = process.env.NODE_PATH.split(path.delimiter).map((dir) =>
-      path.resolve(dir),
-    );
-  }
-
-  while (true) {
-    parent = path.dirname(dir);
-    // Stop if we hit max file system depth or root
-    // Convert to lowercase to fix problems on Windows
-    if (!--depth || parent.toLowerCase() === dir.toLowerCase()) {
-      break;
-    }
-
-    const nodeModulesPath = path.resolve(dir, 'node_modules');
-
-    if (fs.existsSync(nodeModulesPath)) {
-      dirs.push(nodeModulesPath);
-    }
-
-    // Walk
-    dir = parent;
-  }
-
-  return dirs.sort((a, b) => (a.length >= b.length ? -1 : 1));
 }

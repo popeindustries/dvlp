@@ -21,6 +21,7 @@ const path = require('path');
 const { URL } = require('url');
 
 const FILE_TYPES = ['html', 'js', 'css'];
+const MAX_FILE_SYSTEM_DEPTH = 10;
 const RE_GLOB = /[*[{]/;
 const RE_SEPARATOR = /[,;]\s?|\s/g;
 
@@ -34,6 +35,7 @@ module.exports = {
   getTypeFromPath,
   getTypeFromRequest,
   resolveRealFilePath,
+  resolveNodeModulesDirectories,
 };
 
 /**
@@ -115,6 +117,17 @@ function find(req, { directories = config.directories, type } = {}) {
     type = isRequestObject(req)
       ? getTypeFromRequest(req)
       : getTypeFromPath(req);
+  }
+
+  // Special handling for '/node_modules...' to allow breaking out of cwd.
+  // This is similar to how Node resolves package names internally.
+  if (requestedFilePath.startsWith('/node_modules')) {
+    directories = [
+      ...directories,
+      ...resolveNodeModulesDirectories(
+        process.cwd(),
+      ).map((nodeModulesDirPath) => path.dirname(nodeModulesDirPath)),
+    ];
   }
 
   // Handle bundled js import
@@ -319,4 +332,44 @@ function resolveRealFilePath(filePath) {
  */
 function isRequestObject(req) {
   return typeof req !== 'string';
+}
+
+/**
+ * Gather all node_modules directories reachable from "filePath"
+ *
+ * @param { string } filePath
+ * @returns { Array<string> }
+ */
+function resolveNodeModulesDirectories(filePath) {
+  let dir = path.extname(filePath) ? path.dirname(filePath) : filePath;
+  /** @type { Array<string> } */
+  let dirs = [];
+  let depth = MAX_FILE_SYSTEM_DEPTH;
+  let parent;
+
+  if (process.env.NODE_PATH !== undefined) {
+    dirs = process.env.NODE_PATH.split(path.delimiter).map((dir) =>
+      path.resolve(dir),
+    );
+  }
+
+  while (true) {
+    parent = path.dirname(dir);
+    // Stop if we hit max file system depth or root
+    // Convert to lowercase to fix problems on Windows
+    if (!--depth || parent.toLowerCase() === dir.toLowerCase()) {
+      break;
+    }
+
+    const nodeModulesPath = path.resolve(dir, 'node_modules');
+
+    if (fs.existsSync(nodeModulesPath)) {
+      dirs.push(nodeModulesPath);
+    }
+
+    // Walk
+    dir = parent;
+  }
+
+  return dirs.sort((a, b) => (a.length >= b.length ? -1 : 1));
 }
