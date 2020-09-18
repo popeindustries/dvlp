@@ -94,6 +94,7 @@ module.exports = class DvlpServer {
     this.lastChanged = '';
     this.main = main;
     this.mocks = mockPath ? new Mock(mockPath) : undefined;
+    this.staticMode = main === undefined;
 
     const headerScript = concatScripts([
       getProcessEnvString(),
@@ -405,7 +406,9 @@ module.exports = class DvlpServer {
       // Pass through request to app
       if (!res.finished) {
         res.unhandled = true;
-        debug(`allowing app to handle "${req.url}"`);
+        if (!server.staticMode) {
+          noisyInfo(`  allowing app to handle "${req.url}"`);
+        }
         originalRequestHandler(req, res);
       }
     };
