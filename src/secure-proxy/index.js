@@ -119,7 +119,10 @@ function resolveCerts(certsPath) {
     const extname = path.extname(filePath);
     const resolvedFilePath = path.join(dir, filePath);
 
-    if (extname === '.crt' || extname === '.cert') {
+    if (
+      (extname === '.crt' || extname === '.cert') &&
+      !filePath.endsWith('.issuer.crt')
+    ) {
       cert = fs.readFileSync(resolvedFilePath);
     } else if (extname === '.key') {
       key = fs.readFileSync(resolvedFilePath);
