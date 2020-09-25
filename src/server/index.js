@@ -78,18 +78,16 @@ module.exports = async function serverFactory(
       '⚠️  --transpiler option is deprecated. Use --hooks option and onTransform/onServerTransform hooks instead',
     );
   }
-  if (reload) {
-    reloader = await reloadServer(certsPath !== undefined);
-    config.reloadPort = reloader.port;
-  }
   if (certsPath) {
-    secureProxy = await secureProxyServer(certsPath);
+    secureProxy = await secureProxyServer(certsPath, reload);
+  } else if (reload) {
+    reloader = await reloadServer();
   }
 
   const server = new DvlpServer(
     entry.main,
     rollupConfigPath,
-    reloader,
+    reload ? secureProxy || reloader : undefined,
     hooksPath,
     transpilerPath,
     mockPath,

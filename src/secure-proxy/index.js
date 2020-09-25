@@ -3,34 +3,48 @@
 const { Certificate } = require('@fidm/x509');
 const config = require('../config.js');
 const decorateWithServerDestroy = require('server-destroy');
+const EventSourceServer = require('../reloader/event-source-server.js');
 const fs = require('fs');
+const { getReloadClientEmbed } = require('../reloader/reload-client-embed.js');
 const http = require('http');
 const https = require('https');
-const { isReloadRequest } = require('../reloader/index.js');
 const os = require('os');
 const path = require('path');
 
 /**
- * Create reload server
+ * Create secure proxy server.
+ * Implements Reloader behaviour to handle registering reload clients if "reload=true".
  *
  * @param { string } certsPath
+ * @param { boolean } reload
  * @returns { Promise<SecureProxy> }
  */
-module.exports = async function secureProxy(certsPath) {
+module.exports = async function secureProxy(certsPath, reload) {
   const serverOptions = resolveCerts(certsPath);
   const commonName = validateCert(serverOptions.cert);
-  const server = new SecureProxyServer();
+  const server = new SecureProxyServer(reload);
 
   await server.start(serverOptions);
 
   return {
     commonName,
     destroy: server.destroy.bind(server),
+    reloadEmbed: getReloadClientEmbed(443),
+    reloadPort: 443,
+    reloadUrl: `https://localhost:${443}${config.reloadEndpoint}`,
+    send: server.send.bind(server),
   };
 };
 
-class SecureProxyServer {
-  constructor() {
+class SecureProxyServer extends EventSourceServer {
+  /**
+   * Constructor
+   *
+   * @param { boolean } reload
+   */
+  constructor(reload) {
+    super();
+    this.reload = reload;
     this.server;
   }
 
@@ -45,12 +59,18 @@ class SecureProxyServer {
       /** @type { DestroyableHttpsServer } */
       this.server = https.createServer(serverOptions, async (req, res) => {
         // @ts-ignore
-        const port = isReloadRequest(req)
-          ? config.reloadPort
-          : config.applicationPort;
+        if (this.isReloadRequest(req)) {
+          if (this.reload) {
+            super.registerClient(req, res);
+          } else {
+            res.writeHead(404);
+            res.end();
+          }
+          return;
+        }
 
         const originOptions = {
-          port,
+          port: config.applicationPort,
           path: req.url,
           method: req.method,
           headers: req.headers,
@@ -82,6 +102,8 @@ class SecureProxyServer {
    */
   destroy() {
     return new Promise((resolve) => {
+      super.destroy();
+
       if (!this.server) {
         return resolve();
       }

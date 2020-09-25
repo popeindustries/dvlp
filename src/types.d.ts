@@ -51,14 +51,16 @@ declare module 'es-module-lexer' {
   ): Array<Array<{ d: number; e: number; s: number }>>;
 }
 
-declare type Req = import('http').IncomingMessage & {
+declare type IncomingMessage = import('http').IncomingMessage;
+declare type Req = IncomingMessage & {
   filePath: string;
   type: string;
   url: string;
   params?: { [key: string]: string } | {};
 };
 
-declare type Res = import('http').ServerResponse & {
+declare type ServerResponse = import('http').ServerResponse;
+declare type Res = ServerResponse & {
   bundled: boolean;
   encoding: string;
   metrics: Metrics;
@@ -110,7 +112,6 @@ declare type Config = {
   maxAge: string;
   port: number;
   reloadEndpoint: string;
-  reloadPort: number;
   testing: boolean;
   typesByExtension: {
     [extension: string]: string;
@@ -191,16 +192,15 @@ declare type BundleWorkerMessage = {
 };
 
 declare type Reloader = {
-  client: string;
-  url: string;
-  port: number;
   destroy: () => Promise<void>;
+  reloadEmbed: string;
+  reloadPort: number;
+  reloadUrl: string;
   send: (filePath: string) => void;
 };
 
-declare type SecureProxy = {
+declare type SecureProxy = Reloader & {
   commonName?: string;
-  destroy: () => Promise<void>;
 };
 
 declare type Package = {
