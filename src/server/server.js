@@ -113,9 +113,9 @@ module.exports = class DvlpServer {
     /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
       footerScript: {
-        hash: reloader && hashScript(reloader.client),
-        string: reloader ? reloader.client : '',
-        url: reloader && reloader.url,
+        hash: reloader && hashScript(reloader.reloadEmbed),
+        string: reloader ? reloader.reloadEmbed : '',
+        url: reloader && reloader.reloadUrl,
       },
       headerScript: {
         hash: hashScript(headerScript),

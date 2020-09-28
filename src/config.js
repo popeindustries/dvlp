@@ -82,7 +82,6 @@ module.exports = {
   maxAge: '10m',
   port,
   reloadEndpoint: '/dvlpreload',
-  reloadPort: 0,
   testing: TESTING,
   typesByExtension: {
     '.css': 'css',
