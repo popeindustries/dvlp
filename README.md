@@ -47,7 +47,7 @@ Options:
   -m, --mock <path>           path to mock files (directory, file, glob pattern)
   -k, --hooks <path>          path to optional hooks registration file
   --ssl <path>                enable https mode by specifying path to
-                              ".crt"  and ".key" files (directory, glob pattern)
+                              ".crt" and ".key" files (directory, glob pattern)
   -r, --rollup-config <path>  path to optional Rollup.js config file
   -s, --silent                suppress default logging
   --no-reload                 disable reloading connected browsers on file change
