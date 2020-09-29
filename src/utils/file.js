@@ -34,6 +34,7 @@ module.exports = {
   getProjectPath,
   getTypeFromPath,
   getTypeFromRequest,
+  getDirectoryContents,
   resolveRealFilePath,
   resolveNodeModulesDirectories,
 };
@@ -222,6 +223,22 @@ function getTypeFromRequest(req) {
  */
 function getTypeFromPath(filePath) {
   return config.typesByExtension[path.extname(filePath)];
+}
+
+/**
+ * Get directory contents of path
+ *
+ * @param { string } dirPath
+ * @returns { Array<string> }
+ */
+function getDirectoryContents(dirPath) {
+  if (fs.statSync(dirPath).isFile()) {
+    return [dirPath];
+  }
+
+  return fs
+    .readdirSync(dirPath)
+    .map((filePath) => path.resolve(dirPath, filePath));
 }
 
 /**

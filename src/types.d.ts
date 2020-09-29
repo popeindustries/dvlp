@@ -445,10 +445,10 @@ declare interface PushClient {
 
 /* export */ declare type ServerOptions = {
   /**
-   * The path to a directory containing ".crt" and ".key" files.
+   * The path or glob pattern containing ".crt" and ".key" files.
    * This enables secure https mode by proxying all requests through a secure server (default `''`).
    */
-  certsPath?: string;
+  certsPath?: string | Array<string>;
   /**
    * The path to a custom hooks registration file (default `''`).
    */

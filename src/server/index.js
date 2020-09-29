@@ -37,6 +37,10 @@ module.exports = async function serverFactory(
 
   config.directories = Array.from(new Set(entry.directories));
 
+  if (certsPath) {
+    certsPath = expandPath(certsPath);
+  }
+
   if (mockPath) {
     mockPath = expandPath(mockPath);
   }
