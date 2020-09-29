@@ -8,14 +8,14 @@ const fs = require('fs');
 const { getReloadClientEmbed } = require('../reloader/reload-client-embed.js');
 const http = require('http');
 const https = require('https');
-const os = require('os');
 const path = require('path');
+const { getDirectoryContents } = require('../utils/file');
 
 /**
  * Create secure proxy server.
  * Implements Reloader behaviour to handle registering reload clients if "reload=true".
  *
- * @param { string } certsPath
+ * @param { string | Array<string> } certsPath
  * @param { boolean } reload
  * @returns { Promise<SecureProxy> }
  */
@@ -118,41 +118,39 @@ class SecureProxyServer extends EventSourceServer {
 /**
  *
  *
- * @param { string } certsPath
+ * @param { string | Array<string> } certsPaths
  * @returns { { cert: Buffer, key: Buffer } }
  */
-function resolveCerts(certsPath) {
-  if (certsPath.startsWith('~')) {
-    certsPath = path.join(os.homedir(), certsPath.slice(1));
-  }
-
-  const dir = path.resolve(certsPath);
-
-  if (!fs.existsSync(dir)) {
-    throw Error(
-      `unable to find directory path from --ssl option: ${certsPath}`,
-    );
+function resolveCerts(certsPaths) {
+  if (!Array.isArray(certsPaths)) {
+    certsPaths = [certsPaths];
   }
 
   let cert;
   let key;
 
-  for (const filePath of fs.readdirSync(dir)) {
-    const extname = path.extname(filePath);
-    const resolvedFilePath = path.join(dir, filePath);
+  for (const certsPath of certsPaths) {
+    for (const filePath of getDirectoryContents(certsPath)) {
+      const extname = path.extname(filePath);
 
-    if (
-      (extname === '.crt' || extname === '.cert') &&
-      !filePath.endsWith('.issuer.crt')
-    ) {
-      cert = fs.readFileSync(resolvedFilePath);
-    } else if (extname === '.key') {
-      key = fs.readFileSync(resolvedFilePath);
+      if (
+        !cert &&
+        (extname === '.crt' || extname === '.cert') &&
+        !filePath.endsWith('.issuer.crt')
+      ) {
+        cert = fs.readFileSync(filePath);
+      } else if (!key && extname === '.key') {
+        key = fs.readFileSync(filePath);
+      }
     }
   }
 
   if (!cert || !key) {
-    throw Error(`unable to find .crt or .key file in "${dir}"`);
+    throw Error(
+      `unable to find .crt or .key file after searching "${certsPaths.join(
+        ', ',
+      )}"`,
+    );
   }
 
   return { cert, key };

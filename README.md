@@ -46,8 +46,8 @@ Options:
   -p, --port <port>           port number
   -m, --mock <path>           path to mock files (directory, file, glob pattern)
   -k, --hooks <path>          path to optional hooks registration file
-  --ssl <path>                enable https mode by specifying path to directory
-                              containing ".crt" and ".key" files
+  --ssl <path>                enable https mode by specifying path to
+                              ".crt" and ".key" files (directory, glob pattern)
   -r, --rollup-config <path>  path to optional Rollup.js config file
   -s, --silent                suppress default logging
   --no-reload                 disable reloading connected browsers on file change
@@ -484,7 +484,7 @@ All supported options are listed in the Rollup.js [documentation](https://rollup
 
 ### SSL
 
-Enable development against a secure server by passing the path to a directory containing your `.crt` and `.key` files with the `--ssl` option.
+Enable development against a secure server by passing the path or glob pattern to your `.crt` and `.key` files with the `--ssl` option.
 
 > Follow the directions [here](https://deliciousbrains.com/ssl-certificate-authority-for-local-https-development/) to generate a self-signed certificate for local development
 
