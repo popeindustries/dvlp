@@ -9,7 +9,6 @@ const path = require('path');
 
 const TIMEOUT = 1000;
 
-const homedir = os.homedir();
 const tmpdir = os.tmpdir();
 
 /**
@@ -51,15 +50,12 @@ module.exports = function watch(fn) {
       }
 
       filePath = path.resolve(filePath);
-      const dirname = path.dirname(filePath);
-      const basename = path.basename(filePath);
 
       if (
         !files.has(filePath) &&
         !filePath.startsWith(tmpdir) &&
         !filePath.startsWith(bundleDir) &&
-        !basename.startsWith('.') &&
-        dirname !== homedir
+        !path.basename(filePath).startsWith('.')
       ) {
         debug(`watching file "${getProjectPath(filePath)}"`);
         files.add(filePath);
