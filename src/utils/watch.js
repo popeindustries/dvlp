@@ -1,13 +1,16 @@
 'use strict';
 
+const { bundleDir } = require('../config.js');
 const debug = require('debug')('dvlp:watch');
 const { FSWatcher } = require('chokidar');
 const { getProjectPath } = require('./file.js');
+const os = require('os');
 const path = require('path');
 
-// Hidden, node_modules/*, .dvlp/*
-const RE_IGNORED = /(^|[/\\])\..|\.dvlp/i;
 const TIMEOUT = 1000;
+
+const homedir = os.homedir();
+const tmpdir = os.tmpdir();
 
 /**
  * Instantiate a file watcher and begin watching for changes
@@ -17,7 +20,6 @@ const TIMEOUT = 1000;
  */
 module.exports = function watch(fn) {
   const watcher = new FSWatcher({
-    ignored: RE_IGNORED,
     ignoreInitial: true,
     persistent: true,
   });
@@ -49,8 +51,16 @@ module.exports = function watch(fn) {
       }
 
       filePath = path.resolve(filePath);
+      const dirname = path.dirname(filePath);
+      const basename = path.basename(filePath);
 
-      if (!files.has(filePath) && !RE_IGNORED.test(filePath)) {
+      if (
+        !files.has(filePath) &&
+        !filePath.startsWith(tmpdir) &&
+        !filePath.startsWith(bundleDir) &&
+        !basename.startsWith('.') &&
+        dirname !== homedir
+      ) {
         debug(`watching file "${getProjectPath(filePath)}"`);
         files.add(filePath);
         watcher.add(filePath);
