@@ -50,7 +50,7 @@ function getResponse() {
 }
 
 describe('mock', () => {
-  afterEach(mocks.clean);
+  afterEach(mocks.clear);
 
   describe('addResponse()', () => {
     it('should add a json type', () => {

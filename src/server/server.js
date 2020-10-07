@@ -521,7 +521,7 @@ module.exports = class DvlpServer {
    */
   destroy() {
     debug('server destroying');
-    this.mocks && this.mocks.clean();
+    this.mocks && this.mocks.clear();
     this.unlistenForFileRead();
     this.watcher.close();
     return this.stop();

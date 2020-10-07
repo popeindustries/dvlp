@@ -29,6 +29,7 @@ module.exports = class Mock {
     /** @type { Set<MockResponseData | MockStreamData> } */
     this.cache = new Set();
     this.client = mockClient;
+    this.clear = this.clear.bind(this);
     this._uninterceptClientRequest;
 
     if (filePaths) {
