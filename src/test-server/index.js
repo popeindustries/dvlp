@@ -382,7 +382,7 @@ class TestServer {
   destroy() {
     debug('destroying');
     destroyClients();
-    this.mocks.clean();
+    this.mocks.clear();
     instances.delete(this);
     return this._stop();
   }
@@ -394,9 +394,9 @@ class TestServer {
 function enableRequestIntercept() {
   if (uninterceptClientRequest === undefined) {
     uninterceptClientRequest = interceptClientRequest((url) => {
-      const isMocked = Array.from(instances).some((instance) =>
-        instance.mocks.hasMatch(url),
-      );
+      const isMocked = Array.from(instances).some((instance) => {
+        return instance.mocks.hasMatch(url);
+      });
       let hostname = url.hostname || url.host;
 
       // Allow mocked requests to pass-through

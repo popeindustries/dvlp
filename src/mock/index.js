@@ -28,7 +28,6 @@ module.exports = class Mock {
   constructor(filePaths) {
     /** @type { Set<MockResponseData | MockStreamData> } */
     this.cache = new Set();
-    this.clean = this.clean.bind(this);
     this.client = mockClient;
     this._uninterceptClientRequest;
 
@@ -427,7 +426,10 @@ module.exports = class Mock {
    */
   clear() {
     this.cache.clear();
-    this._uninterceptClientRequest && this._uninterceptClientRequest();
+    if (this._uninterceptClientRequest) {
+      this._uninterceptClientRequest();
+      this._uninterceptClientRequest = undefined;
+    }
   }
 
   /**
