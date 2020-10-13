@@ -248,6 +248,7 @@ describe('mock', () => {
       expect(res.body).to.equal('{"user":{"name":"Nancy","id":5678}}');
       expect(res.headers['Content-Type']).to.equal('application/json');
       expect(res.headers['x-custom']).to.equal('custom header');
+      expect(res.headers['Date']).to.equal('Fri, 13 Oct 2020 23:59:59 GMT');
       expect(res.headers['Access-Control-Allow-Origin']).to.equal('*');
     });
     it('should respond to request for mock json with search params', () => {
