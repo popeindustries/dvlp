@@ -5,7 +5,8 @@
   },
   "response": {
     "headers": {
-      "x-custom": "custom header"
+      "x-custom": "custom header",
+      "date": "Fri, 13 Oct 2020 23:59:59 GMT"
     },
     "body": {
       "user": {

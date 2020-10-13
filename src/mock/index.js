@@ -331,14 +331,13 @@ module.exports = class Mock {
 
     // @ts-ignore
     res.writeHead(status, {
-      // Allow type to be overwritten
+      // Allow Content-Type/Date to be overwritten
       'Content-Type': mime.getType(type),
-      ...headers,
+      Date: new Date().toUTCString(),
+      ...normaliseSomeHeaderKeys(headers, ['Content-Type', 'Date']),
       // @ts-ignore
       'Content-Length': Buffer.byteLength(content),
       'Access-Control-Allow-Origin': '*',
-      // Overwrite Date
-      Date: new Date().toUTCString(),
     });
     res.end(content);
     res.metrics.recordEvent(Metrics.EVENT_NAMES.mock);
@@ -736,4 +735,31 @@ function isMockResponseData(mock) {
  */
 function isMockStreamData(mock) {
   return mock && typeof mock === 'object' && 'events' in mock;
+}
+
+/**
+ * Normalise the casing of select header keys
+ *
+ * @param { { [key: string]: string }} headers
+ * @param { Array<string> } keys
+ */
+function normaliseSomeHeaderKeys(headers, keys) {
+  /** @type { { [key: string]: string } } */
+  const normalisedHeaders = {};
+
+  for (let key in headers) {
+    const normalisedKey = key
+      .split('-')
+      .map((segment) => segment[0].toUpperCase() + segment.slice(1))
+      .join('-');
+    const value = headers[key];
+
+    if (keys.includes(normalisedKey)) {
+      key = normalisedKey;
+    }
+
+    normalisedHeaders[key] = value;
+  }
+
+  return normalisedHeaders;
 }
