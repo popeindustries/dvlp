@@ -376,6 +376,22 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
     });
+    it('should start a function server with additional directories', async () => {
+      server = await serverFactory(
+        () => {
+          http
+            .createServer((req, res) => {
+              res.writeHead(200);
+              res.end('hi');
+            })
+            .listen(8000);
+        },
+        { directories: ['test/fixtures/www'], port: 8000, reload: false },
+      );
+      const res = await fetch('http://localhost:8000/module.js');
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('main');
+    });
     it('should start an app server with additional directories', async () => {
       server = await serverFactory(
         ['test/fixtures/www', 'test/fixtures/app.js'],
@@ -384,9 +400,7 @@ describe('server', () => {
           reload: false,
         },
       );
-      const res = await fetch('http://localhost:8000/module.js', {
-        headers: { accept: 'text/html' },
-      });
+      const res = await fetch('http://localhost:8000/module.js');
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('main');
     });

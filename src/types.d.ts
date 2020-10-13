@@ -450,6 +450,10 @@ declare interface PushClient {
    */
   certsPath?: string | Array<string>;
   /**
+   * Additional directories to use for resolving file requests (default `[]`).
+   */
+  directories?: Array<string>;
+  /**
    * The path to a custom hooks registration file (default `''`).
    */
   hooksPath?: string;

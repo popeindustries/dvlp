@@ -5,11 +5,11 @@ const config = require('../config.js');
 const decorateWithServerDestroy = require('server-destroy');
 const EventSourceServer = require('../reloader/event-source-server.js');
 const fs = require('fs');
+const { getDirectoryContents } = require('../utils/file');
 const { getReloadClientEmbed } = require('../reloader/reload-client-embed.js');
 const http = require('http');
 const https = require('https');
 const path = require('path');
-const { getDirectoryContents } = require('../utils/file');
 
 /**
  * Create secure proxy server.

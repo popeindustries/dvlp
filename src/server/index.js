@@ -24,6 +24,7 @@ module.exports = async function serverFactory(
   filePath = process.cwd(),
   {
     certsPath,
+    directories,
     hooksPath,
     mockPath,
     port = config.applicationPort,
@@ -33,7 +34,7 @@ module.exports = async function serverFactory(
     transpilerPath,
   } = {},
 ) {
-  const entry = resolveEntry(filePath);
+  const entry = resolveEntry(filePath, directories);
 
   config.directories = Array.from(new Set(entry.directories));
 
@@ -145,9 +146,10 @@ module.exports = async function serverFactory(
  * Resolve entry data from "filePaths"
  *
  * @param { string | Array<string> | (() => void) } filePath
+ * @param { Array<string> } directories
  * @returns { Entry }
  */
-function resolveEntry(filePath) {
+function resolveEntry(filePath, directories = []) {
   /** @type { Entry } */
   const entry = {
     directories: [],
@@ -182,6 +184,10 @@ function resolveEntry(filePath) {
   } else {
     entry.isFunction = true;
     entry.main = filePath;
+  }
+
+  for (const directory of directories) {
+    entry.directories.push(path.resolve(directory));
   }
 
   return entry;
