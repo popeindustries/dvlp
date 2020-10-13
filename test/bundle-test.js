@@ -69,6 +69,6 @@ describe('bundle()', () => {
     );
     const module = fs.readFileSync(filePath, 'utf8');
     expect(filePath).to.equal(path.join(config.bundleDir, DEBUG));
-    expect(module).to.contain("import ms from 'ms';");
+    expect(module).to.match(/import [^\s]+ from 'ms';/);
   });
 });

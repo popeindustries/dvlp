@@ -13,12 +13,11 @@
     "dvlp": "./bin/dvlp"
   },
   "**NOTES-ON-DEPENDENCY-VERSIONS**": {
-    "@rollup/plugin-commonjs": "error with external import on 15.0.0",
     "terser": "async api incompatible with Rollup build on 5.0.0"
   },
   "dependencies": {
     "@fidm/x509": "^1.2.1",
-    "@rollup/plugin-commonjs": "^14.0.0",
+    "@rollup/plugin-commonjs": "^15.1.0",
     "@rollup/plugin-json": "^4.0.3",
     "@rollup/plugin-node-resolve": "^9.0.0",
     "@rollup/plugin-replace": "^2.3.2",
