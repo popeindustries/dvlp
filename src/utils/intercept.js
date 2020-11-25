@@ -188,8 +188,11 @@ function getHrefFromRequestOptions(options, protocol) {
   if (options.href) {
     return options.href;
   }
+  if (options.host == null) {
+    options.host = 'localhost';
+  }
 
-  let { host = 'localhost', path, port } = options;
+  let { host, path, port } = options;
 
   if (!host.includes(':') && port != null) {
     host += `:${port}`;
