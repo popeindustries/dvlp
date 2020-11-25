@@ -1,7 +1,3 @@
-declare type RollupOptions = import('rollup').RollupOptions;
-declare type RollupInputOptions = import('rollup').InputOptions;
-declare type RollupOutputOptions = import('rollup').OutputOptions;
-
 declare namespace NodeJS {
   interface Global {
     $MOCK_CLIENT?: string;
@@ -10,10 +6,14 @@ declare namespace NodeJS {
   }
 }
 
+declare type RollupOptions = import('rollup').RollupOptions;
+declare type RollupInputOptions = import('rollup').InputOptions;
+declare type RollupOutputOptions = import('rollup').OutputOptions;
 declare type IncomingMessage = import('http').IncomingMessage;
 declare type ServerResponse = import('http').ServerResponse;
 declare type HttpServer = import('http').Server;
 declare type HttpsServer = import('https').Server;
+
 declare interface Req extends IncomingMessage {
   filePath: string;
   type: string;
