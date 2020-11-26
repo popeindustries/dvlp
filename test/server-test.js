@@ -129,17 +129,6 @@ describe('server', () => {
       const res = await fetch('http://localhost:8000/not.css');
       expect(res.status).to.eql(404);
     });
-    it.skip('should start with custom Rollup config', async () => {
-      server = await serverFactory('test/fixtures/www', {
-        port: 8000,
-        rollupConfigPath: 'test/fixtures/rollup.config.js',
-      });
-      const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`,
-      );
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('/* this is a test */');
-    });
     it('should inject the reload script into an html response', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
@@ -438,17 +427,6 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       const body = await res.text();
       expect(body).to.contain("console.log('this is foo')");
-    });
-    it.skip('should start with custom Rollup config', async () => {
-      server = await serverFactory('test/fixtures/app.js', {
-        port: 8000,
-        rollupConfigPath: 'test/fixtures/rollup.config.js',
-      });
-      const res = await fetch(
-        `http://localhost:8000/${config.bundleDirName}/debug-3.1.0.js`,
-      );
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('/* this is a test */');
     });
     it('should inject the reload script into an html response', async () => {
       server = await serverFactory('test/fixtures/app.js', {

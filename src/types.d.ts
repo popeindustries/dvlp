@@ -306,6 +306,7 @@ declare type DefaultResolve = (
 
 /* export */ declare interface Hooks {
   onDependencyBundle?(
+    id: string,
     filePath: string,
     fileContents: string,
     context: DependencyBundleHookContext,

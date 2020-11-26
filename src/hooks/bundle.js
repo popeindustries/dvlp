@@ -44,9 +44,14 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
 
     try {
       if (hookFn) {
-        code = await hookFn(modulePath, readFileSync(modulePath, 'utf8'), {
-          esbuildService: buildService,
-        });
+        code = await hookFn(
+          moduleId,
+          modulePath,
+          readFileSync(modulePath, 'utf8'),
+          {
+            esbuildService: buildService,
+          },
+        );
       }
       if (code === undefined) {
         const namedExports = config.brokenNamedExportsPackages[moduleId];
