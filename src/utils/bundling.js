@@ -7,14 +7,26 @@ const { getCachedPackage } = require('../resolver/index.js');
 const path = require('path');
 
 const RE_SOURCE_PATH = /^\/\/ source: (.+)/;
+const SOURCE_PREFIX = '// source: ';
 
 module.exports = {
   cleanBundledFiles,
   decodeBundleId,
   encodeBundleId,
+  encodeOriginalBundledSourcePath,
   parseOriginalBundledSourcePath,
   resolveBundleFileName,
 };
+
+/**
+ * Encode bundled source path in banner comment
+ *
+ * @param { string } sourcePath
+ * @returns { string }
+ */
+function encodeOriginalBundledSourcePath(sourcePath) {
+  return `${SOURCE_PREFIX}${sourcePath}`;
+}
 
 /**
  * Retrieve original source path from bundled source code

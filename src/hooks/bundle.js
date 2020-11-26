@@ -2,8 +2,12 @@
 
 const { existsSync, readFileSync, writeFileSync } = require('fs');
 const { basename } = require('path');
+const config = require('../config.js');
 const debug = require('debug')('dvlp:bundle');
-const { decodeBundleId } = require('../utils/bundling.js');
+const {
+  decodeBundleId,
+  encodeOriginalBundledSourcePath,
+} = require('../utils/bundling.js');
 const { error } = require('../utils/log.js');
 const { isBundledFilePath } = require('../utils/is.js');
 const Metrics = require('../utils/metrics.js');
@@ -45,25 +49,27 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
         });
       }
       if (code === undefined) {
+        const namedExports = config.brokenNamedExportsPackages[moduleId];
+        let entryPoint = modulePath;
+
+        if (namedExports) {
+          entryPoint = filePath;
+          writeFileSync(
+            filePath,
+            `import entry from '${modulePath}';
+          export default entry;
+          export {${namedExports.join(', ')}} from '${modulePath}';`,
+          );
+        }
+
         const result = await buildService.build({
           bundle: true,
-          define: { 'process.env.NODE_ENV': 'development' },
-          entryPoints: [modulePath],
+          define: { 'process.env.NODE_ENV': '"development"' },
+          entryPoints: [entryPoint],
           format: 'esm',
           logLevel: 'error',
-          plugins: [
-            {
-              name: 'external',
-              setup(build) {
-                build.onResolve(
-                  { filter: /^[^./]/, namespace: 'external' },
-                  (args) => {
-                    return { external: true };
-                  },
-                );
-              },
-            },
-          ],
+          mainFields: ['module', 'browser', 'main'],
+          platform: 'browser',
           target: 'es2020',
           write: false,
         });
@@ -84,7 +90,10 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
 
     if (code !== undefined) {
       debug(`bundled content for ${moduleId}`);
-      writeFileSync(filePath, code);
+      writeFileSync(
+        filePath,
+        `${encodeOriginalBundledSourcePath(modulePath)}\n${code}`,
+      );
       res.bundled = true;
     }
 
