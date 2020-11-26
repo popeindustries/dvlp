@@ -2,6 +2,7 @@
 
 const config = require('../config.js');
 const fs = require('fs');
+const { isModule } = require('./module.js');
 const path = require('path');
 const util = require('util');
 
@@ -18,6 +19,8 @@ const RE_TYPE_JS = /application\/javascript/i;
 module.exports = {
   isAbsoluteFilePath,
   isBareImport,
+  isBundledFilePath,
+  isCjsFile,
   isCssFilePath,
   isCssRequest,
   isHtmlFilePath,
@@ -28,7 +31,6 @@ module.exports = {
   isJsonFilePath,
   isLocalhost,
   isNodeModuleFilePath,
-  isModuleBundlerFilePath,
   isProjectFilePath,
   isPromise,
   isProxy,
@@ -59,6 +61,25 @@ function isAbsoluteFilePath(filePath) {
  */
 function isBareImport(id) {
   return RE_BARE_IMPORT.test(id);
+}
+
+/**
+ * Determine if 'filePath' is referencing a commonjs file
+ *
+ * @param { string } filePath
+ * @param { string } [fileContents]
+ * @returns { boolean }
+ */
+function isCjsFile(filePath, fileContents) {
+  const extension = path.extname(filePath);
+
+  if (extension === '.js') {
+    return !isModule(fileContents || filePath);
+  } else if (extension === '.cjs' || extension === '.json') {
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -191,7 +212,7 @@ function isNodeModuleFilePath(filePath) {
  * @param { string } filePath
  * @returns { boolean }
  */
-function isModuleBundlerFilePath(filePath) {
+function isBundledFilePath(filePath) {
   return filePath.includes(config.bundleDirName);
 }
 

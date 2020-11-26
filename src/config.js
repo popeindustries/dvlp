@@ -2,7 +2,6 @@
 
 const brokenNamedExportsPackages = require('./utils/broken-named-exports.js');
 const fs = require('fs');
-const { isMainThread } = require('worker_threads');
 const mime = require('mime');
 const path = require('path');
 const rimraf = require('rimraf');
@@ -10,7 +9,7 @@ const send = require('send');
 
 const DIR = '.dvlp';
 const JS_MIME_TYPES = {
-  'application/javascript': ['js', 'jsx', 'ts', 'tsx'],
+  'application/javascript': ['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx'],
 };
 const TESTING =
   process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefined;
@@ -24,35 +23,50 @@ const port = process.env.PORT ? Number(process.env.PORT) : 8080;
 mime.define(JS_MIME_TYPES, true);
 send.mime.define(JS_MIME_TYPES, true);
 
-// Guard against multiple workers performing the same file operations
-if (isMainThread) {
-  const dir = path.resolve(DIR);
-  const bundleDirExists = fs.existsSync(bundleDir);
-  const dirExists = fs.existsSync(dir);
-  const rm = dirExists && !bundleDirExists;
+const dir = path.resolve(DIR);
+const bundleDirExists = fs.existsSync(bundleDir);
+const dirExists = fs.existsSync(dir);
+const rm = dirExists && !bundleDirExists;
 
-  if (rm) {
-    const contents = fs.readdirSync(dir).map((item) => path.resolve(dir, item));
+if (rm) {
+  const contents = fs.readdirSync(dir).map((item) => path.resolve(dir, item));
 
-    for (const item of contents) {
-      // Delete all subdirectories
-      if (fs.statSync(item).isDirectory()) {
-        rimraf.sync(item);
+  for (const item of contents) {
+    // Delete all subdirectories
+    if (fs.statSync(item).isDirectory()) {
+      rimraf.sync(item);
+    }
+  }
+}
+if (!dirExists) {
+  fs.mkdirSync(dir);
+}
+if (!bundleDirExists) {
+  fs.mkdirSync(bundleDir);
+} else {
+  // Prune bundle dir of duplicates with different versions
+  const moduleIds = new Map();
+
+  for (const fileName of fs.readdirSync(bundleDir)) {
+    if (fileName.endsWith('.js')) {
+      // Remove version
+      const moduleId = fileName.slice(0, fileName.lastIndexOf('-'));
+
+      if (!moduleIds.has(moduleId)) {
+        moduleIds.set(moduleId, path.join(bundleDir, fileName));
+      } else {
+        // Clear both instances if duplicates with different versions
+        fs.unlinkSync(moduleIds.get(moduleId));
+        fs.unlinkSync(path.join(bundleDir, fileName));
       }
     }
   }
-  if (!dirExists) {
-    fs.mkdirSync(dir);
-  }
-  if (!bundleDirExists) {
-    fs.mkdirSync(bundleDir);
-  }
+}
 
-  if (TESTING) {
-    process.on('exit', () => {
-      rimraf.sync(dir);
-    });
-  }
+if (TESTING) {
+  process.on('exit', () => {
+    rimraf.sync(dir);
+  });
 }
 
 /**
@@ -76,7 +90,7 @@ module.exports = {
       '.html',
       '.htm',
     ],
-    js: ['.ts', '.tsx', '.jsx', '.mjs', '.js', '.json'],
+    js: ['.ts', '.tsx', '.jsx', '.mjs', '.cjs', '.js', '.json'],
   },
   latency: 50,
   maxAge: '10m',
@@ -100,6 +114,7 @@ module.exports = {
     '.dust': 'html',
     '.js': 'js',
     '.mjs': 'js',
+    '.cjs': 'js',
     '.json': 'js',
     '.jsx': 'js',
     '.ts': 'js',

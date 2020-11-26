@@ -2,10 +2,10 @@
 
 const {
   isAbsoluteFilePath,
+  isBundledFilePath,
   isCssRequest,
   isHtmlRequest,
   isJsRequest,
-  isModuleBundlerFilePath,
   isNodeModuleFilePath,
 } = require('./is.js');
 const {
@@ -30,6 +30,7 @@ module.exports = {
   expandPath,
   favIcon: Buffer.from(favicon, 'base64'),
   find,
+  findClosest,
   getAbsoluteProjectPath,
   getProjectPath,
   getTypeFromPath,
@@ -132,7 +133,7 @@ function find(req, { directories = config.directories, type } = {}) {
   }
 
   // Handle bundled js import
-  if (isModuleBundlerFilePath(requestedFilePath)) {
+  if (isBundledFilePath(requestedFilePath)) {
     filePath = path.join(config.bundleDir, path.basename(requestedFilePath));
   } else if (isAbsoluteFilePath(requestedFilePath)) {
     filePath = resolveFilePath(requestedFilePath, type);
@@ -156,6 +157,35 @@ function find(req, { directories = config.directories, type } = {}) {
   }
 
   return filePath;
+}
+
+/**
+ * Walk parent directories looking for first file with matching "fileName"
+ * @param { string } fileName
+ * @returns { string | undefined }
+ */
+function findClosest(fileName) {
+  let dir = path.resolve(fileName);
+  let depth = MAX_FILE_SYSTEM_DEPTH;
+  let parent;
+
+  while (true) {
+    parent = path.dirname(dir);
+    // Stop if we hit max file system depth or root
+    // Convert to lowercase to avoid problems on Windows
+    if (!--depth || parent.toLowerCase() === dir.toLowerCase()) {
+      break;
+    }
+
+    const filePath = path.resolve(dir, fileName);
+
+    if (fs.existsSync(filePath)) {
+      return filePath;
+    }
+
+    // Walk
+    dir = parent;
+  }
 }
 
 /**
@@ -219,7 +249,7 @@ function getTypeFromRequest(req) {
  * Retrieve generic file type from "filePath" extension
  *
  * @param { string } filePath
- * @returns { string }
+ * @returns { 'css' | 'html' | 'js' }
  */
 function getTypeFromPath(filePath) {
   return config.typesByExtension[path.extname(filePath)];
@@ -373,7 +403,7 @@ function resolveNodeModulesDirectories(filePath) {
   while (true) {
     parent = path.dirname(dir);
     // Stop if we hit max file system depth or root
-    // Convert to lowercase to fix problems on Windows
+    // Convert to lowercase to avoid problems on Windows
     if (!--depth || parent.toLowerCase() === dir.toLowerCase()) {
       break;
     }

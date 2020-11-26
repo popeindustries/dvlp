@@ -2,18 +2,17 @@
 
 const { brotliDecompressSync, unzipSync } = require('zlib');
 const {
-  bundle,
-  parseOriginalSourcePath,
-  resolveModuleId,
-} = require('../bundler/index.js');
+  parseOriginalBundledSourcePath,
+  resolveBundleFileName,
+} = require('./bundling.js');
 const { fatal, warn, WARN_BARE_IMPORT } = require('./log.js');
 const { getAbsoluteProjectPath, getProjectPath } = require('./file.js');
 const {
+  isBundledFilePath,
   isCssRequest,
   isHtmlRequest,
   isJsRequest,
   isNodeModuleFilePath,
-  isModuleBundlerFilePath,
   isRelativeFilePath,
 } = require('./is.js');
 const config = require('../config.js');
@@ -48,9 +47,7 @@ function patchResponse(
   filePath,
   req,
   res,
-  { footerScript, headerScript, rollupConfigPath, resolveHook, sendHook } = {
-    rollupConfigPath: '',
-  },
+  { footerScript, headerScript, onResolveImport, onSend },
 ) {
   // req.filepath set after file.find(), filepath passed if cached
   filePath = req.filePath || filePath || req.url;
@@ -93,8 +90,9 @@ function patchResponse(
       enableCrossOriginHeader(res);
       disableCacheControlHeader(res, req.url);
 
-      if (sendHook) {
-        const transformed = sendHook(filePath, html);
+      if (onSend) {
+        const transformed = onSend(filePath, html);
+
         if (transformed !== undefined) {
           html = transformed;
         }
@@ -108,8 +106,9 @@ function patchResponse(
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
 
-      if (sendHook) {
-        const transformed = sendHook(filePath, css);
+      if (onSend) {
+        const transformed = onSend(filePath, css);
+
         if (transformed !== undefined) {
           css = transformed;
         }
@@ -122,10 +121,11 @@ function patchResponse(
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
-      code = rewriteImports(res, filePath, rollupConfigPath, code, resolveHook);
+      code = rewriteImports(res, filePath, code, onResolveImport);
 
-      if (sendHook) {
-        const transformed = sendHook(filePath, code);
+      if (onSend) {
+        const transformed = onSend(filePath, code);
+
         if (transformed !== undefined) {
           code = transformed;
         }
@@ -164,7 +164,7 @@ function disableContentEncodingHeader(res, headerKey, headerValue) {
  */
 function disableCacheControlHeader(res, url) {
   if (!res.headersSent) {
-    if (!isNodeModuleFilePath(url) && !isModuleBundlerFilePath(url)) {
+    if (!isNodeModuleFilePath(url) && !isBundledFilePath(url)) {
       res.setHeader('cache-control', 'no-cache, dvlp-disabled');
     }
   }
@@ -273,18 +273,17 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  *
  * @param { Res } res
  * @param { string } filePath
- * @param { string | undefined } rollupConfigPath
  * @param { string } code
- * @param { PatchResponseOptions["resolveHook"] } resolveHook
+ * @param { PatchResponseOptions["onResolveImport"] } onResolveImport
  * @returns { string }
  */
-function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
+function rewriteImports(res, filePath, code, onResolveImport) {
   res.metrics.recordEvent('rewrite JS imports');
 
   // Retrieve original source path from bundled file
   // to allow reference back to correct node_modules file
-  if (isModuleBundlerFilePath(filePath)) {
-    filePath = parseOriginalSourcePath(code);
+  if (isBundledFilePath(filePath)) {
+    filePath = parseOriginalBundledSourcePath(code);
   }
 
   try {
@@ -318,11 +317,11 @@ function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
           }
         }
 
-        if (resolveHook) {
-          let hookResult;
+        if (onResolveImport) {
+          let resolveResult;
 
           try {
-            hookResult = resolveHook(
+            resolveResult = onResolveImport(
               specifier,
               {
                 isDynamic,
@@ -335,13 +334,13 @@ function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
             throw err;
           }
 
-          if (hookResult === false) {
+          if (resolveResult === false) {
             // Force ignored by hook
             continue;
-          } else if (hookResult !== undefined) {
+          } else if (resolveResult !== undefined) {
             // Handle import statement substitution
-            if (isDynamic && hookResult.includes('(')) {
-              const match = hookResult.match(RE_DYNAMIC_IMPORT);
+            if (isDynamic && resolveResult.includes('(')) {
+              const match = resolveResult.match(RE_DYNAMIC_IMPORT);
               if (match) {
                 [, before, importPath, after] = match;
                 start -= 8;
@@ -351,13 +350,9 @@ function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
                 continue;
               }
             } else {
-              importPath = path.resolve(hookResult);
+              importPath = path.resolve(resolveResult);
             }
           }
-        }
-
-        if (!importPath) {
-          importPath = resolve(specifier, importer);
         }
 
         if (importPath) {
@@ -365,10 +360,7 @@ function rewriteImports(res, filePath, rollupConfigPath, code, resolveHook) {
 
           // Bundle if in node_modules and not an es module
           if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
-            const resolvedId = resolveModuleId(specifier, importPath);
-
-            // Trigger bundling in background while waiting for eventual request
-            bundle(resolvedId, rollupConfigPath, specifier, importPath);
+            const resolvedId = resolveBundleFileName(specifier, importPath);
             newId = `/${path.join(config.bundleDirName, resolvedId)}`;
             warn(WARN_BARE_IMPORT, specifier);
           } else {

@@ -8,7 +8,6 @@ const isModuleLib = require('is-module');
 // @ts-ignore
 const loadModule = require('module')._load;
 const path = require('path');
-const sucrase = require('sucrase');
 const { extensionsByType } = require('../config.js');
 
 /** @type { () => void } */
@@ -39,30 +38,25 @@ function isModule(filePathOrCode) {
  * Import esm/cjs module, transpiling if necessary (via require hook)
  *
  * @param { string } modulePath
- * @param { (filePath: string) => string | undefined } transform
+ * @param { Hooks["onServerTransform"] } [onTransform]
  * @returns { any }
  */
-function importModule(modulePath, transform = (filePath) => undefined) {
+function importModule(modulePath, onTransform) {
   if (revertHook !== undefined) {
     revertHook();
   }
 
   revertHook = addHook(
     (code, filePath) => {
-      const transformed = transform(filePath);
+      if (onTransform) {
+        const transformed = onTransform(filePath, code);
 
-      if (transformed !== undefined) {
-        code = transformed;
+        if (transformed !== undefined) {
+          code = transformed;
+        }
       }
 
-      if (!isModule(code)) {
-        return code;
-      }
-
-      return sucrase.transform(code, {
-        transforms: ['imports'],
-        filePath,
-      }).code;
+      return code;
     },
     {
       exts: extensionsByType.js,

@@ -6,9 +6,6 @@ declare namespace NodeJS {
   }
 }
 
-declare type RollupOptions = import('rollup').RollupOptions;
-declare type RollupInputOptions = import('rollup').InputOptions;
-declare type RollupOutputOptions = import('rollup').OutputOptions;
 declare type IncomingMessage = import('http').IncomingMessage;
 declare type ServerResponse = import('http').ServerResponse;
 declare type HttpServer = import('http').Server;
@@ -70,7 +67,7 @@ declare interface Config {
   reloadEndpoint: string;
   testing: boolean;
   typesByExtension: {
-    [extension: string]: string;
+    [extension: string]: 'css' | 'html' | 'js';
   };
   version: string;
 }
@@ -95,45 +92,14 @@ declare interface PatchResponseOptions {
     string: string;
     url?: string;
   };
-  sendHook?: (filePath: string, fileContents: string) => string | undefined;
-  resolveHook?: (
-    specifier: string,
-    context: ResolveHookContext,
-    defaultResolve: DefaultResolve,
-  ) => string | false | undefined;
-  rollupConfigPath?: string;
+  onSend?: Hooks['onSend'];
+  onResolveImport?: Hooks['onResolveImport'];
 }
 
 declare interface FindOptions {
   directories?: Array<string>;
   type?: string;
 }
-
-declare interface TransformHookContext {
-  client: {
-    manufacturer?: string;
-    name?: string;
-    ua: string;
-    version?: string;
-  };
-}
-
-declare type DefaultResolve = (
-  specifier: string,
-  importer: string,
-) => string | undefined;
-
-declare interface ResolveHookContext {
-  importer: string;
-  isDynamic: boolean;
-}
-
-declare type Transpiler = (
-  filePath: string,
-  isServer: boolean,
-) => Promise<string> | string | undefined;
-
-declare type TranspilerCache = Map<string, string>;
 
 declare interface Watcher {
   add: (filePath: string) => void;
@@ -312,20 +278,51 @@ declare class TestServer {
   destroy(): Promise<void>;
 }
 
+declare interface DependencyBundleHookContext {
+  esbuildService: import('esbuild').Service;
+}
+
+declare interface TransformHookContext {
+  client: {
+    manufacturer?: string;
+    name?: string;
+    ua: string;
+    version?: string;
+  };
+  esbuildService: import('esbuild').Service;
+}
+
+declare interface ResolveHookContext {
+  importer: string;
+  isDynamic: boolean;
+}
+
+declare type DefaultResolve = (
+  specifier: string,
+  importer: string,
+) => string | undefined;
+
 /* export */ declare interface Hooks {
-  onDependencyBundle(filePath: string): Promise<string> | string | undefined;
-  onTransform(
+  onDependencyBundle?(
+    filePath: string,
+    fileContents: string,
+    context: DependencyBundleHookContext,
+  ): Promise<string> | string | undefined;
+  onTransform?(
     filePath: string,
     fileContents: string,
     context: TransformHookContext,
   ): Promise<string> | string | undefined;
-  onResolveImport(
+  onResolveImport?(
     specifier: string,
     context: ResolveHookContext,
     defaultResolve: DefaultResolve,
   ): string | false | undefined;
-  onSend(filePath: string, responseBody: string): string | undefined;
-  onServerTransform(filePath: string, fileContents: string): string | undefined;
+  onSend?(filePath: string, responseBody: string): string | undefined;
+  onServerTransform?(
+    filePath: string,
+    fileContents: string,
+  ): string | undefined;
 }
 
 /* export */ declare interface MockRequest {
@@ -426,18 +423,9 @@ declare interface PushClient {
    */
   reload?: boolean;
   /**
-   * The path to a custom Rollup config file
-   */
-  rollupConfigPath?: string;
-  /**
    * Disable/enable default logging (default `false`).
    */
   silent?: boolean;
-  /**
-   * The path to a custom transpiler script (default `''`).
-   * @deprecated
-   */
-  transpilerPath?: string;
 }
 
 /* export */ declare interface Server {
@@ -558,5 +546,3 @@ declare interface PushClient {
 interface Window {
   dvlp: typeof testBrowser;
 }
-
-/* export */ declare function getDefaultRollupConfig(): import('rollup').RollupOptions;

@@ -1,6 +1,6 @@
 'use strict';
 
-const { cleanBundles } = require('../src/bundler/index.js');
+const { cleanBundledFiles } = require('../src/utils/bundling.js');
 const config = require('../src/config.js');
 const EventSource = require('eventsource');
 const { expect } = require('chai');
@@ -14,11 +14,11 @@ let es, server, ws;
 
 describe('server', () => {
   beforeEach(() => {
-    cleanBundles();
+    cleanBundledFiles();
   });
   afterEach(async () => {
     config.directories = [process.cwd()];
-    cleanBundles();
+    cleanBundledFiles();
     if (es) {
       es.removeAllListeners();
       es.close();
@@ -58,6 +58,7 @@ describe('server', () => {
     it('should serve a js file with correct mime type', async () => {
       server = await serverFactory('test/fixtures/www', { port: 8000 });
       const res = await fetch('http://localhost:8000/script.js');
+      console.log(await res.text());
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include(
         'application/javascript',
@@ -128,7 +129,7 @@ describe('server', () => {
       const res = await fetch('http://localhost:8000/not.css');
       expect(res.status).to.eql(404);
     });
-    it('should start with custom Rollup config', async () => {
+    it.skip('should start with custom Rollup config', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
         rollupConfigPath: 'test/fixtures/rollup.config.js',
@@ -158,18 +159,6 @@ describe('server', () => {
         expect(err).to.exist;
       }
     });
-    it('should transpile file content when using a transpiler', async () => {
-      server = await serverFactory('test/fixtures/www', {
-        port: 8000,
-        reload: false,
-        transpilerPath: 'test/fixtures/transpiler.js',
-      });
-      const res = await fetch('http://localhost:8000/style.css');
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.equal(
-        'this is transpiled content for: style.css',
-      );
-    });
     it('should transform file content when using an onTransform hook', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
@@ -192,21 +181,6 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.equal('this is sent content for: style.css');
     });
-    it('should cache transpiled file content when using a transpiler', async () => {
-      server = await serverFactory('test/fixtures/www', {
-        port: 8000,
-        reload: false,
-        transpilerPath: 'test/fixtures/transpiler.js',
-      });
-      let start = Date.now();
-      let res = await fetch('http://localhost:8000/style.css');
-      expect(res.status).to.eql(200);
-      expect(Date.now() - start).to.be.above(200);
-      start = Date.now();
-      res = await fetch('http://localhost:8000/style.css');
-      expect(res.status).to.eql(200);
-      expect(Date.now() - start).to.be.below(10);
-    });
     it('should cache transformed file content when using an onTransform hook', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8000,
@@ -221,16 +195,6 @@ describe('server', () => {
       res = await fetch('http://localhost:8000/style.css');
       expect(res.status).to.eql(200);
       expect(Date.now() - start).to.be.below(10);
-    });
-    it('should return error when transpiler error', async () => {
-      server = await serverFactory('test/fixtures/www', {
-        port: 8000,
-        reload: false,
-        transpilerPath: 'test/fixtures/transpilerError.js',
-      });
-      const res = await fetch('http://localhost:8000/style.css');
-      expect(res.status).to.eql(500);
-      expect(await res.text()).to.equal('transpiler error style.css');
     });
     it('should return error when hooks onTransform error', async () => {
       server = await serverFactory('test/fixtures/www', {
@@ -454,7 +418,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       const body = await res.text();
       expect(body).to.contain('function baseSlice');
-      expect(body).to.contain('export default array;');
+      expect(body).to.contain('stdin_default = require_array()');
     });
     it('should serve a bundled module js file from server listening for "request" event', async () => {
       server = await serverFactory('test/fixtures/appListener.js', {
@@ -466,7 +430,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       const body = await res.text();
       expect(body).to.contain('function baseSlice');
-      expect(body).to.contain('export default array;');
+      expect(body).to.contain('stdin_default = require_array()');
     });
     it('should serve a node_modules module js file', async () => {
       server = await serverFactory('test/fixtures/app.js', { port: 8000 });
@@ -475,7 +439,7 @@ describe('server', () => {
       const body = await res.text();
       expect(body).to.contain("console.log('this is foo')");
     });
-    it('should start with custom Rollup config', async () => {
+    it.skip('should start with custom Rollup config', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
         rollupConfigPath: 'test/fixtures/rollup.config.js',
@@ -507,19 +471,7 @@ describe('server', () => {
       });
       expect(res.status).to.eql(500);
     });
-    it('should transpile file content when using a transpiler', async () => {
-      server = await serverFactory('test/fixtures/app.js', {
-        port: 8000,
-        reload: false,
-        transpilerPath: 'test/fixtures/transpiler.js',
-      });
-      const res = await fetch('http://localhost:8000/www/style.css');
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.equal(
-        'this is transpiled content for: style.css',
-      );
-    });
-    it('should transpile file content when using a transpiler', async () => {
+    it('should transform file content when using an onTransform hook', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8000,
         reload: false,
