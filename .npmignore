@@ -1,8 +1,0 @@
-/test
-/test-browser
-.*
-/src
-/docs
-rollup.config.js
-tsconfig.json
-package-lock.json
