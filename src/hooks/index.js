@@ -86,6 +86,8 @@ module.exports = class Hooker {
       this.buildService = await startService();
     }
 
+    // TODO: proxy service.build to capture manifest and watch bundled files
+
     await transform(
       filePath,
       lastChangedFilePath,
