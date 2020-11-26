@@ -3,6 +3,7 @@
 const { error, info, noisyInfo } = require('../utils/log.js');
 const { isInvalidFilePath, isJsonFilePath } = require('../utils/is.js');
 const { match, pathToRegexp } = require('path-to-regexp');
+const { URL, URLSearchParams } = require('url');
 const chalk = require('chalk');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:mock');

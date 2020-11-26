@@ -29,18 +29,17 @@ const http = require('http');
 const { importModule } = require('../utils/module.js');
 const Metrics = require('../utils/metrics.js');
 const Mock = require('../mock/index.js');
-// Work around @rollup/plugin-commonjs require.cache
-// @ts-ignore
-const moduleCache = require('module')._cache;
 const { patchResponse } = require('../utils/patch.js');
 const platform = require('platform');
 const send = require('send');
+const { URL } = require('url');
 const watch = require('../utils/watch.js');
 const WebSocket = require('faye-websocket');
 
 const START_TIMEOUT_DURATION = 2000;
 
 const { EventSource } = WebSocket;
+const moduleCache = require.cache;
 const originalCreateServer = http.createServer;
 /** @type { Array<string> } */
 let dvlpModules;
@@ -660,9 +659,9 @@ function clearAppModules(appModules, main) {
   // Remove main from parent
   // (No children when bundled)
   if (
-    mainModule !== undefined &&
-    mainModule.parent !== undefined &&
-    mainModule.parent.children !== undefined
+    mainModule != undefined &&
+    mainModule.parent != null &&
+    mainModule.parent.children != null
   ) {
     const parent = mainModule.parent;
     let i = parent.children.length;

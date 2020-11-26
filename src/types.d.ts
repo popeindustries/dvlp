@@ -10,6 +10,8 @@ declare type IncomingMessage = import('http').IncomingMessage;
 declare type ServerResponse = import('http').ServerResponse;
 declare type HttpServer = import('http').Server;
 declare type HttpsServer = import('https').Server;
+declare type URL = import('url').URL;
+declare type URLSearchParams = import('url').URLSearchParams;
 
 declare interface Req extends IncomingMessage {
   filePath: string;

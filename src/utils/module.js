@@ -2,11 +2,7 @@
 
 const { addHook } = require('pirates');
 const fs = require('fs');
-// @ts-ignore
 const isModuleLib = require('is-module');
-// Work around @rollup/plugin-commonjs dynamic require
-// @ts-ignore
-const loadModule = require('module')._load;
 const path = require('path');
 const { extensionsByType } = require('../config.js');
 
@@ -63,7 +59,12 @@ function importModule(modulePath, onTransform) {
       ignoreNodeModules: false,
     },
   );
-  let mod = loadModule(modulePath, module, false);
+
+  if (modulePath.startsWith('.')) {
+    modulePath = path.resolve(modulePath);
+  }
+
+  let mod = require(modulePath);
 
   // Return default if only exported key
   if ('default' in mod && Object.keys(mod).length === 1) {

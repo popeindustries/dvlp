@@ -3,6 +3,7 @@
 const chalk = require('chalk');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:es');
+// @ts-ignore
 const { EventSource } = require('faye-websocket');
 const { getTypeFromPath } = require('../utils/file.js');
 const { noisyInfo } = require('../utils/log.js');
