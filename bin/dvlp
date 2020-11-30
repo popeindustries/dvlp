@@ -21,7 +21,7 @@ program
   .option('-k, --hooks <path>', 'path to optional hooks registration file')
   .option(
     '--ssl <path>',
-    `enable https mode by specifying path to directory containing ".crt" and ".key" files`,
+    `enable https mode by specifying path to directory containing ".crt" and ".key" files (directory, glob pattern)`,
   )
   .option('-s, --silent', 'suppress default logging')
   .option('--no-reload', 'disable reloading connected browsers on file change')

@@ -45,7 +45,7 @@ Options:
   -m, --mock <path>   path to mock files (directory, file, glob pattern)
   -k, --hooks <path>  path to optional hooks registration file
   --ssl <path>        enable https mode by specifying path to directory containing
-                      ".crt" and ".key" files
+                      ".crt" and ".key" files (directory, glob pattern)
   -s, --silent        suppress default logging
   --no-reload         disable reloading connected browsers on file change
   -v, --version       output the version number
@@ -70,7 +70,7 @@ $ npm run dev
 
 ### Hooks
 
-In some cases, source code may need to be transformed into a valid format before it is executed, or a response body modified before sending to the browser. In these cases, you can register `hooks` to convert file contents on the fly when imported by an application server or requested by the browser.
+In some cases, source code may need to be transformed into a valid format before it is executed, or a response body modified before sending it to the browser. In these cases, you can register `hooks` to convert file contents on the fly when imported by an application server or requested by the browser.
 
 <details>
 <summary>Registering hooks</summary>
