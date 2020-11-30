@@ -5,6 +5,7 @@ const { startService, transformSync } = require('esbuild');
 const bundle = require('./bundle.js');
 const { extname, join } = require('path');
 const { importModule } = require('../utils/module.js');
+const { resolve } = require('../resolver/index.js');
 const transform = require('./transform.js');
 const { warn } = require('../utils/log.js');
 
@@ -188,10 +189,15 @@ module.exports = class Hooker {
         name: 'watch-local',
         setup(build) {
           build.onResolve({ filter: /^[./]/ }, function (args) {
-            const filePath = join(args.resolveDir, args.path);
+            const { importer, path, resolveDir } = args;
+            const filePath = join(resolveDir, path);
 
             if (!isNodeModuleFilePath(filePath)) {
-              watcher.add(filePath);
+              const resolvedFilePath = resolve(filePath, importer);
+
+              if (resolvedFilePath) {
+                watcher.add(resolvedFilePath);
+              }
             }
 
             return undefined;
