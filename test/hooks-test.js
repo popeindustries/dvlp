@@ -46,14 +46,14 @@ describe('hooks()', () => {
       const filePath = path.join(config.bundleDir, LODASH);
       await hooks.onDependencyBundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
-      expect(module).to.include('export default require_lodash();');
+      expect(module).to.include('var export_default = lodash.default');
     });
     it('should bundle and add missing named exports', async () => {
       const hooks = new Hooks();
       const filePath = path.join(config.bundleDir, REACT);
       await hooks.onDependencyBundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
-      expect(module).to.include('react_17_0_1_default as default');
+      expect(module).to.include('export_default as default');
       expect(module).to.include('export_Children as Children');
     });
     it('should return cached bundle', async () => {
@@ -69,7 +69,7 @@ describe('hooks()', () => {
       const filePath = path.join(config.bundleDir, DEBUG);
       await hooks.onDependencyBundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
-      expect(module).to.contain('this is bundled content for: browser.js');
+      expect(module).to.contain('this is bundled content for: debug-4.3.1.js');
     });
     it.skip('should skip bundling transient dependencies', async () => {
       const hooks = new Hooks();

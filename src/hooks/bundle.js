@@ -1,8 +1,8 @@
 'use strict';
 
 const { existsSync, readFileSync, writeFileSync } = require('fs');
-const { basename } = require('path');
 const config = require('../config.js');
+const { basename } = require('path');
 const debug = require('debug')('dvlp:bundle');
 const {
   decodeBundleId,
@@ -11,6 +11,7 @@ const {
 const { error } = require('../utils/log.js');
 const { isBundledFilePath } = require('../utils/is.js');
 const Metrics = require('../utils/metrics.js');
+const { parse } = require('cjs-module-lexer');
 const { resolve } = require('../resolver/index.js');
 
 /**
@@ -43,34 +44,36 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
     }
 
     try {
+      const moduleContents = readFileSync(modulePath, 'utf8');
+      const brokenNamedExports =
+        config.brokenNamedExportsPackages[moduleId] || [];
+      const { exports } = parse(moduleContents);
+      const namedExports = exports
+        .filter((e) => e !== 'default')
+        .concat(brokenNamedExports);
+      const fileContents = namedExports.length
+        ? `export { default } from "${modulePath}"; export {${namedExports.join(
+            ', ',
+          )}} from '${modulePath}';`
+        : `export { default } from "${modulePath}"`;
+
+      writeFileSync(filePath, fileContents);
+
       if (hookFn) {
         code = await hookFn(
           moduleId,
-          modulePath,
-          readFileSync(modulePath, 'utf8'),
+          filePath,
+          readFileSync(filePath, 'utf8'),
           {
             esbuildService: buildService,
           },
         );
       }
       if (code === undefined) {
-        const namedExports = config.brokenNamedExportsPackages[moduleId];
-        let entryPoint = modulePath;
-
-        if (namedExports) {
-          entryPoint = filePath;
-          writeFileSync(
-            filePath,
-            `import entry from '${modulePath}';
-          export default entry;
-          export {${namedExports.join(', ')}} from '${modulePath}';`,
-          );
-        }
-
         const result = await buildService.build({
           bundle: true,
           define: { 'process.env.NODE_ENV': '"development"' },
-          entryPoints: [entryPoint],
+          entryPoints: [filePath],
           format: 'esm',
           logLevel: 'error',
           mainFields: ['module', 'browser', 'main'],
@@ -86,6 +89,7 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
         code = result.outputFiles[0].text;
       }
     } catch (err) {
+      console.log(filePath);
       debug(`error bundling "${moduleId}"`);
       res.writeHead(500);
       res.end(err.message);

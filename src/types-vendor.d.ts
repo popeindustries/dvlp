@@ -38,8 +38,3 @@ declare module 'es-module-lexer' {
     code: string,
   ): Array<Array<{ d: number; e: number; s: number }>>;
 }
-
-declare module 'is-module' {
-  function isModule(source: string): boolean;
-  export = isModule;
-}

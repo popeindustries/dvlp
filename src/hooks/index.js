@@ -28,9 +28,9 @@ module.exports = class Hooker {
     this.hooks;
 
     if (hooksPath) {
-      this.hooks = importModule(hooksPath);
+      const hooks = importModule(hooksPath);
 
-      for (const name of Object.keys(module)) {
+      for (const name of Object.keys(hooks)) {
         if (!HOOK_NAMES.includes(name)) {
           warn(
             `⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(
@@ -39,6 +39,8 @@ module.exports = class Hooker {
           );
         }
       }
+
+      this.hooks = hooks;
     }
 
     /** @type { Map<string, string> } */

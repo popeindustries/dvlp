@@ -88,11 +88,12 @@ module.exports = {
    * Bundle non-esm node_modules dependency requested by the browser.
    * This hook is run after file read.
    *
+   * @param { string } id
    * @param { string } filePath
    * @param { string } fileContents
    * @param { { esbuildService: import('esbuild').Service } } context
    */
-  async onDependencyBundle(filePath, fileContents, context) {
+  async onDependencyBundle(id, filePath, fileContents, context) {
     if (id === 'some/package') {
       // Transform
     }

@@ -2,7 +2,7 @@
 
 const { addHook } = require('pirates');
 const fs = require('fs');
-const isModuleLib = require('is-module');
+const { parse } = require('cjs-module-lexer');
 const path = require('path');
 const { extensionsByType } = require('../config.js');
 
@@ -27,7 +27,14 @@ function isModule(filePathOrCode) {
   ) {
     filePathOrCode = fs.readFileSync(filePathOrCode, 'utf8');
   }
-  return isModuleLib(filePathOrCode);
+
+  // Assume module if parsing as cjs fails
+  try {
+    parse(filePathOrCode);
+    return false;
+  } catch (err) {
+    return true;
+  }
 }
 
 /**
