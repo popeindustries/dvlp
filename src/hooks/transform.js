@@ -8,7 +8,7 @@ const {
 } = require('../utils/file.js');
 const debug = require('debug')('dvlp:transform');
 const { extname } = require('path');
-const { isEsmFile } = require('../utils/is.js');
+const { isTransformableJsFile } = require('../utils/is.js');
 const Metrics = require('../utils/metrics.js');
 const mime = require('mime');
 const { readFileSync } = require('fs');
@@ -70,8 +70,8 @@ module.exports = async function transform(
         fileType === 'js' &&
         fileExtension !== '.json'
       ) {
-        // Skip default transform if esm
-        if (isEsmFile(filePath, fileContents)) {
+        // Skip default transform if not necessary
+        if (!isTransformableJsFile(filePath, fileContents)) {
           return;
         }
 

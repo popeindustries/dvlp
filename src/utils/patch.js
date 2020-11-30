@@ -12,13 +12,13 @@ const {
   isCssRequest,
   isHtmlRequest,
   isJsRequest,
+  isEsmFile,
   isNodeModuleFilePath,
   isRelativeFilePath,
 } = require('./is.js');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:patch');
 const { filePathToUrl } = require('./url.js');
-const { isModule } = require('./module.js');
 const Metrics = require('./metrics.js');
 const path = require('path');
 const { parse } = require('es-module-lexer');
@@ -278,7 +278,7 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  * @returns { string }
  */
 function rewriteImports(res, filePath, code, onResolveImport) {
-  res.metrics.recordEvent('rewrite JS imports');
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
 
   // Retrieve original source path from bundled file
   // to allow reference back to correct node_modules file
@@ -330,7 +330,7 @@ function rewriteImports(res, filePath, code, onResolveImport) {
               resolve,
             );
           } catch (err) {
-            err.hooked;
+            err.hooked = true;
             throw err;
           }
 
@@ -359,7 +359,7 @@ function rewriteImports(res, filePath, code, onResolveImport) {
           let newId = '';
 
           // Bundle if in node_modules and not an es module
-          if (isNodeModuleFilePath(importPath) && !isModule(importPath)) {
+          if (isNodeModuleFilePath(importPath) && !isEsmFile(importPath)) {
             const resolvedId = resolveBundleFileName(specifier, importPath);
             newId = `/${path.join(config.bundleDirName, resolvedId)}`;
             warn(WARN_BARE_IMPORT, specifier);
@@ -376,8 +376,8 @@ function rewriteImports(res, filePath, code, onResolveImport) {
 
           if (newId !== specifier || before || after) {
             debug(
-              `rewrote ${
-                isDynamic ? 'dynamic' : ''
+              `rewrote${
+                isDynamic ? ' dynamic' : ''
               } import id from "${specifier}" to "${newId}"`,
             );
             code =
@@ -399,6 +399,7 @@ function rewriteImports(res, filePath, code, onResolveImport) {
       debug(`no imports to rewrite in "${projectFilePath}"`);
     }
   } catch (err) {
+    console.log(err);
     if (err.hooked) {
       fatal(err);
     }

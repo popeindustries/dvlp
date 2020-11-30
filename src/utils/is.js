@@ -2,7 +2,8 @@
 
 const config = require('../config.js');
 const fs = require('fs');
-const { isModule } = require('./module.js');
+const isFileEsm = require('is-file-esm');
+const { parse } = require('cjs-module-lexer');
 const path = require('path');
 const util = require('util');
 
@@ -36,6 +37,7 @@ module.exports = {
   isPromise,
   isProxy,
   isRelativeFilePath,
+  isTransformableJsFile,
   isValidFilePath,
 };
 
@@ -75,7 +77,7 @@ function isCjsFile(filePath, fileContents) {
   const extension = path.extname(filePath);
 
   if (extension === '.js') {
-    return !isModule(fileContents || filePath);
+    return !isEsmFile(filePath, fileContents);
   } else if (extension === '.cjs' || extension === '.json') {
     return true;
   }
@@ -118,7 +120,20 @@ function isEsmFile(filePath, fileContents) {
   const extension = path.extname(filePath);
 
   if (extension === '.js') {
-    return isModule(fileContents || filePath);
+    try {
+      if (isFileEsm.sync(filePath).esm) {
+        return true;
+      }
+    } catch (err) {
+      // Ignore err
+    }
+
+    try {
+      parse(fileContents || fs.readFileSync(filePath, 'utf8'));
+      return false;
+    } catch (err) {
+      return true;
+    }
   } else if (extension === '.mjs') {
     return true;
   }
@@ -286,6 +301,27 @@ function isProjectFilePath(filePath) {
  */
 function isRelativeFilePath(filePath) {
   return 'string' == typeof filePath && filePath.startsWith('.');
+}
+
+/**
+ * Determine if "filePath" requires transformation
+ *
+ * @param { string } filePath
+ * @param { string } [fileContents]
+ * @returns { boolean }
+ */
+function isTransformableJsFile(filePath, fileContents) {
+  if (isJsFilePath(filePath)) {
+    const extension = path.extname(filePath);
+
+    if (extension.startsWith('.ts') || extension === '.json') {
+      return true;
+    }
+
+    return !isEsmFile(filePath, fileContents);
+  }
+
+  return false;
 }
 
 /**

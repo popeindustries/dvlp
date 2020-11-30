@@ -40,7 +40,7 @@ const terser = require('terser');
       'global.$VERSION': `'${pkg.version}'`,
     },
     entryPoints: ['./src/index.js'],
-    external: ['fsevents'],
+    external: ['esbuild', 'fsevents'],
     format: 'cjs',
     target: 'node12',
     platform: 'node',

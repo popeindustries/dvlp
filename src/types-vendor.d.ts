@@ -38,3 +38,23 @@ declare module 'es-module-lexer' {
     code: string,
   ): Array<Array<{ d: number; e: number; s: number }>>;
 }
+
+declare module 'is-file-esm' {
+  interface result {
+    esm: boolean;
+    type: string;
+    extType: string;
+    path: string;
+    pkgPath: string;
+  }
+  function isFileEsm(
+    path: string,
+    cb: (err: string, result: result) => void,
+  ): void;
+  namespace isFileEsm {
+    function sync(path: string): result;
+  }
+
+  // isFileEsm.sync = function (path: string): void {};
+  export = isFileEsm;
+}

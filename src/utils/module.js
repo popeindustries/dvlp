@@ -1,8 +1,6 @@
 'use strict';
 
 const { addHook } = require('pirates');
-const fs = require('fs');
-const { parse } = require('cjs-module-lexer');
 const path = require('path');
 const { extensionsByType } = require('../config.js');
 
@@ -10,32 +8,8 @@ const { extensionsByType } = require('../config.js');
 let revertHook;
 
 module.exports = {
-  isModule,
   importModule,
 };
-
-/**
- * Determine if filePath or code is es module
- *
- * @param { string } filePathOrCode
- * @returns { boolean }
- */
-function isModule(filePathOrCode) {
-  if (
-    !filePathOrCode.includes('\n') &&
-    extensionsByType.js.includes(path.extname(filePathOrCode))
-  ) {
-    filePathOrCode = fs.readFileSync(filePathOrCode, 'utf8');
-  }
-
-  // Assume module if parsing as cjs fails
-  try {
-    parse(filePathOrCode);
-    return false;
-  } catch (err) {
-    return true;
-  }
-}
 
 /**
  * Import esm/cjs module, transpiling if necessary (via require hook)
