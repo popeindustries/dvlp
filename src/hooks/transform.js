@@ -8,7 +8,7 @@ const {
 } = require('../utils/file.js');
 const debug = require('debug')('dvlp:transform');
 const { extname } = require('path');
-const { isCjsFile } = require('../utils/is.js');
+const { isEsmFile } = require('../utils/is.js');
 const Metrics = require('../utils/metrics.js');
 const mime = require('mime');
 const { readFileSync } = require('fs');
@@ -65,9 +65,13 @@ module.exports = async function transform(
           esbuildService: buildService,
         });
       }
-      if (code === undefined && fileType === 'js') {
-        // Skip default transform if cjs/json
-        if (isCjsFile(filePath, fileContents)) {
+      if (
+        code === undefined &&
+        fileType === 'js' &&
+        fileExtension !== '.json'
+      ) {
+        // Skip default transform if esm
+        if (isEsmFile(filePath, fileContents)) {
           return;
         }
 

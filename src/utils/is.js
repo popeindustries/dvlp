@@ -23,6 +23,7 @@ module.exports = {
   isCjsFile,
   isCssFilePath,
   isCssRequest,
+  isEsmFile,
   isHtmlFilePath,
   isHtmlRequest,
   isInvalidFilePath,
@@ -104,6 +105,25 @@ function isCssRequest(req) {
     (req.headers.accept && RE_TYPE_CSS.test(req.headers.accept)) ||
     isCssFilePath(req.url)
   );
+}
+
+/**
+ * Determine if 'filePath' is referencing an esm file
+ *
+ * @param { string } filePath
+ * @param { string } [fileContents]
+ * @returns { boolean }
+ */
+function isEsmFile(filePath, fileContents) {
+  const extension = path.extname(filePath);
+
+  if (extension === '.js') {
+    return isModule(fileContents || filePath);
+  } else if (extension === '.mjs') {
+    return true;
+  }
+
+  return false;
 }
 
 /**

@@ -407,7 +407,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       const body = await res.text();
       expect(body).to.contain('function baseSlice');
-      expect(body).to.contain('stdin_default = require_array()');
+      expect(body).to.contain('export default require_array()');
     });
     it('should serve a bundled module js file from server listening for "request" event', async () => {
       server = await serverFactory('test/fixtures/appListener.js', {
@@ -419,7 +419,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       const body = await res.text();
       expect(body).to.contain('function baseSlice');
-      expect(body).to.contain('stdin_default = require_array()');
+      expect(body).to.contain('export default require_array()');
     });
     it('should serve a node_modules module js file', async () => {
       server = await serverFactory('test/fixtures/app.js', { port: 8000 });

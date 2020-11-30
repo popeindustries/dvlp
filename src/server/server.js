@@ -90,7 +90,7 @@ module.exports = class DvlpServer {
     this.reloader = reloader;
     /** @type { HttpServer | null } */
     this.server = null;
-    this.hooks = new Hooks(hooksPath);
+    this.hooks = new Hooks(hooksPath, this.watcher);
     this.urlToFilePath = new Map();
     /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
