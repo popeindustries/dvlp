@@ -7,8 +7,10 @@ const pkg = require('../package.json');
 const terser = require('terser');
 
 (async function build() {
-  const reloadClient = await terser.minify(
-    fs.readFileSync('src/reloader/reload-client.js', 'utf8'),
+  const reloadClient = (
+    await terser.minify(
+      fs.readFileSync('src/reloader/reload-client.js', 'utf8'),
+    )
   ).code;
   const mockClient = (
     await terser.minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
