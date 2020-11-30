@@ -11,4 +11,4 @@ app.use(async (ctx) => {
   ctx.body = fs.createReadStream(path.resolve('./assets/index.html'));
 });
 
-app.listen(process.env.PORT || 8000);
+app.listen(process.env.PORT || 8100);

@@ -380,11 +380,11 @@ describe('mock', () => {
 
     it('should return "false" if no match', () => {
       expect(
-        mocks.matchPushEvent('https://localhost:8888/foo', 'open', pushEvent),
+        mocks.matchPushEvent('https://localhost:8111/foo', 'open', pushEvent),
       ).to.equal(false);
       expect(
         mocks.matchPushEvent(
-          'https://localhost:8888/feed',
+          'https://localhost:8111/feed',
           'opeeeen',
           pushEvent,
         ),

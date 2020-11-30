@@ -23,7 +23,7 @@ app.use(async (ctx) => {
   await send(ctx, ctx.path, { root: __dirname + '/www' });
 });
 
-app.listen(process.env.PORT || 8000);
+app.listen(process.env.PORT || 8100);
 
 process.on('beforeExit', () => {
   return new Promise((resolve) => {

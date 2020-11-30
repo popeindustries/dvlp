@@ -265,13 +265,13 @@ describe('testServer', () => {
       });
     });
     it('should push mock event via EventSource', (done) => {
-      testServer({ port: 8888 }).then((srvr) => {
+      testServer({ port: 8111 }).then((srvr) => {
         server = srvr;
         server.loadMockFiles('test/fixtures/mock-push');
-        es = new EventSource('http://localhost:8888/feed');
+        es = new EventSource('http://localhost:8111/feed');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
-          server.pushEvent('http://localhost:8888/feed', 'open');
+          server.pushEvent('http://localhost:8111/feed', 'open');
         };
         es.addEventListener('foo', (event) => {
           expect(event.data).to.equal('{"title":"open"}');
@@ -280,10 +280,10 @@ describe('testServer', () => {
       });
     });
     it('should push mock connect event via EventSource', (done) => {
-      testServer({ port: 8888 }).then((srvr) => {
+      testServer({ port: 8111 }).then((srvr) => {
         server = srvr;
         server.loadMockFiles('test/fixtures/mock-push-connect');
-        es = new EventSource('http://localhost:8888/feed');
+        es = new EventSource('http://localhost:8111/feed');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
         };
@@ -297,13 +297,13 @@ describe('testServer', () => {
       });
     });
     it('should push mock event via WebSocket', (done) => {
-      testServer({ port: 8888 }).then((srvr) => {
+      testServer({ port: 8111 }).then((srvr) => {
         server = srvr;
         server.loadMockFiles('test/fixtures/mock-push');
-        ws = new WebSocket('ws://localhost:8888/socket');
+        ws = new WebSocket('ws://localhost:8111/socket');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
-          server.pushEvent('ws://localhost:8888/socket', 'foo event');
+          server.pushEvent('ws://localhost:8111/socket', 'foo event');
         });
         ws.on('message', (event) => {
           expect(event.data).to.equal('{"title":"foo"}');
@@ -312,11 +312,11 @@ describe('testServer', () => {
       });
     });
     it('should push mock connect events via WebSocket', (done) => {
-      testServer({ port: 8888 }).then((srvr) => {
+      testServer({ port: 8111 }).then((srvr) => {
         const events = [];
         server = srvr;
         server.loadMockFiles('test/fixtures/mock-push-connect');
-        ws = new WebSocket('ws://localhost:8888/socket');
+        ws = new WebSocket('ws://localhost:8111/socket');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
         });
@@ -330,16 +330,16 @@ describe('testServer', () => {
       });
     });
     it('should push a sequence of mock events via EventSource', (done) => {
-      testServer({ port: 8888 }).then((srvr) => {
+      testServer({ port: 8111 }).then((srvr) => {
         let events = [];
         let last;
         server = srvr;
         server.loadMockFiles('test/fixtures/mock-push');
-        es = new EventSource('http://localhost:8888/feed');
+        es = new EventSource('http://localhost:8111/feed');
         es.onopen = () => {
           last = Date.now();
           expect(es.readyState).to.equal(1);
-          server.pushEvent('http://localhost:8888/feed', 'bar events');
+          server.pushEvent('http://localhost:8111/feed', 'bar events');
         };
         es.addEventListener('bar', (event) => {
           const now = Date.now();
@@ -359,16 +359,16 @@ describe('testServer', () => {
       });
     });
     it('should push a sequence of mock events via WebSocket', (done) => {
-      testServer({ port: 8888 }).then((srvr) => {
+      testServer({ port: 8111 }).then((srvr) => {
         let events = [];
         let last;
         server = srvr;
         server.loadMockFiles('test/fixtures/mock-push');
-        ws = new WebSocket('ws://localhost:8888/socket');
+        ws = new WebSocket('ws://localhost:8111/socket');
         ws.on('open', () => {
           last = Date.now();
           expect(ws.readyState).to.equal(1);
-          server.pushEvent('ws://localhost:8888/socket', 'bar events');
+          server.pushEvent('ws://localhost:8111/socket', 'bar events');
         });
         ws.on('message', (event) => {
           const now = Date.now();
