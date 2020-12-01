@@ -19,7 +19,7 @@
     "@fidm/x509": "^1.2.1",
     "@rollup/plugin-commonjs": "^15.1.0",
     "@rollup/plugin-json": "^4.0.3",
-    "@rollup/plugin-node-resolve": "^9.0.0",
+    "@rollup/plugin-node-resolve": "^11.0.0",
     "@rollup/plugin-replace": "^2.3.2",
     "@rollup/plugin-virtual": "^2.0.2",
     "chalk": "^4.0.0",
