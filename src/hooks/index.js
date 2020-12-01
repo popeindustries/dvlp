@@ -207,7 +207,10 @@ module.exports = class Hooker {
 
       this.buildService.build = new Proxy(this.buildService.build, {
         apply(target, context, args) {
-          args[0].plugins = [watchPlugin];
+          if (!args[0].plugins) {
+            args[0].plugins = [];
+          }
+          args[0].plugins.push(watchPlugin);
           return Reflect.apply(target, context, args);
         },
       });
