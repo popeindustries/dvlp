@@ -14,7 +14,13 @@ const mime = require('mime');
 const { readFileSync } = require('fs');
 
 const tsconfigPath = findClosest('tsconfig.json');
-const tsconfig = tsconfigPath ? require(tsconfigPath) : undefined;
+const tsconfig = tsconfigPath
+  ? require(tsconfigPath)
+  : {
+      compilerOptions: {
+        useDefineForClassFields: true,
+      },
+    };
 
 /**
  * Transform file content for request for 'filePath'
