@@ -50,11 +50,11 @@ module.exports = class Hooker {
     /** @type { import("esbuild").Service } */
     this.buildService;
 
-    this.onDependencyBundle = this.onDependencyBundle.bind(this);
-    this.onTransform = this.onTransform.bind(this);
-    this.onResolveImport = this.onResolveImport.bind(this);
-    this.onSend = this.onSend.bind(this);
-    this.onServerTransform = this.onServerTransform.bind(this);
+    this.bundle = this.bundle.bind(this);
+    this.transform = this.transform.bind(this);
+    this.resolveImport = this.resolveImport.bind(this);
+    this.send = this.send.bind(this);
+    this.serverTransform = this.serverTransform.bind(this);
   }
 
   /**
@@ -64,7 +64,7 @@ module.exports = class Hooker {
    * @param { Res } res
    * @returns { Promise<void> }
    */
-  async onDependencyBundle(filePath, res) {
+  async bundle(filePath, res) {
     if (!this.buildService) {
       await this._startService();
     }
@@ -86,7 +86,7 @@ module.exports = class Hooker {
    * @param { TransformHookContext["client"] } clientPlatform
    * @returns { Promise<void> }
    */
-  async onTransform(filePath, lastChangedFilePath, res, clientPlatform) {
+  async transform(filePath, lastChangedFilePath, res, clientPlatform) {
     if (!this.buildService) {
       await this._startService();
     }
@@ -110,7 +110,7 @@ module.exports = class Hooker {
    * @param { DefaultResolve } defaultResolve
    * @returns { string | false | undefined}
    */
-  onResolveImport(specifier, context, defaultResolve) {
+  resolveImport(specifier, context, defaultResolve) {
     let result;
 
     if (this.hooks && this.hooks.onResolveImport) {
@@ -130,7 +130,7 @@ module.exports = class Hooker {
    * @param { string } fileContents
    * @returns { string }
    */
-  onSend(filePath, fileContents) {
+  send(filePath, fileContents) {
     let result;
 
     if (this.hooks && this.hooks.onSend) {
@@ -147,7 +147,7 @@ module.exports = class Hooker {
    * @param { string } fileContents
    * @returns { string }
    */
-  onServerTransform(filePath, fileContents) {
+  serverTransform(filePath, fileContents) {
     let result;
 
     if (this.hooks && this.hooks.onServerTransform) {

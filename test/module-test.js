@@ -11,7 +11,7 @@ describe('importModule()', () => {
   it('should return an es module', () => {
     const module = importModule(
       path.resolve(__dirname, 'fixtures/config.esm.js'),
-      hooks.onServerTransform,
+      hooks.serverTransform,
     );
     expect(module).to.have.property('dep', 'HI!');
   });
@@ -22,7 +22,7 @@ describe('importModule()', () => {
   it('should return a jsx module', () => {
     const module = importModule(
       path.resolve(__dirname, 'fixtures/component.jsx'),
-      hooks.onServerTransform,
+      hooks.serverTransform,
     );
     expect(module).to.have.property('type', 'div');
   });

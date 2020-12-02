@@ -103,8 +103,8 @@ module.exports = class DvlpServer {
         hash: hashScript(headerScript),
         string: headerScript,
       },
-      onResolveImport: this.hooks.onResolveImport,
-      onSend: this.hooks.onSend,
+      resolveImport: this.hooks.resolveImport,
+      send: this.hooks.send,
     };
   }
 
@@ -330,7 +330,7 @@ module.exports = class DvlpServer {
       if (filePath) {
         if (isBundledFilePath(filePath)) {
           // Will write new file to disk
-          await server.hooks.onDependencyBundle(filePath, res);
+          await server.hooks.bundle(filePath, res);
         }
         // Transform all files that aren't bundled or node_modules
         // This ensures that all symlinked workspace files are transformed even though they are dependencies
@@ -353,7 +353,7 @@ module.exports = class DvlpServer {
             };
           }
           // Will respond if transformer exists for this type
-          await server.hooks.onTransform(
+          await server.hooks.transform(
             filePath,
             server.lastChanged,
             res,
@@ -406,7 +406,7 @@ module.exports = class DvlpServer {
     } else if (typeof this.main === 'function') {
       this.main();
     } else {
-      importModule(this.main, this.hooks.onServerTransform);
+      importModule(this.main, this.hooks.serverTransform);
     }
   }
 

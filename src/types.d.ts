@@ -94,8 +94,12 @@ declare interface PatchResponseOptions {
     string: string;
     url?: string;
   };
-  onSend?: Hooks['onSend'];
-  onResolveImport?: Hooks['onResolveImport'];
+  send?: (filePath: string, responseBody: string) => string | undefined;
+  resolveImport?: (
+    specifier: string,
+    context: ResolveHookContext,
+    defaultResolve: DefaultResolve,
+  ) => string | false | undefined;
 }
 
 declare interface FindOptions {

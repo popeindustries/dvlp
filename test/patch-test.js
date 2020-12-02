@@ -294,7 +294,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import "./test/fixtures/www/module.js";');
         expect(getBody(res)).to.equal(
@@ -307,7 +307,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import lodash from "lodash";');
         expect(getBody(res)).to.equal(
@@ -320,7 +320,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import $$observable from "lodash";');
         expect(getBody(res)).to.equal(
@@ -333,7 +333,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end(`const foo = 'bar'\nimport lodash from "lodash";`);
         expect(getBody(res)).to.equal(
@@ -346,7 +346,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end(
           `function foo(value) { return value; };import lodash from "lodash";`,
@@ -361,7 +361,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end(
           `function foo(value) { return value; } import lodash from "lodash";`,
@@ -376,7 +376,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end(`const foo = ('bar') import lodash from "lodash";`);
         expect(getBody(res)).to.equal(
@@ -390,7 +390,7 @@ describe('patch', () => {
         const res = getResponse(req);
         const reactDomError = `error("It looks like you're using the wrong act() around your test interactions.\n" + 'Be sure to use the matching version of act() corresponding to your renderer:\n\n' + '// for react-dom:\n' + "import {act} from 'react-dom/test-utils';\n" + '// ...\n' + 'act(() => ...);\n\n' + '// for react-test-renderer:\n' + "import TestRenderer from 'react-test-renderer';\n" + 'const {act} = TestRenderer;\n' + '// ...\n' + 'act(() => ...);' + '%s', getStackByFiberInDevAndProd(fiber));`;
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end(reactDomError);
         expect(getBody(res)).to.equal(reactDomError);
@@ -401,7 +401,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end(
           'import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";',
@@ -416,7 +416,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import { html } from "lit-html";');
         expect(getBody(res)).to.equal(
@@ -430,7 +430,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import module from "nested/index.js";');
         expect(getBody(res)).to.equal(
@@ -445,7 +445,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import module from "nested/foo";');
         expect(getBody(res)).to.equal(
@@ -459,7 +459,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import module from "./test/fixtures/www/module";');
         expect(getBody(res)).to.equal(
@@ -472,7 +472,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import component from "./test/fixtures/component";');
         expect(getBody(res)).to.equal(
@@ -485,7 +485,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import route from "./test/fixtures/route";');
         expect(getBody(res)).to.equal(
@@ -498,7 +498,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import module from "./test/fixtures/www/nested";');
         expect(getBody(res)).to.equal(
@@ -511,7 +511,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import module from "./test/fixtures/www/nested-ts";');
         expect(getBody(res)).to.equal(
@@ -524,7 +524,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('"this is use of a fake import text"');
         expect(getBody(res)).to.equal(`"this is use of a fake import text"`);
@@ -535,7 +535,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import "bar";');
         expect(getBody(res)).to.equal(
@@ -548,7 +548,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end('import "bat";');
         expect(getBody(res)).to.equal(
@@ -561,7 +561,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: hooks.onResolveImport,
+          resolveImport: hooks.resolveImport,
         });
         res.end(
           'import lodashArr from "lodash/array";\nimport(foo);\nimport("debug");\n',
@@ -576,7 +576,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: (specifier, context, defaultResolve) => {
+          resolveImport: (specifier, context, defaultResolve) => {
             expect(context.isDynamic).to.equal(false);
             return `test/fixtures/www/${specifier}.js`;
           },
@@ -592,7 +592,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: (specifier, context, defaultResolve) => {
+          resolveImport: (specifier, context, defaultResolve) => {
             return defaultResolve(specifier, context.importer);
           },
         });
@@ -607,7 +607,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: (specifier, context, defaultResolve) => {
+          resolveImport: (specifier, context, defaultResolve) => {
             expect(context.isDynamic).to.equal(true);
             return `./test/fixtures/www/${specifier}.js`;
           },
@@ -623,7 +623,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: (specifier, context, defaultResolve) => {
+          resolveImport: (specifier, context, defaultResolve) => {
             return `dynamicImport('${specifier}')`;
           },
         });
@@ -636,7 +636,7 @@ describe('patch', () => {
         });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {
-          onResolveImport: (specifier, context, defaultResolve) => {
+          resolveImport: (specifier, context, defaultResolve) => {
             return `dynamicImport('./test/fixtures/www/${specifier}.js', '/index.js')`;
           },
         });

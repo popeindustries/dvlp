@@ -30,28 +30,28 @@ function getResponse() {
 let hooks;
 
 describe('hooks()', () => {
-  describe('onDependencyBundle', () => {
+  describe('bundle', () => {
     afterEach(() => {
       hooks && hooks.destroy();
     });
 
     it('should return "undefined" if no module bundle found', async () => {
       const hooks = new Hooks();
-      expect(
-        await hooks.onDependencyBundle('./dvlp/bundle-xxx/foofoo-0.0.0.js'),
-      ).to.equal(undefined);
+      expect(await hooks.bundle('./dvlp/bundle-xxx/foofoo-0.0.0.js')).to.equal(
+        undefined,
+      );
     });
     it('should bundle filePath', async () => {
       const hooks = new Hooks();
       const filePath = path.join(config.bundleDir, LODASH);
-      await hooks.onDependencyBundle(filePath, getResponse());
+      await hooks.bundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.include('var export_default = lodash.default');
     });
     it('should bundle and add missing named exports', async () => {
       const hooks = new Hooks();
       const filePath = path.join(config.bundleDir, REACT);
-      await hooks.onDependencyBundle(filePath, getResponse());
+      await hooks.bundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.include('export_default as default');
       expect(module).to.include('export_Children as Children');
@@ -60,32 +60,32 @@ describe('hooks()', () => {
       const hooks = new Hooks();
       const filePath = path.join(config.bundleDir, LODASH);
       fs.writeFileSync(filePath, 'this is cached');
-      await hooks.onDependencyBundle(filePath, getResponse());
+      await hooks.bundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.equal('this is cached');
     });
     it('should bundle with custom hook', async () => {
       const hooks = new Hooks('./test/fixtures/hooks-bundle.js');
       const filePath = path.join(config.bundleDir, DEBUG);
-      await hooks.onDependencyBundle(filePath, getResponse());
+      await hooks.bundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.contain('this is bundled content for: debug-4.3.1.js');
     });
     it.skip('should skip bundling transient dependencies', async () => {
       const hooks = new Hooks();
       const filePath = path.join(config.bundleDir, DEBUG);
-      await hooks.onDependencyBundle(filePath, getResponse());
+      await hooks.bundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.match(/import [^\s]+ from 'ms';/);
     });
   });
 
-  describe('onTransform', () => {
+  describe('transform', () => {
     it('should transform filePath', async () => {
       const hooks = new Hooks();
       const filePath = path.resolve('./test/fixtures/www/dep-cjs.js');
       const res = getResponse();
-      await hooks.onTransform(filePath, '', res, {
+      await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
       });
       expect(res.body).to.contain('export default require_stdin()');
@@ -94,7 +94,7 @@ describe('hooks()', () => {
       const hooks = new Hooks('./test/fixtures/hooks-transform.js');
       const filePath = path.resolve('./test/fixtures/www/script.js');
       const res = getResponse();
-      await hooks.onTransform(filePath, '', res, {
+      await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
       });
       expect(res.body).to.contain('this is transformed content for: script.js');
@@ -108,7 +108,7 @@ describe('hooks()', () => {
       });
       const filePath = path.resolve('./test/fixtures/www/module-with-deps.js');
       const res = getResponse();
-      await hooks.onTransform(filePath, '', res, {
+      await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
       });
       expect(added).to.deep.equal([

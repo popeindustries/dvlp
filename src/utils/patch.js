@@ -47,7 +47,7 @@ function patchResponse(
   filePath,
   req,
   res,
-  { footerScript, headerScript, onResolveImport, onSend },
+  { footerScript, headerScript, resolveImport, send },
 ) {
   // req.filepath set after file.find(), filepath passed if cached
   filePath = req.filePath || filePath || req.url;
@@ -90,8 +90,8 @@ function patchResponse(
       enableCrossOriginHeader(res);
       disableCacheControlHeader(res, req.url);
 
-      if (onSend) {
-        const transformed = onSend(filePath, html);
+      if (send) {
+        const transformed = send(filePath, html);
 
         if (transformed !== undefined) {
           html = transformed;
@@ -106,8 +106,8 @@ function patchResponse(
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
 
-      if (onSend) {
-        const transformed = onSend(filePath, css);
+      if (send) {
+        const transformed = send(filePath, css);
 
         if (transformed !== undefined) {
           css = transformed;
@@ -121,10 +121,10 @@ function patchResponse(
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
-      code = rewriteImports(res, filePath, code, onResolveImport);
+      code = rewriteImports(res, filePath, code, resolveImport);
 
-      if (onSend) {
-        const transformed = onSend(filePath, code);
+      if (send) {
+        const transformed = send(filePath, code);
 
         if (transformed !== undefined) {
           code = transformed;
@@ -274,10 +274,10 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  * @param { Res } res
  * @param { string } filePath
  * @param { string } code
- * @param { PatchResponseOptions["onResolveImport"] } onResolveImport
+ * @param { PatchResponseOptions["resolveImport"] } resolveImport
  * @returns { string }
  */
-function rewriteImports(res, filePath, code, onResolveImport) {
+function rewriteImports(res, filePath, code, resolveImport) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
 
   // Retrieve original source path from bundled file
@@ -317,11 +317,11 @@ function rewriteImports(res, filePath, code, onResolveImport) {
           }
         }
 
-        if (onResolveImport) {
+        if (resolveImport) {
           let resolveResult;
 
           try {
-            resolveResult = onResolveImport(
+            resolveResult = resolveImport(
               specifier,
               {
                 isDynamic,
