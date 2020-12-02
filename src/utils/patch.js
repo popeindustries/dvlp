@@ -6,13 +6,16 @@ const {
   resolveBundleFileName,
 } = require('./bundling.js');
 const { fatal, warn, WARN_BARE_IMPORT } = require('./log.js');
-const { getAbsoluteProjectPath, getProjectPath } = require('./file.js');
+const {
+  getAbsoluteProjectPath,
+  getProjectPath,
+  isEsmFile,
+} = require('./file.js');
 const {
   isBundledFilePath,
   isCssRequest,
   isHtmlRequest,
   isJsRequest,
-  isEsmFile,
   isNodeModuleFilePath,
   isRelativeFilePath,
 } = require('./is.js');
