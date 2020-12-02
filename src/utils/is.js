@@ -2,8 +2,6 @@
 
 const config = require('../config.js');
 const fs = require('fs');
-const isFileEsm = require('is-file-esm');
-const { parse } = require('cjs-module-lexer');
 const path = require('path');
 const util = require('util');
 
@@ -21,10 +19,8 @@ module.exports = {
   isAbsoluteFilePath,
   isBareImport,
   isBundledFilePath,
-  isCjsFile,
   isCssFilePath,
   isCssRequest,
-  isEsmFile,
   isHtmlFilePath,
   isHtmlRequest,
   isInvalidFilePath,
@@ -67,22 +63,13 @@ function isBareImport(id) {
 }
 
 /**
- * Determine if 'filePath' is referencing a commonjs file
+ * Determine if 'filePath' is for a bundled module file
  *
  * @param { string } filePath
- * @param { string } [fileContents]
  * @returns { boolean }
  */
-function isCjsFile(filePath, fileContents) {
-  const extension = path.extname(filePath);
-
-  if (extension === '.js') {
-    return !isEsmFile(filePath, fileContents);
-  } else if (extension === '.cjs' || extension === '.json') {
-    return true;
-  }
-
-  return false;
+function isBundledFilePath(filePath) {
+  return filePath.includes(config.bundleDirName);
 }
 
 /**
@@ -107,38 +94,6 @@ function isCssRequest(req) {
     (req.headers.accept && RE_TYPE_CSS.test(req.headers.accept)) ||
     isCssFilePath(req.url)
   );
-}
-
-/**
- * Determine if 'filePath' is referencing an esm file
- *
- * @param { string } filePath
- * @param { string } [fileContents]
- * @returns { boolean }
- */
-function isEsmFile(filePath, fileContents) {
-  const extension = path.extname(filePath);
-
-  if (extension === '.js') {
-    try {
-      if (isFileEsm.sync(filePath).esm) {
-        return true;
-      }
-    } catch (err) {
-      // Ignore err
-    }
-
-    try {
-      parse(fileContents || fs.readFileSync(filePath, 'utf8'));
-      return false;
-    } catch (err) {
-      return true;
-    }
-  } else if (extension === '.mjs') {
-    return true;
-  }
-
-  return false;
 }
 
 /**
@@ -242,16 +197,6 @@ function isNodeModuleFilePath(filePath) {
 }
 
 /**
- * Determine if 'filePath' is for a bundled module file
- *
- * @param { string } filePath
- * @returns { boolean }
- */
-function isBundledFilePath(filePath) {
-  return filePath.includes(config.bundleDirName);
-}
-
-/**
  * Determine if 'obj' is Proxy
  *
  * @param { any } obj
@@ -318,7 +263,8 @@ function isTransformableJsFile(filePath, fileContents) {
       return true;
     }
 
-    return !isEsmFile(filePath, fileContents);
+    // Circular dependency
+    return !require('./file.js').isEsmFile(filePath, fileContents);
   }
 
   return false;

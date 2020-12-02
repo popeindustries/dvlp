@@ -399,7 +399,6 @@ function rewriteImports(res, filePath, code, resolveImport) {
       debug(`no imports to rewrite in "${projectFilePath}"`);
     }
   } catch (err) {
-    console.log(err);
     if (err.hooked) {
       fatal(err);
     }

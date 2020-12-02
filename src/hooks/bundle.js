@@ -10,6 +10,7 @@ const {
 } = require('../utils/bundling.js');
 const { error } = require('../utils/log.js');
 const { isBundledFilePath } = require('../utils/is.js');
+const { isEsmFile } = require('../utils/file.js');
 const Metrics = require('../utils/metrics.js');
 const { parse } = require('cjs-module-lexer');
 const { resolve } = require('../resolver/index.js');
@@ -45,37 +46,41 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
 
     try {
       const moduleContents = readFileSync(modulePath, 'utf8');
-      const brokenNamedExports =
-        config.brokenNamedExportsPackages[moduleId] || [];
-      const { exports } = parse(moduleContents);
-      const namedExports = exports
-        .filter((e) => e !== 'default')
-        .concat(brokenNamedExports);
-      const fileContents = namedExports.length
-        ? `export { default } from "${modulePath}"; export {${namedExports.join(
-            ', ',
-          )}} from '${modulePath}';`
-        : `export { default } from "${modulePath}"`;
+      const isEsm = isEsmFile(modulePath, moduleContents);
+      let entryFilePath = modulePath;
+      let entryFileContents = moduleContents;
 
-      writeFileSync(filePath, fileContents);
+      // Fix named exports for cjs
+      if (!isEsm) {
+        const brokenNamedExports =
+          config.brokenNamedExportsPackages[moduleId] || [];
+        const { exports } = parse(moduleContents);
+        const namedExports = exports
+          .filter((e) => e !== 'default')
+          .concat(brokenNamedExports);
+        const fileContents = namedExports.length
+          ? `export { default } from "${modulePath}"; export {${namedExports.join(
+              ', ',
+            )}} from '${modulePath}';`
+          : `export { default } from "${modulePath}"`;
+
+        entryFilePath = filePath;
+        entryFileContents = fileContents;
+        writeFileSync(filePath, fileContents);
+      }
 
       if (hookFn) {
-        code = await hookFn(
-          moduleId,
-          filePath,
-          readFileSync(filePath, 'utf8'),
-          {
-            esbuildService: buildService,
-          },
-        );
+        code = await hookFn(moduleId, entryFilePath, entryFileContents, {
+          esbuildService: buildService,
+        });
       }
       if (code === undefined) {
         const result = await buildService.build({
           bundle: true,
           define: { 'process.env.NODE_ENV': '"development"' },
-          entryPoints: [filePath],
+          entryPoints: [entryFilePath],
           format: 'esm',
-          logLevel: 'error',
+          logLevel: 'warning',
           mainFields: ['module', 'browser', 'main'],
           platform: 'browser',
           target: 'es2020',
@@ -89,7 +94,6 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
         code = result.outputFiles[0].text;
       }
     } catch (err) {
-      console.log(filePath);
       debug(`error bundling "${moduleId}"`);
       res.writeHead(500);
       res.end(err.message);

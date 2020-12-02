@@ -1,9 +1,10 @@
 'use strict';
 
-const { isCjsFile, isNodeModuleFilePath } = require('../utils/is.js');
+const { extname, resolve: resolvePath } = require('path');
 const { startService, transformSync } = require('esbuild');
 const bundle = require('./bundle.js');
-const { extname, join } = require('path');
+const { isCjsFile } = require('../utils/file.js');
+const { isNodeModuleFilePath } = require('../utils/is.js');
 const { importModule } = require('../utils/module.js');
 const { resolve } = require('../resolver/index.js');
 const transform = require('./transform.js');
@@ -190,13 +191,13 @@ module.exports = class Hooker {
         setup(build) {
           build.onResolve({ filter: /^[./]/ }, function (args) {
             const { importer, path, resolveDir } = args;
-            const filePath = join(resolveDir, path);
+            const filePath = resolvePath(resolveDir, path);
 
             if (!isNodeModuleFilePath(filePath)) {
-              const resolvedFilePath = resolve(filePath, importer);
+              const importPath = resolve(path, importer);
 
-              if (resolvedFilePath) {
-                watcher.add(resolvedFilePath);
+              if (importPath) {
+                watcher.add(importPath);
               }
             }
 

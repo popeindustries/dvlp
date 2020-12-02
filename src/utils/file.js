@@ -17,6 +17,8 @@ const config = require('../config.js');
 const favicon = require('./favicon.js');
 const fs = require('fs');
 const glob = require('glob');
+const isFileEsm = require('is-file-esm');
+const { parse } = require('cjs-module-lexer');
 const path = require('path');
 const { URL } = require('url');
 
@@ -24,6 +26,9 @@ const FILE_TYPES = ['html', 'js', 'css'];
 const MAX_FILE_SYSTEM_DEPTH = 10;
 const RE_GLOB = /[*[{]/;
 const RE_SEPARATOR = /[,;]\s?|\s/g;
+
+/** @type { Map<string, 'cjs' | 'esm'> } */
+const fileFormatCache = new Map();
 
 module.exports = {
   exists,
@@ -36,6 +41,8 @@ module.exports = {
   getTypeFromPath,
   getTypeFromRequest,
   getDirectoryContents,
+  isCjsFile,
+  isEsmFile,
   resolveRealFilePath,
   resolveNodeModulesDirectories,
 };
@@ -269,6 +276,73 @@ function getDirectoryContents(dirPath) {
   return fs
     .readdirSync(dirPath)
     .map((filePath) => path.resolve(dirPath, filePath));
+}
+
+/**
+ * Determine if 'filePath' is referencing a commonjs file
+ *
+ * @param { string } filePath
+ * @param { string } [fileContents]
+ * @returns { boolean }
+ */
+function isCjsFile(filePath, fileContents) {
+  if (fileFormatCache.has(filePath)) {
+    return fileFormatCache.get(filePath) === 'cjs';
+  }
+
+  const extension = path.extname(filePath);
+  let isCjs = false;
+
+  if (extension === '.js') {
+    isCjs = !isEsmFile(filePath, fileContents);
+  } else if (extension === '.cjs' || extension === '.json') {
+    isCjs = true;
+  }
+
+  fileFormatCache.set(filePath, isCjs ? 'cjs' : 'esm');
+
+  return isCjs;
+}
+
+/**
+ * Determine if 'filePath' is referencing an esm file
+ *
+ * @param { string } filePath
+ * @param { string } [fileContents]
+ * @returns { boolean }
+ */
+function isEsmFile(filePath, fileContents) {
+  if (fileFormatCache.has(filePath)) {
+    return fileFormatCache.get(filePath) === 'esm';
+  }
+
+  const extension = path.extname(filePath);
+  let isEsm = false;
+
+  if (extension === '.js') {
+    try {
+      if (isFileEsm.sync(filePath).esm) {
+        isEsm = true;
+      }
+    } catch (err) {
+      // Ignore err
+    }
+
+    if (!isEsm) {
+      try {
+        parse(fileContents || fs.readFileSync(filePath, 'utf8'));
+        isEsm = false;
+      } catch (err) {
+        isEsm = true;
+      }
+    }
+  } else if (extension === '.mjs') {
+    isEsm = true;
+  }
+
+  fileFormatCache.set(filePath, isEsm ? 'esm' : 'cjs');
+
+  return isEsm;
 }
 
 /**
