@@ -81,13 +81,15 @@ module.exports = async function transform(
           return;
         }
 
+        const { name, version } = clientPlatform;
         /** @type {import("esbuild").TransformOptions} */
         const options = {
           format: 'esm',
           // @ts-ignore - filtered by "fileType"
           loader: fileExtension.slice(1),
           sourcefile: filePath,
-          target: 'es2020',
+          target:
+            name && version ? `${name.toLowerCase()}${version}` : 'es2020',
         };
 
         if (tsconfig) {
