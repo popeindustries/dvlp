@@ -31,7 +31,6 @@ function isWebSocketUrl(url) {
 function getUrl(req) {
   if (!(req instanceof URL)) {
     req = new URL(
-      // @ts-ignore
       typeof req === 'string' ? decodeURIComponent(req) : req.url,
       `http://localhost:${config.applicationPort}`,
     );

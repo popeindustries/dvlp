@@ -13,7 +13,7 @@ const {
 const { isAbsoluteFilePath, isRelativeFilePath } = require('../utils/is.js');
 const path = require('path');
 
-const cache = new Map();
+const resolveCache = new Map();
 const packageCache = new Map();
 
 module.exports = {
@@ -38,8 +38,8 @@ function resolve(specifier, importer = 'index.js') {
   importer = path.resolve(importer);
   const key = getCacheKey(importer, specifier);
 
-  if (cache.has(key)) {
-    return cache.get(key);
+  if (resolveCache.has(key)) {
+    return resolveCache.get(key);
   }
 
   const filePath = doResolve(specifier, path.dirname(importer));
@@ -48,7 +48,7 @@ function resolve(specifier, importer = 'index.js') {
     return;
   }
 
-  cache.set(key, filePath);
+  resolveCache.set(key, filePath);
   return filePath;
 }
 
@@ -137,6 +137,6 @@ function getCachedPackage(dir) {
  * Clear caches
  */
 function clearResolverCache() {
-  cache.clear();
+  resolveCache.clear();
   packageCache.clear();
 }

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import '../mock/mock-client.js';
 
 export const testBrowser = {

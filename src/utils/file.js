@@ -2,10 +2,10 @@
 
 const {
   isAbsoluteFilePath,
+  isBundledFilePath,
   isCssRequest,
   isHtmlRequest,
   isJsRequest,
-  isModuleBundlerFilePath,
   isNodeModuleFilePath,
 } = require('./is.js');
 const {
@@ -17,6 +17,8 @@ const config = require('../config.js');
 const favicon = require('./favicon.js');
 const fs = require('fs');
 const glob = require('glob');
+const isFileEsm = require('is-file-esm');
+const { parse } = require('cjs-module-lexer');
 const path = require('path');
 const { URL } = require('url');
 
@@ -25,16 +27,22 @@ const MAX_FILE_SYSTEM_DEPTH = 10;
 const RE_GLOB = /[*[{]/;
 const RE_SEPARATOR = /[,;]\s?|\s/g;
 
+/** @type { Map<string, 'cjs' | 'esm'> } */
+const fileFormatCache = new Map();
+
 module.exports = {
   exists,
   expandPath,
   favIcon: Buffer.from(favicon, 'base64'),
   find,
+  findClosest,
   getAbsoluteProjectPath,
   getProjectPath,
   getTypeFromPath,
   getTypeFromRequest,
   getDirectoryContents,
+  isCjsFile,
+  isEsmFile,
   resolveRealFilePath,
   resolveNodeModulesDirectories,
 };
@@ -132,7 +140,7 @@ function find(req, { directories = config.directories, type } = {}) {
   }
 
   // Handle bundled js import
-  if (isModuleBundlerFilePath(requestedFilePath)) {
+  if (isBundledFilePath(requestedFilePath)) {
     filePath = path.join(config.bundleDir, path.basename(requestedFilePath));
   } else if (isAbsoluteFilePath(requestedFilePath)) {
     filePath = resolveFilePath(requestedFilePath, type);
@@ -156,6 +164,35 @@ function find(req, { directories = config.directories, type } = {}) {
   }
 
   return filePath;
+}
+
+/**
+ * Walk parent directories looking for first file with matching "fileName"
+ * @param { string } fileName
+ * @returns { string | undefined }
+ */
+function findClosest(fileName) {
+  let dir = path.resolve(fileName);
+  let depth = MAX_FILE_SYSTEM_DEPTH;
+  let parent;
+
+  while (true) {
+    parent = path.dirname(dir);
+    // Stop if we hit max file system depth or root
+    // Convert to lowercase to avoid problems on Windows
+    if (!--depth || parent.toLowerCase() === dir.toLowerCase()) {
+      break;
+    }
+
+    const filePath = path.resolve(dir, fileName);
+
+    if (fs.existsSync(filePath)) {
+      return filePath;
+    }
+
+    // Walk
+    dir = parent;
+  }
 }
 
 /**
@@ -219,7 +256,7 @@ function getTypeFromRequest(req) {
  * Retrieve generic file type from "filePath" extension
  *
  * @param { string } filePath
- * @returns { string }
+ * @returns { 'css' | 'html' | 'js' }
  */
 function getTypeFromPath(filePath) {
   return config.typesByExtension[path.extname(filePath)];
@@ -239,6 +276,73 @@ function getDirectoryContents(dirPath) {
   return fs
     .readdirSync(dirPath)
     .map((filePath) => path.resolve(dirPath, filePath));
+}
+
+/**
+ * Determine if 'filePath' is referencing a commonjs file
+ *
+ * @param { string } filePath
+ * @param { string } [fileContents]
+ * @returns { boolean }
+ */
+function isCjsFile(filePath, fileContents) {
+  if (fileFormatCache.has(filePath)) {
+    return fileFormatCache.get(filePath) === 'cjs';
+  }
+
+  const extension = path.extname(filePath);
+  let isCjs = false;
+
+  if (extension === '.js') {
+    isCjs = !isEsmFile(filePath, fileContents);
+  } else if (extension === '.cjs' || extension === '.json') {
+    isCjs = true;
+  }
+
+  fileFormatCache.set(filePath, isCjs ? 'cjs' : 'esm');
+
+  return isCjs;
+}
+
+/**
+ * Determine if 'filePath' is referencing an esm file
+ *
+ * @param { string } filePath
+ * @param { string } [fileContents]
+ * @returns { boolean }
+ */
+function isEsmFile(filePath, fileContents) {
+  if (fileFormatCache.has(filePath)) {
+    return fileFormatCache.get(filePath) === 'esm';
+  }
+
+  const extension = path.extname(filePath);
+  let isEsm = false;
+
+  if (extension === '.js') {
+    try {
+      if (isFileEsm.sync(filePath).esm) {
+        isEsm = true;
+      }
+    } catch (err) {
+      // Ignore err
+    }
+
+    if (!isEsm) {
+      try {
+        parse(fileContents || fs.readFileSync(filePath, 'utf8'));
+        isEsm = false;
+      } catch (err) {
+        isEsm = true;
+      }
+    }
+  } else if (extension === '.mjs') {
+    isEsm = true;
+  }
+
+  fileFormatCache.set(filePath, isEsm ? 'esm' : 'cjs');
+
+  return isEsm;
 }
 
 /**
@@ -373,7 +477,7 @@ function resolveNodeModulesDirectories(filePath) {
   while (true) {
     parent = path.dirname(dir);
     // Stop if we hit max file system depth or root
-    // Convert to lowercase to fix problems on Windows
+    // Convert to lowercase to avoid problems on Windows
     if (!--depth || parent.toLowerCase() === dir.toLowerCase()) {
       break;
     }

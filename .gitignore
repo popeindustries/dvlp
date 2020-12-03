@@ -2,7 +2,6 @@
 /node_modules
 .DS_Store
 .dvlp
-/bundle-worker.js
 /dvlp.js
 /dvlp-browser.js
 /dvlp.d.ts

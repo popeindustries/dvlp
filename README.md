@@ -17,7 +17,7 @@
 
 **dvlp** allows you to easily serve files from one or more project directories (`static` mode), or from your custom application server (`app` mode). In both cases, **dvlp** automatically injects the necessary reload script into HTML responses to enable reloading, watches all files for changes, restarts the `app` server if necessary, and reloads all connected browsers.
 
-In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (`import "lodash"`), which are not supported by browsers, work by re-writing all import paths to valid urls. Since most `node_modules` packages are still published as CommonJS modules, each bare import is also bundled and converted to an ESM module using [Rollup.js](https://rollupjs.org). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under your project root.
+In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (`import "lodash"`), which are not supported by browsers, work by re-writing all import paths to valid urls. Since most `node_modules` packages are still published as CommonJS modules, each bare import is also bundled and converted to an ESM module using [esbuild](https://esbuild.github.io). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under your project root.
 
 ### Bonus!
 
@@ -34,8 +34,6 @@ $ npm install dvlp
 ## Usage
 
 ```text
-$ dvlp --help
-
 Usage: dvlp [options] [path...]
 
 Start a development server, restarting and reloading connected browsers on file changes.
@@ -43,17 +41,15 @@ Start a development server, restarting and reloading connected browsers on file 
   server if "path" is a single application server file.
 
 Options:
-  -p, --port <port>           port number
-  -m, --mock <path>           path to mock files (directory, file, glob pattern)
-  -k, --hooks <path>          path to optional hooks registration file
-  --ssl <path>                enable https mode by specifying path to
-                              ".crt" and ".key" files (directory, glob pattern)
-  -r, --rollup-config <path>  path to optional Rollup.js config file
-  -s, --silent                suppress default logging
-  --no-reload                 disable reloading connected browsers on file change
-  -t, --transpiler <path>     [deprecated] path to optional transpiler file
-  -v, --version               output the version number
-  -h, --help                  display help for command
+  -p, --port <port>   port number
+  -m, --mock <path>   path to mock files (directory, file, glob pattern)
+  -k, --hooks <path>  path to optional hooks registration file
+  --ssl <path>        enable https mode by specifying path to directory containing
+                      ".crt" and ".key" files (directory, glob pattern)
+  -s, --silent        suppress default logging
+  --no-reload         disable reloading connected browsers on file change
+  -v, --version       output the version number
+  -h, --help          display help for command
 ```
 
 Add a script to your package.json `scripts`:
@@ -74,7 +70,7 @@ $ npm run dev
 
 ### Hooks
 
-In some cases, you may want to write source code in a non-standard, higher-order language like SASS (for CSS) or JSX (for JS), or modify a response body before sending to the browser. In these cases, you can register `hooks` to convert file contents on the fly when imported by an application server or requested by the browser.
+In some cases, source code may need to be transformed into a valid format before it is executed, or a response body modified before sending it to the browser. In these cases, you can register `hooks` to convert file contents on the fly when imported by an application server or requested by the browser.
 
 <details>
 <summary>Registering hooks</summary>
@@ -84,29 +80,40 @@ Create a Node.js module that exposes one or more supported lifecycle hook functi
 ```js
 // scripts/hooks.js
 const sass = require('sass');
-const sucrase = require('sucrase');
 
-const RE_JS = /\.jsx?$/;
 const RE_SASS = /\.s[ac]ss$/;
 
 module.exports = {
+  /**
+   * Bundle non-esm node_modules dependency requested by the browser.
+   * This hook is run after file read.
+   *
+   * @param { string } id
+   * @param { string } filePath
+   * @param { string } fileContents
+   * @param { { esbuildService: import('esbuild').Service } } context
+   */
+  async onDependencyBundle(id, filePath, fileContents, context) {
+    if (id === 'some/package') {
+      // Transform
+    }
+  }
+
   /**
    * Transform file contents for file requested by the browser.
    * This hook is run after file read, and before any modifications by dvlp.
    *
    * @param { string } filePath
    * @param { string } fileContents
-   * @param { { client: { manufacturer: string, name: string, ua: string, version: string } } } context
+   * @param { { client: { manufacturer: string, name: string, ua: string, version: string }, esbuildService: import("esbuild").Service } } context
    */
-  onTransform(filePath, fileContents, context) {
+  async onTransform(filePath, fileContents, context) {
+    // Note: .ts, .tsx, .jsx files are transformed by default
+
     if (RE_SASS.test(filePath)) {
       return sass.renderSync({
         file: filePath,
       }).css;
-    } else if (RE_JS.test(filePath)) {
-      return sucrase.transform(fileContents, {
-        transforms: ['jsx'],
-      }).code;
     }
   },
 
@@ -118,11 +125,7 @@ module.exports = {
    * @param { string } fileContents
    */
   onServerTransform(filePath, fileContents) {
-    if (RE_JS.test(filePath)) {
-      return sucrase.transform(fileContents, {
-        transforms: ['imports', 'jsx'],
-      }).code;
-    }
+    // Note: .ts, .tsx, .jsx files are transformed by default
   },
 
   /**
@@ -174,8 +177,6 @@ module.exports = {
 ```
 
 </details>
-
-In order to keep things snappy, **dvlp** will cache transformed content and only re-transform single files when the original contents have changed.
 
 ### Mocking
 
@@ -443,44 +444,9 @@ describe('some test', () => {
 
 ### Bundling
 
-As mentioned in [How it works](#how-it-works), **dvlp** will bundle CommonJS packages imported from `node_modules` in order to convert them to es6 modules. [Rollup.js](https://rollupjs.org) is used to create these bundles, and they are then cached on disk inside the `.dvlp` directory under your project root.
+As mentioned in [How it works](#how-it-works), **dvlp** will bundle CommonJS packages imported from `node_modules` in order to convert them to es6 modules. [esbuild](https://esbuild.github.io) is used to create these bundles, and they are then cached on disk inside the `.dvlp` directory under your project root.
 
-<details>
-
-<summary>Overriding default Rollup config</summary>
-
-In the (rare) case you need to configure Rollup.js to work with the packages you're importing, you can pass the path to a custom configuration file with the `-r, --rollup-config` option.
-
-**dvlp** will override/ignore the `input`, `treeshake`, and `watch` options, as well as the `file`, `format`, and `sourcemap` output options. Here is the default configuration currently used (also available as a direct import: `import { getDefaultRollupConfig } from 'dvlp'`):
-
-```js
-{
-  input: 'path/to/temp/file',
-  treeshake: false,
-  output: {
-    file: 'path/to/cache/file',
-    format: 'es',
-    sourcemap: false
-  },
-  external: (id) => /^[^./]/.test(id),
-  plugins: [
-    replacePlugin({
-      'process.env.NODE_ENV': `"${process.env.NODE_ENV}"` || '"development"',
-    }),
-    resolvePlugin({
-      mainFields: ['browser', 'module', 'main'],
-    }),
-    jsonPlugin(),
-    commonjsPlugin({
-      sourceMap: false,
-    }),
-  ]
-}
-```
-
-All supported options are listed in the Rollup.js [documentation](https://rollupjs.org/guide/en#big-list-of-options).
-
-</details>
+In the (rare) case you need to customise bundling to work with the packages you're importing, you can register a `onDependencyBundle` [hook](#hooks).
 
 ### SSL
 
@@ -508,7 +474,6 @@ Serve files at `filePath`, starting static file server if one or more directorie
 - **`mockPath: string|[string]`** the path(s) to load mock files from (default `''`)
 - **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 - **`reload: boolean`**: enable/disable browser reloading (default `true`)
-- **`rollupConfigPath: string`**: the path to the custom Rollup config to use for bundling CommonJS dependencies (default `''`)
 - **`silent: boolean`**: disable/enable default logging (default `false`)
 
 ```js

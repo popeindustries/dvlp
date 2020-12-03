@@ -18,6 +18,7 @@ const RE_TYPE_JS = /application\/javascript/i;
 module.exports = {
   isAbsoluteFilePath,
   isBareImport,
+  isBundledFilePath,
   isCssFilePath,
   isCssRequest,
   isHtmlFilePath,
@@ -28,11 +29,11 @@ module.exports = {
   isJsonFilePath,
   isLocalhost,
   isNodeModuleFilePath,
-  isModuleBundlerFilePath,
   isProjectFilePath,
   isPromise,
   isProxy,
   isRelativeFilePath,
+  isTransformableJsFile,
   isValidFilePath,
 };
 
@@ -59,6 +60,16 @@ function isAbsoluteFilePath(filePath) {
  */
 function isBareImport(id) {
   return RE_BARE_IMPORT.test(id);
+}
+
+/**
+ * Determine if 'filePath' is for a bundled module file
+ *
+ * @param { string } filePath
+ * @returns { boolean }
+ */
+function isBundledFilePath(filePath) {
+  return filePath.includes(config.bundleDirName);
 }
 
 /**
@@ -186,16 +197,6 @@ function isNodeModuleFilePath(filePath) {
 }
 
 /**
- * Determine if 'filePath' is for a bundled module file
- *
- * @param { string } filePath
- * @returns { boolean }
- */
-function isModuleBundlerFilePath(filePath) {
-  return filePath.includes(config.bundleDirName);
-}
-
-/**
  * Determine if 'obj' is Proxy
  *
  * @param { any } obj
@@ -245,6 +246,28 @@ function isProjectFilePath(filePath) {
  */
 function isRelativeFilePath(filePath) {
   return 'string' == typeof filePath && filePath.startsWith('.');
+}
+
+/**
+ * Determine if "filePath" requires transformation
+ *
+ * @param { string } filePath
+ * @param { string } [fileContents]
+ * @returns { boolean }
+ */
+function isTransformableJsFile(filePath, fileContents) {
+  if (isJsFilePath(filePath)) {
+    const extension = path.extname(filePath);
+
+    if (extension.startsWith('.ts') || extension === '.json') {
+      return true;
+    }
+
+    // Circular dependency
+    return !require('./file.js').isEsmFile(filePath, fileContents);
+  }
+
+  return false;
 }
 
 /**

@@ -5,8 +5,6 @@ module.exports = {
     await sleep(200);
     return `this is transformed content for: ${path.basename(filePath)}`;
   },
-  onSend(filePath, code) {},
-  onServerTransform(filePath, code) {},
 };
 
 function sleep(duration) {

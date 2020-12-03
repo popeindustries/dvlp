@@ -1,7 +1,5 @@
 'use strict';
 
-/** @typedef {import("http").Server} Server */
-
 const { error, fatal, info, noisyInfo } = require('../utils/log.js');
 const {
   favIcon,
@@ -13,11 +11,7 @@ const {
   interceptFileRead,
   interceptProcessOn,
 } = require('../utils/intercept.js');
-const {
-  isModuleBundlerFilePath,
-  isNodeModuleFilePath,
-} = require('../utils/is.js');
-const { bundle } = require('../bundler/index.js');
+const { isBundledFilePath, isNodeModuleFilePath } = require('../utils/is.js');
 const {
   concatScripts,
   getDvlpGlobalString,
@@ -30,24 +24,22 @@ const config = require('../config.js');
 const createFileServer = require('./file-server.js');
 const debug = require('debug')('dvlp:server');
 const fs = require('fs');
-const Hooks = require('../utils/hooks.js');
+const Hooks = require('../hooks/index.js');
 const http = require('http');
 const { importModule } = require('../utils/module.js');
 const Metrics = require('../utils/metrics.js');
 const Mock = require('../mock/index.js');
-// Work around @rollup/plugin-commonjs require.cache
-// @ts-ignore
-const moduleCache = require('module')._cache;
-const path = require('path');
 const { patchResponse } = require('../utils/patch.js');
 const platform = require('platform');
 const send = require('send');
+const { URL } = require('url');
 const watch = require('../utils/watch.js');
 const WebSocket = require('faye-websocket');
 
 const START_TIMEOUT_DURATION = 2000;
 
 const { EventSource } = WebSocket;
+const moduleCache = require.cache;
 const originalCreateServer = http.createServer;
 /** @type { Array<string> } */
 let dvlpModules;
@@ -59,20 +51,11 @@ module.exports = class DvlpServer {
    * Constructor
    *
    * @param { string | (() => void) | undefined } main
-   * @param { string } [rollupConfigPath]
    * @param { Reloader } [reloader]
    * @param { string } [hooksPath]
-   * @param { string } [transpilerPath]
    * @param { string | Array<string> } [mockPath]
    */
-  constructor(
-    main,
-    rollupConfigPath,
-    reloader,
-    hooksPath,
-    transpilerPath,
-    mockPath,
-  ) {
+  constructor(main, reloader, hooksPath, mockPath) {
     // Listen for all upcoming file system reads (including require('*'))
     // Register early to catch all reads, including transformers that patch fs.readFile
     this.watcher = this.createWatcher();
@@ -105,10 +88,9 @@ module.exports = class DvlpServer {
     this.origin = '';
     this.port = Number(process.env.PORT);
     this.reloader = reloader;
-    this.rollupConfigPath = rollupConfigPath;
-    /** @type { Server | null } */
+    /** @type { HttpServer | null } */
     this.server = null;
-    this.hooks = new Hooks(hooksPath, transpilerPath);
+    this.hooks = new Hooks(hooksPath, this.watcher);
     this.urlToFilePath = new Map();
     /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
@@ -121,9 +103,8 @@ module.exports = class DvlpServer {
         hash: hashScript(headerScript),
         string: headerScript,
       },
-      rollupConfigPath,
-      resolveHook: this.hooks.resolveImport,
-      sendHook: this.hooks.send,
+      resolveImport: this.hooks.resolveImport,
+      send: this.hooks.send,
     };
   }
 
@@ -211,7 +192,7 @@ module.exports = class DvlpServer {
             handler = undefined;
           }
 
-          /** @type { Server } */
+          /** @type { HttpServer } */
           const server = (instance.server = Reflect.apply(target, ctx, args));
 
           server.timeout = server.keepAliveTimeout = 0;
@@ -335,18 +316,6 @@ module.exports = class DvlpServer {
         if (filePath) {
           server.addWatchFiles(filePath);
           server.urlToFilePath.set(req.url, filePath);
-
-          if (isModuleBundlerFilePath(filePath)) {
-            res.bundled = true;
-            res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
-            await bundle(
-              path.basename(filePath),
-              server.rollupConfigPath,
-              undefined,
-              undefined,
-            );
-            res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
-          }
         } else {
           // File not found. Clear previously known path
           server.urlToFilePath.delete(req.url);
@@ -359,12 +328,13 @@ module.exports = class DvlpServer {
       }
 
       if (filePath) {
-        const isBundled = isModuleBundlerFilePath(filePath);
-        const shouldTransform = !isBundled && !isNodeModuleFilePath(filePath);
-
+        if (isBundledFilePath(filePath)) {
+          // Will write new file to disk
+          await server.hooks.bundle(filePath, res);
+        }
         // Transform all files that aren't bundled or node_modules
         // This ensures that all symlinked workspace files are transformed even though they are dependencies
-        if (shouldTransform) {
+        if (!isNodeModuleFilePath(filePath)) {
           const userAgent = req.headers['user-agent'];
           const dvlpUA = `dvlp/${config.version}`;
           let clientPlatform;
@@ -524,6 +494,7 @@ module.exports = class DvlpServer {
     this.mocks && this.mocks.clear();
     this.unlistenForFileRead();
     this.watcher.close();
+    this.hooks.destroy();
     return this.stop();
   }
 };
@@ -688,9 +659,9 @@ function clearAppModules(appModules, main) {
   // Remove main from parent
   // (No children when bundled)
   if (
-    mainModule !== undefined &&
-    mainModule.parent !== undefined &&
-    mainModule.parent.children !== undefined
+    mainModule != undefined &&
+    mainModule.parent != null &&
+    mainModule.parent.children != null
   ) {
     const parent = mainModule.parent;
     let i = parent.children.length;

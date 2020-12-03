@@ -1,12 +1,9 @@
 'use strict';
 
-/** @typedef { import("rollup").RollupOptions } RollupOptions */
-
 const { exists, expandPath, getProjectPath } = require('../utils/file.js');
-const { info, error, warn } = require('../utils/log.js');
+const { info, error } = require('../utils/log.js');
 const chalk = require('chalk');
 const config = require('../config.js');
-const { destroyWorkers } = require('../bundler/index.js');
 const DvlpServer = require('./server.js');
 const fs = require('fs');
 const path = require('path');
@@ -29,9 +26,7 @@ module.exports = async function serverFactory(
     mockPath,
     port = config.applicationPort,
     reload = true,
-    rollupConfigPath,
     silent,
-    transpilerPath,
   } = {},
 ) {
   const entry = resolveEntry(filePath, directories);
@@ -55,14 +50,6 @@ module.exports = async function serverFactory(
     process.env.PORT = String(port);
   }
 
-  if (rollupConfigPath) {
-    rollupConfigPath = path.resolve(rollupConfigPath);
-    info(
-      `${chalk.green('✔')} registered custom Rollup.js config at ${chalk.green(
-        getProjectPath(rollupConfigPath),
-      )}`,
-    );
-  }
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
 
@@ -71,18 +58,8 @@ module.exports = async function serverFactory(
         getProjectPath(hooksPath),
       )}`,
     );
-  } else if (transpilerPath) {
-    transpilerPath = path.resolve(transpilerPath);
-
-    info(
-      `${chalk.green('✔')} loaded transpiler from ${chalk.green(
-        getProjectPath(transpilerPath),
-      )}`,
-    );
-    warn(
-      '⚠️  --transpiler option is deprecated. Use --hooks option and onTransform/onServerTransform hooks instead',
-    );
   }
+
   if (certsPath) {
     secureProxy = await secureProxyServer(certsPath, reload);
   } else if (reload) {
@@ -91,10 +68,8 @@ module.exports = async function serverFactory(
 
   const server = new DvlpServer(
     entry.main,
-    rollupConfigPath,
     reload ? secureProxy || reloader : undefined,
     hooksPath,
-    transpilerPath,
     mockPath,
   );
 
@@ -136,7 +111,6 @@ module.exports = async function serverFactory(
         reloader && reloader.destroy(),
         secureProxy && secureProxy.destroy(),
         server.destroy(),
-        destroyWorkers(),
       ]).then();
     },
   };
