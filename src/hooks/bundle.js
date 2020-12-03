@@ -83,7 +83,7 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
           logLevel: 'warning',
           mainFields: ['module', 'browser', 'main'],
           platform: 'browser',
-          target: 'es2020',
+          target: 'es2018',
           write: false,
         });
 
