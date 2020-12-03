@@ -71,11 +71,7 @@ module.exports = async function transform(
           esbuildService: buildService,
         });
       }
-      if (
-        code === undefined &&
-        fileType === 'js' &&
-        fileExtension !== '.json'
-      ) {
+      if (code === undefined) {
         // Skip default transform if not necessary
         if (!isTransformableJsFile(filePath, fileContents)) {
           return;

@@ -83,12 +83,12 @@ describe('hooks()', () => {
   describe('transform', () => {
     it('should transform filePath', async () => {
       const hooks = new Hooks();
-      const filePath = path.resolve('./test/fixtures/www/dep-cjs.js');
+      const filePath = path.resolve('./test/fixtures/www/dep.ts');
       const res = getResponse();
       await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
       });
-      expect(res.body).to.contain('export default require_stdin()');
+      expect(res.body).to.contain('stdin_default as default');
     });
     it('should transform with custom hook', async () => {
       const hooks = new Hooks('./test/fixtures/hooks-transform.js');

@@ -249,7 +249,8 @@ function isRelativeFilePath(filePath) {
 }
 
 /**
- * Determine if "filePath" requires transformation
+ * Determine if "filePath" requires transformation.
+ * By default, only transform ts/jsx.
  *
  * @param { string } filePath
  * @param { string } [fileContents]
@@ -259,12 +260,9 @@ function isTransformableJsFile(filePath, fileContents) {
   if (isJsFilePath(filePath)) {
     const extension = path.extname(filePath);
 
-    if (extension.startsWith('.ts') || extension === '.json') {
+    if (extension.startsWith('.ts') || extension === '.jsx') {
       return true;
     }
-
-    // Circular dependency
-    return !require('./file.js').isEsmFile(filePath, fileContents);
   }
 
   return false;
