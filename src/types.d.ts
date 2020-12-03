@@ -142,6 +142,13 @@ declare interface Package {
   version: string;
 }
 
+declare interface Platform {
+  manufacturer?: string;
+  name?: string;
+  ua: string;
+  version?: string;
+}
+
 declare type InterceptClientRequestCallback = (url: URL) => boolean;
 
 declare type InterceptFileReadCallback = (filePath: string) => void;

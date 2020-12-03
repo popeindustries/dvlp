@@ -30,7 +30,7 @@ const { importModule } = require('../utils/module.js');
 const Metrics = require('../utils/metrics.js');
 const Mock = require('../mock/index.js');
 const { patchResponse } = require('../utils/patch.js');
-const platform = require('platform');
+const { parseUserAgent } = require('../utils/platform.js');
 const send = require('send');
 const { URL } = require('url');
 const watch = require('../utils/watch.js');
@@ -335,29 +335,12 @@ module.exports = class DvlpServer {
         // Transform all files that aren't bundled or node_modules
         // This ensures that all symlinked workspace files are transformed even though they are dependencies
         if (!isNodeModuleFilePath(filePath)) {
-          const userAgent = req.headers['user-agent'];
-          const dvlpUA = `dvlp/${config.version}`;
-          let clientPlatform;
-
-          if (userAgent) {
-            const { manufacturer, name, ua = dvlpUA, version } = platform.parse(
-              userAgent,
-            );
-            clientPlatform = { manufacturer, name, ua, version };
-          } else {
-            clientPlatform = {
-              manufacturer: '',
-              name: '',
-              ua: dvlpUA,
-              version: '',
-            };
-          }
           // Will respond if transformer exists for this type
           await server.hooks.transform(
             filePath,
             server.lastChanged,
             res,
-            clientPlatform,
+            parseUserAgent(req.headers['user-agent']),
           );
         }
 

@@ -156,7 +156,7 @@ describe('server', () => {
       });
       const res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(200);
-      expect(await res.text()).to.equal(
+      expect(await res.text()).to.contain(
         'this is transformed content for: style.css',
       );
     });
@@ -168,7 +168,9 @@ describe('server', () => {
       });
       const res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(200);
-      expect(await res.text()).to.equal('this is sent content for: style.css');
+      expect(await res.text()).to.contain(
+        'this is sent content for: style.css',
+      );
     });
     it('should cache transformed file content when using an onTransform hook', async () => {
       server = await serverFactory('test/fixtures/www', {
@@ -183,6 +185,45 @@ describe('server', () => {
       start = Date.now();
       res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(200);
+      expect(Date.now() - start).to.be.below(10);
+    });
+    it('should cache transformed file content by user-agent when using an onTransfrom hook', async () => {
+      server = await serverFactory('test/fixtures/www', {
+        port: 8100,
+        reload: false,
+        hooksPath: 'test/fixtures/hooks-transform.js',
+      });
+      let start = Date.now();
+      let res = await fetch('http://localhost:8100/style.css', {
+        headers: {
+          'user-agent':
+            'Mozilla/5.0 (SMART-TV; LINUX; Tizen 5.5) AppleWebKit/537.36 (KHTML, like Gecko) 69.0.3497.106/5.5 TV Safari/537.36',
+        },
+      });
+      expect(res.status).to.eql(200);
+      expect(Date.now() - start).to.be.above(200);
+      expect(await res.text()).to.equal(
+        'this is transformed content for: style.css on Chrome:69',
+      );
+      start = Date.now();
+      res = await fetch('http://localhost:8100/style.css', {
+        headers: {
+          'user-agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36',
+        },
+      });
+      expect(res.status).to.eql(200);
+      expect(Date.now() - start).to.be.above(200);
+      expect(await res.text()).to.equal(
+        'this is transformed content for: style.css on Chrome:87',
+      );
+      start = Date.now();
+      res = await fetch('http://localhost:8100/style.css', {
+        headers: {
+          'user-agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36',
+        },
+      });
       expect(Date.now() - start).to.be.below(10);
     });
     it('should return error when hooks onTransform error', async () => {
@@ -457,7 +498,7 @@ describe('server', () => {
       });
       const res = await fetch('http://localhost:8100/www/style.css');
       expect(res.status).to.eql(200);
-      expect(await res.text()).to.equal(
+      expect(await res.text()).to.contain(
         'this is transformed content for: style.css',
       );
     });
