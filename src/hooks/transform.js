@@ -64,6 +64,7 @@ module.exports = async function transform(
   if (lastChangedIsDependency || lastChangedFilePath === filePath || !code) {
     try {
       const fileContents = readFileSync(filePath, 'utf8');
+      code = undefined;
 
       if (hookFn) {
         code = await hookFn(filePath, fileContents, {
@@ -78,7 +79,7 @@ module.exports = async function transform(
         }
 
         const { name, version } = clientPlatform;
-        /** @type {import("esbuild").TransformOptions} */
+        /** @type { import("esbuild").TransformOptions } */
         const options = {
           format: 'esm',
           // @ts-ignore - filtered by "fileType"
