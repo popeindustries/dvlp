@@ -36,7 +36,7 @@ const { URL } = require('url');
 const watch = require('../utils/watch.js');
 const WebSocket = require('faye-websocket');
 
-const START_TIMEOUT_DURATION = 2000;
+const START_TIMEOUT_DURATION = 4000;
 
 const { EventSource } = WebSocket;
 const moduleCache = require.cache;
