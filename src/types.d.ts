@@ -145,6 +145,11 @@ declare interface Package {
 declare interface Platform {
   manufacturer?: string;
   name?: string;
+  os?: {
+    architecture?: number;
+    family?: string;
+    version?: string;
+  };
   ua: string;
   version?: string;
 }

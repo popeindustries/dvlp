@@ -215,7 +215,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(Date.now() - start).to.be.above(200);
       expect(await res.text()).to.equal(
-        'this is transformed content for: style.css on Chrome:87',
+        'this is transformed content for: style.css on Chrome Mobile:87',
       );
       start = Date.now();
       res = await fetch('http://localhost:8100/style.css', {

@@ -11,6 +11,7 @@ const { extname } = require('path');
 const { isTransformableJsFile } = require('../utils/is.js');
 const Metrics = require('../utils/metrics.js');
 const mime = require('mime');
+const { parseEsbuildTarget } = require('../utils/platform.js');
 const { readFileSync } = require('fs');
 
 const tsconfigPath = findClosest('tsconfig.json');
@@ -78,15 +79,13 @@ module.exports = async function transform(
           return;
         }
 
-        const { name, version } = clientPlatform;
         /** @type { import("esbuild").TransformOptions } */
         const options = {
           format: 'esm',
           // @ts-ignore - filtered by "fileType"
           loader: fileExtension.slice(1),
           sourcefile: filePath,
-          target:
-            name && version ? `${name.toLowerCase()}${version}` : 'es2020',
+          target: parseEsbuildTarget(clientPlatform),
         };
 
         if (tsconfig) {
