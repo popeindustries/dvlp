@@ -30,7 +30,7 @@ function parseUserAgent(userAgent) {
 
   return {
     manufacturer,
-    name,
+    name: name ? name.split(' ')[0] : undefined,
     ua,
     version: version ? version.split('.')[0] : undefined,
   };

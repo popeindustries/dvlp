@@ -209,7 +209,7 @@ describe('server', () => {
       res = await fetch('http://localhost:8100/style.css', {
         headers: {
           'user-agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36',
+            'Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36',
         },
       });
       expect(res.status).to.eql(200);
@@ -221,7 +221,7 @@ describe('server', () => {
       res = await fetch('http://localhost:8100/style.css', {
         headers: {
           'user-agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36',
+            'Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36',
         },
       });
       expect(Date.now() - start).to.be.below(10);
