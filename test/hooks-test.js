@@ -46,7 +46,7 @@ describe('hooks()', () => {
       const filePath = path.join(config.bundleDir, LODASH);
       await hooks.bundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
-      expect(module).to.include('var export_default = lodash.default');
+      expect(module).to.include('var export_default = import_lodash.default');
     });
     it('should bundle and add missing named exports', async () => {
       const hooks = new Hooks();
@@ -88,7 +88,7 @@ describe('hooks()', () => {
       await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
       });
-      expect(res.body).to.contain('stdin_default as default');
+      expect(res.body).to.contain('dep_default as default');
     });
     it('should transform with custom hook', async () => {
       const hooks = new Hooks('./test/fixtures/hooks-transform.js');
