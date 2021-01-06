@@ -84,6 +84,7 @@ module.exports = async function transform(
           format: 'esm',
           // @ts-ignore - filtered by "fileType"
           loader: fileExtension.slice(1),
+          logLevel: 'warning',
           sourcefile: filePath,
           target: parseEsbuildTarget(clientPlatform),
         };

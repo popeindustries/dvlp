@@ -80,7 +80,7 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
           define: { 'process.env.NODE_ENV': '"development"' },
           entryPoints: [entryFilePath],
           format: 'esm',
-          logLevel: 'warning',
+          logLevel: 'error',
           mainFields: ['module', 'browser', 'main'],
           platform: 'browser',
           target: 'es2018',
