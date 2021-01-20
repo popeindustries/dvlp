@@ -61,6 +61,7 @@ module.exports = class DvlpServer {
     this.watcher = this.createWatcher();
     this.unlistenForFileRead = interceptFileRead((filePath) => {
       this.addWatchFiles(filePath);
+      this.lastInterceptFileRead = Date.now();
     });
 
     if (dvlpModules === undefined) {
@@ -78,6 +79,7 @@ module.exports = class DvlpServer {
     this.main = main;
     this.mocks = mockPath ? new Mock(mockPath) : undefined;
     this.staticMode = main === undefined;
+    this.lastInterceptFileRead = Date.now();
 
     const headerScript = concatScripts([
       getProcessEnvString(),
@@ -171,10 +173,17 @@ module.exports = class DvlpServer {
   start() {
     return new Promise((resolve, reject) => {
       // Force reject if never started
-      const timeoutID = setTimeout(() => {
-        debug('server not started after timeout');
-        reject(Error('unable to start server'));
-      }, START_TIMEOUT_DURATION);
+      const timeoutIntervalID = setInterval(() => {
+        // Needed as intercepting and watching files negatively affects startup time
+        const didTimeout =
+          Date.now() - this.lastInterceptFileRead > START_TIMEOUT_DURATION;
+
+        if (didTimeout) {
+          clearInterval(timeoutIntervalID);
+          debug('server not started after timeout');
+          reject(Error('unable to start server'));
+        }
+      }, 1000);
       const instance = this;
 
       http.createServer = new Proxy(http.createServer, {
@@ -211,7 +220,7 @@ module.exports = class DvlpServer {
           });
           server.on('listening', () => {
             debug('server started');
-            clearTimeout(timeoutID);
+            clearInterval(timeoutIntervalID);
             instance.appModules = getAppModules();
             instance.addWatchFiles(instance.appModules);
             const address = server.address();
