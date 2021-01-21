@@ -181,7 +181,7 @@ module.exports = class DvlpServer {
         if (didTimeout) {
           clearInterval(timeoutIntervalID);
           debug('server not started after timeout');
-          reject(Error('unable to start server'));
+          reject(Error(`unable to start server: application server did not respond within the ${START_TIMEOUT_DURATION}ms startup window`));
         }
       }, 1000);
       const instance = this;
