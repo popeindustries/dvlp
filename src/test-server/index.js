@@ -1,10 +1,6 @@
 'use strict';
 
-const {
-  connectClient,
-  destroyClients,
-  pushEvent,
-} = require('../push-events/index.js');
+const { connectClient, destroyClients, pushEvent } = require('../push-events/index.js');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:test');
 const decorateWithServerDestroy = require('server-destroy');
@@ -57,9 +53,7 @@ module.exports = async function testServerFactory(options) {
  * @param { boolean } [rerouteAllRequests]
  * @returns { void }
  */
-module.exports.disableNetwork = function disableNetwork(
-  rerouteAllRequests = false,
-) {
+module.exports.disableNetwork = function disableNetwork(rerouteAllRequests = false) {
   enableRequestIntercept();
   networkDisabled = true;
   reroute = rerouteAllRequests;
@@ -83,10 +77,7 @@ module.exports.enableNetwork = function enableNetwork() {
  * @param { Res } res
  * @returns { undefined }
  */
-module.exports.mockHangResponseHandler = function mockHangResponseHandler(
-  req,
-  res,
-) {
+module.exports.mockHangResponseHandler = function mockHangResponseHandler(req, res) {
   return;
 };
 
@@ -97,10 +88,7 @@ module.exports.mockHangResponseHandler = function mockHangResponseHandler(
  * @param { Res } res
  * @returns { undefined }
  */
-module.exports.mockErrorResponseHandler = function mockErrorResponseHandler(
-  req,
-  res,
-) {
+module.exports.mockErrorResponseHandler = function mockErrorResponseHandler(req, res) {
   res.writeHead(500);
   res.error = Error('error');
   res.end('error');
@@ -114,10 +102,7 @@ module.exports.mockErrorResponseHandler = function mockErrorResponseHandler(
  * @param { Res } res
  * @returns { undefined }
  */
-module.exports.mockMissingResponseHandler = function mockMissingResponseHandler(
-  req,
-  res,
-) {
+module.exports.mockMissingResponseHandler = function mockMissingResponseHandler(req, res) {
   res.writeHead(404);
   res.end('missing');
   return;
@@ -130,10 +115,7 @@ module.exports.mockMissingResponseHandler = function mockMissingResponseHandler(
  * @param { Res } res
  * @returns { undefined }
  */
-module.exports.mockOfflineResponseHandler = function mockOfflineResponseHandler(
-  req,
-  res,
-) {
+module.exports.mockOfflineResponseHandler = function mockOfflineResponseHandler(req, res) {
   req.socket.destroy();
   return;
 };
@@ -145,12 +127,7 @@ class TestServer {
    * @param { TestServerOptions } options
    */
   constructor(options) {
-    const {
-      autorespond = true,
-      latency = config.latency,
-      port = config.port,
-      webroot = '',
-    } = options;
+    const { autorespond = true, latency = config.latency, port = config.port, webroot = '' } = options;
 
     this.latency = latency;
     this.mocks = new Mock();
@@ -284,10 +261,7 @@ class TestServer {
             body,
           );
 
-          this.pushEvent(
-            new URL(req.url, `ws://${req.headers.host}`).href,
-            'connect',
-          );
+          this.pushEvent(new URL(req.url, `ws://${req.headers.host}`).href, 'connect');
         }
       });
 

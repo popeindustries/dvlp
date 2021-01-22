@@ -4,10 +4,7 @@ const { existsSync, readFileSync, writeFileSync } = require('fs');
 const config = require('../config.js');
 const { basename } = require('path');
 const debug = require('debug')('dvlp:bundle');
-const {
-  decodeBundleId,
-  encodeOriginalBundledSourcePath,
-} = require('../utils/bundling.js');
+const { decodeBundleId, encodeOriginalBundledSourcePath } = require('../utils/bundling.js');
 const { error } = require('../utils/log.js');
 const { isBundledFilePath } = require('../utils/is.js');
 const { isEsmFile } = require('../utils/file.js');
@@ -33,9 +30,7 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
     res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
 
     const fileName = basename(filePath);
-    const moduleId = decodeBundleId(
-      fileName.slice(0, fileName.lastIndexOf('-')),
-    );
+    const moduleId = decodeBundleId(fileName.slice(0, fileName.lastIndexOf('-')));
     const modulePath = resolve(moduleId);
     let code;
 
@@ -52,16 +47,11 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
 
       // Fix named exports for cjs
       if (!isEsm) {
-        const brokenNamedExports =
-          config.brokenNamedExportsPackages[moduleId] || [];
+        const brokenNamedExports = config.brokenNamedExportsPackages[moduleId] || [];
         const { exports } = parse(moduleContents);
-        const namedExports = exports
-          .filter((e) => e !== 'default')
-          .concat(brokenNamedExports);
+        const namedExports = exports.filter((e) => e !== 'default').concat(brokenNamedExports);
         const fileContents = namedExports.length
-          ? `export { default } from "${modulePath}"; export {${namedExports.join(
-              ', ',
-            )}} from '${modulePath}';`
+          ? `export { default } from "${modulePath}"; export {${namedExports.join(', ')}} from '${modulePath}';`
           : `export { default } from "${modulePath}"`;
 
         entryFilePath = filePath;
@@ -103,10 +93,7 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
 
     if (code !== undefined) {
       debug(`bundled content for ${moduleId}`);
-      writeFileSync(
-        filePath,
-        `${encodeOriginalBundledSourcePath(modulePath)}\n${code}`,
-      );
+      writeFileSync(filePath, `${encodeOriginalBundledSourcePath(modulePath)}\n${code}`);
       res.bundled = true;
     }
 

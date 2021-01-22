@@ -1,10 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
-const {
-  parseEsbuildTarget,
-  parseUserAgent,
-} = require('../src/utils/platform.js');
+const { parseEsbuildTarget, parseUserAgent } = require('../src/utils/platform.js');
 
 describe('platform', () => {
   describe('parseEsbuildTarget', () => {
@@ -12,9 +9,7 @@ describe('platform', () => {
       expect(parseEsbuildTarget(parseUserAgent())).to.equal('es2020');
     });
     it('should return default for unknown ua', () => {
-      expect(parseEsbuildTarget(parseUserAgent('xxxxxxxxx'))).to.equal(
-        'es2020',
-      );
+      expect(parseEsbuildTarget(parseUserAgent('xxxxxxxxx'))).to.equal('es2020');
     });
     it('should correctly parse mobile chrome ua', () => {
       expect(

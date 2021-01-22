@@ -37,9 +37,7 @@ describe('hooks()', () => {
 
     it('should return "undefined" if no module bundle found', async () => {
       const hooks = new Hooks();
-      expect(await hooks.bundle('./dvlp/bundle-xxx/foofoo-0.0.0.js')).to.equal(
-        undefined,
-      );
+      expect(await hooks.bundle('./dvlp/bundle-xxx/foofoo-0.0.0.js')).to.equal(undefined);
     });
     it('should bundle filePath', async () => {
       const hooks = new Hooks();
@@ -111,9 +109,7 @@ describe('hooks()', () => {
       await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
       });
-      expect(added).to.deep.equal([
-        path.resolve('./test/fixtures/www/dep-esm.js'),
-      ]);
+      expect(added).to.deep.equal([path.resolve('./test/fixtures/www/dep-esm.js')]);
     });
   });
 });

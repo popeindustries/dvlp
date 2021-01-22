@@ -19,15 +19,7 @@ const secureProxyServer = require('../secure-proxy/index.js');
  */
 module.exports = async function serverFactory(
   filePath = process.cwd(),
-  {
-    certsPath,
-    directories,
-    hooksPath,
-    mockPath,
-    port = config.applicationPort,
-    reload = true,
-    silent,
-  } = {},
+  { certsPath, directories, hooksPath, mockPath, port = config.applicationPort, reload = true, silent } = {},
 ) {
   const entry = resolveEntry(filePath, directories);
 
@@ -53,11 +45,7 @@ module.exports = async function serverFactory(
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
 
-    info(
-      `${chalk.green('✔')} registered hooks at ${chalk.green(
-        getProjectPath(hooksPath),
-      )}`,
-    );
+    info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
   }
 
   if (certsPath) {
@@ -66,12 +54,7 @@ module.exports = async function serverFactory(
     reloader = await reloadServer();
   }
 
-  const server = new DvlpServer(
-    entry.main,
-    reload ? secureProxy || reloader : undefined,
-    hooksPath,
-    mockPath,
-  );
+  const server = new DvlpServer(entry.main, reload ? secureProxy || reloader : undefined, hooksPath, mockPath);
 
   try {
     await server.start();
@@ -90,10 +73,7 @@ module.exports = async function serverFactory(
     ? 'function'
     // @ts-ignore
     : getProjectPath(entry.main);
-  const origin =
-    secureProxy && secureProxy.commonName
-      ? `https://${secureProxy.commonName}`
-      : server.origin;
+  const origin = secureProxy && secureProxy.commonName ? `https://${secureProxy.commonName}` : server.origin;
 
   info(`\n  💥 serving ${chalk.green(paths)}`);
   info(`    ...at ${chalk.green.underline(origin)}`);

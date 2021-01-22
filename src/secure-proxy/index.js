@@ -133,11 +133,7 @@ function resolveCerts(certsPaths) {
     for (const filePath of getDirectoryContents(certsPath)) {
       const extname = path.extname(filePath);
 
-      if (
-        !cert &&
-        (extname === '.crt' || extname === '.cert') &&
-        !filePath.endsWith('.issuer.crt')
-      ) {
+      if (!cert && (extname === '.crt' || extname === '.cert') && !filePath.endsWith('.issuer.crt')) {
         cert = fs.readFileSync(filePath);
       } else if (!key && extname === '.key') {
         key = fs.readFileSync(filePath);
@@ -146,11 +142,7 @@ function resolveCerts(certsPaths) {
   }
 
   if (!cert || !key) {
-    throw Error(
-      `unable to find .crt or .key file after searching "${certsPaths.join(
-        ', ',
-      )}"`,
-    );
+    throw Error(`unable to find .crt or .key file after searching "${certsPaths.join(', ')}"`);
   }
 
   return { cert, key };

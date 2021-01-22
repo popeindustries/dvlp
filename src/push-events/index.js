@@ -43,10 +43,7 @@ function connectClient(stream, ...args) {
     const [req, socket, body] = args;
     const isSocketio = RE_SOCKETIO_PROTOCOL.test(req.url);
     const extensionsHeaders = req.headers['Sec-WebSocket-Extensions'];
-    const extensions =
-      extensionsHeaders && extensionsHeaders.includes('permessage-deflate')
-        ? [deflate]
-        : [];
+    const extensions = extensionsHeaders && extensionsHeaders.includes('permessage-deflate') ? [deflate] : [];
 
     client = new WebSocket(req, socket, body, [], { extensions });
     client.on('message', (/** @type { { data: string } } */ event) => {
@@ -65,9 +62,7 @@ function connectClient(stream, ...args) {
       }
     });
     if (isSocketio) {
-      client.send(
-        '0{"sid":"dvlp","upgrades":[],"pingInterval":250000,"pingTimeout":600000}',
-      );
+      client.send('0{"sid":"dvlp","upgrades":[],"pingInterval":250000,"pingTimeout":600000}');
     }
   } else {
     const [req, res] = args;
@@ -130,11 +125,7 @@ function pushEvent(stream, event) {
     options = undefined;
   }
 
-  debug(
-    `push to ${clients.size} client${
-      clients.size > 1 ? 's' : ''
-    } connected on ${url}`,
-  );
+  debug(`push to ${clients.size} client${clients.size > 1 ? 's' : ''} connected on ${url}`);
   debug(message);
   for (const client of clients) {
     client.send(message, options);

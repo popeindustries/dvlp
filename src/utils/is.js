@@ -89,11 +89,7 @@ function isCssFilePath(filePath) {
  * @returns { req is Req }
  */
 function isCssRequest(req) {
-  return (
-    req.type === 'css' ||
-    (req.headers.accept && RE_TYPE_CSS.test(req.headers.accept)) ||
-    isCssFilePath(req.url)
-  );
+  return req.type === 'css' || (req.headers.accept && RE_TYPE_CSS.test(req.headers.accept)) || isCssFilePath(req.url);
 }
 
 /**
@@ -114,9 +110,7 @@ function isHtmlFilePath(filePath) {
  */
 function isHtmlRequest(req) {
   return (
-    req.type === 'html' ||
-    (req.headers.accept && RE_TYPE_HTML.test(req.headers.accept)) ||
-    isHtmlFilePath(req.url)
+    req.type === 'html' || (req.headers.accept && RE_TYPE_HTML.test(req.headers.accept)) || isHtmlFilePath(req.url)
   );
 }
 

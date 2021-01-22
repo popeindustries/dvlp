@@ -153,11 +153,7 @@ function resolvePackagePath(filePath) {
 
     // Stop if we hit root or max file system depth
     // Convert to lowercase to fix problems on Windows
-    if (
-      dir === root ||
-      !--depth ||
-      parent.toLowerCase() === dir.toLowerCase()
-    ) {
+    if (dir === root || !--depth || parent.toLowerCase() === dir.toLowerCase()) {
       break;
     }
 

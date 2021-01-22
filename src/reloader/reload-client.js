@@ -40,13 +40,7 @@
         var filePath = json.filePath;
         var linksAndImportRules = [];
         for (var i = 0; i < document.styleSheets.length; i++) {
-          if (
-            parseStylesheet(
-              document.styleSheets[i],
-              filePath,
-              linksAndImportRules,
-            )
-          ) {
+          if (parseStylesheet(document.styleSheets[i], filePath, linksAndImportRules)) {
             return;
           }
         }

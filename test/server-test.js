@@ -60,43 +60,31 @@ describe('server', () => {
       const res = await fetch('http://localhost:8100/script.js');
       console.log(await res.text());
       expect(res.status).to.eql(200);
-      expect(res.headers.get('Content-type')).to.include(
-        'application/javascript',
-      );
+      expect(res.headers.get('Content-type')).to.include('application/javascript');
     });
     it('should serve a js file with missing extension with correct mime type', async () => {
       server = await serverFactory('test/fixtures/www', { port: 8100 });
       const res = await fetch('http://localhost:8100/script');
       expect(res.status).to.eql(200);
-      expect(res.headers.get('Content-type')).to.include(
-        'application/javascript',
-      );
+      expect(res.headers.get('Content-type')).to.include('application/javascript');
     });
     it('should serve a js package file with correct mime type', async () => {
       server = await serverFactory('test/fixtures/www', { port: 8100 });
       const res = await fetch('http://localhost:8100/nested');
       expect(res.status).to.eql(200);
-      expect(res.headers.get('Content-type')).to.include(
-        'application/javascript',
-      );
+      expect(res.headers.get('Content-type')).to.include('application/javascript');
     });
     it('should serve a bundled module js file with correct mime type', async () => {
       server = await serverFactory('test/fixtures/www', { port: 8100 });
-      const res = await fetch(
-        `http://localhost:8100/${config.bundleDirName}/lodash__array-4.17.10.js`,
-      );
+      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/lodash__array-4.17.10.js`);
       expect(res.status).to.eql(200);
-      expect(res.headers.get('Content-type')).to.include(
-        'application/javascript',
-      );
+      expect(res.headers.get('Content-type')).to.include('application/javascript');
     });
     it('should serve a node_modules js file with correct mime type', async () => {
       server = await serverFactory('test/fixtures', { port: 8100 });
       const res = await fetch(`http://localhost:8100/foo/foo.js`);
       expect(res.status).to.eql(200);
-      expect(res.headers.get('Content-type')).to.include(
-        'application/javascript',
-      );
+      expect(res.headers.get('Content-type')).to.include('application/javascript');
       const body = await res.text();
       expect(body).to.contain("console.log('this is foo');");
     });
@@ -113,16 +101,11 @@ describe('server', () => {
       expect(res.headers.get('Content-type')).to.include('application/json');
     });
     it('should serve files from additional directories', async () => {
-      server = await serverFactory(
-        ['test/fixtures/www', path.resolve(__dirname, 'fixtures/assets')],
-        { port: 8100 },
-      );
+      server = await serverFactory(['test/fixtures/www', path.resolve(__dirname, 'fixtures/assets')], { port: 8100 });
       const res = await fetch('http://localhost:8100/index.css');
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include('text/css');
-      expect(await res.text()).to.equal(
-        'body {\n  background-color: white;\n}',
-      );
+      expect(await res.text()).to.equal('body {\n  background-color: white;\n}');
     });
     it('should return 404 for missing file', async () => {
       server = await serverFactory('test/fixtures/www', { port: 8100 });
@@ -156,9 +139,7 @@ describe('server', () => {
       });
       const res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain(
-        'this is transformed content for: style.css',
-      );
+      expect(await res.text()).to.contain('this is transformed content for: style.css');
     });
     it('should transform file content when using an onSend hook', async () => {
       server = await serverFactory('test/fixtures/www', {
@@ -168,9 +149,7 @@ describe('server', () => {
       });
       const res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain(
-        'this is sent content for: style.css',
-      );
+      expect(await res.text()).to.contain('this is sent content for: style.css');
     });
     it('should cache transformed file content when using an onTransform hook', async () => {
       server = await serverFactory('test/fixtures/www', {
@@ -202,9 +181,7 @@ describe('server', () => {
       });
       expect(res.status).to.eql(200);
       expect(Date.now() - start).to.be.above(200);
-      expect(await res.text()).to.equal(
-        'this is transformed content for: style.css on Chrome:69',
-      );
+      expect(await res.text()).to.equal('this is transformed content for: style.css on Chrome:69');
       start = Date.now();
       res = await fetch('http://localhost:8100/style.css', {
         headers: {
@@ -214,9 +191,7 @@ describe('server', () => {
       });
       expect(res.status).to.eql(200);
       expect(Date.now() - start).to.be.above(200);
-      expect(await res.text()).to.equal(
-        'this is transformed content for: style.css on Chrome Mobile:87',
-      );
+      expect(await res.text()).to.equal('this is transformed content for: style.css on Chrome Mobile:87');
       start = Date.now();
       res = await fetch('http://localhost:8100/style.css', {
         headers: {
@@ -253,9 +228,7 @@ describe('server', () => {
         reload: false,
       }).then((srvr) => {
         server = srvr;
-        es = new EventSource(
-          'http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed',
-        );
+        es = new EventSource('http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
           done();
@@ -269,9 +242,7 @@ describe('server', () => {
         reload: false,
       }).then((srvr) => {
         server = srvr;
-        es = new EventSource(
-          'http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed',
-        );
+        es = new EventSource('http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
           fetch('http://localhost:8100/dvlp/push-event', {
@@ -299,9 +270,7 @@ describe('server', () => {
         reload: false,
       }).then((srvr) => {
         server = srvr;
-        ws = new WebSocket(
-          'ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket',
-        );
+        ws = new WebSocket('ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
           done();
@@ -315,9 +284,7 @@ describe('server', () => {
         reload: false,
       }).then((srvr) => {
         server = srvr;
-        ws = new WebSocket(
-          'ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket',
-        );
+        ws = new WebSocket('ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
           fetch('http://localhost:8100/dvlp/push-event', {
@@ -387,13 +354,10 @@ describe('server', () => {
       expect(await res.text()).to.contain('main');
     });
     it('should start an app server with additional directories', async () => {
-      server = await serverFactory(
-        ['test/fixtures/www', 'test/fixtures/app.js'],
-        {
-          port: 8100,
-          reload: false,
-        },
-      );
+      server = await serverFactory(['test/fixtures/www', 'test/fixtures/app.js'], {
+        port: 8100,
+        reload: false,
+      });
       const res = await fetch('http://localhost:8100/module.js');
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('main');
@@ -442,9 +406,7 @@ describe('server', () => {
     });
     it('should serve a bundled module js file', async () => {
       server = await serverFactory('test/fixtures/app.js', { port: 8100 });
-      const res = await fetch(
-        `http://localhost:8100/${config.bundleDirName}/lodash__array-4.17.20.js`,
-      );
+      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/lodash__array-4.17.20.js`);
       expect(res.status).to.eql(200);
       const body = await res.text();
       expect(body).to.contain('function baseSlice');
@@ -454,9 +416,7 @@ describe('server', () => {
       server = await serverFactory('test/fixtures/appListener.js', {
         port: 8100,
       });
-      const res = await fetch(
-        `http://localhost:8100/${config.bundleDirName}/lodash__array-4.17.20.js`,
-      );
+      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/lodash__array-4.17.20.js`);
       expect(res.status).to.eql(200);
       const body = await res.text();
       expect(body).to.contain('function baseSlice');
@@ -498,9 +458,7 @@ describe('server', () => {
       });
       const res = await fetch('http://localhost:8100/www/style.css');
       expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain(
-        'this is transformed content for: style.css',
-      );
+      expect(await res.text()).to.contain('this is transformed content for: style.css');
     });
     it('should respond to mocked requests', async () => {
       server = await serverFactory('test/fixtures/app.js', {
@@ -519,9 +477,7 @@ describe('server', () => {
         reload: false,
       }).then((srvr) => {
         server = srvr;
-        es = new EventSource(
-          'http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed',
-        );
+        es = new EventSource('http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
           done();
@@ -535,9 +491,7 @@ describe('server', () => {
         reload: false,
       }).then((srvr) => {
         server = srvr;
-        es = new EventSource(
-          'http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed',
-        );
+        es = new EventSource('http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
           fetch('http://localhost:8100/dvlp/push-event', {
@@ -565,9 +519,7 @@ describe('server', () => {
         reload: false,
       }).then((srvr) => {
         server = srvr;
-        ws = new WebSocket(
-          'ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket',
-        );
+        ws = new WebSocket('ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
           done();
@@ -581,9 +533,7 @@ describe('server', () => {
         reload: false,
       }).then((srvr) => {
         server = srvr;
-        ws = new WebSocket(
-          'ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket',
-        );
+        ws = new WebSocket('ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
           fetch('http://localhost:8100/dvlp/push-event', {
@@ -638,9 +588,7 @@ describe('server', () => {
           });
           const res = await fetch('https://localhost:443/script.js');
           expect(res.status).to.eql(200);
-          expect(res.headers.get('Content-type')).to.include(
-            'application/javascript',
-          );
+          expect(res.headers.get('Content-type')).to.include('application/javascript');
         });
       });
       describe('application', () => {
@@ -662,9 +610,7 @@ describe('server', () => {
             port: 8100,
             reload: false,
           });
-          const res = await fetch(
-            `https://localhost:443/node_modules/foo/foo.js`,
-          );
+          const res = await fetch(`https://localhost:443/node_modules/foo/foo.js`);
           expect(res.status).to.eql(200);
           const body = await res.text();
           expect(body).to.contain("console.log('this is foo')");

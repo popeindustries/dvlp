@@ -26,16 +26,13 @@ function createRequestHandler() {
     const url = req.url;
 
     res.once('finish', () => {
-      const reroute =
-        url !== req.url ? `(re-routed to ${chalk.green(req.url)})` : '';
+      const reroute = url !== req.url ? `(re-routed to ${chalk.green(req.url)})` : '';
       const duration = res.metrics.getEvent('response', true);
 
       info(
         res.statusCode < 300
           ? `${duration} handled request for ${chalk.green(url)} ${reroute}`
-          : `${duration} [${res.statusCode}] unhandled request for ${chalk.red(
-              url,
-            )} ${reroute}`,
+          : `${duration} [${res.statusCode}] unhandled request for ${chalk.red(url)} ${reroute}`,
       );
     });
 

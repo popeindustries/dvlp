@@ -11,8 +11,7 @@ const DIR = '.dvlp';
 const JS_MIME_TYPES = {
   'application/javascript': ['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx'],
 };
-const TESTING =
-  process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefined;
+const TESTING = process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefined;
 // Replaced during build
 const VERSION = global.$VERSION || 'dev';
 
@@ -81,15 +80,7 @@ module.exports = {
   // Ordered to trigger transpiling if necessary
   extensionsByType: {
     css: ['.pcss', '.sass', '.scss', '.less', '.styl', '.stylus', '.css'],
-    html: [
-      '.nunjs',
-      '.nunjucks',
-      '.hbs',
-      '.handlebars',
-      '.dust',
-      '.html',
-      '.htm',
-    ],
+    html: ['.nunjs', '.nunjucks', '.hbs', '.handlebars', '.dust', '.html', '.htm'],
     js: ['.ts', '.tsx', '.jsx', '.mjs', '.cjs', '.js', '.json'],
   },
   latency: 50,

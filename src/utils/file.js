@@ -8,11 +8,7 @@ const {
   isJsRequest,
   isNodeModuleFilePath,
 } = require('./is.js');
-const {
-  warn,
-  WARN_MISSING_EXTENSION,
-  WARN_PACKAGE_INDEX,
-} = require('./log.js');
+const { warn, WARN_MISSING_EXTENSION, WARN_PACKAGE_INDEX } = require('./log.js');
 const config = require('../config.js');
 const favicon = require('./favicon.js');
 const fs = require('fs');
@@ -117,15 +113,11 @@ function expandPath(filePath) {
  * @returns { string | undefined }
  */
 function find(req, { directories = config.directories, type } = {}) {
-  const requestedFilePath = isRequestObject(req)
-    ? new URL(req.url, 'http://localhost').pathname
-    : req;
+  const requestedFilePath = isRequestObject(req) ? new URL(req.url, 'http://localhost').pathname : req;
   let filePath;
 
   if (!type) {
-    type = isRequestObject(req)
-      ? getTypeFromRequest(req)
-      : getTypeFromPath(req);
+    type = isRequestObject(req) ? getTypeFromRequest(req) : getTypeFromPath(req);
   }
 
   // Special handling for '/node_modules...' to allow breaking out of cwd.
@@ -133,9 +125,7 @@ function find(req, { directories = config.directories, type } = {}) {
   if (requestedFilePath.startsWith('/node_modules')) {
     directories = [
       ...directories,
-      ...resolveNodeModulesDirectories(
-        process.cwd(),
-      ).map((nodeModulesDirPath) => path.dirname(nodeModulesDirPath)),
+      ...resolveNodeModulesDirectories(process.cwd()).map((nodeModulesDirPath) => path.dirname(nodeModulesDirPath)),
     ];
   }
 
@@ -206,13 +196,9 @@ function getProjectPath(filePath) {
     filePath = filePath[0];
   }
 
-  const projectFilePath = isAbsoluteFilePath(filePath)
-    ? path.relative(process.cwd(), filePath)
-    : filePath;
+  const projectFilePath = isAbsoluteFilePath(filePath) ? path.relative(process.cwd(), filePath) : filePath;
 
-  return projectFilePath.startsWith('/')
-    ? projectFilePath.slice(1)
-    : projectFilePath;
+  return projectFilePath.startsWith('/') ? projectFilePath.slice(1) : projectFilePath;
 }
 
 /**
@@ -224,10 +210,7 @@ function getProjectPath(filePath) {
 function getAbsoluteProjectPath(filePath) {
   return isAbsoluteFilePath(filePath)
     ? filePath
-    : path.join(
-        process.cwd(),
-        filePath.charAt(0) === '/' ? filePath.slice(1) : filePath,
-      );
+    : path.join(process.cwd(), filePath.charAt(0) === '/' ? filePath.slice(1) : filePath);
 }
 
 /**
@@ -273,9 +256,7 @@ function getDirectoryContents(dirPath) {
     return [dirPath];
   }
 
-  return fs
-    .readdirSync(dirPath)
-    .map((filePath) => path.resolve(dirPath, filePath));
+  return fs.readdirSync(dirPath).map((filePath) => path.resolve(dirPath, filePath));
 }
 
 /**
@@ -388,10 +369,7 @@ function resolveFilePath(filePath, type) {
     return resolveRealFilePath(fp);
   }
 
-  fp = resolveFilePathExtension(
-    path.join(filePath, 'index'),
-    config.extensionsByType[type],
-  );
+  fp = resolveFilePathExtension(path.join(filePath, 'index'), config.extensionsByType[type]);
 
   if (fp && type === 'js') {
     if (!isNodeModuleFilePath(fp)) {
@@ -469,9 +447,7 @@ function resolveNodeModulesDirectories(filePath) {
   let parent;
 
   if (process.env.NODE_PATH !== undefined) {
-    dirs = process.env.NODE_PATH.split(path.delimiter).map((dir) =>
-      path.resolve(dir),
-    );
+    dirs = process.env.NODE_PATH.split(path.delimiter).map((dir) => path.resolve(dir));
   }
 
   while (true) {

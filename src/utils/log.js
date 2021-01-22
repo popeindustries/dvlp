@@ -4,12 +4,9 @@ const chalk = require('chalk');
 const config = require('../config.js');
 
 const SEG_LENGTH = 80;
-const WARN_BARE_IMPORT =
-  '⚠️  re-writing bare imports because browsers do not support Node-style import identifiers';
-const WARN_MISSING_EXTENSION =
-  '⚠️  adding missing extensions because browsers can only resolve valid URL identifiers';
-const WARN_NODE_PATH =
-  '⚠️  re-writing NODE_PATH import because browsers can only resolve valid URL identifiers';
+const WARN_BARE_IMPORT = '⚠️  re-writing bare imports because browsers do not support Node-style import identifiers';
+const WARN_MISSING_EXTENSION = '⚠️  adding missing extensions because browsers can only resolve valid URL identifiers';
+const WARN_NODE_PATH = '⚠️  re-writing NODE_PATH import because browsers can only resolve valid URL identifiers';
 const WARN_PACKAGE_INDEX =
   '⚠️  adding missing package index.js because browsers do not support Node-style package identifiers';
 const WARN_SERVER_TRANSPILE =

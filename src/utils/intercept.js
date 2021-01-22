@@ -131,11 +131,7 @@ function restoreClientRequest(fn) {
  */
 function clientRequestApplyTrap(protocol) {
   return function apply(target, ctx, args) {
-    const url = new URL(
-      typeof args[0] === 'string'
-        ? args[0]
-        : getHrefFromRequestOptions(args[0], protocol),
-    );
+    const url = new URL(typeof args[0] === 'string' ? args[0] : getHrefFromRequestOptions(args[0], protocol));
 
     // TODO: pass method/headers
     if (notifyListeners(clientRequestListeners, url) === false) {
@@ -145,10 +141,7 @@ function clientRequestApplyTrap(protocol) {
     if (isLocalhost(url.hostname)) {
       // Force to http
       url.protocol = 'http:';
-      target =
-        target === originalHttpsGet || target === originalHttpGet
-          ? originalHttpGet
-          : originalHttpRequest;
+      target = target === originalHttpsGet || target === originalHttpGet ? originalHttpGet : originalHttpRequest;
     }
     if (typeof args[0] === 'string') {
       args[0] = url.href;

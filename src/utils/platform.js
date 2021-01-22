@@ -49,12 +49,7 @@ function parseEsbuildTarget(platform) {
   const { name = '', os: { family } = {}, version } = platform;
   const engine = family === 'iOS' ? 'ios' : name.split(' ')[0].toLowerCase();
 
-  if (
-    !engine ||
-    engine === 'dvlp' ||
-    !version ||
-    !ESBUILD_BROWSER_ENGINES.includes(engine)
-  ) {
+  if (!engine || engine === 'dvlp' || !version || !ESBUILD_BROWSER_ENGINES.includes(engine)) {
     return 'es2020';
   }
 

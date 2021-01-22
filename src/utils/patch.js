@@ -1,16 +1,9 @@
 'use strict';
 
 const { brotliDecompressSync, unzipSync } = require('zlib');
-const {
-  parseOriginalBundledSourcePath,
-  resolveBundleFileName,
-} = require('./bundling.js');
+const { parseOriginalBundledSourcePath, resolveBundleFileName } = require('./bundling.js');
 const { fatal, warn, WARN_BARE_IMPORT } = require('./log.js');
-const {
-  getAbsoluteProjectPath,
-  getProjectPath,
-  isEsmFile,
-} = require('./file.js');
+const { getAbsoluteProjectPath, getProjectPath, isEsmFile } = require('./file.js');
 const {
   isBundledFilePath,
   isCssRequest,
@@ -46,19 +39,11 @@ module.exports = {
  * @param { Res } res
  * @param { PatchResponseOptions } options
  */
-function patchResponse(
-  filePath,
-  req,
-  res,
-  { footerScript, headerScript, resolveImport, send },
-) {
+function patchResponse(filePath, req, res, { footerScript, headerScript, resolveImport, send }) {
   // req.filepath set after file.find(), filepath passed if cached
   filePath = req.filePath || filePath || req.url;
   debug(`patching response for "${getProjectPath(filePath)}"`);
-  proxySetHeader(
-    res,
-    disableContentEncodingHeader.bind(disableContentEncodingHeader, res),
-  );
+  proxySetHeader(res, disableContentEncodingHeader.bind(disableContentEncodingHeader, res));
   if (isHtmlRequest(req)) {
     const urls = [];
     const hashes = [];
@@ -85,10 +70,7 @@ function patchResponse(
       }
       scripts.header = headerScript.string;
     }
-    proxySetHeader(
-      res,
-      injectCSPHeader.bind(injectCSPHeader, res, urls, hashes),
-    );
+    proxySetHeader(res, injectCSPHeader.bind(injectCSPHeader, res, urls, hashes));
     proxyBodyWrite(res, (html) => {
       enableCrossOriginHeader(res);
       disableCacheControlHeader(res, req.url);
@@ -203,10 +185,7 @@ function injectScripts(res, scripts, html) {
   }
   if (footer && RE_CLOSE_BODY_TAG.test(html)) {
     debug('injecting footer script');
-    html = html.replace(
-      RE_CLOSE_BODY_TAG,
-      `<script>${footer}</script>\n</body>`,
-    );
+    html = html.replace(RE_CLOSE_BODY_TAG, `<script>${footer}</script>\n</body>`);
   }
 
   res.metrics.recordEvent(Metrics.EVENT_NAMES.scripts);
@@ -227,10 +206,7 @@ function injectCSPHeader(res, urls, hashes, key, value) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
   const lcKey = key.toLowerCase();
 
-  if (
-    lcKey === 'content-security-policy-report-only' ||
-    lcKey === 'content-security-policy'
-  ) {
+  if (lcKey === 'content-security-policy-report-only' || lcKey === 'content-security-policy') {
     const urlsString = urls.join(' ');
     const hashesString = hashes.map((hash) => `'sha256-${hash}'`).join(' ');
     const rules = value
@@ -239,9 +215,7 @@ function injectCSPHeader(res, urls, hashes, key, value) {
       .reduce((/** @type { {[key: string]: string} } */ rules, ruleString) => {
         const firstSpace = ruleString.indexOf(' ');
 
-        rules[ruleString.slice(0, firstSpace)] = ruleString.slice(
-          firstSpace + 1,
-        );
+        rules[ruleString.slice(0, firstSpace)] = ruleString.slice(firstSpace + 1);
         return rules;
       }, {});
 
@@ -250,10 +224,7 @@ function injectCSPHeader(res, urls, hashes, key, value) {
     } else {
       rules['connect-src'] = urlsString;
     }
-    if (
-      rules['script-src'] &&
-      (RE_NONCE_SHA.test(value) || !value.includes('unsafe-inline'))
-    ) {
+    if (rules['script-src'] && (RE_NONCE_SHA.test(value) || !value.includes('unsafe-inline'))) {
       rules['script-src'] = `${rules['script-src']} ${hashesString}`;
     }
     if (rules['default-src'] === "'none'") {
@@ -369,8 +340,7 @@ function rewriteImports(res, filePath, code, resolveImport) {
           } else {
             // Don't rewrite if no change after resolving
             newId =
-              isRelativeFilePath(specifier) &&
-              path.join(path.dirname(filePath), specifier) === importPath
+              isRelativeFilePath(specifier) && path.join(path.dirname(filePath), specifier) === importPath
                 ? specifier
                 : importPath;
           }
@@ -378,24 +348,12 @@ function rewriteImports(res, filePath, code, resolveImport) {
           newId = filePathToUrl(newId);
 
           if (newId !== specifier || before || after) {
-            debug(
-              `rewrote${
-                isDynamic ? ' dynamic' : ''
-              } import id from "${specifier}" to "${newId}"`,
-            );
-            code =
-              code.substring(0, start) +
-              before +
-              newId +
-              after +
-              code.substring(end);
-            offset +=
-              before.length + newId.length + after.length - specifier.length;
+            debug(`rewrote${isDynamic ? ' dynamic' : ''} import id from "${specifier}" to "${newId}"`);
+            code = code.substring(0, start) + before + newId + after + code.substring(end);
+            offset += before.length + newId.length + after.length - specifier.length;
           }
         } else {
-          warn(
-            `⚠️  unable to resolve path for "${specifier}" from "${projectFilePath}"`,
-          );
+          warn(`⚠️  unable to resolve path for "${specifier}" from "${projectFilePath}"`);
         }
       }
     } else {

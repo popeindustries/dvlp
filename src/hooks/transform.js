@@ -1,11 +1,7 @@
 'use strict';
 
 const { error } = require('../utils/log.js');
-const {
-  findClosest,
-  getProjectPath,
-  getTypeFromPath,
-} = require('../utils/file.js');
+const { findClosest, getProjectPath, getTypeFromPath } = require('../utils/file.js');
 const debug = require('debug')('dvlp:transform');
 const { extname } = require('path');
 const { isTransformableJsFile } = require('../utils/is.js');
@@ -56,9 +52,7 @@ module.exports = async function transform(
   // but they are watched when read from file system during transformation,
   // so transform again if changed file is of same type
   const lastChangedIsDependency =
-    lastChangedFilePath &&
-    !cache.has(lastChangedCacheKey) &&
-    getTypeFromPath(lastChangedFilePath) === fileType;
+    lastChangedFilePath && !cache.has(lastChangedCacheKey) && getTypeFromPath(lastChangedFilePath) === fileType;
   let code = cache.get(cacheKey);
   let transformed = false;
 
@@ -109,18 +103,13 @@ module.exports = async function transform(
   }
 
   if (code !== undefined) {
-    debug(
-      `${
-        transformed ? 'transformed content for' : 'skipping transform for'
-      } "${relativeFilePath}"`,
-    );
+    debug(`${transformed ? 'transformed content for' : 'skipping transform for'} "${relativeFilePath}"`);
     res.transformed = true;
     res.writeHead(200, {
       'Access-Control-Allow-Origin': '*',
       'Cache-Control': 'max-age=0',
       'Content-Length': Buffer.byteLength(code),
-      'Content-Type':
-        mime.getType(getTypeFromPath(filePath) || filePath) || undefined,
+      'Content-Type': mime.getType(getTypeFromPath(filePath) || filePath) || undefined,
     });
     res.end(code);
     res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);

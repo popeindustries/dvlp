@@ -10,13 +10,7 @@ const { resolve } = require('../resolver/index.js');
 const transform = require('./transform.js');
 const { warn } = require('../utils/log.js');
 
-const HOOK_NAMES = [
-  'onDependencyBundle',
-  'onTransform',
-  'onResolveImport',
-  'onSend',
-  'onServerTransform',
-];
+const HOOK_NAMES = ['onDependencyBundle', 'onTransform', 'onResolveImport', 'onSend', 'onServerTransform'];
 
 module.exports = class Hooker {
   /**
@@ -34,11 +28,7 @@ module.exports = class Hooker {
 
       for (const name of Object.keys(hooks)) {
         if (!HOOK_NAMES.includes(name)) {
-          warn(
-            `⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(
-              ', ',
-            )}`,
-          );
+          warn(`⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(', ')}`);
         }
       }
 
@@ -70,12 +60,7 @@ module.exports = class Hooker {
       await this._startService();
     }
 
-    await bundle(
-      filePath,
-      res,
-      this.buildService,
-      this.hooks && this.hooks.onDependencyBundle,
-    );
+    await bundle(filePath, res, this.buildService, this.hooks && this.hooks.onDependencyBundle);
   }
 
   /**

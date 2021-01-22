@@ -52,11 +52,7 @@ module.exports = class EventSourceServer {
     const data = JSON.stringify({ type, filePath });
 
     if (this.clients.size) {
-      noisyInfo(
-        `${chalk.yellow(`  ⟲ ${event}ing`)} ${this.clients.size} client${
-          this.clients.size > 1 ? 's' : ''
-        }`,
-      );
+      noisyInfo(`${chalk.yellow(`  ⟲ ${event}ing`)} ${this.clients.size} client${this.clients.size > 1 ? 's' : ''}`);
 
       for (const client of this.clients) {
         // @ts-ignore

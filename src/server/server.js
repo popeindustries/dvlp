@@ -1,23 +1,10 @@
 'use strict';
 
 const { error, fatal, info, noisyInfo } = require('../utils/log.js');
-const {
-  favIcon,
-  find,
-  getProjectPath,
-  getTypeFromRequest,
-} = require('../utils/file.js');
-const {
-  interceptFileRead,
-  interceptProcessOn,
-} = require('../utils/intercept.js');
+const { favIcon, find, getProjectPath, getTypeFromRequest } = require('../utils/file.js');
+const { interceptFileRead, interceptProcessOn } = require('../utils/intercept.js');
 const { isBundledFilePath, isNodeModuleFilePath } = require('../utils/is.js');
-const {
-  concatScripts,
-  getDvlpGlobalString,
-  getProcessEnvString,
-  hashScript,
-} = require('../utils/scripts.js');
+const { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } = require('../utils/scripts.js');
 const { connectClient, pushEvent } = require('../push-events/index.js');
 const chalk = require('chalk');
 const config = require('../config.js');
@@ -115,11 +102,7 @@ module.exports = class DvlpServer {
    */
   createWatcher() {
     return watch(async (filePath) => {
-      noisyInfo(
-        `\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.yellow(
-          getProjectPath(filePath),
-        )}`,
-      );
+      noisyInfo(`\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.yellow(getProjectPath(filePath))}`);
 
       this.lastChanged = filePath;
 
@@ -184,10 +167,7 @@ module.exports = class DvlpServer {
 
           // Wrap request handler (if passed)
           if (handler && typeof handler === 'function') {
-            args[args.length - 1] = instance.createRequestHandler(
-              instance,
-              handler,
-            );
+            args[args.length - 1] = instance.createRequestHandler(instance, handler);
           } else {
             handler = undefined;
           }
@@ -283,14 +263,10 @@ module.exports = class DvlpServer {
 
           if (res.mocked) {
             // Decode query param and strip "?dvlpmock=" prefix (sometimes double encoded if coming from client)
-            url = decodeURIComponent(
-              decodeURIComponent(url.slice(url.indexOf('?dvlpmock=') + 10)),
-            );
+            url = decodeURIComponent(decodeURIComponent(url.slice(url.indexOf('?dvlpmock=') + 10)));
           }
 
-          const msg = `${duration} handled${chalk.italic(
-            modifier,
-          )}request for ${chalk.green(url)}`;
+          const msg = `${duration} handled${chalk.italic(modifier)}request for ${chalk.green(url)}`;
 
           res.mocked ? noisyInfo(msg) : info(msg);
         }
@@ -336,12 +312,7 @@ module.exports = class DvlpServer {
         // This ensures that all symlinked workspace files are transformed even though they are dependencies
         if (!isNodeModuleFilePath(filePath)) {
           // Will respond if transformer exists for this type
-          await server.hooks.transform(
-            filePath,
-            server.lastChanged,
-            res,
-            parseUserAgent(req.headers['user-agent']),
-          );
+          await server.hooks.transform(filePath, server.lastChanged, res, parseUserAgent(req.headers['user-agent']));
         }
 
         // Handle bundled, node_modules, and external files if not already handled by transformer
@@ -531,11 +502,7 @@ function handleMockResponse(req, res, mocks) {
       );
       // Send 'connect' event if it exists
       mocks.matchPushEvent(mock, 'connect', pushEvent);
-      noisyInfo(
-        `${chalk.green(
-          '     0ms',
-        )} connected to EventSource client at ${chalk.green(mock)}`,
-      );
+      noisyInfo(`${chalk.green('     0ms')} connected to EventSource client at ${chalk.green(mock)}`);
     } else {
       mocks.matchResponse(mock, req, res);
     }
@@ -572,11 +539,7 @@ function handleMockWebSocket(req, socket, body, mocks) {
     );
     // Send 'connect' event if it exists
     mocks.matchPushEvent(mock, 'connect', pushEvent);
-    noisyInfo(
-      `${chalk.green(
-        '     0ms',
-      )} connected to WebSocket client at ${chalk.green(mock)}`,
-    );
+    noisyInfo(`${chalk.green('     0ms')} connected to WebSocket client at ${chalk.green(mock)}`);
   }
 }
 
@@ -621,9 +584,7 @@ function handlePushEvent(req, res, mocks) {
  * @returns { Array<string> }
  */
 function getAppModules() {
-  const modules = Object.keys(moduleCache).filter(
-    (m) => !dvlpModules.includes(m) /* && !isNodeModuleFilePath(m) */,
-  );
+  const modules = Object.keys(moduleCache).filter((m) => !dvlpModules.includes(m) /* && !isNodeModuleFilePath(m) */);
 
   debug(`found ${modules.length} app modules`);
 
@@ -641,11 +602,7 @@ function clearAppModules(appModules, main) {
 
   // Remove main from parent
   // (No children when bundled)
-  if (
-    mainModule != undefined &&
-    mainModule.parent != null &&
-    mainModule.parent.children != null
-  ) {
+  if (mainModule != undefined && mainModule.parent != null && mainModule.parent.children != null) {
     const parent = mainModule.parent;
     let i = parent.children.length;
 

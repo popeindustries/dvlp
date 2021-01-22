@@ -1,15 +1,7 @@
 'use strict';
 
-const {
-  getPackage,
-  resolveAliasPath,
-  resolvePackagePath,
-} = require('./package.js');
-const {
-  find,
-  getProjectPath,
-  resolveRealFilePath,
-} = require('../utils/file.js');
+const { getPackage, resolveAliasPath, resolvePackagePath } = require('./package.js');
+const { find, getProjectPath, resolveRealFilePath } = require('../utils/file.js');
 const { isAbsoluteFilePath, isRelativeFilePath } = require('../utils/is.js');
 const path = require('path');
 
@@ -74,10 +66,7 @@ function doResolve(specifier, importerDirPath) {
   }
 
   /** @type { string | undefined } */
-  let filePath = resolveAliasPath(
-    isIdRelative ? path.join(importerDirPath, specifier) : specifier,
-    pkg,
-  );
+  let filePath = resolveAliasPath(isIdRelative ? path.join(importerDirPath, specifier) : specifier, pkg);
 
   if (isAbsoluteFilePath(filePath)) {
     // @ts-ignore
