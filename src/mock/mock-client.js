@@ -71,7 +71,9 @@
           });
 
           console.log('mocking xhr response (with local data) for: ' + parseOriginalHref(href));
-          xhr.onreadystatechange({ currentTarget: xhr });
+          if (xhr.onreadystatechange && typeof xhr.onreadystatechange === 'function') {
+            xhr.onreadystatechange({ currentTarget: xhr });
+          }
           xhr.onload({ currentTarget: xhr });
         };
       } else if (mockData.callback) {
@@ -143,8 +145,10 @@
     if (typeof EventSource !== 'undefined') {
       window.EventSource = new Proxy(window.EventSource, {
         construct: function (target, args) {
-          args[0] = matchHref(args[0])[0];
-          console.log('mocking EventSource response (with remote data) for: ' + args[0]);
+          if (!args[0].includes('dvlpreload')) {
+            args[0] = matchHref(args[0])[0];
+            console.log('mocking EventSource response (with remote data) for: ' + args[0]);
+          }
           return Reflect.construct(target, args);
         },
       });
@@ -289,7 +293,7 @@
         '//' +
         location.host +
         location.pathname +
-        '??dvlpmock=' +
+        '?dvlpmock=' +
         encodeURIComponent(url.href);
     } else if (location.host !== url.host) {
       if (reroute) {

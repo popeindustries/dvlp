@@ -23,11 +23,7 @@ describe('Mock', function () {
       xhr.send();
     });
     it('should respond to locally mocked AJAX request', function (done) {
-      window.dvlp.mockResponse(
-        'http://www.google.com/bar',
-        { body: { name: 'bar' } },
-        true,
-      );
+      window.dvlp.mockResponse('http://www.google.com/bar', { body: { name: 'bar' } }, true);
       expect(window.dvlp.cache).to.have.length(4);
       const xhr = new XMLHttpRequest();
       xhr.onload = function () {
@@ -40,11 +36,7 @@ describe('Mock', function () {
       xhr.send();
     });
     it('should respond to locally mocked AJAX request with custom status', function (done) {
-      window.dvlp.mockResponse(
-        'http://www.google.com/bar',
-        { body: { name: 'bar' }, status: 403 },
-        true,
-      );
+      window.dvlp.mockResponse('http://www.google.com/bar', { body: { name: 'bar' }, status: 403 }, true);
       expect(window.dvlp.cache).to.have.length(4);
       const xhr = new XMLHttpRequest();
       xhr.onload = function () {
@@ -58,26 +50,18 @@ describe('Mock', function () {
       xhr.send();
     });
     it('should respond to locally mocked AJAX request with error status', function (done) {
-      window.dvlp.mockResponse(
-        'http://www.google.com/bar',
-        { body: {}, error: 500 },
-        true,
-      );
+      window.dvlp.mockResponse('http://www.google.com/bar', { body: {}, error: 500 }, true);
       const xhr = new XMLHttpRequest();
       xhr.onload = function () {
         expect(xhr.status).to.equal(500);
-        expect(xhr.response).to.eql('"error"');
+        expect(xhr.response).to.eql('error');
         done();
       };
       xhr.open('GET', 'http://www.google.com/bar');
       xhr.send();
     });
     it('should not respond to locally mocked hung AJAX request', function (done) {
-      window.dvlp.mockResponse(
-        'http://www.google.com/bar',
-        { body: {}, hang: true },
-        true,
-      );
+      window.dvlp.mockResponse('http://www.google.com/bar', { body: {}, hang: true }, true);
       const xhr = new XMLHttpRequest();
       xhr.onload = function () {
         expect(xhr.status).to.not.exist;
@@ -98,12 +82,7 @@ describe('Mock', function () {
       window.dvlp.enableNetwork();
     });
     it('should trigger callback when handling mocked AJAX request', function (done) {
-      window.dvlp.mockResponse(
-        'http://www.google.com/foo',
-        undefined,
-        true,
-        done,
-      );
+      window.dvlp.mockResponse('http://www.google.com/foo', undefined, true, done);
       const xhr = new XMLHttpRequest();
       xhr.onload = function () {
         const json = JSON.parse(xhr.response);
@@ -113,12 +92,7 @@ describe('Mock', function () {
       xhr.send();
     });
     it('should trigger callback when handling locally mocked AJAX request', function (done) {
-      window.dvlp.mockResponse(
-        'http://www.google.com/bar',
-        { body: { name: 'bar' } },
-        true,
-        done,
-      );
+      window.dvlp.mockResponse('http://www.google.com/bar', { body: { name: 'bar' } }, true, done);
       expect(window.dvlp.cache).to.have.length(4);
       const xhr = new XMLHttpRequest();
       xhr.onload = function () {
@@ -163,11 +137,7 @@ describe('Mock', function () {
       xhr.send();
     });
     it('should respond to locally mocked AJAX request with search', function (done) {
-      window.dvlp.mockResponse(
-        'http://www.google.com/bar?foo=1',
-        { body: { name: 'bar' } },
-        true,
-      );
+      window.dvlp.mockResponse('http://www.google.com/bar?foo=1', { body: { name: 'bar' } }, true);
       const xhr = new XMLHttpRequest();
       xhr.onload = function () {
         const json = JSON.parse(xhr.response);
@@ -192,11 +162,7 @@ describe('Mock', function () {
         });
       });
       it('should respond to locally mocked fetch request', function (done) {
-        var remove = window.dvlp.mockResponse(
-          'http://www.google.com/bar',
-          { body: { name: 'bar' } },
-          false,
-        );
+        var remove = window.dvlp.mockResponse('http://www.google.com/bar', { body: { name: 'bar' } }, false);
         expect(window.dvlp.cache).to.have.length(4);
         fetch('http://www.google.com/bar', {
           mode: 'cors',
@@ -230,11 +196,7 @@ describe('Mock', function () {
         });
       });
       it('should respond to locally mocked fetch request with error status', function (done) {
-        window.dvlp.mockResponse(
-          'http://www.google.com/bar',
-          { body: {}, error: true },
-          true,
-        );
+        window.dvlp.mockResponse('http://www.google.com/bar', { body: {}, error: true }, true);
         fetch('http://www.google.com/bar', {
           mode: 'cors',
         }).then(function (res) {
@@ -247,11 +209,7 @@ describe('Mock', function () {
         });
       });
       it('should not respond to locally mocked hung fetch request', function (done) {
-        window.dvlp.mockResponse(
-          'http://www.google.com/bar',
-          { body: {}, hang: true },
-          true,
-        );
+        window.dvlp.mockResponse('http://www.google.com/bar', { body: {}, hang: true }, true);
         fetch('http://www.google.com/bar', {
           mode: 'cors',
         }).then(function (res) {
@@ -270,12 +228,7 @@ describe('Mock', function () {
         window.dvlp.enableNetwork();
       });
       it('trigger callback when handling mocked fetch request', function (done) {
-        var remove = window.dvlp.mockResponse(
-          'http://www.google.com/foo',
-          undefined,
-          false,
-          done,
-        );
+        var remove = window.dvlp.mockResponse('http://www.google.com/foo', undefined, false, done);
         expect(window.dvlp.cache).to.have.length(4);
         fetch('http://www.google.com/foo', {
           mode: 'cors',
@@ -288,12 +241,7 @@ describe('Mock', function () {
         });
       });
       it('trigger callback when handling locally mocked fetch request', function (done) {
-        var remove = window.dvlp.mockResponse(
-          'http://www.google.com/bar',
-          { body: { name: 'bar' } },
-          false,
-          done,
-        );
+        var remove = window.dvlp.mockResponse('http://www.google.com/bar', { body: { name: 'bar' } }, false, done);
         expect(window.dvlp.cache).to.have.length(4);
         fetch('http://www.google.com/bar', {
           mode: 'cors',
