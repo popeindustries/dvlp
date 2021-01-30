@@ -3,6 +3,7 @@
     "url": "/1234.jpg"
   },
   "response": {
-    "body": "1234.jpg"
+    "body": "1234.jpg",
+    "headers": { "Cache-Control": "public, max-age=10", "x-foo": "foo" }
   }
 }

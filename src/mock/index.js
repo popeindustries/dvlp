@@ -16,6 +16,8 @@ const mime = require('mime');
 const path = require('path');
 const send = require('send');
 
+const RE_MAX_AGE = /max-age=(\d+)/;
+
 const mockClient = global.$MOCK_CLIENT || fs.readFileSync(path.resolve(__dirname, 'mock-client.js'), 'utf8');
 
 module.exports = class Mock {
@@ -282,27 +284,31 @@ module.exports = class Mock {
     let content = body;
 
     switch (type) {
-      case 'file':
+      case 'file': {
+        // Set custom headers
+        for (const header in headers) {
+          res.setHeader(header, headers[header]);
+        }
         res.setHeader('Access-Control-Allow-Origin', '*');
-        // Body is path to file (relative to mock file)
         send(
           {
             // @ts-ignore
             url: href,
             headers: {},
           },
-          // @ts-ignore
+          // @ts-ignore - body is path to file (relative to mock file)
           path.resolve(path.dirname(filePath), body),
           {
-            cacheControl: true,
             dotfiles: 'allow',
-            maxAge: config.maxAge,
+            maxAge: getMaxAgeFromHeaders(normaliseHeaderKeys(headers, ['Cache-Control'])) || config.maxAge,
           },
         ).pipe(res);
         return;
-      case 'json':
+      }
+      case 'json': {
         content = JSON.stringify(body);
         break;
+      }
     }
 
     // @ts-ignore
@@ -310,7 +316,7 @@ module.exports = class Mock {
       // Allow Content-Type/Date to be overwritten
       'Content-Type': mime.getType(type),
       Date: new Date().toUTCString(),
-      ...normaliseSomeHeaderKeys(headers, ['Content-Type', 'Date']),
+      ...normaliseHeaderKeys(headers, ['Content-Type', 'Date']),
       // @ts-ignore
       'Content-Length': Buffer.byteLength(content),
       'Access-Control-Allow-Origin': '*',
@@ -695,10 +701,10 @@ function isMockStreamData(mock) {
 /**
  * Normalise the casing of select header keys
  *
- * @param { { [key: string]: string }} headers
+ * @param { { [key: string]: string } } headers
  * @param { Array<string> } keys
  */
-function normaliseSomeHeaderKeys(headers, keys) {
+function normaliseHeaderKeys(headers, keys) {
   /** @type { { [key: string]: string } } */
   const normalisedHeaders = {};
 
@@ -717,4 +723,22 @@ function normaliseSomeHeaderKeys(headers, keys) {
   }
 
   return normalisedHeaders;
+}
+
+/**
+ * Retrieve max-age in ms from "headers" Cache-Control string
+ *
+ * @param { { [key: string]: string } } headers
+ * @returns { number }
+ */
+function getMaxAgeFromHeaders(headers) {
+  const cacheControl = headers['Cache-Control'];
+
+  if (!cacheControl) {
+    return 0;
+  }
+
+  const maxAge = RE_MAX_AGE.exec(cacheControl);
+
+  return maxAge && maxAge[1] ? parseInt(maxAge[1], 10) * 1000 : 0;
 }

@@ -352,6 +352,13 @@ describe('mock', () => {
       expect(res.statusCode).to.equal(403);
       expect(res.headers['Content-Type']).to.equal('application/json');
     });
+    it('should return with custom cache-control header', () => {
+      const href = '/index.json';
+      const res = getResponse();
+      mocks.addResponse(href, { body: {}, headers: { 'Cache-Control': 'public, max-age=10' } });
+      mocks.matchResponse(href, getRequest(href), res);
+      expect(res.headers['Cache-Control']).to.equal('public, max-age=10');
+    });
   });
 
   describe('matchPushEvent()', () => {
