@@ -20,6 +20,7 @@ const bundleDir = path.resolve(bundleDirName);
 const port = process.env.PORT ? Number(process.env.PORT) : 8080;
 
 mime.define(JS_MIME_TYPES, true);
+// @ts-ignore
 send.mime.define(JS_MIME_TYPES, true);
 
 const dir = path.resolve(DIR);

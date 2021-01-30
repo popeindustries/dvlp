@@ -14,10 +14,7 @@ program
   server if "path" is a single application server file.`,
   )
   .option('-p, --port <port>', 'port number', parseInt)
-  .option(
-    '-m, --mock <path>',
-    'path to mock files (directory, file, glob pattern)',
-  )
+  .option('-m, --mock <path>', 'path to mock files (directory, file, glob pattern)')
   .option('-k, --hooks <path>', 'path to optional hooks registration file')
   .option(
     '--ssl <path>',
@@ -33,13 +30,15 @@ program.parse(process.argv);
 
 async function boot(path = [process.cwd()]) {
   try {
+    const options = program.opts();
+
     await server(path, {
-      certsPath: program.ssl,
-      hooksPath: program.hooks,
-      mockPath: program.mock,
-      port: program.port,
-      reload: program.reload,
-      silent: program.silent,
+      certsPath: options.ssl,
+      hooksPath: options.hooks,
+      mockPath: options.mock,
+      port: options.port,
+      reload: options.reload,
+      silent: options.silent,
     });
   } catch (err) {
     console.error(err);
