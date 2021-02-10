@@ -30,6 +30,7 @@
     "chalk": "^4.0.0",
     "chokidar": "^3.4.2",
     "cjs-module-lexer": "^1.0.0",
+    "cross-env": "^7.0.3",
     "debug": "^4.2.0",
     "es-module-lexer": "^0.3.25",
     "eslint": "^7.11.0",
@@ -71,7 +72,7 @@
     "lint:src": "eslint './{src,test}/**/*.js'",
     "lint:types": "tsc --noEmit",
     "prepublishOnly": "npm run build",
-    "test": "NODE_ENV=dvlptest mocha test/*-test.js --reporter spec --bail --exit --timeout 10000 --require src/config.js",
+    "test": "cross-env NODE_ENV=dvlptest mocha test/*-test.js --reporter spec --bail --exit --timeout 10000 --require src/config.js",
     "test:browser": "npm run build && ./bin/dvlp --mock test-browser/fixtures/mock test-browser",
     "demo": "./bin/dvlp test/fixtures/app.js"
   },
