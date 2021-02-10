@@ -105,7 +105,7 @@ describe('server', () => {
       const res = await fetch('http://localhost:8100/index.css');
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include('text/css');
-      expect(await res.text()).to.equal('body {\n  background-color: white;\n}');
+      expect(await res.text()).to.include('background-color: white;}');
     });
     it('should return 404 for missing file', async () => {
       server = await serverFactory('test/fixtures/www', { port: 8100 });
