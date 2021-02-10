@@ -48,11 +48,14 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
       // Fix named exports for cjs
       if (!isEsm) {
         const brokenNamedExports = config.brokenNamedExportsPackages[moduleId] || [];
+        const inlineableModulePath = modulePath.replace(/\\/g, '\\\\');
         const { exports } = parse(moduleContents);
         const namedExports = exports.filter((e) => e !== 'default').concat(brokenNamedExports);
         const fileContents = namedExports.length
-          ? `export { default } from "${modulePath}"; export {${namedExports.join(', ')}} from '${modulePath}';`
-          : `export { default } from "${modulePath}"`;
+          ? `export { default } from "${inlineableModulePath}"; export {${namedExports.join(
+              ', ',
+            )}} from '${inlineableModulePath}';`
+          : `export { default } from "${inlineableModulePath}"`;
 
         entryFilePath = filePath;
         entryFileContents = fileContents;

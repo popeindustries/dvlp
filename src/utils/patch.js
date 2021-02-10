@@ -6,11 +6,11 @@ const { fatal, warn, WARN_BARE_IMPORT } = require('./log.js');
 const { getAbsoluteProjectPath, getProjectPath, isEsmFile } = require('./file.js');
 const {
   isBundledFilePath,
+  isBundledUrl,
   isCssRequest,
   isHtmlRequest,
   isJsRequest,
   isNodeModuleFilePath,
-  isRelativeFilePath,
 } = require('./is.js');
 const config = require('../config.js');
 const debug = require('debug')('dvlp:patch');
@@ -149,7 +149,7 @@ function disableContentEncodingHeader(res, headerKey, headerValue) {
  */
 function disableCacheControlHeader(res, url) {
   if (!res.headersSent) {
-    if (!isNodeModuleFilePath(url) && !isBundledFilePath(url)) {
+    if (!isNodeModuleFilePath(url) && !isBundledUrl(url)) {
       res.setHeader('cache-control', 'no-cache, dvlp-disabled');
     }
   }
@@ -338,11 +338,7 @@ function rewriteImports(res, filePath, code, resolveImport) {
             newId = `/${path.join(config.bundleDirName, resolvedId)}`;
             warn(WARN_BARE_IMPORT, specifier);
           } else {
-            // Don't rewrite if no change after resolving
-            newId =
-              isRelativeFilePath(specifier) && path.join(path.dirname(filePath), specifier) === importPath
-                ? specifier
-                : importPath;
+            newId = importPath;
           }
 
           newId = filePathToUrl(newId);

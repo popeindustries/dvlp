@@ -4,6 +4,7 @@ const { clearResolverCache, resolve } = require('../src/resolver/index.js');
 const { getPackage, resolvePackagePath } = require('../src/resolver/package.js');
 const config = require('../src/config.js');
 const { expect } = require('chai');
+const { platform } = require('os');
 const path = require('path');
 
 describe('resolver', () => {
@@ -193,9 +194,11 @@ describe('resolver', () => {
     it('should resolve a native module reference', () => {
       expect(resolve('http', path.resolve('foo.js'))).to.equal(undefined);
     });
-    it('should resolve a symlinked js package file', () => {
-      expect(resolve('linked', path.resolve('baz.js'))).to.equal(path.resolve('linked/index.js'));
-    });
+    if (platform() !== 'win32') {
+      it('should resolve a symlinked js package file', () => {
+        expect(resolve('linked', path.resolve('baz.js'))).to.equal(path.resolve('linked/index.js'));
+      });
+    }
     it('should resolve self-referential package source reference', () => {
       expect(resolve('project/foo.js', path.resolve('baz.js'))).to.equal(path.resolve('foo.js'));
     });

@@ -13,6 +13,11 @@ const DEBUG_VERSION = '4.3.1';
 const LODASH_VERSION = '4.17.20';
 const NODE_PATH = process.env.NODE_PATH;
 
+const cwd = process
+  .cwd()
+  .replace(/^[A-Z]:/, '/')
+  .replace(/\\/g, '/');
+const bundleDir = config.bundleDirName.replace(/\\/g, '/');
 const hooks = new Hooks();
 
 function getBody(res) {
@@ -24,7 +29,7 @@ function getBody(res) {
 }
 function getRequest(url, headers = { accept: '*/*' }) {
   return {
-    filePath: path.resolve('test/fixtures/www', url),
+    filePath: path.resolve(path.join('test/fixtures/www', url)),
     headers,
     httpVersionMajor: 1,
     httpVersionMinor: 1,
@@ -267,8 +272,8 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import "./test/fixtures/www/module.js";');
-        expect(getBody(res)).to.equal(`import "${process.cwd()}/test/fixtures/www/module.js";`);
+        res.end('import "./module.js";');
+        expect(getBody(res)).to.equal(`import "${cwd}/test/fixtures/www/module.js";`);
       });
       it('should resolve bare js import id', () => {
         const req = getRequest('/index.js', {
@@ -279,7 +284,7 @@ describe('patch', () => {
           resolveImport: hooks.resolveImport,
         });
         res.end('import lodash from "lodash";');
-        expect(getBody(res)).to.equal(`import lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`);
+        expect(getBody(res)).to.equal(`import lodash from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`);
       });
       it('should escape "$" when resolving js import id', () => {
         const req = getRequest('/index.js', {
@@ -290,9 +295,7 @@ describe('patch', () => {
           resolveImport: hooks.resolveImport,
         });
         res.end('import $$observable from "lodash";');
-        expect(getBody(res)).to.equal(
-          `import $$observable from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
-        );
+        expect(getBody(res)).to.equal(`import $$observable from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`);
       });
       it('should resolve import at the start of a line', () => {
         const req = getRequest('/index.js', {
@@ -304,7 +307,7 @@ describe('patch', () => {
         });
         res.end(`const foo = 'bar'\nimport lodash from "lodash";`);
         expect(getBody(res)).to.equal(
-          `const foo = 'bar'\nimport lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
+          `const foo = 'bar'\nimport lodash from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`,
         );
       });
       it('should resolve import following a semi-colon', () => {
@@ -317,7 +320,7 @@ describe('patch', () => {
         });
         res.end(`function foo(value) { return value; };import lodash from "lodash";`);
         expect(getBody(res)).to.equal(
-          `function foo(value) { return value; };import lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
+          `function foo(value) { return value; };import lodash from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`,
         );
       });
       it('should resolve import following a closing curly bracket', () => {
@@ -330,7 +333,7 @@ describe('patch', () => {
         });
         res.end(`function foo(value) { return value; } import lodash from "lodash";`);
         expect(getBody(res)).to.equal(
-          `function foo(value) { return value; } import lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
+          `function foo(value) { return value; } import lodash from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`,
         );
       });
       it('should resolve import following a closing parethesis', () => {
@@ -343,7 +346,7 @@ describe('patch', () => {
         });
         res.end(`const foo = ('bar') import lodash from "lodash";`);
         expect(getBody(res)).to.equal(
-          `const foo = ('bar') import lodash from "/${config.bundleDirName}/lodash-${LODASH_VERSION}.js";`,
+          `const foo = ('bar') import lodash from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`,
         );
       });
       it('should not resolve import following an invalid character', () => {
@@ -368,7 +371,7 @@ describe('patch', () => {
         });
         res.end('import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";');
         expect(getBody(res)).to.equal(
-          `import lodashArr from "/${config.bundleDirName}/lodash__array-${LODASH_VERSION}.js";\nimport { foo } from "./foo.js";\nimport debug from "/${config.bundleDirName}/debug-${DEBUG_VERSION}.js";`,
+          `import lodashArr from "/${bundleDir}/lodash__array-${LODASH_VERSION}.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
         );
       });
       it('should resolve bare js import id for es module', () => {
@@ -380,10 +383,10 @@ describe('patch', () => {
           resolveImport: hooks.resolveImport,
         });
         res.end('import { html } from "lit-html";');
-        expect(getBody(res)).to.equal(`import { html } from "${process.cwd()}/node_modules/lit-html/lit-html.js";`);
+        expect(getBody(res)).to.equal(`import { html } from "${cwd}/node_modules/lit-html/lit-html.js";`);
       });
       it('should resolve NODE_PATH js import id', () => {
-        setNodePath('test/fixtures/www');
+        setNodePath('test/fixtures');
         const req = getRequest('/index.js', {
           accept: 'application/javascript',
         });
@@ -391,12 +394,12 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import module from "nested/index.js";');
-        expect(getBody(res)).to.equal(`import module from "${process.cwd()}/test/fixtures/www/nested/index.js";`);
+        res.end('import module from "app.js";');
+        expect(getBody(res)).to.equal(`import module from "${cwd}/test/fixtures/app.js";`);
         setNodePath(NODE_PATH);
       });
       it('should resolve NODE_PATH js import id missing extension', () => {
-        setNodePath('test/fixtures/www');
+        setNodePath('test/fixtures');
         const req = getRequest('/index.js', {
           accept: 'application/javascript',
         });
@@ -404,8 +407,8 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import module from "nested/foo";');
-        expect(getBody(res)).to.equal(`import module from "${process.cwd()}/test/fixtures/www/nested/foo.jsx";`);
+        res.end('import module from "app";');
+        expect(getBody(res)).to.equal(`import module from "${cwd}/test/fixtures/app.js";`);
         setNodePath(NODE_PATH);
       });
       it('should resolve js import id missing extension', () => {
@@ -416,8 +419,8 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import module from "./test/fixtures/www/module";');
-        expect(getBody(res)).to.equal(`import module from "${process.cwd()}/test/fixtures/www/module.js";`);
+        res.end('import module from "./module";');
+        expect(getBody(res)).to.equal(`import module from "${cwd}/test/fixtures/www/module.js";`);
       });
       it('should resolve jsx import id missing extension', () => {
         const req = getRequest('/index.js', {
@@ -427,8 +430,8 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import component from "./test/fixtures/component";');
-        expect(getBody(res)).to.equal(`import component from "${process.cwd()}/test/fixtures/component.jsx";`);
+        res.end('import component from "../component";');
+        expect(getBody(res)).to.equal(`import component from "${cwd}/test/fixtures/component.jsx";`);
       });
       it('should resolve ts import id missing extension', () => {
         const req = getRequest('/index.ts', {
@@ -438,8 +441,8 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import route from "./test/fixtures/route";');
-        expect(getBody(res)).to.equal(`import route from "${process.cwd()}/test/fixtures/route.ts";`);
+        res.end('import route from "../route";');
+        expect(getBody(res)).to.equal(`import route from "${cwd}/test/fixtures/route.ts";`);
       });
       it('should resolve js import id missing package index', () => {
         const req = getRequest('/index.js', {
@@ -449,8 +452,8 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import module from "./test/fixtures/www/nested";');
-        expect(getBody(res)).to.equal(`import module from "${process.cwd()}/test/fixtures/www/nested/index.js";`);
+        res.end('import module from "./nested";');
+        expect(getBody(res)).to.equal(`import module from "${cwd}/test/fixtures/www/nested/index.js";`);
       });
       it('should resolve ts import id missing package index', () => {
         const req = getRequest('/index.ts', {
@@ -460,8 +463,8 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import module from "./test/fixtures/www/nested-ts";');
-        expect(getBody(res)).to.equal(`import module from "${process.cwd()}/test/fixtures/www/nested-ts/index.ts";`);
+        res.end('import module from "./nested-ts";');
+        expect(getBody(res)).to.equal(`import module from "${cwd}/test/fixtures/www/nested-ts/index.ts";`);
       });
       it('should ignore erroneous "import" string', () => {
         const req = getRequest('/index.js', {
@@ -483,7 +486,7 @@ describe('patch', () => {
           resolveImport: hooks.resolveImport,
         });
         res.end('import "bar";');
-        expect(getBody(res)).to.equal(`import "${process.cwd()}/test/fixtures/node_modules/bar/browser.js";`);
+        expect(getBody(res)).to.equal(`import "${cwd}/test/fixtures/node_modules/bar/browser.js";`);
       });
       it('should resolve js import with browser field map', () => {
         const req = getRequest('/test/fixtures/index.js', {
@@ -494,7 +497,7 @@ describe('patch', () => {
           resolveImport: hooks.resolveImport,
         });
         res.end('import "bat";');
-        expect(getBody(res)).to.equal(`import "${process.cwd()}/test/fixtures/node_modules/bat/browser.js";`);
+        expect(getBody(res)).to.equal(`import "${cwd}/test/fixtures/node_modules/bat/browser.js";`);
       });
       it('should resolve js dynamic import()', () => {
         const req = getRequest('/index.js', {
@@ -506,7 +509,7 @@ describe('patch', () => {
         });
         res.end('import lodashArr from "lodash/array";\nimport(foo);\nimport("debug");\n');
         expect(getBody(res)).to.equal(
-          `import lodashArr from "/${config.bundleDirName}/lodash__array-${LODASH_VERSION}.js";\nimport(foo);\nimport("/${config.bundleDirName}/debug-${DEBUG_VERSION}.js");\n`,
+          `import lodashArr from "/${bundleDir}/lodash__array-${LODASH_VERSION}.js";\nimport(foo);\nimport("/${bundleDir}/debug-${DEBUG_VERSION}.js");\n`,
         );
       });
       it('should resolve js import with resolve hook', () => {
@@ -521,10 +524,10 @@ describe('patch', () => {
           },
         });
         res.end('import "module"');
-        expect(getBody(res)).to.equal(`import "${process.cwd()}/test/fixtures/www/module.js"`);
+        expect(getBody(res)).to.equal(`import "${cwd}/test/fixtures/www/module.js"`);
       });
       it('should resolve js import with resolve hook using defaultResolve', () => {
-        const req = getRequest('/test/fixtures/www/index.js', {
+        const req = getRequest('/index.js', {
           accept: 'application/javascript',
         });
         const res = getResponse(req);
@@ -534,7 +537,7 @@ describe('patch', () => {
           },
         });
         res.end('import "./module.js"');
-        expect(getBody(res)).to.equal(`import "${process.cwd()}/test/fixtures/www/module.js"`);
+        expect(getBody(res)).to.equal(`import "${cwd}/test/fixtures/www/module.js"`);
       });
       it('should resolve js dynamic import with resolve hook', () => {
         const req = getRequest('/index.js', {
@@ -548,7 +551,7 @@ describe('patch', () => {
           },
         });
         res.end('import("module");');
-        expect(getBody(res)).to.equal(`import("${process.cwd()}/test/fixtures/www/module.js");`);
+        expect(getBody(res)).to.equal(`import("${cwd}/test/fixtures/www/module.js");`);
       });
       it('should replace js dynamic import expression with resolve hook return value', () => {
         const req = getRequest('/index.js', {

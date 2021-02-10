@@ -347,11 +347,11 @@ describe('testServer', () => {
           last = now;
           events.push(event.data);
           if (events.length === 1) {
-            expect(elapsed).to.be.within(480, 520);
+            expect(elapsed).to.be.within(480, 550);
           } else if (events.length === 2) {
-            expect(elapsed).to.be.within(980, 1020);
+            expect(elapsed).to.be.within(980, 1050);
           } else if (events.length === 3) {
-            expect(elapsed).to.be.within(0, 20);
+            expect(elapsed).to.be.within(0, 50);
             expect(events).to.eql(['bar1', 'bar2', 'bar3']);
             done();
           }
@@ -376,11 +376,11 @@ describe('testServer', () => {
           last = now;
           events.push(event.data);
           if (events.length === 1) {
-            expect(elapsed).to.be.within(480, 520);
+            expect(elapsed).to.be.within(480, 550);
           } else if (events.length === 2) {
-            expect(elapsed).to.be.within(980, 1020);
+            expect(elapsed).to.be.within(980, 1050);
           } else if (events.length === 3) {
-            expect(elapsed).to.be.within(0, 20);
+            expect(elapsed).to.be.within(0, 50);
             expect(events).to.eql(['bar1', 'bar2', 'bar3']);
             done();
           }

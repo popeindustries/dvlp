@@ -19,6 +19,7 @@ module.exports = {
   isAbsoluteFilePath,
   isBareImport,
   isBundledFilePath,
+  isBundledUrl,
   isCssFilePath,
   isCssRequest,
   isHtmlFilePath,
@@ -70,6 +71,16 @@ function isBareImport(id) {
  */
 function isBundledFilePath(filePath) {
   return filePath.includes(config.bundleDirName);
+}
+
+/**
+ * Determine if 'url' is for a bundled module file
+ *
+ * @param { string } url
+ * @returns { boolean }
+ */
+function isBundledUrl(url) {
+  return url.includes(config.bundleDirName.replace(/\\/g, '/'));
 }
 
 /**

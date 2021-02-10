@@ -2,7 +2,7 @@
 
 const {
   isAbsoluteFilePath,
-  isBundledFilePath,
+  isBundledUrl,
   isCssRequest,
   isHtmlRequest,
   isJsRequest,
@@ -113,7 +113,7 @@ function expandPath(filePath) {
  * @returns { string | undefined }
  */
 function find(req, { directories = config.directories, type } = {}) {
-  const requestedFilePath = isRequestObject(req) ? new URL(req.url, 'http://localhost').pathname : req;
+  const href = decodeURI(isRequestObject(req) ? new URL(req.url, 'http://localhost').pathname : req);
   let filePath;
 
   if (!type) {
@@ -122,7 +122,7 @@ function find(req, { directories = config.directories, type } = {}) {
 
   // Special handling for '/node_modules...' to allow breaking out of cwd.
   // This is similar to how Node resolves package names internally.
-  if (requestedFilePath.startsWith('/node_modules')) {
+  if (href.startsWith('/node_modules')) {
     directories = [
       ...directories,
       ...resolveNodeModulesDirectories(process.cwd()).map((nodeModulesDirPath) => path.dirname(nodeModulesDirPath)),
@@ -130,13 +130,13 @@ function find(req, { directories = config.directories, type } = {}) {
   }
 
   // Handle bundled js import
-  if (isBundledFilePath(requestedFilePath)) {
-    filePath = path.join(config.bundleDir, path.basename(requestedFilePath));
-  } else if (isAbsoluteFilePath(requestedFilePath)) {
-    filePath = resolveFilePath(requestedFilePath, type);
+  if (isBundledUrl(href)) {
+    filePath = path.join(config.bundleDir, path.basename(href));
+  } else if (isAbsoluteFilePath(href)) {
+    filePath = resolveFilePath(href, type);
   } else {
     for (const directory of directories) {
-      filePath = resolveFilePath(path.join(directory, requestedFilePath), type);
+      filePath = resolveFilePath(path.join(directory, href), type);
 
       if (filePath) {
         break;
