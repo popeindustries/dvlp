@@ -23,7 +23,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: node_modules
-          key: os-${{ matrix.os }}node-${{ matrix.node }}-${{ hashFiles('**/package-lock.json') }} # Cache key based on Node version + hashed package-lock.json contents
+          key: os-${{ matrix.os }}-node-${{ matrix.node }}-${{ hashFiles('**/package-lock.json') }} # Cache key based on Node version + hashed package-lock.json contents
 
       - name: Install
         run: npm install
