@@ -4,11 +4,12 @@ on: push
 
 jobs:
   build_deploy:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest]
         node: ['12', '14', '15']
-    name: Install, build, and test (Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    name: Install, build, and test (OS ${{ matrix.os }} - Node ${{ matrix.node }})
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -22,7 +23,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: node_modules
-          key: node-${{ matrix.node }}-${{ hashFiles('**/package-lock.json') }} # Cache key based on Node version + hashed package-lock.json contents
+          key: os-${{ matrix.os }}node-${{ matrix.node }}-${{ hashFiles('**/package-lock.json') }} # Cache key based on Node version + hashed package-lock.json contents
 
       - name: Install
         run: npm install
