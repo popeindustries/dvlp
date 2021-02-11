@@ -71,7 +71,6 @@
     "lint": "npm run lint:types && npm run lint:src",
     "lint:src": "eslint './{src,test}/**/*.js'",
     "lint:types": "tsc --noEmit",
-    "postinstall": "husky install",
     "prepublishOnly": "npm run build",
     "test": "cross-env NODE_ENV=dvlptest mocha test/*-test.js --reporter spec --exit --timeout 10000 --require src/config.js",
     "test:browser": "npm run build && ./bin/dvlp --mock test-browser/fixtures/mock test-browser",
