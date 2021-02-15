@@ -15,7 +15,7 @@ const NODE_PATH = process.env.NODE_PATH;
 
 const cwd = process
   .cwd()
-  .replace(/^[A-Z]:/, '/')
+  .replace(/^[A-Z]:\\/, '/')
   .replace(/\\/g, '/');
 const bundleDir = config.bundleDirName.replace(/\\/g, '/');
 const hooks = new Hooks();

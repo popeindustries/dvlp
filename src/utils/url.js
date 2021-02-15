@@ -73,5 +73,5 @@ function getUrlCacheKey(url) {
  * @returns { string }
  */
 function filePathToUrl(filePath) {
-  return encodeURI(filePath.replace(/^[A-Z]:/, '/').replace(/\\/g, '/'));
+  return encodeURI(filePath.replace(/^[A-Z]:\\/, '/').replace(/\\/g, '/'));
 }
