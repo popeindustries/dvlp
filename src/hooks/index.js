@@ -1,7 +1,7 @@
 'use strict';
 
+const { build: esBuild, transform: esTransform, transformSync: esTransformSync } = require('esbuild');
 const { extname, resolve: resolvePath } = require('path');
-const { startService, transformSync } = require('esbuild');
 const bundle = require('./bundle.js');
 const { isCjsFile } = require('../utils/file.js');
 const { isNodeModuleFilePath } = require('../utils/is.js');
@@ -35,17 +35,54 @@ module.exports = class Hooker {
       this.hooks = hooks;
     }
 
+    /** @type { esbuild } */
+    this.esbuild = {
+      build: esBuild,
+      transform: esTransform,
+    };
     /** @type { Map<string, string> } */
     this.transformCache = new Map();
     this.watcher = watcher;
-    /** @type { import("esbuild").Service } */
-    this.buildService;
 
     this.bundle = this.bundle.bind(this);
     this.transform = this.transform.bind(this);
     this.resolveImport = this.resolveImport.bind(this);
     this.send = this.send.bind(this);
     this.serverTransform = this.serverTransform.bind(this);
+
+    if (this.watcher) {
+      const watcher = this.watcher;
+      /** @type { import('esbuild').Plugin } */
+      const watchPlugin = {
+        name: 'watch-local',
+        setup(build) {
+          build.onResolve({ filter: /^[./]/ }, function (args) {
+            const { importer, path, resolveDir } = args;
+            const filePath = resolvePath(resolveDir, path);
+
+            if (!isNodeModuleFilePath(filePath)) {
+              const importPath = resolve(path, importer);
+
+              if (importPath) {
+                watcher.add(importPath);
+              }
+            }
+
+            return undefined;
+          });
+        },
+      };
+
+      this.esbuild.build = new Proxy(this.esbuild.build, {
+        apply(target, context, args) {
+          if (!args[0].plugins) {
+            args[0].plugins = [];
+          }
+          args[0].plugins.push(watchPlugin);
+          return Reflect.apply(target, context, args);
+        },
+      });
+    }
   }
 
   /**
@@ -56,11 +93,7 @@ module.exports = class Hooker {
    * @returns { Promise<void> }
    */
   async bundle(filePath, res) {
-    if (!this.buildService) {
-      await this._startService();
-    }
-
-    await bundle(filePath, res, this.buildService, this.hooks && this.hooks.onDependencyBundle);
+    await bundle(filePath, res, this.esbuild, this.hooks && this.hooks.onDependencyBundle);
   }
 
   /**
@@ -73,17 +106,13 @@ module.exports = class Hooker {
    * @returns { Promise<void> }
    */
   async transform(filePath, lastChangedFilePath, res, clientPlatform) {
-    if (!this.buildService) {
-      await this._startService();
-    }
-
     await transform(
       filePath,
       lastChangedFilePath,
       res,
       clientPlatform,
       this.transformCache,
-      this.buildService,
+      this.esbuild,
       this.hooks && this.hooks.onTransform,
     );
   }
@@ -140,7 +169,7 @@ module.exports = class Hooker {
       result = this.hooks.onServerTransform(filePath, fileContents);
     }
     if (result === undefined && !isCjsFile(filePath, fileContents)) {
-      result = transformSync(fileContents, {
+      result = esTransformSync(fileContents, {
         format: 'cjs',
         // @ts-ignore - supports all filetypes supported by node
         loader: extname(filePath).slice(1),
@@ -156,50 +185,7 @@ module.exports = class Hooker {
    * Destroy instance
    */
   destroy() {
-    if (this.buildService) {
-      this.buildService.stop();
-    }
     this.transformCache.clear();
     this.watcher = undefined;
-  }
-
-  async _startService() {
-    if (!this.buildService) {
-      this.buildService = await startService();
-    }
-
-    if (this.watcher) {
-      const watcher = this.watcher;
-      /** @type { import('esbuild').Plugin } */
-      const watchPlugin = {
-        name: 'watch-local',
-        setup(build) {
-          build.onResolve({ filter: /^[./]/ }, function (args) {
-            const { importer, path, resolveDir } = args;
-            const filePath = resolvePath(resolveDir, path);
-
-            if (!isNodeModuleFilePath(filePath)) {
-              const importPath = resolve(path, importer);
-
-              if (importPath) {
-                watcher.add(importPath);
-              }
-            }
-
-            return undefined;
-          });
-        },
-      };
-
-      this.buildService.build = new Proxy(this.buildService.build, {
-        apply(target, context, args) {
-          if (!args[0].plugins) {
-            args[0].plugins = [];
-          }
-          args[0].plugins.push(watchPlugin);
-          return Reflect.apply(target, context, args);
-        },
-      });
-    }
   }
 };

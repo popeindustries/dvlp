@@ -1,7 +1,7 @@
 module.exports = {
   async onTransform(filePath, code, context) {
     return (
-      await context.esbuildService.build({
+      await context.esbuild.build({
         bundle: true,
         format: 'esm',
         entryPoints: [filePath],

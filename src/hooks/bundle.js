@@ -1,10 +1,10 @@
 'use strict';
 
 const { existsSync, readFileSync, writeFileSync } = require('fs');
-const config = require('../config.js');
-const { basename } = require('path');
-const debug = require('debug')('dvlp:bundle');
 const { decodeBundleId, encodeOriginalBundledSourcePath } = require('../utils/bundling.js');
+const { basename } = require('path');
+const config = require('../config.js');
+const debug = require('debug')('dvlp:bundle');
 const { error } = require('../utils/log.js');
 const { isBundledFilePath } = require('../utils/is.js');
 const { isEsmFile } = require('../utils/file.js');
@@ -17,11 +17,11 @@ const { resolve } = require('../resolver/index.js');
  *
  * @param { string } filePath
  * @param { Res } res
- * @param { import("esbuild").Service } buildService
+ * @param { esbuild } esbuild
  * @param { Hooks["onDependencyBundle"] } hookFn
  * @returns { Promise<void> }
  */
-module.exports = async function bundle(filePath, res, buildService, hookFn) {
+module.exports = async function bundle(filePath, res, esbuild, hookFn) {
   if (existsSync(filePath)) {
     return;
   }
@@ -64,11 +64,11 @@ module.exports = async function bundle(filePath, res, buildService, hookFn) {
 
       if (hookFn) {
         code = await hookFn(moduleId, entryFilePath, entryFileContents, {
-          esbuildService: buildService,
+          esbuild,
         });
       }
       if (code === undefined) {
-        const result = await buildService.build({
+        const result = await esbuild.build({
           bundle: true,
           define: { 'process.env.NODE_ENV': '"development"' },
           entryPoints: [entryFilePath],

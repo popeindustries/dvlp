@@ -27,19 +27,11 @@ const tsconfig = tsconfigPath
  * @param { Res } res
  * @param { TransformHookContext["client"] } clientPlatform
  * @param { Map<string, string> } cache
- * @param { import("esbuild").Service } buildService
+ * @param { esbuild } esbuild
  * @param { Hooks["onTransform"] } hookFn
  * @returns { Promise<void> }
  */
-module.exports = async function transform(
-  filePath,
-  lastChangedFilePath,
-  res,
-  clientPlatform,
-  cache,
-  buildService,
-  hookFn,
-) {
+module.exports = async function transform(filePath, lastChangedFilePath, res, clientPlatform, cache, esbuild, hookFn) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
 
   // Segment cache by user agent to support different transforms based on client
@@ -64,7 +56,7 @@ module.exports = async function transform(
       if (hookFn) {
         code = await hookFn(filePath, fileContents, {
           client: clientPlatform,
-          esbuildService: buildService,
+          esbuild,
         });
       }
       if (code === undefined) {
@@ -87,7 +79,7 @@ module.exports = async function transform(
           options.tsconfigRaw = tsconfig;
         }
 
-        code = (await buildService.transform(fileContents, options)).code;
+        code = (await esbuild.transform(fileContents, options)).code;
       }
       if (code !== undefined) {
         transformed = true;
