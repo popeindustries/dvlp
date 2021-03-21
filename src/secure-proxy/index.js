@@ -3,7 +3,7 @@ import config from '../config.js';
 import decorateWithServerDestroy from 'server-destroy';
 import EventSourceServer from '../reloader/event-source-server.js';
 import fs from 'fs';
-import { getDirectoryContents } from '../utils/file';
+import { getDirectoryContents } from '../utils/file.js';
 import { getReloadClientEmbed } from '../reloader/reload-client-embed.js';
 import http from 'http';
 import https from 'https';

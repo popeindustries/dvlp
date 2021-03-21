@@ -7,13 +7,13 @@ import { platform } from 'os';
 
 describe('resolver', () => {
   before(() => {
-    const cwd = path.resolve(__dirname, 'fixtures/resolver');
+    const cwd = path.resolve(path.dirname(import.meta.url), 'fixtures/resolver');
     config.directories.push(cwd);
     process.chdir(cwd);
   });
   after(() => {
     config.directories.pop();
-    process.chdir(path.resolve(__dirname, '..'));
+    process.chdir(path.resolve(path.dirname(import.meta.url), '..'));
   });
 
   describe('package', () => {

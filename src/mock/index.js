@@ -17,7 +17,9 @@ import send from 'send';
 const RE_MAX_AGE = /max-age=(\d+)/;
 
 const debug = Debug('dvlp:mock');
-const mockClient = global.$MOCK_CLIENT || fs.readFileSync(path.resolve(__dirname, 'mock-client.js'), 'utf8');
+const mockClient =
+  global.$MOCK_CLIENT ||
+  fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'mock-client.js'), 'utf8');
 
 export default class Mock {
   /**

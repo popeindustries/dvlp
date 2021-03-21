@@ -6,8 +6,9 @@ import fetch from 'node-fetch';
 import http from 'http';
 import path from 'path';
 import serverFactory from '../src/server/index.js';
-import { Client as WebSocket } from 'faye-websocket';
+import websocket from 'faye-websocket';
 
+const { Client: WebSocket } = websocket;
 let es, server, ws;
 
 describe('server', () => {
@@ -99,7 +100,10 @@ describe('server', () => {
       expect(res.headers.get('Content-type')).to.include('application/json');
     });
     it('should serve files from additional directories', async () => {
-      server = await serverFactory(['test/fixtures/www', path.resolve(__dirname, 'fixtures/assets')], { port: 8100 });
+      server = await serverFactory(
+        ['test/fixtures/www', path.resolve(path.dirname(import.meta.url), 'fixtures/assets')],
+        { port: 8100 },
+      );
       const res = await fetch('http://localhost:8100/index.css');
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include('text/css');

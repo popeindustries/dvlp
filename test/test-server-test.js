@@ -2,8 +2,9 @@ import EventSource from 'eventsource';
 import { expect } from 'chai';
 import fetch from 'node-fetch';
 import testServer from '../src/test-server/index.js';
-import { Client as WebSocket } from 'faye-websocket';
+import websocket from 'faye-websocket';
 
+const { Client: WebSocket } = websocket;
 let es, server, ws;
 
 function sleep(dur) {

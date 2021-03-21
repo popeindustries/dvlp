@@ -24,7 +24,6 @@ const START_TIMEOUT_DURATION = 4000;
 
 const debug = Debug('dvlp:server');
 const { EventSource } = WebSocket;
-const moduleCache = require.cache;
 const originalCreateServer = http.createServer;
 /** @type { Array<string> } */
 let dvlpModules;
@@ -49,7 +48,7 @@ export default class DvlpServer {
     });
 
     if (dvlpModules === undefined) {
-      dvlpModules = Object.keys(moduleCache);
+      // dvlpModules = Object.keys(moduleCache);
     }
     if (globalKeys === undefined) {
       globalKeys = Object.keys(global);
@@ -582,11 +581,9 @@ function handlePushEvent(req, res, mocks) {
  * @returns { Array<string> }
  */
 function getAppModules() {
-  const modules = Object.keys(moduleCache).filter((m) => !dvlpModules.includes(m) /* && !isNodeModuleFilePath(m) */);
-
-  debug(`found ${modules.length} app modules`);
-
-  return modules;
+  // const modules = Object.keys(moduleCache).filter((m) => !dvlpModules.includes(m) /* && !isNodeModuleFilePath(m) */);
+  // debug(`found ${modules.length} app modules`);
+  // return modules;
 }
 
 /**
@@ -596,26 +593,22 @@ function getAppModules() {
  * @param { string } main
  */
 function clearAppModules(appModules, main) {
-  const mainModule = moduleCache[main];
-
-  // Remove main from parent
-  // (No children when bundled)
-  if (mainModule != undefined && mainModule.parent != null && mainModule.parent.children != null) {
-    const parent = mainModule.parent;
-    let i = parent.children.length;
-
-    while (--i) {
-      if (parent.children[i].id === mainModule.id) {
-        parent.children.splice(i, 1);
-      }
-    }
-  }
-
-  for (const m of appModules) {
-    delete moduleCache[m];
-  }
-
-  debug(`cleared ${appModules.length} app modules from require.cache`);
+  // const mainModule = moduleCache[main];
+  // // Remove main from parent
+  // // (No children when bundled)
+  // if (mainModule != undefined && mainModule.parent != null && mainModule.parent.children != null) {
+  //   const parent = mainModule.parent;
+  //   let i = parent.children.length;
+  //   while (--i) {
+  //     if (parent.children[i].id === mainModule.id) {
+  //       parent.children.splice(i, 1);
+  //     }
+  //   }
+  // }
+  // for (const m of appModules) {
+  //   delete moduleCache[m];
+  // }
+  // debug(`cleared ${appModules.length} app modules from require.cache`);
 }
 
 /**
