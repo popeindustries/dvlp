@@ -81,11 +81,6 @@
     "singleQuote": true,
     "trailingComma": "all"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
     "*.js": [
       "prettier --write",
