@@ -1,16 +1,16 @@
-'use strict';
+import { decodeBundleId, encodeOriginalBundledSourcePath } from '../utils/bundling.js';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { basename } from 'path';
+import config from '../config.js';
+import Debug from 'debug';
+import { error } from '../utils/log.js';
+import { isBundledFilePath } from '../utils/is.js';
+import { isEsmFile } from '../utils/file.js';
+import Metrics from '../utils/metrics.js';
+import { parse } from 'cjs-module-lexer';
+import { resolve } from '../resolver/index.js';
 
-const { existsSync, readFileSync, writeFileSync } = require('fs');
-const { decodeBundleId, encodeOriginalBundledSourcePath } = require('../utils/bundling.js');
-const { basename } = require('path');
-const config = require('../config.js');
-const debug = require('debug')('dvlp:bundle');
-const { error } = require('../utils/log.js');
-const { isBundledFilePath } = require('../utils/is.js');
-const { isEsmFile } = require('../utils/file.js');
-const Metrics = require('../utils/metrics.js');
-const { parse } = require('cjs-module-lexer');
-const { resolve } = require('../resolver/index.js');
+const debug = Debug('dvlp:bundle');
 
 /**
  * Bundle node_modules cjs dependency and store at 'filePath'
@@ -21,7 +21,7 @@ const { resolve } = require('../resolver/index.js');
  * @param { Hooks["onDependencyBundle"] } hookFn
  * @returns { Promise<void> }
  */
-module.exports = async function bundle(filePath, res, esbuild, hookFn) {
+export default async function bundle(filePath, res, esbuild, hookFn) {
   if (existsSync(filePath)) {
     return;
   }
@@ -102,4 +102,4 @@ module.exports = async function bundle(filePath, res, esbuild, hookFn) {
 
     res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
   }
-};
+}

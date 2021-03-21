@@ -1,7 +1,5 @@
-'use strict';
-
-const { expect } = require('chai');
-const { getDeterministicPort } = require('../src/utils/port.js');
+import { expect } from 'chai';
+import { getDeterministicPort } from '../src/utils/port.js';
 
 describe('port', () => {
   describe('getDeterministicPort', () => {

@@ -1,9 +1,7 @@
-'use strict';
-
-const chalk = require('chalk');
-const debug = require('debug')('dvlp:metrics');
-const { getProjectPath } = require('./file.js');
-const { performance } = require('perf_hooks');
+import chalk from 'chalk';
+import Debug from 'debug';
+import { getProjectPath } from './file.js';
+import { performance } from 'perf_hooks';
 
 const EVENT_NAMES = {
   bundle: 'bundle file',
@@ -15,7 +13,9 @@ const EVENT_NAMES = {
   transform: 'transform file',
 };
 
-class Metrics {
+const debug = Debug('dvlp:metrics');
+
+export default class Metrics {
   /**
    * Constructor
    *
@@ -71,8 +71,6 @@ class Metrics {
 }
 
 Metrics.EVENT_NAMES = EVENT_NAMES;
-
-module.exports = Metrics;
 
 /**
  * Retrieve rounded difference

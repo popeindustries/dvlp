@@ -1,16 +1,17 @@
-'use strict';
+import chalk from 'chalk';
+import config from '../config.js';
 
-const chalk = require('chalk');
-const config = require('../config.js');
+export const WARN_BARE_IMPORT =
+  '⚠️  re-writing bare imports because browsers do not support Node-style import identifiers';
+export const WARN_MISSING_EXTENSION =
+  '⚠️  adding missing extensions because browsers can only resolve valid URL identifiers';
+export const WARN_NODE_PATH = '⚠️  re-writing NODE_PATH import because browsers can only resolve valid URL identifiers';
+export const WARN_PACKAGE_INDEX =
+  '⚠️  adding missing package index.js because browsers do not support Node-style package identifiers';
+export const WARN_SERVER_TRANSPILE =
+  '⚠️  ignoring async Promise returned when executing transpiler on a server file. Be sure to check the "isServer" argument before returning a transpiled value';
 
 const SEG_LENGTH = 80;
-const WARN_BARE_IMPORT = '⚠️  re-writing bare imports because browsers do not support Node-style import identifiers';
-const WARN_MISSING_EXTENSION = '⚠️  adding missing extensions because browsers can only resolve valid URL identifiers';
-const WARN_NODE_PATH = '⚠️  re-writing NODE_PATH import because browsers can only resolve valid URL identifiers';
-const WARN_PACKAGE_INDEX =
-  '⚠️  adding missing package index.js because browsers do not support Node-style package identifiers';
-const WARN_SERVER_TRANSPILE =
-  '⚠️  ignoring async Promise returned when executing transpiler on a server file. Be sure to check the "isServer" argument before returning a transpiled value';
 
 let maxBareImport = 1;
 let maxMissingExtension = 1;
@@ -19,18 +20,7 @@ let maxPackageIndex = 1;
 let maxServerTranspile = 1;
 let silent = false;
 
-module.exports = {
-  WARN_BARE_IMPORT,
-  WARN_MISSING_EXTENSION,
-  WARN_NODE_PATH,
-  WARN_PACKAGE_INDEX,
-  WARN_SERVER_TRANSPILE,
-  info,
-  noisyInfo,
-  warn,
-  error,
-  fatal,
-
+export default {
   /**
    * Set silent state
    *
@@ -46,7 +36,7 @@ module.exports = {
  *
  * @param { string } msg
  */
-function info(msg) {
+export function info(msg) {
   if (!config.testing && !silent) {
     console.log(truncate(' ' + msg));
   }
@@ -57,7 +47,7 @@ function info(msg) {
  *
  * @param { string } msg
  */
-function noisyInfo(msg) {
+export function noisyInfo(msg) {
   if (!config.testing) {
     console.log(truncate(' ' + msg));
   }
@@ -68,7 +58,7 @@ function noisyInfo(msg) {
  *
  * @param { ...unknown } args
  */
-function warn(...args) {
+export function warn(...args) {
   if (!config.testing && !silent) {
     const [warning] = args;
     let msg = '';
@@ -114,7 +104,7 @@ function warn(...args) {
  *
  * @param { ...unknown } args
  */
-function error(...args) {
+export function error(...args) {
   if (!config.testing) {
     console.error('\n', chalk.red.inverse(' error '), ...args);
   }
@@ -125,7 +115,7 @@ function error(...args) {
  *
  * @param { ...unknown } args
  */
-function fatal(...args) {
+export function fatal(...args) {
   if (!config.testing) {
     console.error('\n', chalk.red.inverse(' fatal error '), ...args);
   }

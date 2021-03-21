@@ -1,14 +1,12 @@
-'use strict';
-
-const { cleanBundledFiles } = require('../src/utils/bundling.js');
-const config = require('../src/config.js');
-const EventSource = require('eventsource');
-const { expect } = require('chai');
-const fetch = require('node-fetch');
-const http = require('http');
-const path = require('path');
-const serverFactory = require('../src/server/index.js');
-const { Client: WebSocket } = require('faye-websocket');
+import { cleanBundledFiles } from '../src/utils/bundling.js';
+import config from '../src/config.js';
+import EventSource from 'eventsource';
+import { expect } from 'chai';
+import fetch from 'node-fetch';
+import http from 'http';
+import path from 'path';
+import serverFactory from '../src/server/index.js';
+import { Client as WebSocket } from 'faye-websocket';
 
 let es, server, ws;
 

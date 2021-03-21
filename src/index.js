@@ -1,6 +1,4 @@
-'use strict';
+import './config.js';
 
-require('./config.js');
-
-exports.server = require('./server/index.js');
-exports.testServer = require('./test-server/index.js');
+export { default as server } from './server/index.js';
+export { default as testServer } from './test-server/index.js';

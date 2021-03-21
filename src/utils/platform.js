@@ -1,11 +1,7 @@
-'use strict';
-
-const config = require('../config.js');
-const platform = require('platform');
+import config from '../config.js';
+import platform from 'platform';
 
 const ESBUILD_BROWSER_ENGINES = ['chrome', 'edge', 'firefox', 'ios', 'safari'];
-
-module.exports = { parseEsbuildTarget, parseUserAgent };
 
 /**
  * Parse platform information from User-Agent
@@ -13,7 +9,7 @@ module.exports = { parseEsbuildTarget, parseUserAgent };
  * @param { string } [userAgent]
  * @returns { Platform }
  */
-function parseUserAgent(userAgent) {
+export function parseUserAgent(userAgent) {
   const dvlpUA = `dvlp/${config.version} (+https://github.com/popeindustries/dvlp)`;
 
   if (!userAgent) {
@@ -45,7 +41,7 @@ function parseUserAgent(userAgent) {
  * @param { Platform } platform
  * @returns { string }
  */
-function parseEsbuildTarget(platform) {
+export function parseEsbuildTarget(platform) {
   const { name = '', os: { family } = {}, version } = platform;
   const engine = family === 'iOS' ? 'ios' : name.split(' ')[0].toLowerCase();
 

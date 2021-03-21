@@ -2,9 +2,9 @@
 
 process.env.NODE_NO_WARNINGS = '1';
 
-const pkg = require('../package.json');
-const program = require('commander');
-const { server } = require('../dvlp.js');
+import pkg from '../package.json';
+import program from 'commander';
+import { server } from '../dvlp.js';
 
 program
   .usage('[options] [path...]')

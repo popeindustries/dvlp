@@ -1,20 +1,11 @@
-'use strict';
-
-const crypto = require('crypto');
-
-module.exports = {
-  concatScripts,
-  getDvlpGlobalString,
-  getProcessEnvString,
-  hashScript,
-};
+import crypto from 'crypto';
 
 /**
  * Retrieve process.env polyfill
  *
  * @returns { string }
  */
-function getProcessEnvString() {
+export function getProcessEnvString() {
   return `window.process=window.process||{env:{}};window.process.env.NODE_ENV="${
     process.env.NODE_ENV || 'development'
   }";`;
@@ -25,7 +16,7 @@ function getProcessEnvString() {
  *
  * @returns { string }
  */
-function getDvlpGlobalString() {
+export function getDvlpGlobalString() {
   return 'window.DVLP=true;';
 }
 
@@ -35,7 +26,7 @@ function getDvlpGlobalString() {
  * @param { Array<string> } scripts
  * @return { string }
  */
-function concatScripts(scripts) {
+export function concatScripts(scripts) {
   return scripts.filter((script) => !!script).join('\n');
 }
 
@@ -45,6 +36,6 @@ function concatScripts(scripts) {
  * @param { string } script
  * @returns { string }
  */
-function hashScript(script) {
+export function hashScript(script) {
   return crypto.createHash('sha256').update(script).digest('base64');
 }

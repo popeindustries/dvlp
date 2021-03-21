@@ -1,30 +1,28 @@
-'use strict';
-
-const { error, fatal, info, noisyInfo } = require('../utils/log.js');
-const { favIcon, find, getProjectPath, getTypeFromRequest } = require('../utils/file.js');
-const { interceptFileRead, interceptProcessOn } = require('../utils/intercept.js');
-const { isBundledFilePath, isNodeModuleFilePath } = require('../utils/is.js');
-const { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } = require('../utils/scripts.js');
-const { connectClient, pushEvent } = require('../push-events/index.js');
-const chalk = require('chalk');
-const config = require('../config.js');
-const createFileServer = require('./file-server.js');
-const debug = require('debug')('dvlp:server');
-const fs = require('fs');
-const Hooks = require('../hooks/index.js');
-const http = require('http');
-const { importModule } = require('../utils/module.js');
-const Metrics = require('../utils/metrics.js');
-const Mock = require('../mock/index.js');
-const { patchResponse } = require('../utils/patch.js');
-const { parseUserAgent } = require('../utils/platform.js');
-const send = require('send');
-const { URL } = require('url');
-const watch = require('../utils/watch.js');
-const WebSocket = require('faye-websocket');
+import { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } from '../utils/scripts.js';
+import { connectClient, pushEvent } from '../push-events/index.js';
+import { error, fatal, info, noisyInfo } from '../utils/log.js';
+import { favIcon, find, getProjectPath, getTypeFromRequest } from '../utils/file.js';
+import { interceptFileRead, interceptProcessOn } from '../utils/intercept.js';
+import { isBundledFilePath, isNodeModuleFilePath } from '../utils/is.js';
+import chalk from 'chalk';
+import config from '../config.js';
+import createFileServer from './file-server.js';
+import Debug from 'debug';
+import fs from 'fs';
+import Hooks from '../hooks/index.js';
+import http from 'http';
+import Metrics from '../utils/metrics.js';
+import Mock from '../mock/index.js';
+import { parseUserAgent } from '../utils/platform.js';
+import { patchResponse } from '../utils/patch.js';
+import send from 'send';
+import { URL } from 'url';
+import watch from '../utils/watch.js';
+import WebSocket from 'faye-websocket';
 
 const START_TIMEOUT_DURATION = 4000;
 
+const debug = Debug('dvlp:server');
 const { EventSource } = WebSocket;
 const moduleCache = require.cache;
 const originalCreateServer = http.createServer;
@@ -33,7 +31,7 @@ let dvlpModules;
 /** @type { Array<string> } */
 let globalKeys;
 
-module.exports = class DvlpServer {
+export default class DvlpServer {
   /**
    * Constructor
    *
@@ -360,7 +358,7 @@ module.exports = class DvlpServer {
     } else if (typeof this.main === 'function') {
       this.main();
     } else {
-      importModule(this.main, this.hooks.serverTransform);
+      // importModule(this.main, this.hooks.serverTransform);
     }
   }
 
@@ -451,7 +449,7 @@ module.exports = class DvlpServer {
     this.hooks.destroy();
     return this.stop();
   }
-};
+}
 
 /**
  * Handle request for favicon

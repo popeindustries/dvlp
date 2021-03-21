@@ -1,10 +1,8 @@
-'use strict';
-
-const config = require('../src/config.js');
-const { expect } = require('chai');
-const fs = require('fs');
-const Hooks = require('../src/hooks/index.js');
-const path = require('path');
+import config from '../src/config.js';
+import { expect } from 'chai';
+import fs from 'fs';
+import Hooks from '../src/hooks/index.js';
+import path from 'path';
 
 const DEBUG = 'debug-4.3.1.js';
 const REACT = 'react-17.0.1.js';

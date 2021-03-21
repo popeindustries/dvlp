@@ -1,18 +1,10 @@
-'use strict';
-
-const { find, resolveNodeModulesDirectories } = require('../utils/file.js');
-const { isRelativeFilePath } = require('../utils/is.js');
-const fs = require('fs');
-const path = require('path');
+import { find, resolveNodeModulesDirectories } from '../utils/file.js';
+import fs from 'fs';
+import { isRelativeFilePath } from '../utils/is.js';
+import path from 'path';
 
 const MAX_FILE_SYSTEM_DEPTH = 10;
 const RE_TRAILING = /\/+$|\\+$/;
-
-module.exports = {
-  getPackage,
-  resolveAliasPath,
-  resolvePackagePath,
-};
 
 /**
  * Retrieve package details for "filePath"
@@ -21,7 +13,7 @@ module.exports = {
  * @param { string } [packagePath]
  * @returns { Package | undefined }
  */
-function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
+export function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
   if (packagePath === undefined || !fs.existsSync(packagePath)) {
     return;
   }
@@ -110,7 +102,7 @@ function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
  * @param { Package } pkg
  * @returns { string }
  */
-function resolveAliasPath(filePath, pkg) {
+export function resolveAliasPath(filePath, pkg) {
   // Follow chain of aliases
   // a => b; b => c; c => d
   while (filePath in pkg.aliases) {
@@ -126,7 +118,7 @@ function resolveAliasPath(filePath, pkg) {
  * @param { string } filePath
  * @returns { string | undefined }
  */
-function resolvePackagePath(filePath) {
+export function resolvePackagePath(filePath) {
   filePath = filePath.replace(RE_TRAILING, '');
   const cwd = process.cwd();
   const isNodeModule = filePath.includes('node_modules');

@@ -1,11 +1,8 @@
-'use strict';
-
-const { isWebSocketUrl, getUrl, getUrlCacheKey } = require('../utils/url.js');
-const debug = require('debug')('dvlp:push');
-const deflate = require('permessage-deflate');
-const { error } = require('../utils/log.js');
-const WebSocket = require('faye-websocket');
-const { EventSource } = WebSocket;
+import { getUrl, getUrlCacheKey, isWebSocketUrl } from '../utils/url.js';
+import Debug from 'debug';
+import deflate from 'permessage-deflate';
+import { error } from '../utils/log.js';
+import WebSocket from 'faye-websocket';
 
 const DEFAULT_ES_CONFIG = {
   headers: { 'Access-Control-Allow-Origin': '*' },
@@ -18,12 +15,8 @@ const RE_SOCKETIO_PROTOCOL = /socket\.?io|EIO/;
  * @type { Map<string, Set<PushClient>> }
  */
 const cache = new Map();
-
-module.exports = {
-  connectClient,
-  destroyClients,
-  pushEvent,
-};
+const debug = Debug('dvlp:push');
+const { EventSource } = WebSocket;
 
 /**
  * Initialize EventSource/WebSocket client
@@ -32,7 +25,7 @@ module.exports = {
  * @param { ...any } args
  * @returns { void }
  */
-function connectClient(stream, ...args) {
+export function connectClient(stream, ...args) {
   const { type, url } = getStream(stream);
   const cacheKey = getUrlCacheKey(getUrl(url));
   const clients = cache.get(cacheKey) || new Set();
@@ -91,7 +84,7 @@ function connectClient(stream, ...args) {
  * @param { PushEvent } event
  * @returns { void }
  */
-function pushEvent(stream, event) {
+export function pushEvent(stream, event) {
   if (!stream || !event) {
     return;
   }
@@ -139,7 +132,7 @@ function pushEvent(stream, event) {
  * @param { string | PushStream } [stream]
  * @returns { void }
  */
-function destroyClients(stream) {
+export function destroyClients(stream) {
   if (stream === undefined) {
     for (const cacheKey of cache.keys()) {
       destroyClient(cacheKey);

@@ -1,17 +1,11 @@
-'use strict';
-
-const { buildSync } = require('esbuild');
-const fs = require('fs');
-const path = require('path');
-const pkg = require('../package.json');
-const terser = require('terser');
+import { buildSync } from 'esbuild';
+import fs from 'fs';
+import path from 'path';
+import pkg from '../package.json';
+import terser from 'terser';
 
 (async function build() {
-  const reloadClient = (
-    await terser.minify(
-      fs.readFileSync('src/reloader/reload-client.js', 'utf8'),
-    )
-  ).code;
+  const reloadClient = (await terser.minify(fs.readFileSync('src/reloader/reload-client.js', 'utf8'))).code;
   const mockClient = (
     await terser.minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
       // Preserve 'cache' var for regex replacement
@@ -21,9 +15,7 @@ const terser = require('terser');
 
   fs.writeFileSync(
     path.resolve('dvlp.d.ts'),
-    fs
-      .readFileSync(path.resolve('src/types.d.ts'), 'utf8')
-      .replace(/\/\*\s+export\s+\*\//g, 'export'),
+    fs.readFileSync(path.resolve('src/types.d.ts'), 'utf8').replace(/\/\*\s+export\s+\*\//g, 'export'),
   );
 
   buildSync({

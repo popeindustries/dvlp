@@ -1,36 +1,33 @@
-'use strict';
-
-const config = require('../config.js');
-const debug = require('debug')('dvlp:reload');
-const decorateWithServerDestroy = require('server-destroy');
-const EventSourceServer = require('./event-source-server.js');
-const { getDeterministicPort } = require('../utils/port.js');
-const { getReloadClientEmbed } = require('./reload-client-embed.js');
-const http = require('http');
+import config from '../config.js';
+import Debug from 'debug';
+import decorateWithServerDestroy from 'server-destroy';
+import EventSourceServer from './event-source-server.js';
+import { getDeterministicPort } from '../utils/port.js';
+import { getReloadClientEmbed } from './reload-client-embed.js';
+import http from 'http';
 
 const PORT_FINGERPRINT = `${process.cwd()} ${process.argv.slice(2).join(' ')}`;
 
-module.exports = {
-  /**
-   * Create reload server
-   *
-   * @param { boolean } isBehindSecureProxy
-   * @returns { Promise<Reloader> }
-   */
-  async reloadServer(isBehindSecureProxy = false) {
-    const server = new ReloadServer();
+const debug = Debug('dvlp:reload');
 
-    await server.start();
+/**
+ * Create reload server
+ *
+ * @returns { Promise<Reloader> }
+ */
+export async function reloadServer() {
+  const server = new ReloadServer();
 
-    return {
-      destroy: server.destroy.bind(server),
-      send: server.send.bind(server),
-      reloadEmbed: getReloadClientEmbed(server.port),
-      reloadPort: server.port,
-      reloadUrl: `http://localhost:${server.port}${config.reloadEndpoint}`,
-    };
-  },
-};
+  await server.start();
+
+  return {
+    destroy: server.destroy.bind(server),
+    send: server.send.bind(server),
+    reloadEmbed: getReloadClientEmbed(server.port),
+    reloadPort: server.port,
+    reloadUrl: `http://localhost:${server.port}${config.reloadEndpoint}`,
+  };
+}
 
 class ReloadServer extends EventSourceServer {
   constructor() {

@@ -1,11 +1,9 @@
-'use strict';
-
-const brokenNamedExportsPackages = require('./utils/broken-named-exports.js');
-const fs = require('fs');
-const mime = require('mime');
-const path = require('path');
-const rimraf = require('rimraf');
-const send = require('send');
+import brokenNamedExportsPackages from './utils/broken-named-exports.js';
+import fs from 'fs';
+import mime from 'mime';
+import path from 'path';
+import rimraf from 'rimraf';
+import send from 'send';
 
 const DIR = '.dvlp';
 const JS_MIME_TYPES = {
@@ -72,7 +70,7 @@ if (TESTING) {
 /**
  * @type { Config }
  */
-module.exports = {
+export default {
   applicationPort: port,
   brokenNamedExportsPackages,
   bundleDir,

@@ -1,8 +1,6 @@
-'use strict';
-
-const { expect } = require('chai');
-const { expandPath, find } = require('../src/utils/file.js');
-const path = require('path');
+import { expandPath, find } from '../src/utils/file.js';
+import { expect } from 'chai';
+import path from 'path';
 
 describe('file', () => {
   describe('expandPath()', () => {

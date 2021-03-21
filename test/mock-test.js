@@ -1,8 +1,6 @@
-'use strict';
-
-const { expect } = require('chai');
-const Mock = require('../src/mock/index.js');
-const { pushEvent } = require('../src/push-events/index.js');
+import { expect } from 'chai';
+import Mock from '../src/mock/index.js';
+import { pushEvent } from '../src/push-events/index.js';
 
 const mocks = new Mock();
 

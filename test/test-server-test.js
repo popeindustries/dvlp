@@ -1,10 +1,8 @@
-'use strict';
-
-const { expect } = require('chai');
-const EventSource = require('eventsource');
-const fetch = require('node-fetch');
-const testServer = require('../src/test-server/index.js');
-const { Client: WebSocket } = require('faye-websocket');
+import EventSource from 'eventsource';
+import { expect } from 'chai';
+import fetch from 'node-fetch';
+import testServer from '../src/test-server/index.js';
+import { Client as WebSocket } from 'faye-websocket';
 
 let es, server, ws;
 

@@ -1,10 +1,8 @@
-'use strict';
-
-const fs = require('fs');
-const http = require('http');
-const https = require('https');
-const { isLocalhost, isProxy } = require('./is.js');
-const { URL } = require('url');
+import { isLocalhost, isProxy } from './is.js';
+import fs from 'fs';
+import http from 'http';
+import https from 'https';
+import { URL } from 'url';
 
 /** @type { Set<InterceptClientRequestCallback> } */
 const clientRequestListeners = new Set();
@@ -23,19 +21,13 @@ const originalReadFileSync = fs.readFileSync;
 
 /** @typedef { import("http").ClientRequestArgs & { href?: string } } ClientRequestArgs */
 
-module.exports = {
-  interceptClientRequest,
-  interceptFileRead,
-  interceptProcessOn,
-};
-
 /**
  * Listen for file system reads and report
  *
  * @param { InterceptFileReadCallback } fn
  * @returns { () => void }
  */
-function interceptFileRead(fn) {
+export function interceptFileRead(fn) {
   if (!isProxy(fs.readFile)) {
     // Proxy ReadStream private method to work around patching by graceful-fs
     const ReadStream = fs.ReadStream.prototype;
@@ -86,7 +78,7 @@ function restoreFileRead(fn) {
  * @param { InterceptClientRequestCallback } fn
  * @returns { () => void }
  */
-function interceptClientRequest(fn) {
+export function interceptClientRequest(fn) {
   if (!isProxy(http.request)) {
     // @ts-ignore
     http.request = new Proxy(http.request, {
@@ -200,7 +192,7 @@ function getHrefFromRequestOptions(options, protocol) {
  * @param { InterceptProcessOnCallback } fn
  * @returns { () => void }
  */
-function interceptProcessOn(fn) {
+export function interceptProcessOn(fn) {
   if (!isProxy(process.on)) {
     process.on = new Proxy(process.on, {
       apply: (target, ctx, args) => {

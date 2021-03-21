@@ -1,14 +1,12 @@
-'use strict';
-
-const { exists, expandPath, getProjectPath } = require('../utils/file.js');
-const { info, error } = require('../utils/log.js');
-const chalk = require('chalk');
-const config = require('../config.js');
-const DvlpServer = require('./server.js');
-const fs = require('fs');
-const path = require('path');
-const { reloadServer } = require('../reloader/index.js');
-const secureProxyServer = require('../secure-proxy/index.js');
+import logger, { error, info } from '../utils/log.js';
+import { exists, expandPath, getProjectPath } from '../utils/file.js';
+import chalk from 'chalk';
+import config from '../config.js';
+import DvlpServer from './server.js';
+import fs from 'fs';
+import path from 'path';
+import { reloadServer } from '../reloader/index.js';
+import secureProxyServer from '../secure-proxy/index.js';
 
 /**
  * Server instance factory
@@ -17,7 +15,7 @@ const secureProxyServer = require('../secure-proxy/index.js');
  * @param { ServerOptions } options
  * @returns { Promise<Server> }
  */
-module.exports = async function serverFactory(
+export default async function serverFactory(
   filePath = process.cwd(),
   { certsPath, directories, hooksPath, mockPath, port = config.applicationPort, reload = true, silent } = {},
 ) {
@@ -80,7 +78,7 @@ module.exports = async function serverFactory(
   info(' 👀 watching for changes...\n');
 
   if (silent) {
-    require('../utils/log').silent = true;
+    logger.silent = true;
   }
 
   return {
@@ -94,7 +92,7 @@ module.exports = async function serverFactory(
       ]).then();
     },
   };
-};
+}
 
 /**
  * Resolve entry data from "filePaths"

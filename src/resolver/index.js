@@ -1,18 +1,12 @@
-'use strict';
+import { find, getProjectPath, resolveRealFilePath } from '../utils/file.js';
+import { getPackage, resolveAliasPath, resolvePackagePath } from './package.js';
+import { isAbsoluteFilePath, isRelativeFilePath } from '../utils/is.js';
+import path from 'path';
 
-const { getPackage, resolveAliasPath, resolvePackagePath } = require('./package.js');
-const { find, getProjectPath, resolveRealFilePath } = require('../utils/file.js');
-const { isAbsoluteFilePath, isRelativeFilePath } = require('../utils/is.js');
-const path = require('path');
-
+/** @type { Map<string, string> } */
 const resolveCache = new Map();
+/** @type { Map<string, Package | undefined> } */
 const packageCache = new Map();
-
-module.exports = {
-  clearResolverCache,
-  getCachedPackage,
-  resolve,
-};
 
 /**
  * Resolve absolute file path for "specifier" relative to "importer",
@@ -22,7 +16,7 @@ module.exports = {
  * @param { string } [importer]
  * @returns { string | undefined }
  */
-function resolve(specifier, importer = 'index.js') {
+export function resolve(specifier, importer = 'index.js') {
   if (!specifier) {
     return;
   }
@@ -108,10 +102,15 @@ function getCacheKey(importerFilePath, specifier) {
  * Retrieve Package instance for "dir"
  *
  * @param { string } dir
- * @returns { Package }
+ * @returns { Package | undefined }
  */
-function getCachedPackage(dir) {
+export function getCachedPackage(dir) {
   const pkgPath = resolvePackagePath(dir);
+
+  if (!pkgPath) {
+    return;
+  }
+
   let pkg = packageCache.get(pkgPath);
 
   if (!pkg) {
@@ -125,7 +124,7 @@ function getCachedPackage(dir) {
 /**
  * Clear caches
  */
-function clearResolverCache() {
+export function clearResolverCache() {
   resolveCache.clear();
   packageCache.clear();
 }

@@ -1,18 +1,15 @@
-'use strict';
-
-const { build: esBuild, transform: esTransform, transformSync: esTransformSync } = require('esbuild');
-const { extname, resolve: resolvePath } = require('path');
-const bundle = require('./bundle.js');
-const { isCjsFile } = require('../utils/file.js');
-const { isNodeModuleFilePath } = require('../utils/is.js');
-const { importModule } = require('../utils/module.js');
-const { resolve } = require('../resolver/index.js');
-const transform = require('./transform.js');
-const { warn } = require('../utils/log.js');
+import { build as esBuild, transform as esTransform, transformSync as esTransformSync } from 'esbuild';
+import { extname, resolve as resolvePath } from 'path';
+import bundle from './bundle.js';
+import { isCjsFile } from '../utils/file.js';
+import { isNodeModuleFilePath } from '../utils/is.js';
+import { resolve } from '../resolver/index.js';
+import transform from './transform.js';
+import { warn } from '../utils/log.js';
 
 const HOOK_NAMES = ['onDependencyBundle', 'onTransform', 'onResolveImport', 'onSend', 'onServerTransform'];
 
-module.exports = class Hooker {
+export default class Hooker {
   /**
    * Constructor
    *
@@ -22,18 +19,6 @@ module.exports = class Hooker {
   constructor(hooksPath, watcher) {
     /** @type { Hooks | undefined } */
     this.hooks;
-
-    if (hooksPath) {
-      const hooks = importModule(hooksPath);
-
-      for (const name of Object.keys(hooks)) {
-        if (!HOOK_NAMES.includes(name)) {
-          warn(`⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(', ')}`);
-        }
-      }
-
-      this.hooks = hooks;
-    }
 
     /** @type { esbuild } */
     this.esbuild = {
@@ -81,6 +66,18 @@ module.exports = class Hooker {
           args[0].plugins.push(watchPlugin);
           return Reflect.apply(target, context, args);
         },
+      });
+    }
+
+    if (hooksPath) {
+      import(hooksPath).then((hooks) => {
+        for (const name of Object.keys(hooks)) {
+          if (!HOOK_NAMES.includes(name)) {
+            warn(`⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(', ')}`);
+          }
+        }
+
+        this.hooks = hooks;
       });
     }
   }
@@ -188,4 +185,4 @@ module.exports = class Hooker {
     this.transformCache.clear();
     this.watcher = undefined;
   }
-};
+}

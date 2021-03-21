@@ -1,33 +1,29 @@
-'use strict';
-
-const { brotliDecompressSync, unzipSync } = require('zlib');
-const { parseOriginalBundledSourcePath, resolveBundleFileName } = require('./bundling.js');
-const { fatal, warn, WARN_BARE_IMPORT } = require('./log.js');
-const { getAbsoluteProjectPath, getProjectPath, isEsmFile } = require('./file.js');
-const {
+import { brotliDecompressSync, unzipSync } from 'zlib';
+import { fatal, warn, WARN_BARE_IMPORT } from './log.js';
+import { getAbsoluteProjectPath, getProjectPath, isEsmFile } from './file.js';
+import {
   isBundledFilePath,
   isBundledUrl,
   isCssRequest,
   isHtmlRequest,
   isJsRequest,
   isNodeModuleFilePath,
-} = require('./is.js');
-const config = require('../config.js');
-const debug = require('debug')('dvlp:patch');
-const { filePathToUrl } = require('./url.js');
-const Metrics = require('./metrics.js');
-const path = require('path');
-const { parse } = require('es-module-lexer');
-const { resolve } = require('../resolver/index.js');
+} from './is.js';
+import { parseOriginalBundledSourcePath, resolveBundleFileName } from './bundling.js';
+import config from '../config.js';
+import Debug from 'debug';
+import { filePathToUrl } from './url.js';
+import Metrics from './metrics.js';
+import { parse } from 'es-module-lexer';
+import path from 'path';
+import { resolve } from '../resolver/index.js';
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
 const RE_DYNAMIC_IMPORT = /(^[^(]+\(['"])([^'"]+)(['"][^)]*\))/;
 const RE_NONCE_SHA = /nonce-|sha\d{3}-/;
 const RE_OPEN_HEAD_TAG = /<head>/i;
 
-module.exports = {
-  patchResponse,
-};
+const debug = Debug('dvlp:patch');
 
 /**
  * Patch response body.
@@ -39,7 +35,7 @@ module.exports = {
  * @param { Res } res
  * @param { PatchResponseOptions } options
  */
-function patchResponse(filePath, req, res, { footerScript, headerScript, resolveImport, send }) {
+export function patchResponse(filePath, req, res, { footerScript, headerScript, resolveImport, send }) {
   // req.filepath set after file.find(), filepath passed if cached
   filePath = req.filePath || filePath || req.url;
   debug(`patching response for "${getProjectPath(filePath)}"`);

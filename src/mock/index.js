@@ -1,26 +1,25 @@
-'use strict';
-
-const { error, info, noisyInfo } = require('../utils/log.js');
-const { isInvalidFilePath, isJsonFilePath } = require('../utils/is.js');
-const { match, pathToRegexp } = require('path-to-regexp');
-const { URL, URLSearchParams } = require('url');
-const chalk = require('chalk');
-const config = require('../config.js');
-const debug = require('debug')('dvlp:mock');
-const fs = require('fs');
-const { getProjectPath } = require('../utils/file.js');
-const { getUrl } = require('../utils/url.js');
-const { interceptClientRequest } = require('../utils/intercept.js');
-const Metrics = require('../utils/metrics.js');
-const mime = require('mime');
-const path = require('path');
-const send = require('send');
+import { error, info, noisyInfo } from '../utils/log.js';
+import { isInvalidFilePath, isJsonFilePath } from '../utils/is.js';
+import { match, pathToRegexp } from 'path-to-regexp';
+import { URL, URLSearchParams } from 'url';
+import chalk from 'chalk';
+import config from '../config.js';
+import Debug from 'debug';
+import fs from 'fs';
+import { getProjectPath } from '../utils/file.js';
+import { getUrl } from '../utils/url.js';
+import { interceptClientRequest } from '../utils/intercept.js';
+import Metrics from '../utils/metrics.js';
+import mime from 'mime';
+import path from 'path';
+import send from 'send';
 
 const RE_MAX_AGE = /max-age=(\d+)/;
 
+const debug = Debug('dvlp:mock');
 const mockClient = global.$MOCK_CLIENT || fs.readFileSync(path.resolve(__dirname, 'mock-client.js'), 'utf8');
 
-module.exports = class Mock {
+export default class Mock {
   /**
    * Constructor
    *
@@ -517,7 +516,7 @@ module.exports = class Mock {
       error(err);
     }
   }
-};
+}
 
 /**
  * Retrieve origin, path regex, and search params for "req"

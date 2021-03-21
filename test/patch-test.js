@@ -1,13 +1,11 @@
-'use strict';
-
-const { brotliCompressSync, gzipSync } = require('zlib');
-const { clearResolverCache } = require('../src/resolver/index.js');
-const config = require('../src/config.js');
-const { expect } = require('chai');
-const Hooks = require('../src/hooks/index.js');
-const { patchResponse } = require('../src/utils/patch.js');
-const path = require('path');
-const { ServerResponse } = require('http');
+import { brotliCompressSync, gzipSync } from 'zlib';
+import { clearResolverCache } from '../src/resolver/index.js';
+import config from '../src/config.js';
+import { expect } from 'chai';
+import Hooks from '../src/hooks/index.js';
+import { patchResponse } from '../src/utils/patch.js';
+import path from 'path';
+import { ServerResponse } from 'http';
 
 const DEBUG_VERSION = '4.3.1';
 const LODASH_VERSION = '4.17.20';

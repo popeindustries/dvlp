@@ -1,22 +1,20 @@
-'use strict';
-
-const {
+import {
   isAbsoluteFilePath,
   isBundledUrl,
   isCssRequest,
   isHtmlRequest,
   isJsRequest,
   isNodeModuleFilePath,
-} = require('./is.js');
-const { warn, WARN_MISSING_EXTENSION, WARN_PACKAGE_INDEX } = require('./log.js');
-const config = require('../config.js');
-const favicon = require('./favicon.js');
-const fs = require('fs');
-const glob = require('glob');
-const isFileEsm = require('is-file-esm');
-const { parse } = require('cjs-module-lexer');
-const path = require('path');
-const { URL } = require('url');
+} from './is.js';
+import { warn, WARN_MISSING_EXTENSION, WARN_PACKAGE_INDEX } from './log.js';
+import config from '../config.js';
+import favicon from './favicon.js';
+import fs from 'fs';
+import glob from 'glob';
+import isFileEsm from 'is-file-esm';
+import { parse } from 'cjs-module-lexer';
+import path from 'path';
+import { URL } from 'url';
 
 const FILE_TYPES = ['html', 'js', 'css'];
 const MAX_FILE_SYSTEM_DEPTH = 10;
@@ -26,22 +24,7 @@ const RE_SEPARATOR = /[,;]\s?|\s/g;
 /** @type { Map<string, 'cjs' | 'esm'> } */
 const fileFormatCache = new Map();
 
-module.exports = {
-  exists,
-  expandPath,
-  favIcon: Buffer.from(favicon, 'base64'),
-  find,
-  findClosest,
-  getAbsoluteProjectPath,
-  getProjectPath,
-  getTypeFromPath,
-  getTypeFromRequest,
-  getDirectoryContents,
-  isCjsFile,
-  isEsmFile,
-  resolveRealFilePath,
-  resolveNodeModulesDirectories,
-};
+export const favIcon = Buffer.from(favicon, 'base64');
 
 /**
  * Validate that all file paths exist
@@ -49,7 +32,7 @@ module.exports = {
  * @param { string | Array<string> } filePaths
  * @returns { void }
  */
-function exists(filePaths) {
+export function exists(filePaths) {
   if (!Array.isArray(filePaths)) {
     filePaths = [filePaths];
   }
@@ -68,7 +51,7 @@ function exists(filePaths) {
  * @param { string | Array<string> } filePath
  * @returns { Array<string> }
  */
-function expandPath(filePath) {
+export function expandPath(filePath) {
   if (!filePath) {
     return [];
   }
@@ -112,7 +95,7 @@ function expandPath(filePath) {
  * @param { FindOptions } options
  * @returns { string | undefined }
  */
-function find(req, { directories = config.directories, type } = {}) {
+export function find(req, { directories = config.directories, type } = {}) {
   const href = decodeURI(isRequestObject(req) ? new URL(req.url, 'http://localhost').pathname : req);
   let filePath;
 
@@ -161,7 +144,7 @@ function find(req, { directories = config.directories, type } = {}) {
  * @param { string } fileName
  * @returns { string | undefined }
  */
-function findClosest(fileName) {
+export function findClosest(fileName) {
   let dir = path.resolve(fileName);
   let depth = MAX_FILE_SYSTEM_DEPTH;
   let parent;
@@ -191,7 +174,7 @@ function findClosest(fileName) {
  * @param { string | Array<string> } filePath
  * @returns { string }
  */
-function getProjectPath(filePath) {
+export function getProjectPath(filePath) {
   if (Array.isArray(filePath)) {
     filePath = filePath[0];
   }
@@ -207,7 +190,7 @@ function getProjectPath(filePath) {
  * @param { string } filePath
  * @returns { string }
  */
-function getAbsoluteProjectPath(filePath) {
+export function getAbsoluteProjectPath(filePath) {
   return isAbsoluteFilePath(filePath)
     ? filePath
     : path.join(process.cwd(), filePath.charAt(0) === '/' ? filePath.slice(1) : filePath);
@@ -219,7 +202,7 @@ function getAbsoluteProjectPath(filePath) {
  * @param { Req } req
  * @returns { string }
  */
-function getTypeFromRequest(req) {
+export function getTypeFromRequest(req) {
   // Unknown file types are sent with 'Accept: text/html',
   // so try JS/CSS before HTML
   if (req.type) {
@@ -241,7 +224,7 @@ function getTypeFromRequest(req) {
  * @param { string } filePath
  * @returns { 'css' | 'html' | 'js' }
  */
-function getTypeFromPath(filePath) {
+export function getTypeFromPath(filePath) {
   return config.typesByExtension[path.extname(filePath)];
 }
 
@@ -251,7 +234,7 @@ function getTypeFromPath(filePath) {
  * @param { string } dirPath
  * @returns { Array<string> }
  */
-function getDirectoryContents(dirPath) {
+export function getDirectoryContents(dirPath) {
   if (fs.statSync(dirPath).isFile()) {
     return [dirPath];
   }
@@ -266,7 +249,7 @@ function getDirectoryContents(dirPath) {
  * @param { string } [fileContents]
  * @returns { boolean }
  */
-function isCjsFile(filePath, fileContents) {
+export function isCjsFile(filePath, fileContents) {
   if (fileFormatCache.has(filePath)) {
     return fileFormatCache.get(filePath) === 'cjs';
   }
@@ -292,7 +275,7 @@ function isCjsFile(filePath, fileContents) {
  * @param { string } [fileContents]
  * @returns { boolean }
  */
-function isEsmFile(filePath, fileContents) {
+export function isEsmFile(filePath, fileContents) {
   if (fileFormatCache.has(filePath)) {
     return fileFormatCache.get(filePath) === 'esm';
   }
@@ -411,7 +394,7 @@ function resolveFilePathExtension(filePath, extensions) {
  * @param { string } filePath
  * @returns { string }
  */
-function resolveRealFilePath(filePath) {
+export function resolveRealFilePath(filePath) {
   if (!filePath) {
     return filePath;
   }
@@ -439,7 +422,7 @@ function isRequestObject(req) {
  * @param { string } filePath
  * @returns { Array<string> }
  */
-function resolveNodeModulesDirectories(filePath) {
+export function resolveNodeModulesDirectories(filePath) {
   let dir = path.extname(filePath) ? path.dirname(filePath) : filePath;
   /** @type { Array<string> } */
   let dirs = [];
