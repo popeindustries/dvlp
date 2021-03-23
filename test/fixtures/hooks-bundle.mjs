@@ -1,6 +1,6 @@
-const path = require('path');
+import path from 'path';
 
-module.exports = {
+export default {
   onDependencyBundle(id, filePath) {
     return `this is bundled content for: ${path.basename(filePath)}`;
   },

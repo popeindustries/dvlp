@@ -1,3 +1,4 @@
+import { init, parse } from 'cjs-module-lexer';
 import {
   isAbsoluteFilePath,
   isBundledUrl,
@@ -12,9 +13,10 @@ import favicon from './favicon.js';
 import fs from 'fs';
 import glob from 'glob';
 import isFileEsm from 'is-file-esm';
-import { parse } from 'cjs-module-lexer';
 import path from 'path';
 import { URL } from 'url';
+
+export const favIcon = Buffer.from(favicon, 'base64');
 
 const FILE_TYPES = ['html', 'js', 'css'];
 const MAX_FILE_SYSTEM_DEPTH = 10;
@@ -24,7 +26,7 @@ const RE_SEPARATOR = /[,;]\s?|\s/g;
 /** @type { Map<string, 'cjs' | 'esm'> } */
 const fileFormatCache = new Map();
 
-export const favIcon = Buffer.from(favicon, 'base64');
+init();
 
 /**
  * Validate that all file paths exist

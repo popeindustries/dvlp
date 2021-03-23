@@ -70,7 +70,7 @@ if (TESTING) {
 /**
  * @type { Config }
  */
-export default {
+const config = {
   applicationPort: port,
   brokenNamedExportsPackages,
   bundleDir,
@@ -112,3 +112,5 @@ export default {
   },
   version: VERSION,
 };
+
+export default config;

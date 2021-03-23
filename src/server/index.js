@@ -1,5 +1,5 @@
-import logger, { error, info } from '../utils/log.js';
 import { exists, expandPath, getProjectPath } from '../utils/file.js';
+import logger, { error, info } from '../utils/log.js';
 import chalk from 'chalk';
 import config from '../config.js';
 import DvlpServer from './server.js';
@@ -20,39 +20,34 @@ export default async function serverFactory(
   { certsPath, directories, hooksPath, mockPath, port = config.applicationPort, reload = true, silent } = {},
 ) {
   const entry = resolveEntry(filePath, directories);
-
-  config.directories = Array.from(new Set(entry.directories));
-
-  if (certsPath) {
-    certsPath = expandPath(certsPath);
-  }
-
-  if (mockPath) {
-    mockPath = expandPath(mockPath);
-  }
-
+  /** @type { Hooks | undefined } */
+  let hooks;
   /** @type { Reloader | undefined } */
   let reloader;
   /** @type { SecureProxy | undefined } */
   let secureProxy;
 
-  if (process.env.PORT === undefined) {
-    process.env.PORT = String(port);
-  }
+  config.directories = Array.from(new Set(entry.directories));
 
+  if (mockPath) {
+    mockPath = expandPath(mockPath);
+  }
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
-
+    hooks = await import(hooksPath);
     info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
   }
-
   if (certsPath) {
+    certsPath = expandPath(certsPath);
     secureProxy = await secureProxyServer(certsPath, reload);
   } else if (reload) {
     reloader = await reloadServer();
   }
+  if (process.env.PORT === undefined) {
+    process.env.PORT = String(port);
+  }
 
-  const server = new DvlpServer(entry.main, reload ? secureProxy || reloader : undefined, hooksPath, mockPath);
+  const server = new DvlpServer(entry.main, reload ? secureProxy || reloader : undefined, hooks, mockPath);
 
   try {
     await server.start();

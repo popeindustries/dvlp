@@ -13,30 +13,44 @@ export default class Hooker {
   /**
    * Constructor
    *
-   * @param { string } [hooksPath]
+   * @param { Hooks } [hooks]
    * @param { Watcher } [watcher]
    */
-  constructor(hooksPath, watcher) {
-    /** @type { Hooks | undefined } */
-    this.hooks;
+  constructor(hooks, watcher) {
+    if (hooks) {
+      for (const name of Object.keys(hooks)) {
+        if (!HOOK_NAMES.includes(name)) {
+          warn(`⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(', ')}`);
+        }
+      }
+    }
 
     /** @type { esbuild } */
     this.esbuild = {
       build: esBuild,
       transform: esTransform,
     };
+    /** @type { Hooks | undefined } */
+    this.hooks = hooks;
     /** @type { Map<string, string> } */
     this.transformCache = new Map();
     this.watcher = watcher;
 
-    this.bundle = this.bundle.bind(this);
-    this.transform = this.transform.bind(this);
-    this.resolveImport = this.resolveImport.bind(this);
-    this.send = this.send.bind(this);
-    this.serverTransform = this.serverTransform.bind(this);
+    /** @type { Array<import('esbuild').Plugin> } */
+    this.serverBundlePlugins = [
+      {
+        name: 'server-bundle',
+        setup(build) {
+          build.onLoad({ filter: /^[./]/ }, async function (args) {
+            return undefined;
+          });
+        },
+      },
+    ];
 
-    if (this.watcher) {
-      const watcher = this.watcher;
+    // Patch build to watch files when used in transform hook,
+    // since esbuild file reads don't use fs.readFile API
+    if (watcher) {
       /** @type { import('esbuild').Plugin } */
       const watchPlugin = {
         name: 'watch-local',
@@ -58,6 +72,7 @@ export default class Hooker {
         },
       };
 
+      this.serverBundlePlugins.push(watchPlugin);
       this.esbuild.build = new Proxy(this.esbuild.build, {
         apply(target, context, args) {
           if (!args[0].plugins) {
@@ -69,17 +84,12 @@ export default class Hooker {
       });
     }
 
-    if (hooksPath) {
-      import(hooksPath).then((hooks) => {
-        for (const name of Object.keys(hooks)) {
-          if (!HOOK_NAMES.includes(name)) {
-            warn(`⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(', ')}`);
-          }
-        }
-
-        this.hooks = hooks;
-      });
-    }
+    this.bundle = this.bundle.bind(this);
+    this.transform = this.transform.bind(this);
+    this.resolveImport = this.resolveImport.bind(this);
+    this.send = this.send.bind(this);
+    this.serverBundle = this.serverBundle.bind(this);
+    this.serverTransform = this.serverTransform.bind(this);
   }
 
   /**
@@ -153,7 +163,15 @@ export default class Hooker {
   }
 
   /**
-   * Transform content for 'filePath' import
+   * Bundle server content for 'filePath' entry
+   *
+   * @param { string } filePath
+   * @returns { Promise<void> }
+   */
+  async serverBundle(filePath) {}
+
+  /**
+   * Transform server content for 'filePath' import
    *
    * @param { string } filePath
    * @param { string } fileContents

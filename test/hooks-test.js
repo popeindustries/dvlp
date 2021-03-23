@@ -2,7 +2,10 @@ import config from '../src/config.js';
 import { expect } from 'chai';
 import fs from 'fs';
 import Hooks from '../src/hooks/index.js';
+import hooksFixture from './fixtures/hooks-bundle.mjs';
 import path from 'path';
+import transformBundleFixture from './fixtures/hooks-transform-bundle.js';
+import transformFixture from './fixtures/hooks-transform.js';
 
 const DEBUG = 'debug-4.3.1.js';
 const REACT = 'react-17.0.1.js';
@@ -42,7 +45,7 @@ describe('hooks()', () => {
       const filePath = path.join(config.bundleDir, LODASH);
       await hooks.bundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
-      expect(module).to.include('var export_default = import_lodash.default');
+      expect(module).to.include('export_default as default');
     });
     it('should bundle and add missing named exports', async () => {
       const hooks = new Hooks();
@@ -61,18 +64,11 @@ describe('hooks()', () => {
       expect(module).to.equal('this is cached');
     });
     it('should bundle with custom hook', async () => {
-      const hooks = new Hooks('./test/fixtures/hooks-bundle.js');
+      const hooks = new Hooks(hooksFixture);
       const filePath = path.join(config.bundleDir, DEBUG);
       await hooks.bundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.contain('this is bundled content for: debug-4.3.1.js');
-    });
-    it.skip('should skip bundling transient dependencies', async () => {
-      const hooks = new Hooks();
-      const filePath = path.join(config.bundleDir, DEBUG);
-      await hooks.bundle(filePath, getResponse());
-      const module = fs.readFileSync(filePath, 'utf8');
-      expect(module).to.match(/import [^\s]+ from 'ms';/);
     });
   });
 
@@ -87,7 +83,7 @@ describe('hooks()', () => {
       expect(res.body).to.contain('dep_default as default');
     });
     it('should transform with custom hook', async () => {
-      const hooks = new Hooks('./test/fixtures/hooks-transform.js');
+      const hooks = new Hooks(transformFixture);
       const filePath = path.resolve('./test/fixtures/www/script.js');
       const res = getResponse();
       await hooks.transform(filePath, '', res, {
@@ -97,7 +93,7 @@ describe('hooks()', () => {
     });
     it('should add project dependencies to optional watcher', async () => {
       const added = [];
-      const hooks = new Hooks('./test/fixtures/hooks-transform-bundle.js', {
+      const hooks = new Hooks(transformBundleFixture, {
         add(filePath) {
           added.push(filePath);
         },

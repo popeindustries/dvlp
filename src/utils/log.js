@@ -5,7 +5,6 @@ export const WARN_BARE_IMPORT =
   '⚠️  re-writing bare imports because browsers do not support Node-style import identifiers';
 export const WARN_MISSING_EXTENSION =
   '⚠️  adding missing extensions because browsers can only resolve valid URL identifiers';
-export const WARN_NODE_PATH = '⚠️  re-writing NODE_PATH import because browsers can only resolve valid URL identifiers';
 export const WARN_PACKAGE_INDEX =
   '⚠️  adding missing package index.js because browsers do not support Node-style package identifiers';
 export const WARN_SERVER_TRANSPILE =
@@ -15,7 +14,6 @@ const SEG_LENGTH = 80;
 
 let maxBareImport = 1;
 let maxMissingExtension = 1;
-let maxNodePath = 1;
 let maxPackageIndex = 1;
 let maxServerTranspile = 1;
 let silent = false;
@@ -67,11 +65,6 @@ export function warn(...args) {
       case WARN_BARE_IMPORT:
         if (maxBareImport-- > 0) {
           msg = `${WARN_BARE_IMPORT}`;
-        }
-        break;
-      case WARN_NODE_PATH:
-        if (maxNodePath-- > 0) {
-          msg = `${WARN_NODE_PATH}`;
         }
         break;
       case WARN_MISSING_EXTENSION:

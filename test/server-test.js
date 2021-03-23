@@ -31,7 +31,7 @@ describe('server', () => {
   });
 
   describe('static', () => {
-    it('should implicitly serve index.html', async () => {
+    it.only('should implicitly serve index.html', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8100,
         reload: false,

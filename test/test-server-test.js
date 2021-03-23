@@ -50,7 +50,8 @@ describe('testServer', () => {
     server = await testServer({ webroot: 'src' });
     const res = await fetch('http://localhost:8080/test-server/index.js');
     expect(res).to.exist;
-    expect(await res.text()).to.contain('module.exports.disableNetwork');
+    const module = await res.text();
+    expect(module).to.contain('testServerFactory.disableNetwork');
   });
   it('should add default connection latency to each request', async () => {
     server = await testServer();

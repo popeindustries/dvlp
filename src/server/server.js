@@ -9,7 +9,7 @@ import config from '../config.js';
 import createFileServer from './file-server.js';
 import Debug from 'debug';
 import fs from 'fs';
-import Hooks from '../hooks/index.js';
+import Hooker from '../hooks/index.js';
 import http from 'http';
 import Metrics from '../utils/metrics.js';
 import Mock from '../mock/index.js';
@@ -26,8 +26,6 @@ const debug = Debug('dvlp:server');
 const { EventSource } = WebSocket;
 const originalCreateServer = http.createServer;
 /** @type { Array<string> } */
-let dvlpModules;
-/** @type { Array<string> } */
 let globalKeys;
 
 export default class DvlpServer {
@@ -36,26 +34,21 @@ export default class DvlpServer {
    *
    * @param { string | (() => void) | undefined } main
    * @param { Reloader } [reloader]
-   * @param { string } [hooksPath]
+   * @param { Hooks } [hooks]
    * @param { string | Array<string> } [mockPath]
    */
-  constructor(main, reloader, hooksPath, mockPath) {
-    // Listen for all upcoming file system reads (including require('*'))
+  constructor(main, reloader, hooks, mockPath) {
+    // Listen for all upcoming file system reads
     // Register early to catch all reads, including transformers that patch fs.readFile
     this.watcher = this.createWatcher();
     this.unlistenForFileRead = interceptFileRead((filePath) => {
       this.addWatchFiles(filePath);
     });
 
-    if (dvlpModules === undefined) {
-      // dvlpModules = Object.keys(moduleCache);
-    }
     if (globalKeys === undefined) {
       globalKeys = Object.keys(global);
     }
 
-    /** @type { Array<string> } */
-    this.appModules = [];
     this.connections = new Map();
     this.exitHandler = null;
     this.lastChanged = '';
@@ -74,7 +67,7 @@ export default class DvlpServer {
     this.reloader = reloader;
     /** @type { HttpServer | null } */
     this.server = null;
-    this.hooks = new Hooks(hooksPath, this.watcher);
+    this.hooks = new Hooker(hooks, this.watcher);
     this.urlToFilePath = new Map();
     /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
@@ -189,8 +182,8 @@ export default class DvlpServer {
           server.on('listening', () => {
             debug('server started');
             clearTimeout(timeoutID);
-            instance.appModules = getAppModules();
-            instance.addWatchFiles(instance.appModules);
+            // instance.appModules = getAppModules();
+            // instance.addWatchFiles(instance.appModules);
             const address = server.address();
             if (address && typeof address !== 'string') {
               instance.port = address.port;
@@ -376,8 +369,6 @@ export default class DvlpServer {
     }
     process.removeListener('uncaughtException', this.onUncaught);
     process.removeListener('unhandledRejection', this.onUncaught);
-    // @ts-ignore
-    clearAppModules(this.appModules, this.main);
     clearGlobals();
   }
 
@@ -573,42 +564,6 @@ function handlePushEvent(req, res, mocks) {
   }
 
   return false;
-}
-
-/**
- * Retrieve app modules (excluding node_modules)
- *
- * @returns { Array<string> }
- */
-function getAppModules() {
-  // const modules = Object.keys(moduleCache).filter((m) => !dvlpModules.includes(m) /* && !isNodeModuleFilePath(m) */);
-  // debug(`found ${modules.length} app modules`);
-  // return modules;
-}
-
-/**
- * Clear app modules from module cache
- *
- * @param { Array<string> } appModules
- * @param { string } main
- */
-function clearAppModules(appModules, main) {
-  // const mainModule = moduleCache[main];
-  // // Remove main from parent
-  // // (No children when bundled)
-  // if (mainModule != undefined && mainModule.parent != null && mainModule.parent.children != null) {
-  //   const parent = mainModule.parent;
-  //   let i = parent.children.length;
-  //   while (--i) {
-  //     if (parent.children[i].id === mainModule.id) {
-  //       parent.children.splice(i, 1);
-  //     }
-  //   }
-  // }
-  // for (const m of appModules) {
-  //   delete moduleCache[m];
-  // }
-  // debug(`cleared ${appModules.length} app modules from require.cache`);
 }
 
 /**
