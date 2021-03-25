@@ -7,6 +7,7 @@ import { isBundledFilePath, isNodeModuleFilePath } from '../utils/is.js';
 import chalk from 'chalk';
 import config from '../config.js';
 import createFileServer from './file-server.js';
+import { createRequire } from 'module';
 import Debug from 'debug';
 import fs from 'fs';
 import Hooker from '../hooks/index.js';
@@ -25,6 +26,7 @@ const START_TIMEOUT_DURATION = 4000;
 const debug = Debug('dvlp:server');
 const { EventSource } = WebSocket;
 const originalCreateServer = http.createServer;
+const require = createRequire(import.meta.url);
 /** @type { Array<string> } */
 let globalKeys;
 
@@ -53,6 +55,7 @@ export default class DvlpServer {
     this.exitHandler = null;
     this.lastChanged = '';
     this.main = main;
+    this.mainPath = '';
     this.mocks = mockPath ? new Mock(mockPath) : undefined;
     this.staticMode = main === undefined;
 
@@ -182,8 +185,6 @@ export default class DvlpServer {
           server.on('listening', () => {
             debug('server started');
             clearTimeout(timeoutID);
-            // instance.appModules = getAppModules();
-            // instance.addWatchFiles(instance.appModules);
             const address = server.address();
             if (address && typeof address !== 'string') {
               instance.port = address.port;
@@ -331,9 +332,9 @@ export default class DvlpServer {
   /**
    * Start application
    *
-   * @returns { void }
+   * @returns { Promise<void> }
    */
-  startApplication() {
+  async startApplication() {
     debug('starting application');
     process.on('uncaughtException', this.onUncaught);
     // @ts-ignore
@@ -350,7 +351,8 @@ export default class DvlpServer {
     } else if (typeof this.main === 'function') {
       this.main();
     } else {
-      // importModule(this.main, this.hooks.serverTransform);
+      this.mainPath = await this.hooks.serverBundle(this.main);
+      await import(this.mainPath);
     }
   }
 
@@ -366,6 +368,9 @@ export default class DvlpServer {
     }
     if (this.exitHandler) {
       await this.exitHandler();
+    }
+    if (config.format === 'cjs') {
+      delete require.cache[this.mainPath];
     }
     process.removeListener('uncaughtException', this.onUncaught);
     process.removeListener('unhandledRejection', this.onUncaught);

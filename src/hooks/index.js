@@ -1,8 +1,9 @@
-import { build as esBuild, transform as esTransform, transformSync as esTransformSync } from 'esbuild';
-import { extname, resolve as resolvePath } from 'path';
+import { build as esBuild, transform as esTransform } from 'esbuild';
 import bundle from './bundle.js';
-import { isCjsFile } from '../utils/file.js';
+import config from '../config.js';
 import { isNodeModuleFilePath } from '../utils/is.js';
+import { join } from 'path';
+import { readFileSync } from 'fs';
 import { resolve } from '../resolver/index.js';
 import transform from './transform.js';
 import { warn } from '../utils/log.js';
@@ -39,10 +40,31 @@ export default class Hooker {
     /** @type { Array<import('esbuild').Plugin> } */
     this.serverBundlePlugins = [
       {
-        name: 'server-bundle',
+        name: 'bundle-server-project-files',
         setup(build) {
-          build.onLoad({ filter: /^[./]/ }, async function (args) {
-            return undefined;
+          build.onResolve({ filter: /.*/ }, function (args) {
+            const { importer, path } = args;
+            const filePath = resolve(path, importer);
+            const external = filePath === undefined || isNodeModuleFilePath(filePath);
+
+            if (external) {
+              return { path, external };
+            }
+            return { path: filePath, namespace: 'project-file' };
+          });
+          build.onLoad({ filter: /^[./]/, namespace: 'project-file' }, async function (args) {
+            try {
+              let contents = readFileSync(args.path, 'utf8');
+              if (hooks && hooks.onServerTransform) {
+                const code = await hooks.onServerTransform(args.path, contents);
+                if (code !== undefined) {
+                  contents = code;
+                }
+              }
+              return { contents };
+            } catch (err) {
+              return { errors: [{ text: err.message }] };
+            }
           });
         },
       },
@@ -52,33 +74,29 @@ export default class Hooker {
     // since esbuild file reads don't use fs.readFile API
     if (watcher) {
       /** @type { import('esbuild').Plugin } */
-      const watchPlugin = {
-        name: 'watch-local',
+      const resolvePlugin = {
+        name: 'watch-project-files',
         setup(build) {
           build.onResolve({ filter: /^[./]/ }, function (args) {
-            const { importer, path, resolveDir } = args;
-            const filePath = resolvePath(resolveDir, path);
+            const { importer, path } = args;
+            const filePath = resolve(path, importer);
 
-            if (!isNodeModuleFilePath(filePath)) {
-              const importPath = resolve(path, importer);
-
-              if (importPath) {
-                watcher.add(importPath);
-              }
+            if (filePath && !isNodeModuleFilePath(filePath)) {
+              watcher && watcher.add(filePath);
             }
 
-            return undefined;
+            return {
+              path: filePath || path,
+            };
           });
         },
       };
-
-      this.serverBundlePlugins.push(watchPlugin);
       this.esbuild.build = new Proxy(this.esbuild.build, {
         apply(target, context, args) {
           if (!args[0].plugins) {
             args[0].plugins = [];
           }
-          args[0].plugins.push(watchPlugin);
+          args[0].plugins.unshift(resolvePlugin);
           return Reflect.apply(target, context, args);
         },
       });
@@ -166,32 +184,56 @@ export default class Hooker {
    * Bundle server content for 'filePath' entry
    *
    * @param { string } filePath
-   * @returns { Promise<void> }
+   * @returns { Promise<string> }
    */
-  async serverBundle(filePath) {}
+  async serverBundle(filePath) {
+    const { format } = config;
+    const outputPath = join(config.applicationDir, `app-${Date.now()}.${format === 'cjs' ? 'cjs' : 'mjs'}`);
+
+    await esBuild({
+      banner: {
+        js:
+          format === 'cjs'
+            ? ''
+            : "import { createRequire } from 'module'; \nconst require = createRequire(import.meta.url);",
+      },
+      bundle: true,
+      stdin: {
+        contents: `import '${filePath}';`,
+        resolveDir: process.cwd(),
+      },
+      format,
+      outfile: outputPath,
+      platform: 'node',
+      plugins: this.serverBundlePlugins,
+      target: `node${process.versions.node}`,
+    });
+
+    return outputPath;
+  }
 
   /**
    * Transform server content for 'filePath' import
    *
    * @param { string } filePath
    * @param { string } fileContents
-   * @returns { string }
+   * @returns { Promise<string> }
    */
-  serverTransform(filePath, fileContents) {
+  async serverTransform(filePath, fileContents) {
     let result;
 
     if (this.hooks && this.hooks.onServerTransform) {
-      result = this.hooks.onServerTransform(filePath, fileContents);
+      result = await this.hooks.onServerTransform(filePath, fileContents);
     }
-    if (result === undefined && !isCjsFile(filePath, fileContents)) {
-      result = esTransformSync(fileContents, {
-        format: 'cjs',
-        // @ts-ignore - supports all filetypes supported by node
-        loader: extname(filePath).slice(1),
-        sourcefile: filePath,
-        target: `node${process.versions.node}`,
-      }).code;
-    }
+    // if (result === undefined && !isCjsFile(filePath, fileContents)) {
+    //   result = esTransformSync(fileContents, {
+    //     format: 'cjs',
+    //     // @ts-ignore - supports all filetypes supported by node
+    //     loader: extname(filePath).slice(1),
+    //     sourcefile: filePath,
+    //     target: `node${process.versions.node}`,
+    //   }).code;
+    // }
 
     return result || fileContents;
   }

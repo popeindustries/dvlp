@@ -61,6 +61,8 @@ declare namespace Metrics {
   }
 }
 declare interface Config {
+  applicationDir: string;
+  applicationDirName: string;
   applicationPort: number;
   brokenNamedExportsPackages: Record<string, Array<string>>;
   bundleDir: string;
@@ -69,6 +71,7 @@ declare interface Config {
   extensionsByType: {
     [type: string]: Array<string>;
   };
+  format: 'cjs' | 'esm';
   latency: number;
   maxAge: string;
   port: number;

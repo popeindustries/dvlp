@@ -31,7 +31,7 @@ describe('server', () => {
   });
 
   describe('static', () => {
-    it.only('should implicitly serve index.html', async () => {
+    it('should implicitly serve index.html', async () => {
       server = await serverFactory('test/fixtures/www', {
         port: 8100,
         reload: false,
@@ -101,7 +101,7 @@ describe('server', () => {
     });
     it('should serve files from additional directories', async () => {
       server = await serverFactory(
-        ['test/fixtures/www', path.resolve(path.dirname(import.meta.url), 'fixtures/assets')],
+        ['test/fixtures/www', path.join(path.dirname(new URL(import.meta.url).pathname), 'fixtures/assets')],
         { port: 8100 },
       );
       const res = await fetch('http://localhost:8100/index.css');

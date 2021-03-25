@@ -13,6 +13,8 @@ const TESTING = process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefin
 // Replaced during build
 const VERSION = global.$VERSION || 'dev';
 
+const applicationDirName = `${path.join(DIR, `app-${VERSION}`)}`;
+const applicationDir = path.resolve(applicationDirName);
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
 const bundleDir = path.resolve(bundleDirName);
 const port = process.env.PORT ? Number(process.env.PORT) : 8080;
@@ -22,11 +24,11 @@ mime.define(JS_MIME_TYPES, true);
 send.mime.define(JS_MIME_TYPES, true);
 
 const dir = path.resolve(DIR);
+const applicationDirExists = fs.existsSync(applicationDir);
 const bundleDirExists = fs.existsSync(bundleDir);
 const dirExists = fs.existsSync(dir);
-const rm = dirExists && !bundleDirExists;
 
-if (rm) {
+if (dirExists && !bundleDirExists) {
   const contents = fs.readdirSync(dir).map((item) => path.resolve(dir, item));
 
   for (const item of contents) {
@@ -36,8 +38,14 @@ if (rm) {
     }
   }
 }
+if (applicationDirExists) {
+  rimraf.sync(applicationDir);
+}
 if (!dirExists) {
   fs.mkdirSync(dir);
+}
+if (!applicationDirExists) {
+  fs.mkdirSync(applicationDir);
 }
 if (!bundleDirExists) {
   fs.mkdirSync(bundleDir);
@@ -71,6 +79,8 @@ if (TESTING) {
  * @type { Config }
  */
 const config = {
+  applicationDir,
+  applicationDirName,
   applicationPort: port,
   brokenNamedExportsPackages,
   bundleDir,
@@ -82,6 +92,7 @@ const config = {
     html: ['.nunjs', '.nunjucks', '.hbs', '.handlebars', '.dust', '.html', '.htm'],
     js: ['.ts', '.tsx', '.jsx', '.mjs', '.cjs', '.js', '.json'],
   },
+  format: 'esm',
   latency: 50,
   maxAge: '10m',
   port,

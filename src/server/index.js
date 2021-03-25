@@ -1,4 +1,4 @@
-import { exists, expandPath, getProjectPath } from '../utils/file.js';
+import { exists, expandPath, getProjectPath, isCjsFile } from '../utils/file.js';
 import logger, { error, info } from '../utils/log.js';
 import chalk from 'chalk';
 import config from '../config.js';
@@ -28,13 +28,21 @@ export default async function serverFactory(
   let secureProxy;
 
   config.directories = Array.from(new Set(entry.directories));
-
+  // Set format based on application entry
+  if (entry.isApp) {
+    // @ts-ignore
+    config.format = isCjsFile(entry.main, fs.readFileSync(entry.main, 'utf8')) ? 'cjs' : 'esm';
+  }
   if (mockPath) {
     mockPath = expandPath(mockPath);
   }
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
     hooks = await import(hooksPath);
+    if (hooks && 'default' in hooks) {
+      // @ts-ignore
+      hooks = hooks.default;
+    }
     info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
   }
   if (certsPath) {
