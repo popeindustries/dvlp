@@ -1,3 +1,4 @@
+import { error, fatal, warn } from '../utils/log.js';
 import { Certificate } from '@fidm/x509';
 import config from '../config.js';
 import decorateWithServerDestroy from 'server-destroy';
@@ -54,7 +55,6 @@ class SecureProxyServer extends EventSourceServer {
    */
   start(serverOptions) {
     return new Promise((resolve, reject) => {
-      /** @type { DestroyableHttpsServer } */
       this.server = https.createServer(serverOptions, async (req, res) => {
         // @ts-ignore
         if (this.isReloadRequest(req)) {
@@ -164,13 +164,13 @@ function validateCert(certFileData) {
     const diff = expires.getTime() - now.getTime();
 
     if (diff < 0) {
-      throw Error('your ssl certificate has expired!');
+      error('your ssl certificate has expired!');
     } else if (diff / 86400000 < 10) {
-      // TODO warn
+      warn('cetificate will expire soon!');
     }
 
     return commonName;
   } catch (err) {
-    // TODO: log error
+    fatal(err);
   }
 }
