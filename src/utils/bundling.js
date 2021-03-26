@@ -43,7 +43,7 @@ export function resolveBundleFileName(id, filePath) {
 
   const pkg = getCachedPackage(path.dirname(filePath));
 
-  return `${encodeBundleId(id)}-${pkg.version}.js`;
+  return `${encodeBundleId(id)}-${pkg ? pkg.version : ''}.js`;
 }
 
 /**

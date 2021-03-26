@@ -352,6 +352,7 @@ export default class DvlpServer {
       this.main();
     } else {
       this.mainPath = await this.hooks.serverBundle(this.main);
+      // @ts-ignore
       await import(pathToFileURL(this.mainPath));
     }
   }

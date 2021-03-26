@@ -39,6 +39,7 @@ export default async function serverFactory(
   }
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
+    // @ts-ignore
     hooks = await import(pathToFileURL(hooksPath));
     if (hooks && 'default' in hooks) {
       // @ts-ignore

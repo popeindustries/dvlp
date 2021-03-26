@@ -103,7 +103,7 @@ describe('hooks()', () => {
       await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
       });
-      expect(added).to.deep.equal([path.resolve('./test/fixtures/www/dep-esm.js')]);
+      expect(added).to.deep.equal([filePath, path.resolve('./test/fixtures/www/dep-esm.js')]);
     });
   });
 });
