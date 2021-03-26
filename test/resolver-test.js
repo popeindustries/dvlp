@@ -2,18 +2,19 @@ import { clearResolverCache, resolve } from '../src/resolver/index.js';
 import { getPackage, resolvePackagePath } from '../src/resolver/package.js';
 import config from '../src/config.js';
 import { expect } from 'chai';
+import { fileURLToPath } from 'url';
 import path from 'path';
 import { platform } from 'os';
 
 describe('resolver', () => {
   before(() => {
-    const cwd = path.join(path.dirname(new URL(import.meta.url).pathname), 'fixtures/resolver');
+    const cwd = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures/resolver');
     config.directories.push(cwd);
     process.chdir(cwd);
   });
   after(() => {
     config.directories.pop();
-    process.chdir(path.join(path.dirname(new URL(import.meta.url).pathname), '..'));
+    process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), '..'));
   });
 
   describe('package', () => {

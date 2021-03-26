@@ -1,11 +1,11 @@
 import config from '../config.js';
+import { fileURLToPath } from 'url';
 import fs from 'fs';
 import path from 'path';
-import { URL } from 'url';
 
 const reloadClient =
   global.$RELOAD_CLIENT ||
-  fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'reload-client.js'), 'utf8');
+  fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'reload-client.js'), 'utf8');
 
 /**
  * Retrieve embeddable reload client script

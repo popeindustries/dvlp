@@ -1,7 +1,7 @@
 import { error, info, noisyInfo } from '../utils/log.js';
+import { fileURLToPath, URL, URLSearchParams } from 'url';
 import { isInvalidFilePath, isJsonFilePath } from '../utils/is.js';
 import { match, pathToRegexp } from 'path-to-regexp';
-import { URL, URLSearchParams } from 'url';
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
@@ -19,7 +19,7 @@ const RE_MAX_AGE = /max-age=(\d+)/;
 const debug = Debug('dvlp:mock');
 const mockClient =
   global.$MOCK_CLIENT ||
-  fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'mock-client.js'), 'utf8');
+  fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'mock-client.js'), 'utf8');
 
 export default class Mock {
   /**

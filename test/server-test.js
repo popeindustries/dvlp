@@ -3,6 +3,7 @@ import config from '../src/config.js';
 import EventSource from 'eventsource';
 import { expect } from 'chai';
 import fetch from 'node-fetch';
+import { fileURLToPath } from 'url';
 import http from 'http';
 import path from 'path';
 import serverFactory from '../src/server/index.js';
@@ -101,7 +102,7 @@ describe('server', () => {
     });
     it('should serve files from additional directories', async () => {
       server = await serverFactory(
-        ['test/fixtures/www', path.join(path.dirname(new URL(import.meta.url).pathname), 'fixtures/assets')],
+        ['test/fixtures/www', path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures/assets')],
         { port: 8100 },
       );
       const res = await fetch('http://localhost:8100/index.css');
