@@ -272,7 +272,7 @@ declare class TestServer {
 }
 
 declare interface DependencyBundleHookContext {
-  esbuild: esbuild;
+  esbuild: Pick<esbuild, 'build'>;
 }
 
 declare interface TransformHookContext {

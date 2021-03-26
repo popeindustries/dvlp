@@ -17,7 +17,7 @@ const debug = Debug('dvlp:bundle');
  *
  * @param { string } filePath
  * @param { Res } res
- * @param { esbuild } esbuild
+ * @param { Pick<esbuild, 'build'> } esbuild
  * @param { Hooks["onDependencyBundle"] } hookFn
  * @returns { Promise<void> }
  */
@@ -83,7 +83,6 @@ export default async function bundle(filePath, res, esbuild, hookFn) {
         if (!result.outputFiles) {
           throw Error(`unknown bundling error: ${result.warnings.join('\n')}`);
         }
-
         code = result.outputFiles[0].text;
       }
     } catch (err) {

@@ -3,7 +3,6 @@ import bundle from './bundle.js';
 import config from '../config.js';
 import { isNodeModuleFilePath } from '../utils/is.js';
 import { join } from 'path';
-import { pathToFileURL } from 'url';
 import { readFileSync } from 'fs';
 import { resolve } from '../resolver/index.js';
 import transform from './transform.js';
@@ -27,11 +26,6 @@ export default class Hooker {
       }
     }
 
-    /** @type { esbuild } */
-    this.esbuild = {
-      build: esBuild,
-      transform: esTransform,
-    };
     /** @type { Hooks | undefined } */
     this.hooks = hooks;
     /** @type { Map<string, string> } */
@@ -45,24 +39,27 @@ export default class Hooker {
         setup(build) {
           build.onResolve({ filter: /.*/ }, function (args) {
             const { importer, path } = args;
-            const filePath = resolve(path, importer);
+            const filePath = importer ? resolve(path, importer) : path;
             const external = filePath === undefined || isNodeModuleFilePath(filePath);
 
             if (external) {
               return { path, external };
             }
-            return { path: filePath, namespace: 'project-file' };
+            return { path: filePath };
           });
-          build.onLoad({ filter: /^[./]/, namespace: 'project-file' }, async function (args) {
+
+          build.onLoad({ filter: /^[./]/ }, async function (args) {
             try {
-              let contents = readFileSync(args.path, 'utf8');
               if (hooks && hooks.onServerTransform) {
+                let contents = readFileSync(args.path, 'utf8');
                 const code = await hooks.onServerTransform(args.path, contents);
+
                 if (code !== undefined) {
                   contents = code;
                 }
+
+                return { contents };
               }
-              return { contents };
             } catch (err) {
               return { errors: [{ text: err.message }] };
             }
@@ -80,19 +77,17 @@ export default class Hooker {
         setup(build) {
           build.onResolve({ filter: /^[./]/ }, function (args) {
             const { importer, path } = args;
-            const filePath = resolve(path, importer);
+            const filePath = importer ? resolve(path, importer) : path;
 
             if (filePath && !isNodeModuleFilePath(filePath)) {
               watcher && watcher.add(filePath);
             }
 
-            return {
-              path: filePath || path,
-            };
+            return undefined;
           });
         },
       };
-      this.esbuild.build = new Proxy(this.esbuild.build, {
+      this.patchedESBuild = new Proxy(esBuild, {
         apply(target, context, args) {
           if (!args[0].plugins) {
             args[0].plugins = [];
@@ -101,6 +96,8 @@ export default class Hooker {
           return Reflect.apply(target, context, args);
         },
       });
+    } else {
+      this.patchedESBuild = esBuild;
     }
 
     this.bundle = this.bundle.bind(this);
@@ -108,7 +105,6 @@ export default class Hooker {
     this.resolveImport = this.resolveImport.bind(this);
     this.send = this.send.bind(this);
     this.serverBundle = this.serverBundle.bind(this);
-    this.serverTransform = this.serverTransform.bind(this);
   }
 
   /**
@@ -119,7 +115,14 @@ export default class Hooker {
    * @returns { Promise<void> }
    */
   async bundle(filePath, res) {
-    await bundle(filePath, res, this.esbuild, this.hooks && this.hooks.onDependencyBundle);
+    await bundle(
+      filePath,
+      res,
+      {
+        build: esBuild,
+      },
+      this.hooks && this.hooks.onDependencyBundle,
+    );
   }
 
   /**
@@ -138,7 +141,10 @@ export default class Hooker {
       res,
       clientPlatform,
       this.transformCache,
-      this.esbuild,
+      {
+        build: this.patchedESBuild,
+        transform: esTransform,
+      },
       this.hooks && this.hooks.onTransform,
     );
   }
@@ -200,10 +206,7 @@ export default class Hooker {
             : "import { createRequire as createDvlpTopLevelRequire } from 'module'; \nconst require = createDvlpTopLevelRequire(import.meta.url);",
       },
       bundle: true,
-      stdin: {
-        contents: `import '${pathToFileURL(filePath)}';`,
-        resolveDir: process.cwd(),
-      },
+      entryPoints: [filePath],
       format,
       outfile: outputPath,
       platform: 'node',
@@ -212,32 +215,6 @@ export default class Hooker {
     });
 
     return outputPath;
-  }
-
-  /**
-   * Transform server content for 'filePath' import
-   *
-   * @param { string } filePath
-   * @param { string } fileContents
-   * @returns { Promise<string> }
-   */
-  async serverTransform(filePath, fileContents) {
-    let result;
-
-    if (this.hooks && this.hooks.onServerTransform) {
-      result = await this.hooks.onServerTransform(filePath, fileContents);
-    }
-    // if (result === undefined && !isCjsFile(filePath, fileContents)) {
-    //   result = esTransformSync(fileContents, {
-    //     format: 'cjs',
-    //     // @ts-ignore - supports all filetypes supported by node
-    //     loader: extname(filePath).slice(1),
-    //     sourcefile: filePath,
-    //     target: `node${process.versions.node}`,
-    //   }).code;
-    // }
-
-    return result || fileContents;
   }
 
   /**
