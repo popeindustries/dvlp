@@ -4,6 +4,7 @@ import { error, fatal, info, noisyInfo } from '../utils/log.js';
 import { favIcon, find, getProjectPath, getTypeFromRequest } from '../utils/file.js';
 import { interceptFileRead, interceptProcessOn } from '../utils/intercept.js';
 import { isBundledFilePath, isNodeModuleFilePath } from '../utils/is.js';
+import { pathToFileURL, URL } from 'url';
 import chalk from 'chalk';
 import config from '../config.js';
 import createFileServer from './file-server.js';
@@ -17,7 +18,6 @@ import Mock from '../mock/index.js';
 import { parseUserAgent } from '../utils/platform.js';
 import { patchResponse } from '../utils/patch.js';
 import send from 'send';
-import { URL } from 'url';
 import watch from '../utils/watch.js';
 import WebSocket from 'faye-websocket';
 
@@ -352,7 +352,7 @@ export default class DvlpServer {
       this.main();
     } else {
       this.mainPath = await this.hooks.serverBundle(this.main);
-      await import(this.mainPath);
+      await import(pathToFileURL(this.mainPath));
     }
   }
 

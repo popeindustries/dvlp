@@ -5,6 +5,7 @@ import config from '../config.js';
 import DvlpServer from './server.js';
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { reloadServer } from '../reloader/index.js';
 import secureProxyServer from '../secure-proxy/index.js';
 
@@ -38,7 +39,7 @@ export default async function serverFactory(
   }
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
-    hooks = await import(hooksPath);
+    hooks = await import(pathToFileURL(hooksPath));
     if (hooks && 'default' in hooks) {
       // @ts-ignore
       hooks = hooks.default;
