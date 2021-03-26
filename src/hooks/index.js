@@ -3,6 +3,7 @@ import bundle from './bundle.js';
 import config from '../config.js';
 import { isNodeModuleFilePath } from '../utils/is.js';
 import { join } from 'path';
+import { pathToFileURL } from 'url';
 import { readFileSync } from 'fs';
 import { resolve } from '../resolver/index.js';
 import transform from './transform.js';
@@ -200,7 +201,7 @@ export default class Hooker {
       },
       bundle: true,
       stdin: {
-        contents: `import '${filePath}';`,
+        contents: `import '${pathToFileURL(filePath)}';`,
         resolveDir: process.cwd(),
       },
       format,

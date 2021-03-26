@@ -311,7 +311,7 @@ describe('server', () => {
   });
 
   describe('application', () => {
-    it('should start an app server', async () => {
+    it.only('should start an app server', async () => {
       server = await serverFactory('test/fixtures/app.js', {
         port: 8100,
         reload: false,
