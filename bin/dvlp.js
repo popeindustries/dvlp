@@ -2,8 +2,12 @@
 
 process.env.NODE_NO_WARNINGS = '1';
 
-const pkg = require('../package.json');
-const program = require('commander');
+import { dirname, join } from 'path';
+import program from 'commander';
+import { readFileSync } from 'fs';
+import { server } from '../dvlp.js';
+
+const pkg = readFileSync(join(dirname(new URL(import.meta.url).pathname), '../package.json'), 'utf8');
 
 program
   .usage('[options] [path...]')
@@ -29,7 +33,6 @@ program.parse(process.argv);
 
 async function boot(path = [process.cwd()]) {
   try {
-    const { server } = await import('../dvlp.js');
     const options = program.opts();
 
     await server(path, {

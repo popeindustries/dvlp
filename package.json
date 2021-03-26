@@ -11,7 +11,7 @@
   "license": "MIT",
   "private": false,
   "bin": {
-    "dvlp": "bin/dvlp"
+    "dvlp": "bin/dvlp.js"
   },
   "dependencies": {
     "commander": "^7.0.0",

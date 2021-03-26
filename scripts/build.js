@@ -28,6 +28,10 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   });
 
   await build({
+    banner: {
+      js:
+        "import { createRequire as createRequireBecauseEsbuild } from 'module'; \nconst require = createRequireBecauseEsbuild(import.meta.url);",
+    },
     bundle: true,
     define: {
       'global.$RELOAD_CLIENT': `'${reloadClient}'`,
@@ -36,7 +40,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     },
     entryPoints: ['./src/index.js'],
     external: ['esbuild', 'fsevents'],
-    format: 'cjs',
+    format: 'esm',
     target: 'node12',
     platform: 'node',
     outfile: 'dvlp.js',

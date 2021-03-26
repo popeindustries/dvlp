@@ -196,7 +196,7 @@ export default class Hooker {
         js:
           format === 'cjs'
             ? ''
-            : "import { createRequire } from 'module'; \nconst require = createRequire(import.meta.url);",
+            : "import { createRequire as createDvlpTopLevelRequire } from 'module'; \nconst require = createDvlpTopLevelRequire(import.meta.url);",
       },
       bundle: true,
       stdin: {
