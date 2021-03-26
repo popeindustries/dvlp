@@ -1,13 +1,14 @@
-import { buildSync } from 'esbuild';
+import { build } from 'esbuild';
 import fs from 'fs';
+import { minify } from 'terser';
 import path from 'path';
-import pkg from '../package.json';
-import terser from 'terser';
 
-(async function build() {
-  const reloadClient = (await terser.minify(fs.readFileSync('src/reloader/reload-client.js', 'utf8'))).code;
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+
+(async function main() {
+  const reloadClient = (await minify(fs.readFileSync('src/reloader/reload-client.js', 'utf8'))).code;
   const mockClient = (
-    await terser.minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
+    await minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
       // Preserve 'cache' var for regex replacement
       mangle: { reserved: ['cache'] },
     })
@@ -18,7 +19,7 @@ import terser from 'terser';
     fs.readFileSync(path.resolve('src/types.d.ts'), 'utf8').replace(/\/\*\s+export\s+\*\//g, 'export'),
   );
 
-  buildSync({
+  await build({
     bundle: true,
     entryPoints: ['./src/test-browser/index.js'],
     format: 'esm',
@@ -26,7 +27,7 @@ import terser from 'terser';
     outfile: 'dvlp-browser.js',
   });
 
-  buildSync({
+  await build({
     bundle: true,
     define: {
       'global.$RELOAD_CLIENT': `'${reloadClient}'`,

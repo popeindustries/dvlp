@@ -190,6 +190,7 @@ export default class Hooker {
     const { format } = config;
     const outputPath = join(config.applicationDir, `app-${Date.now()}.${format === 'cjs' ? 'cjs' : 'mjs'}`);
 
+    // TODO: incremental: true, write: false, sourcemap: 'inline'
     await esBuild({
       banner: {
         js:
