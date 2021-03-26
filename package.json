@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "commander": "^7.0.0",
-    "esbuild": "^0.9.3"
+    "esbuild": "^0.10.1"
   },
   "devDependencies": {
     "@fidm/x509": "^1.2.1",
