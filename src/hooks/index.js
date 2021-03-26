@@ -46,7 +46,7 @@ export default class Hooker {
               return { path, external };
             }
 
-            watcher && filePath && watcher.add(filePath);
+            filePath && watcher && watcher.add(filePath);
             return { path: filePath };
           });
 
@@ -216,7 +216,7 @@ export default class Hooker {
           incremental: true,
           platform: 'node',
           plugins: this.serverBundlePlugins,
-          sourcemap: 'inline',
+          sourcemap: true,
           target: `node${process.versions.node}`,
           write: false,
         }));
