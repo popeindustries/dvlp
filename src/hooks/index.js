@@ -198,21 +198,21 @@ export default class Hooker {
    * @returns { Promise<string> }
    */
   async serverBundle(filePath) {
-    const { format } = config;
-    const outputPath = join(config.applicationDir, `app-${Date.now()}.${format === 'cjs' ? 'cjs' : 'mjs'}`);
+    const { applicationFormat } = config;
+    const outputPath = join(config.applicationDir, `app-${Date.now()}.${applicationFormat === 'cjs' ? 'cjs' : 'mjs'}`);
 
     const result = await (this.serverBundleRebuild
       ? this.serverBundleRebuild()
       : esBuild({
           banner: {
             js:
-              format === 'cjs'
+              applicationFormat === 'cjs'
                 ? ''
                 : "import { createRequire as createDvlpTopLevelRequire } from 'module'; \nconst require = createDvlpTopLevelRequire(import.meta.url);",
           },
           bundle: true,
           entryPoints: [filePath],
-          format,
+          format: applicationFormat,
           incremental: true,
           platform: 'node',
           plugins: this.serverBundlePlugins,

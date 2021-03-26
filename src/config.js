@@ -79,6 +79,7 @@ if (TESTING) {
 const config = {
   applicationDir,
   applicationDirName,
+  applicationFormat: 'esm',
   applicationPort: port,
   brokenNamedExportsPackages,
   bundleDir,
@@ -90,7 +91,6 @@ const config = {
     html: ['.nunjs', '.nunjucks', '.hbs', '.handlebars', '.dust', '.html', '.htm'],
     js: ['.ts', '.tsx', '.jsx', '.mjs', '.cjs', '.js', '.json'],
   },
-  format: 'esm',
   latency: 50,
   maxAge: '10m',
   port,

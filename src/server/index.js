@@ -35,7 +35,7 @@ export default async function serverFactory(
     // This is also called in utils/file.js, but not awaited, so ensure that the lexer is actually initialised first
     await init();
     // @ts-ignore
-    config.format = isCjsFile(entry.main, fs.readFileSync(entry.main, 'utf8')) ? 'cjs' : 'esm';
+    config.applicationFormat = isCjsFile(entry.main, fs.readFileSync(entry.main, 'utf8')) ? 'cjs' : 'esm';
   }
   if (mockPath) {
     mockPath = expandPath(mockPath);

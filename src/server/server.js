@@ -370,7 +370,7 @@ export default class DvlpServer {
     if (this.exitHandler) {
       await this.exitHandler();
     }
-    if (config.format === 'cjs') {
+    if (config.applicationFormat === 'cjs') {
       delete require.cache[this.mainPath];
     }
     process.removeListener('uncaughtException', this.onUncaught);
