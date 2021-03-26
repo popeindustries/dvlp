@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import config from '../config.js';
 import DvlpServer from './server.js';
 import fs from 'fs';
+import { init } from 'cjs-module-lexer';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { reloadServer } from '../reloader/index.js';
@@ -31,6 +32,8 @@ export default async function serverFactory(
   config.directories = Array.from(new Set(entry.directories));
   // Set format based on application entry
   if (entry.isApp) {
+    // This is also called in utils/file.js, but not awaited, so ensure that the lexer is actually initialised first
+    await init();
     // @ts-ignore
     config.format = isCjsFile(entry.main, fs.readFileSync(entry.main, 'utf8')) ? 'cjs' : 'esm';
   }

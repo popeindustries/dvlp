@@ -44,9 +44,7 @@ if (applicationDirExists) {
 if (!dirExists) {
   fs.mkdirSync(dir);
 }
-if (!applicationDirExists) {
-  fs.mkdirSync(applicationDir);
-}
+fs.mkdirSync(applicationDir);
 if (!bundleDirExists) {
   fs.mkdirSync(bundleDir);
 } else {

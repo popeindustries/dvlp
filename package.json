@@ -76,7 +76,7 @@
     "prepublishOnly": "npm run build",
     "test": "cross-env NODE_ENV=dvlptest mocha test/*-test.js --reporter spec --exit --timeout 10000",
     "test:browser": "npm run build && ./bin/dvlp --mock test-browser/fixtures/mock test-browser",
-    "demo": "./bin/dvlp test/fixtures/app.js"
+    "demo": "./bin/dvlp.js test/fixtures/app.js"
   },
   "prettier": {
     "arrowParens": "always",

@@ -1,9 +1,9 @@
 import { build as esBuild, transform as esTransform } from 'esbuild';
+import { readFileSync, writeFileSync } from 'fs';
 import bundle from './bundle.js';
 import config from '../config.js';
 import { isNodeModuleFilePath } from '../utils/is.js';
 import { join } from 'path';
-import { readFileSync } from 'fs';
 import { resolve } from '../resolver/index.js';
 import transform from './transform.js';
 import { warn } from '../utils/log.js';
@@ -45,6 +45,8 @@ export default class Hooker {
             if (external) {
               return { path, external };
             }
+
+            watcher && filePath && watcher.add(filePath);
             return { path: filePath };
           });
 
@@ -67,6 +69,8 @@ export default class Hooker {
         },
       },
     ];
+    /** @type { import('esbuild').BuildInvalidate } */
+    this.serverBundleRebuild;
 
     // Patch build to watch files when used in transform hook,
     // since esbuild file reads don't use fs.readFile API
@@ -197,22 +201,31 @@ export default class Hooker {
     const { format } = config;
     const outputPath = join(config.applicationDir, `app-${Date.now()}.${format === 'cjs' ? 'cjs' : 'mjs'}`);
 
-    // TODO: incremental: true, write: false, sourcemap: 'inline'
-    await esBuild({
-      banner: {
-        js:
-          format === 'cjs'
-            ? ''
-            : "import { createRequire as createDvlpTopLevelRequire } from 'module'; \nconst require = createDvlpTopLevelRequire(import.meta.url);",
-      },
-      bundle: true,
-      entryPoints: [filePath],
-      format,
-      outfile: outputPath,
-      platform: 'node',
-      plugins: this.serverBundlePlugins,
-      target: `node${process.versions.node}`,
-    });
+    const result = await (this.serverBundleRebuild
+      ? this.serverBundleRebuild()
+      : esBuild({
+          banner: {
+            js:
+              format === 'cjs'
+                ? ''
+                : "import { createRequire as createDvlpTopLevelRequire } from 'module'; \nconst require = createDvlpTopLevelRequire(import.meta.url);",
+          },
+          bundle: true,
+          entryPoints: [filePath],
+          format,
+          incremental: true,
+          platform: 'node',
+          plugins: this.serverBundlePlugins,
+          sourcemap: 'inline',
+          target: `node${process.versions.node}`,
+          write: false,
+        }));
+
+    if (!result.outputFiles) {
+      throw Error(`unknown bundling error: ${result.warnings.join('\n')}`);
+    }
+
+    writeFileSync(outputPath, result.outputFiles[0].text, 'utf8');
 
     return outputPath;
   }
@@ -221,6 +234,7 @@ export default class Hooker {
    * Destroy instance
    */
   destroy() {
+    this.serverBundleRebuild && this.serverBundleRebuild.dispose();
     this.transformCache.clear();
     this.watcher = undefined;
   }
