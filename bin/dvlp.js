@@ -3,11 +3,12 @@
 process.env.NODE_NO_WARNINGS = '1';
 
 import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import program from 'commander';
 import { readFileSync } from 'fs';
 import { server } from '../dvlp.js';
 
-const pkg = readFileSync(join(dirname(new URL(import.meta.url).pathname), '../package.json'), 'utf8');
+const pkg = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../package.json'), 'utf8');
 
 program
   .usage('[options] [path...]')
