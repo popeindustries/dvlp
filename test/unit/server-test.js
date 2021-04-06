@@ -58,7 +58,6 @@ describe('server', () => {
     it('should serve a js file with correct mime type', async () => {
       server = await serverFactory('test/unit/fixtures/www', { port: 8100 });
       const res = await fetch('http://localhost:8100/script.js');
-      console.log(await res.text());
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include('application/javascript');
     });

@@ -5,7 +5,7 @@ import { fork } from 'child_process';
 /** @type { import('child_process').ChildProcess */
 let childProcess;
 
-describe.only('server', () => {
+describe('server', () => {
   afterEach(() => {
     childProcess && childProcess.kill();
   });
@@ -51,11 +51,9 @@ describe.only('server', () => {
 function child(...args) {
   return new Promise((resolve, reject) => {
     const childProcess = fork(...args);
-    childProcess.on('spawn', () => {
-      setTimeout(() => {
-        resolve(childProcess);
-      }, 1000);
-    });
+    setTimeout(() => {
+      resolve(childProcess);
+    }, 1000);
     childProcess.on('error', reject);
   });
 }
