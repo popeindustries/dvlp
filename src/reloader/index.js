@@ -44,7 +44,6 @@ class ReloadServer extends EventSourceServer {
    */
   start() {
     return new Promise((resolve, reject) => {
-      /** @type { DestroyableHttpServer } */
       this.server = http.createServer(async (req, res) => {
         // @ts-ignore
         if (!this.isReloadRequest(req)) {
