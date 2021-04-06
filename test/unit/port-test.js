@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getDeterministicPort } from '../src/utils/port.js';
+import { getDeterministicPort } from '../../src/utils/port.js';
 
 describe('port', () => {
   describe('getDeterministicPort', () => {

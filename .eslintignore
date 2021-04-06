@@ -1,2 +1,2 @@
 *.d.ts
-/test/fixtures
+/test/unit/fixtures

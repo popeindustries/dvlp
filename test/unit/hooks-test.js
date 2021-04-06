@@ -1,7 +1,7 @@
-import config from '../src/config.js';
+import config from '../../src/config.js';
 import { expect } from 'chai';
 import fs from 'fs';
-import Hooks from '../src/hooks/index.js';
+import Hooks from '../../src/hooks/index.js';
 import hooksFixture from './fixtures/hooks-bundle.mjs';
 import path from 'path';
 import transformBundleFixture from './fixtures/hooks-transform-bundle.js';
@@ -75,7 +75,7 @@ describe('hooks()', () => {
   describe('transform', () => {
     it('should transform filePath', async () => {
       const hooks = new Hooks();
-      const filePath = path.resolve('./test/fixtures/www/dep.ts');
+      const filePath = path.resolve('./test/unit/fixtures/www/dep.ts');
       const res = getResponse();
       await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
@@ -84,7 +84,7 @@ describe('hooks()', () => {
     });
     it('should transform with custom hook', async () => {
       const hooks = new Hooks(transformFixture);
-      const filePath = path.resolve('./test/fixtures/www/script.js');
+      const filePath = path.resolve('./test/unit/fixtures/www/script.js');
       const res = getResponse();
       await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
@@ -98,12 +98,12 @@ describe('hooks()', () => {
           added.push(filePath);
         },
       });
-      const filePath = path.resolve('./test/fixtures/www/module-with-deps.js');
+      const filePath = path.resolve('./test/unit/fixtures/www/module-with-deps.js');
       const res = getResponse();
       await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
       });
-      expect(added.includes(path.resolve('./test/fixtures/www/dep-esm.js'))).to.be.true;
+      expect(added.includes(path.resolve('./test/unit/fixtures/www/dep-esm.js'))).to.be.true;
     });
   });
 });

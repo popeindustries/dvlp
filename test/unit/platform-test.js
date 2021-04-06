@@ -1,4 +1,4 @@
-import { parseEsbuildTarget, parseUserAgent } from '../src/utils/platform.js';
+import { parseEsbuildTarget, parseUserAgent } from '../../src/utils/platform.js';
 import { expect } from 'chai';
 
 describe('platform', () => {

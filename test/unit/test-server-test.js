@@ -1,7 +1,7 @@
 import EventSource from 'eventsource';
 import { expect } from 'chai';
 import fetch from 'node-fetch';
-import testServer from '../src/test-server/index.js';
+import testServer from '../../src/test-server/index.js';
 import websocket from 'faye-websocket';
 
 const { Client: WebSocket } = websocket;
@@ -193,7 +193,7 @@ describe('testServer', () => {
   describe('loadMockFiles()', () => {
     it('should respond to mocked image request with custom headers', async () => {
       server = await testServer();
-      server.loadMockFiles('test/fixtures/mock');
+      server.loadMockFiles('test/unit/fixtures/mock');
       const res = await fetch('http://localhost:8080/1234.jpg');
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('image/jpeg');
@@ -202,7 +202,7 @@ describe('testServer', () => {
     });
     it('should respond to mocked external json request', async () => {
       server = await testServer();
-      server.loadMockFiles('test/fixtures/mock');
+      server.loadMockFiles('test/unit/fixtures/mock');
       const res = await fetch('http://www.someapi.com/v1/5678');
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('application/json');
@@ -210,7 +210,7 @@ describe('testServer', () => {
     });
     it('should respond to mocked external https json request', async () => {
       server = await testServer();
-      server.loadMockFiles('test/fixtures/mock');
+      server.loadMockFiles('test/unit/fixtures/mock');
       const res = await fetch('https://www.someapi.com/v1/9012');
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('application/json');
@@ -267,7 +267,7 @@ describe('testServer', () => {
     it('should push mock event via EventSource', (done) => {
       testServer({ port: 8111 }).then((srvr) => {
         server = srvr;
-        server.loadMockFiles('test/fixtures/mock-push');
+        server.loadMockFiles('test/unit/fixtures/mock-push');
         es = new EventSource('http://localhost:8111/feed');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -282,7 +282,7 @@ describe('testServer', () => {
     it('should push mock connect event via EventSource', (done) => {
       testServer({ port: 8111 }).then((srvr) => {
         server = srvr;
-        server.loadMockFiles('test/fixtures/mock-push-connect');
+        server.loadMockFiles('test/unit/fixtures/mock-push-connect');
         es = new EventSource('http://localhost:8111/feed');
         es.onopen = () => {
           expect(es.readyState).to.equal(1);
@@ -299,7 +299,7 @@ describe('testServer', () => {
     it('should push mock event via WebSocket', (done) => {
       testServer({ port: 8111 }).then((srvr) => {
         server = srvr;
-        server.loadMockFiles('test/fixtures/mock-push');
+        server.loadMockFiles('test/unit/fixtures/mock-push');
         ws = new WebSocket('ws://localhost:8111/socket');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
@@ -315,7 +315,7 @@ describe('testServer', () => {
       testServer({ port: 8111 }).then((srvr) => {
         const events = [];
         server = srvr;
-        server.loadMockFiles('test/fixtures/mock-push-connect');
+        server.loadMockFiles('test/unit/fixtures/mock-push-connect');
         ws = new WebSocket('ws://localhost:8111/socket');
         ws.on('open', () => {
           expect(ws.readyState).to.equal(1);
@@ -334,7 +334,7 @@ describe('testServer', () => {
         let events = [];
         let last;
         server = srvr;
-        server.loadMockFiles('test/fixtures/mock-push');
+        server.loadMockFiles('test/unit/fixtures/mock-push');
         es = new EventSource('http://localhost:8111/feed');
         es.onopen = () => {
           last = Date.now();
@@ -363,7 +363,7 @@ describe('testServer', () => {
         let events = [];
         let last;
         server = srvr;
-        server.loadMockFiles('test/fixtures/mock-push');
+        server.loadMockFiles('test/unit/fixtures/mock-push');
         ws = new WebSocket('ws://localhost:8111/socket');
         ws.on('open', () => {
           last = Date.now();

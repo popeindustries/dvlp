@@ -1,6 +1,6 @@
-import { clearResolverCache, resolve } from '../src/resolver/index.js';
-import { getPackage, resolvePackagePath } from '../src/resolver/package.js';
-import config from '../src/config.js';
+import { clearResolverCache, resolve } from '../../src/resolver/index.js';
+import { getPackage, resolvePackagePath } from '../../src/resolver/package.js';
+import config from '../../src/config.js';
 import { expect } from 'chai';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -14,7 +14,7 @@ describe('resolver', () => {
   });
   after(() => {
     config.directories.pop();
-    process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), '..'));
+    process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), '../..'));
   });
 
   describe('package', () => {
