@@ -224,6 +224,9 @@ export default class Hooker {
     if (!result.outputFiles) {
       throw Error(`unknown bundling error: ${result.warnings.join('\n')}`);
     }
+    if (result.rebuild) {
+      this.serverBundleRebuild = result.rebuild;
+    }
 
     writeFileSync(outputPath, result.outputFiles[0].text, 'utf8');
 
