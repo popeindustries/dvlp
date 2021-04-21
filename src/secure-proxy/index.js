@@ -67,6 +67,9 @@ class SecureProxyServer extends EventSourceServer {
           return;
         }
 
+        req.headers['X-Forwarded-Host'] = req.headers.host;
+        req.headers.Forwarded = `host=${req.headers.host}`;
+
         const originOptions = {
           port: config.applicationPort,
           path: req.url,
