@@ -46,7 +46,7 @@
     "eventsource": "^1.0.7",
     "faye-websocket": "^0.11.3",
     "glob": "^7.1.5",
-    "husky": "^4.3.8",
+    "husky": "^6.0.0",
     "is-file-esm": "^1.0.0",
     "koa": "2.13.0",
     "koa-send": "5.0.1",
@@ -82,18 +82,14 @@
     "prepublishOnly": "npm run build",
     "test": "cross-env NODE_ENV=dvlptest mocha test/unit/*-test.js --reporter spec --exit --timeout 10000",
     "test:browser": "npm run build && ./bin/dvlp.js --mock test/browser/fixtures/mock test/browser",
-    "test:integration": "npm run build && cross-env NODE_ENV=dvlptest mocha test/integration/*-test.js --reporter spec --exit --timeout 10000"
+    "test:integration": "npm run build && cross-env NODE_ENV=dvlptest mocha test/integration/*-test.js --reporter spec --exit --timeout 10000",
+    "prepare": "husky install"
   },
   "prettier": {
     "arrowParens": "always",
     "printWidth": 120,
     "singleQuote": true,
     "trailingComma": "all"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   },
   "lint-staged": {
     "*.js": [
