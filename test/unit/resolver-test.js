@@ -1,21 +1,20 @@
-'use strict';
-
-const { clearResolverCache, resolve } = require('../src/resolver/index.js');
-const { getPackage, resolvePackagePath } = require('../src/resolver/package.js');
-const config = require('../src/config.js');
-const { expect } = require('chai');
-const { platform } = require('os');
-const path = require('path');
+import { clearResolverCache, resolve } from '../../src/resolver/index.js';
+import { getPackage, resolvePackagePath } from '../../src/resolver/package.js';
+import config from '../../src/config.js';
+import { expect } from 'chai';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import { platform } from 'os';
 
 describe('resolver', () => {
   before(() => {
-    const cwd = path.resolve(__dirname, 'fixtures/resolver');
+    const cwd = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures/resolver');
     config.directories.push(cwd);
     process.chdir(cwd);
   });
   after(() => {
     config.directories.pop();
-    process.chdir(path.resolve(__dirname, '..'));
+    process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), '../..'));
   });
 
   describe('package', () => {
@@ -45,7 +44,7 @@ describe('resolver', () => {
       });
       it('should return details for the project root package', () => {
         const pkg = getPackage(process.cwd());
-        expect(pkg).to.have.property('isNodeModule', false);
+        expect(pkg).to.have.property('isProjectPackage', true);
         expect(pkg).to.have.property('manifestPath', path.resolve('package.json'));
       });
       it('should return details for the project root package from a nested project file', () => {

@@ -1,12 +1,9 @@
-'use strict';
-
-const chalk = require('chalk');
-const config = require('../config.js');
-const debug = require('debug')('dvlp:es');
-// @ts-ignore
-const { EventSource } = require('faye-websocket');
-const { getTypeFromPath } = require('../utils/file.js');
-const { noisyInfo } = require('../utils/log.js');
+import chalk from 'chalk';
+import config from '../config.js';
+import Debug from 'debug';
+import { getTypeFromPath } from '../utils/file.js';
+import { noisyInfo } from '../utils/log.js';
+import WebSocket from 'faye-websocket';
 
 const DEFAULT_CLIENT_CONFIG = {
   headers: { 'Access-Control-Allow-Origin': '*' },
@@ -14,7 +11,10 @@ const DEFAULT_CLIENT_CONFIG = {
   retry: 10,
 };
 
-module.exports = class EventSourceServer {
+const debug = Debug('dvlp:es');
+const { EventSource } = WebSocket;
+
+export default class EventSourceServer {
   constructor() {
     /** @type { Set<EventSource> } */
     this.clients = new Set();
@@ -86,4 +86,4 @@ module.exports = class EventSourceServer {
     }
     this.clients.clear();
   }
-};
+}

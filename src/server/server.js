@@ -1,68 +1,61 @@
-'use strict';
-
-const { error, fatal, info, noisyInfo } = require('../utils/log.js');
-const { favIcon, find, getProjectPath, getTypeFromRequest } = require('../utils/file.js');
-const { interceptFileRead, interceptProcessOn } = require('../utils/intercept.js');
-const { isBundledFilePath, isNodeModuleFilePath } = require('../utils/is.js');
-const { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } = require('../utils/scripts.js');
-const { connectClient, pushEvent } = require('../push-events/index.js');
-const chalk = require('chalk');
-const config = require('../config.js');
-const createFileServer = require('./file-server.js');
-const debug = require('debug')('dvlp:server');
-const fs = require('fs');
-const Hooks = require('../hooks/index.js');
-const http = require('http');
-const { importModule } = require('../utils/module.js');
-const Metrics = require('../utils/metrics.js');
-const Mock = require('../mock/index.js');
-const { patchResponse } = require('../utils/patch.js');
-const { parseUserAgent } = require('../utils/platform.js');
-const send = require('send');
-const { URL } = require('url');
-const watch = require('../utils/watch.js');
-const WebSocket = require('faye-websocket');
+import { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } from '../utils/scripts.js';
+import { connectClient, pushEvent } from '../push-events/index.js';
+import { error, fatal, info, noisyInfo } from '../utils/log.js';
+import { favIcon, find, getProjectPath, getTypeFromRequest } from '../utils/file.js';
+import { interceptFileRead, interceptProcessOn } from '../utils/intercept.js';
+import { isBundledFilePath, isNodeModuleFilePath } from '../utils/is.js';
+import { pathToFileURL, URL } from 'url';
+import chalk from 'chalk';
+import config from '../config.js';
+import createFileServer from './file-server.js';
+import { createRequire } from 'module';
+import Debug from 'debug';
+import fs from 'fs';
+import Hooker from '../hooks/index.js';
+import http from 'http';
+import Metrics from '../utils/metrics.js';
+import Mock from '../mock/index.js';
+import { parseUserAgent } from '../utils/platform.js';
+import { patchResponse } from '../utils/patch.js';
+import send from 'send';
+import watch from '../utils/watch.js';
+import WebSocket from 'faye-websocket';
 
 const START_TIMEOUT_DURATION = 4000;
 
+const debug = Debug('dvlp:server');
 const { EventSource } = WebSocket;
-const moduleCache = require.cache;
 const originalCreateServer = http.createServer;
-/** @type { Array<string> } */
-let dvlpModules;
+const require = createRequire(import.meta.url);
 /** @type { Array<string> } */
 let globalKeys;
 
-module.exports = class DvlpServer {
+export default class DvlpServer {
   /**
    * Constructor
    *
    * @param { string | (() => void) | undefined } main
    * @param { Reloader } [reloader]
-   * @param { string } [hooksPath]
+   * @param { Hooks } [hooks]
    * @param { string | Array<string> } [mockPath]
    */
-  constructor(main, reloader, hooksPath, mockPath) {
-    // Listen for all upcoming file system reads (including require('*'))
+  constructor(main, reloader, hooks, mockPath) {
+    // Listen for all upcoming file system reads
     // Register early to catch all reads, including transformers that patch fs.readFile
     this.watcher = this.createWatcher();
     this.unlistenForFileRead = interceptFileRead((filePath) => {
       this.addWatchFiles(filePath);
     });
 
-    if (dvlpModules === undefined) {
-      dvlpModules = Object.keys(moduleCache);
-    }
     if (globalKeys === undefined) {
       globalKeys = Object.keys(global);
     }
 
-    /** @type { Array<string> } */
-    this.appModules = [];
     this.connections = new Map();
     this.exitHandler = null;
     this.lastChanged = '';
     this.main = main;
+    this.mainPath = '';
     this.mocks = mockPath ? new Mock(mockPath) : undefined;
     this.staticMode = main === undefined;
 
@@ -77,7 +70,7 @@ module.exports = class DvlpServer {
     this.reloader = reloader;
     /** @type { HttpServer | null } */
     this.server = null;
-    this.hooks = new Hooks(hooksPath, this.watcher);
+    this.hooks = new Hooker(hooks, this.watcher);
     this.urlToFilePath = new Map();
     /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
@@ -192,8 +185,6 @@ module.exports = class DvlpServer {
           server.on('listening', () => {
             debug('server started');
             clearTimeout(timeoutID);
-            instance.appModules = getAppModules();
-            instance.addWatchFiles(instance.appModules);
             const address = server.address();
             if (address && typeof address !== 'string') {
               instance.port = address.port;
@@ -341,9 +332,9 @@ module.exports = class DvlpServer {
   /**
    * Start application
    *
-   * @returns { void }
+   * @returns { Promise<void> }
    */
-  startApplication() {
+  async startApplication() {
     debug('starting application');
     process.on('uncaughtException', this.onUncaught);
     // @ts-ignore
@@ -360,7 +351,9 @@ module.exports = class DvlpServer {
     } else if (typeof this.main === 'function') {
       this.main();
     } else {
-      importModule(this.main, this.hooks.serverTransform);
+      this.mainPath = await this.hooks.serverBundle(this.main);
+      // @ts-ignore
+      await import(pathToFileURL(this.mainPath));
     }
   }
 
@@ -377,10 +370,11 @@ module.exports = class DvlpServer {
     if (this.exitHandler) {
       await this.exitHandler();
     }
+    if (config.applicationFormat === 'cjs') {
+      delete require.cache[this.mainPath];
+    }
     process.removeListener('uncaughtException', this.onUncaught);
     process.removeListener('unhandledRejection', this.onUncaught);
-    // @ts-ignore
-    clearAppModules(this.appModules, this.main);
     clearGlobals();
   }
 
@@ -451,7 +445,7 @@ module.exports = class DvlpServer {
     this.hooks.destroy();
     return this.stop();
   }
-};
+}
 
 /**
  * Handle request for favicon
@@ -576,48 +570,6 @@ function handlePushEvent(req, res, mocks) {
   }
 
   return false;
-}
-
-/**
- * Retrieve app modules (excluding node_modules)
- *
- * @returns { Array<string> }
- */
-function getAppModules() {
-  const modules = Object.keys(moduleCache).filter((m) => !dvlpModules.includes(m) /* && !isNodeModuleFilePath(m) */);
-
-  debug(`found ${modules.length} app modules`);
-
-  return modules;
-}
-
-/**
- * Clear app modules from module cache
- *
- * @param { Array<string> } appModules
- * @param { string } main
- */
-function clearAppModules(appModules, main) {
-  const mainModule = moduleCache[main];
-
-  // Remove main from parent
-  // (No children when bundled)
-  if (mainModule != undefined && mainModule.parent != null && mainModule.parent.children != null) {
-    const parent = mainModule.parent;
-    let i = parent.children.length;
-
-    while (--i) {
-      if (parent.children[i].id === mainModule.id) {
-        parent.children.splice(i, 1);
-      }
-    }
-  }
-
-  for (const m of appModules) {
-    delete moduleCache[m];
-  }
-
-  debug(`cleared ${appModules.length} app modules from require.cache`);
 }
 
 /**

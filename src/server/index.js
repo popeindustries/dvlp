@@ -1,14 +1,14 @@
-'use strict';
-
-const { exists, expandPath, getProjectPath } = require('../utils/file.js');
-const { info, error } = require('../utils/log.js');
-const chalk = require('chalk');
-const config = require('../config.js');
-const DvlpServer = require('./server.js');
-const fs = require('fs');
-const path = require('path');
-const { reloadServer } = require('../reloader/index.js');
-const secureProxyServer = require('../secure-proxy/index.js');
+import { exists, expandPath, getProjectPath, isCjsFile } from '../utils/file.js';
+import logger, { error, info } from '../utils/log.js';
+import chalk from 'chalk';
+import config from '../config.js';
+import DvlpServer from './server.js';
+import fs from 'fs';
+import { init } from 'cjs-module-lexer';
+import path from 'path';
+import { pathToFileURL } from 'url';
+import { reloadServer } from '../reloader/index.js';
+import secureProxyServer from '../secure-proxy/index.js';
 
 /**
  * Server instance factory
@@ -17,44 +17,50 @@ const secureProxyServer = require('../secure-proxy/index.js');
  * @param { ServerOptions } options
  * @returns { Promise<Server> }
  */
-module.exports = async function serverFactory(
+export default async function serverFactory(
   filePath = process.cwd(),
   { certsPath, directories, hooksPath, mockPath, port = config.applicationPort, reload = true, silent } = {},
 ) {
   const entry = resolveEntry(filePath, directories);
-
-  config.directories = Array.from(new Set(entry.directories));
-
-  if (certsPath) {
-    certsPath = expandPath(certsPath);
-  }
-
-  if (mockPath) {
-    mockPath = expandPath(mockPath);
-  }
-
+  /** @type { Hooks | undefined } */
+  let hooks;
   /** @type { Reloader | undefined } */
   let reloader;
   /** @type { SecureProxy | undefined } */
   let secureProxy;
 
-  if (process.env.PORT === undefined) {
-    process.env.PORT = String(port);
+  config.directories = Array.from(new Set(entry.directories));
+  // Set format based on application entry
+  if (entry.isApp) {
+    // This is also called in utils/file.js, but not awaited, so ensure that the lexer is actually initialised first
+    await init();
+    // @ts-ignore
+    config.applicationFormat = isCjsFile(entry.main, fs.readFileSync(entry.main, 'utf8')) ? 'cjs' : 'esm';
   }
-
+  if (mockPath) {
+    mockPath = expandPath(mockPath);
+  }
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
-
+    // @ts-ignore
+    hooks = await import(pathToFileURL(hooksPath));
+    if (hooks && 'default' in hooks) {
+      // @ts-ignore
+      hooks = hooks.default;
+    }
     info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
   }
-
   if (certsPath) {
+    certsPath = expandPath(certsPath);
     secureProxy = await secureProxyServer(certsPath, reload);
   } else if (reload) {
     reloader = await reloadServer();
   }
+  if (process.env.PORT === undefined) {
+    process.env.PORT = String(port);
+  }
 
-  const server = new DvlpServer(entry.main, reload ? secureProxy || reloader : undefined, hooksPath, mockPath);
+  const server = new DvlpServer(entry.main, reload ? secureProxy || reloader : undefined, hooks, mockPath);
 
   try {
     await server.start();
@@ -80,7 +86,7 @@ module.exports = async function serverFactory(
   info(' 👀 watching for changes...\n');
 
   if (silent) {
-    require('../utils/log').silent = true;
+    logger.silent = true;
   }
 
   return {
@@ -94,7 +100,7 @@ module.exports = async function serverFactory(
       ]).then();
     },
   };
-};
+}
 
 /**
  * Resolve entry data from "filePaths"

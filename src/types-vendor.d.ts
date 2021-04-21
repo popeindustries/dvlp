@@ -33,12 +33,6 @@ declare module 'permessage-deflate' {
   export = deflate;
 }
 
-declare module 'es-module-lexer' {
-  function parse(
-    code: string,
-  ): Array<Array<{ d: number; e: number; s: number }>>;
-}
-
 declare module 'is-file-esm' {
   interface result {
     esm: boolean;
@@ -47,10 +41,7 @@ declare module 'is-file-esm' {
     path: string;
     pkgPath: string;
   }
-  function isFileEsm(
-    path: string,
-    cb: (err: string, result: result) => void,
-  ): void;
+  function isFileEsm(path: string, cb: (err: string, result: result) => void): void;
   namespace isFileEsm {
     function sync(path: string): result;
   }

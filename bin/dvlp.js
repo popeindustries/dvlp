@@ -2,9 +2,13 @@
 
 process.env.NODE_NO_WARNINGS = '1';
 
-const pkg = require('../package.json');
-const program = require('commander');
-const { server } = require('../dvlp.js');
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import program from 'commander';
+import { readFileSync } from 'fs';
+import { server } from '../dvlp.js';
+
+const pkg = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../package.json'), 'utf8');
 
 program
   .usage('[options] [path...]')

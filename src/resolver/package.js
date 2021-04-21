@@ -1,18 +1,11 @@
-'use strict';
-
-const { find, resolveNodeModulesDirectories } = require('../utils/file.js');
-const { isRelativeFilePath } = require('../utils/is.js');
-const fs = require('fs');
-const path = require('path');
+import { find, resolveNodeModulesDirectories } from '../utils/file.js';
+import fs from 'fs';
+import { isRelativeFilePath } from '../utils/is.js';
+import path from 'path';
+// import { resolve as resolveExports } from 'resolve.exports';
 
 const MAX_FILE_SYSTEM_DEPTH = 10;
 const RE_TRAILING = /\/+$|\\+$/;
-
-module.exports = {
-  getPackage,
-  resolveAliasPath,
-  resolvePackagePath,
-};
 
 /**
  * Retrieve package details for "filePath"
@@ -21,18 +14,18 @@ module.exports = {
  * @param { string } [packagePath]
  * @returns { Package | undefined }
  */
-function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
+export function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
   if (packagePath === undefined || !fs.existsSync(packagePath)) {
     return;
   }
 
   const manifestPath = path.join(packagePath, 'package.json');
-  const isNodeModule = packagePath !== process.cwd();
+  const isProjectPackage = packagePath === process.cwd();
   const paths = resolveNodeModulesDirectories(packagePath);
   /** @type { Package } */
   const pkg = {
     aliases: {},
-    isNodeModule,
+    isProjectPackage,
     manifestPath,
     main: '',
     name: '',
@@ -50,12 +43,13 @@ function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
     const hasModuleField = json.module !== undefined;
     let main = find(json.module || json.main || 'index.js', findOptions);
 
-    /**
-     * Resolve "main" and resource aliases.
-     * A "module" field takes precedence over aliases for "main" in "browser".
-     */
-    if (json.browser) {
-      // Illegal to overwrite "module" via "browser"
+    if (json.exports) {
+      pkg.exports = json.exports;
+    } else if (json.browser) {
+      /**
+       * Resolve "main" and resource aliases.
+       * A "module" field takes precedence over aliases for "main" in "browser".
+       */
       if (!hasModuleField && typeof json.browser === 'string') {
         main = find(json.browser, findOptions);
       } else {
@@ -110,7 +104,7 @@ function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
  * @param { Package } pkg
  * @returns { string }
  */
-function resolveAliasPath(filePath, pkg) {
+export function resolveAliasPath(filePath, pkg) {
   // Follow chain of aliases
   // a => b; b => c; c => d
   while (filePath in pkg.aliases) {
@@ -126,7 +120,7 @@ function resolveAliasPath(filePath, pkg) {
  * @param { string } filePath
  * @returns { string | undefined }
  */
-function resolvePackagePath(filePath) {
+export function resolvePackagePath(filePath) {
   filePath = filePath.replace(RE_TRAILING, '');
   const cwd = process.cwd();
   const isNodeModule = filePath.includes('node_modules');
@@ -160,4 +154,15 @@ function resolvePackagePath(filePath) {
     // Walk
     dir = parent;
   }
+}
+
+/**
+ * Determine whether "specifier" is self-referential based on "pkg"
+ *
+ * @param { string } specifier
+ * @param { Package } pkg
+ * @returns { boolean }
+ */
+export function isSelfReferentialSpecifier(specifier, pkg) {
+  return !isRelativeFilePath(specifier) && specifier.split('/')[0] === pkg.name;
 }

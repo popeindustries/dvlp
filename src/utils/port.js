@@ -1,9 +1,3 @@
-'use strict';
-
-module.exports = {
-  getDeterministicPort,
-};
-
 /**
  * Get deterministic port number based on passed 'string'
  *
@@ -12,7 +6,7 @@ module.exports = {
  * @param { number } max
  * @returns { number }
  */
-function getDeterministicPort(string, min, max) {
+export function getDeterministicPort(string, min, max) {
   let hash = 0;
   let i = 0;
   let length = string.length;

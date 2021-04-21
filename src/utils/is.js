@@ -1,9 +1,7 @@
-'use strict';
-
-const config = require('../config.js');
-const fs = require('fs');
-const path = require('path');
-const util = require('util');
+import config from '../config.js';
+import fs from 'fs';
+import path from 'path';
+import util from 'util';
 
 const HAS_UTIL_IS_PROXY = util.types && util.types.isProxy !== undefined;
 const RE_BARE_IMPORT = /^[^./]/;
@@ -15,36 +13,13 @@ const RE_TYPE_CSS = /text\/css/i;
 const RE_TYPE_HTML = /text\/html/i;
 const RE_TYPE_JS = /application\/javascript/i;
 
-module.exports = {
-  isAbsoluteFilePath,
-  isBareImport,
-  isBundledFilePath,
-  isBundledUrl,
-  isCssFilePath,
-  isCssRequest,
-  isHtmlFilePath,
-  isHtmlRequest,
-  isInvalidFilePath,
-  isJsFilePath,
-  isJsRequest,
-  isJsonFilePath,
-  isLocalhost,
-  isNodeModuleFilePath,
-  isProjectFilePath,
-  isPromise,
-  isProxy,
-  isRelativeFilePath,
-  isTransformableJsFile,
-  isValidFilePath,
-};
-
 /**
  * Determine if "filePath" is absolute
  *
  * @param { string } filePath
  * @returns { boolean }
  */
-function isAbsoluteFilePath(filePath) {
+export function isAbsoluteFilePath(filePath) {
   return (
     'string' == typeof filePath &&
     path.isAbsolute(filePath) &&
@@ -59,7 +34,7 @@ function isAbsoluteFilePath(filePath) {
  * @param { string } id
  * @returns { boolean }
  */
-function isBareImport(id) {
+export function isBareImport(id) {
   return RE_BARE_IMPORT.test(id);
 }
 
@@ -69,7 +44,7 @@ function isBareImport(id) {
  * @param { string } filePath
  * @returns { boolean }
  */
-function isBundledFilePath(filePath) {
+export function isBundledFilePath(filePath) {
   return filePath.includes(config.bundleDirName);
 }
 
@@ -79,7 +54,7 @@ function isBundledFilePath(filePath) {
  * @param { string } url
  * @returns { boolean }
  */
-function isBundledUrl(url) {
+export function isBundledUrl(url) {
   return url.includes(config.bundleDirName.replace(/\\/g, '/'));
 }
 
@@ -89,7 +64,7 @@ function isBundledUrl(url) {
  * @param { string } filePath
  * @returns { boolean }
  */
-function isCssFilePath(filePath) {
+export function isCssFilePath(filePath) {
   return config.extensionsByType.css.includes(path.extname(filePath));
 }
 
@@ -99,7 +74,7 @@ function isCssFilePath(filePath) {
  * @param { any } req
  * @returns { req is Req }
  */
-function isCssRequest(req) {
+export function isCssRequest(req) {
   return req.type === 'css' || (req.headers.accept && RE_TYPE_CSS.test(req.headers.accept)) || isCssFilePath(req.url);
 }
 
@@ -109,7 +84,7 @@ function isCssRequest(req) {
  * @param { string } filePath
  * @returns { boolean }
  */
-function isHtmlFilePath(filePath) {
+export function isHtmlFilePath(filePath) {
   return config.extensionsByType.html.includes(path.extname(filePath));
 }
 
@@ -119,7 +94,7 @@ function isHtmlFilePath(filePath) {
  * @param { any } req
  * @returns { req is Req }
  */
-function isHtmlRequest(req) {
+export function isHtmlRequest(req) {
   return (
     req.type === 'html' || (req.headers.accept && RE_TYPE_HTML.test(req.headers.accept)) || isHtmlFilePath(req.url)
   );
@@ -131,7 +106,7 @@ function isHtmlRequest(req) {
  * @param { string } filePath
  * @returns { boolean }
  */
-function isInvalidFilePath(filePath) {
+export function isInvalidFilePath(filePath) {
   return RE_INVALID.test(filePath);
 }
 
@@ -141,7 +116,7 @@ function isInvalidFilePath(filePath) {
  * @param { string } filePath
  * @returns { boolean }
  */
-function isJsFilePath(filePath) {
+export function isJsFilePath(filePath) {
   return config.extensionsByType.js.includes(path.extname(filePath));
 }
 
@@ -151,7 +126,7 @@ function isJsFilePath(filePath) {
  * @param { any } req
  * @returns { req is Req }
  */
-function isJsRequest(req) {
+export function isJsRequest(req) {
   return (
     req.type === 'js' ||
     // Almost always '*/*'
@@ -166,7 +141,7 @@ function isJsRequest(req) {
  * @param { string } filePath
  * @returns { boolean }
  */
-function isJsonFilePath(filePath) {
+export function isJsonFilePath(filePath) {
   return RE_JSON.test(filePath);
 }
 
@@ -176,7 +151,7 @@ function isJsonFilePath(filePath) {
  * @param { string } url
  * @returns { boolean }
  */
-function isLocalhost(url) {
+export function isLocalhost(url) {
   return RE_LOCALHOST.test(url);
 }
 
@@ -186,7 +161,7 @@ function isLocalhost(url) {
  * @param { string } filePath
  * @returns { boolean }
  */
-function isNodeModuleFilePath(filePath) {
+export function isNodeModuleFilePath(filePath) {
   const isNodeModule = RE_NODE_MODULES.test(filePath);
 
   if (!isNodeModule) {
@@ -207,7 +182,7 @@ function isNodeModuleFilePath(filePath) {
  * @param { any } obj
  * @returns { obj is Proxy }
  */
-function isProxy(obj) {
+export function isProxy(obj) {
   if (HAS_UTIL_IS_PROXY) {
     return util.types.isProxy(obj);
   } else {
@@ -221,7 +196,7 @@ function isProxy(obj) {
  * @param { any } obj
  * @returns { obj is Promise<T> }
  */
-function isPromise(obj) {
+export function isPromise(obj) {
   if (HAS_UTIL_IS_PROXY) {
     return util.types.isPromise(obj);
   } else {
@@ -235,7 +210,7 @@ function isPromise(obj) {
  * @param { string } filePath
  * @returns { boolean }
  */
-function isProjectFilePath(filePath) {
+export function isProjectFilePath(filePath) {
   if (!path.isAbsolute(filePath)) {
     filePath = path.resolve(filePath);
   }
@@ -249,7 +224,7 @@ function isProjectFilePath(filePath) {
  * @param { string } filePath
  * @returns { boolean }
  */
-function isRelativeFilePath(filePath) {
+export function isRelativeFilePath(filePath) {
   return 'string' == typeof filePath && filePath.startsWith('.');
 }
 
@@ -261,7 +236,7 @@ function isRelativeFilePath(filePath) {
  * @param { string } [fileContents]
  * @returns { boolean }
  */
-function isTransformableJsFile(filePath, fileContents) {
+export function isTransformableJsFile(filePath, fileContents) {
   if (isJsFilePath(filePath)) {
     const extension = path.extname(filePath);
 
@@ -281,7 +256,7 @@ function isTransformableJsFile(filePath, fileContents) {
  * @param { string } [fromDir]
  * @returns { boolean }
  */
-function isValidFilePath(filePath, fromDir = process.cwd()) {
+export function isValidFilePath(filePath, fromDir = process.cwd()) {
   if (isRelativeFilePath(filePath)) {
     filePath = path.join(fromDir, filePath);
   }

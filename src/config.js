@@ -1,11 +1,9 @@
-'use strict';
-
-const brokenNamedExportsPackages = require('./utils/broken-named-exports.js');
-const fs = require('fs');
-const mime = require('mime');
-const path = require('path');
-const rimraf = require('rimraf');
-const send = require('send');
+import brokenNamedExportsPackages from './utils/broken-named-exports.js';
+import fs from 'fs';
+import mime from 'mime';
+import path from 'path';
+import rimraf from 'rimraf';
+import send from 'send';
 
 const DIR = '.dvlp';
 const JS_MIME_TYPES = {
@@ -15,6 +13,8 @@ const TESTING = process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefin
 // Replaced during build
 const VERSION = global.$VERSION || 'dev';
 
+const applicationDirName = `${path.join(DIR, `app-${VERSION}`)}`;
+const applicationDir = path.resolve(applicationDirName);
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
 const bundleDir = path.resolve(bundleDirName);
 const port = process.env.PORT ? Number(process.env.PORT) : 8080;
@@ -24,11 +24,11 @@ mime.define(JS_MIME_TYPES, true);
 send.mime.define(JS_MIME_TYPES, true);
 
 const dir = path.resolve(DIR);
+const applicationDirExists = fs.existsSync(applicationDir);
 const bundleDirExists = fs.existsSync(bundleDir);
 const dirExists = fs.existsSync(dir);
-const rm = dirExists && !bundleDirExists;
 
-if (rm) {
+if (dirExists && !bundleDirExists) {
   const contents = fs.readdirSync(dir).map((item) => path.resolve(dir, item));
 
   for (const item of contents) {
@@ -38,9 +38,13 @@ if (rm) {
     }
   }
 }
+if (applicationDirExists) {
+  rimraf.sync(applicationDir);
+}
 if (!dirExists) {
   fs.mkdirSync(dir);
 }
+fs.mkdirSync(applicationDir);
 if (!bundleDirExists) {
   fs.mkdirSync(bundleDir);
 } else {
@@ -72,7 +76,10 @@ if (TESTING) {
 /**
  * @type { Config }
  */
-module.exports = {
+const config = {
+  applicationDir,
+  applicationDirName,
+  applicationFormat: 'esm',
   applicationPort: port,
   brokenNamedExportsPackages,
   bundleDir,
@@ -114,3 +121,5 @@ module.exports = {
   },
   version: VERSION,
 };
+
+export default config;

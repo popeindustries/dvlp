@@ -1,22 +1,11 @@
-'use strict';
-
-const { isJsFilePath, isNodeModuleFilePath } = require('./is.js');
-const config = require('../config.js');
-const { existsSync, readdirSync, unlinkSync } = require('fs');
-const { getCachedPackage } = require('../resolver/index.js');
-const path = require('path');
+import { existsSync, readdirSync, unlinkSync } from 'fs';
+import { isJsFilePath, isNodeModuleFilePath } from './is.js';
+import config from '../config.js';
+import { getCachedPackage } from '../resolver/index.js';
+import path from 'path';
 
 const RE_SOURCE_PATH = /^\/\/ source: (.+)/;
 const SOURCE_PREFIX = '// source: ';
-
-module.exports = {
-  cleanBundledFiles,
-  decodeBundleId,
-  encodeBundleId,
-  encodeOriginalBundledSourcePath,
-  parseOriginalBundledSourcePath,
-  resolveBundleFileName,
-};
 
 /**
  * Encode bundled source path in banner comment
@@ -24,7 +13,7 @@ module.exports = {
  * @param { string } sourcePath
  * @returns { string }
  */
-function encodeOriginalBundledSourcePath(sourcePath) {
+export function encodeOriginalBundledSourcePath(sourcePath) {
   return `${SOURCE_PREFIX}${sourcePath}`;
 }
 
@@ -34,7 +23,7 @@ function encodeOriginalBundledSourcePath(sourcePath) {
  * @param { string } code
  * @returns { string }
  */
-function parseOriginalBundledSourcePath(code) {
+export function parseOriginalBundledSourcePath(code) {
   const match = RE_SOURCE_PATH.exec(code);
 
   return match && match[1] ? match[1] : '';
@@ -47,20 +36,20 @@ function parseOriginalBundledSourcePath(code) {
  * @param { string } filePath
  * @returns { string }
  */
-function resolveBundleFileName(id, filePath) {
+export function resolveBundleFileName(id, filePath) {
   if (!isNodeModuleFilePath(filePath)) {
     return '';
   }
 
   const pkg = getCachedPackage(path.dirname(filePath));
 
-  return `${encodeBundleId(id)}-${pkg.version}.js`;
+  return `${encodeBundleId(id)}-${pkg ? pkg.version : ''}.js`;
 }
 
 /**
  * Clear disk cache
  */
-function cleanBundledFiles() {
+export function cleanBundledFiles() {
   if (existsSync(config.bundleDir)) {
     for (const filePath of readdirSync(config.bundleDir).filter(isJsFilePath)) {
       unlinkSync(path.join(config.bundleDir, filePath));
@@ -73,7 +62,7 @@ function cleanBundledFiles() {
  *
  * @param { string } id
  */
-function encodeBundleId(id) {
+export function encodeBundleId(id) {
   return id.replace(/\//g, '__');
 }
 
@@ -82,6 +71,6 @@ function encodeBundleId(id) {
  *
  * @param { string } id
  */
-function decodeBundleId(id) {
+export function decodeBundleId(id) {
   return id.replace(/__/g, '/');
 }

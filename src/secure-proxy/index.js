@@ -1,15 +1,14 @@
-'use strict';
-
-const { Certificate } = require('@fidm/x509');
-const config = require('../config.js');
-const decorateWithServerDestroy = require('server-destroy');
-const EventSourceServer = require('../reloader/event-source-server.js');
-const fs = require('fs');
-const { getDirectoryContents } = require('../utils/file');
-const { getReloadClientEmbed } = require('../reloader/reload-client-embed.js');
-const http = require('http');
-const https = require('https');
-const path = require('path');
+import { error, fatal, warn } from '../utils/log.js';
+import { Certificate } from '@fidm/x509';
+import config from '../config.js';
+import decorateWithServerDestroy from 'server-destroy';
+import EventSourceServer from '../reloader/event-source-server.js';
+import fs from 'fs';
+import { getDirectoryContents } from '../utils/file.js';
+import { getReloadClientEmbed } from '../reloader/reload-client-embed.js';
+import http from 'http';
+import https from 'https';
+import path from 'path';
 
 /**
  * Create secure proxy server.
@@ -19,7 +18,7 @@ const path = require('path');
  * @param { boolean } reload
  * @returns { Promise<SecureProxy> }
  */
-module.exports = async function secureProxy(certsPath, reload) {
+export default async function secureProxy(certsPath, reload) {
   const serverOptions = resolveCerts(certsPath);
   const commonName = validateCert(serverOptions.cert);
   const server = new SecureProxyServer(reload);
@@ -34,7 +33,7 @@ module.exports = async function secureProxy(certsPath, reload) {
     reloadUrl: `https://localhost:${443}${config.reloadEndpoint}`,
     send: server.send.bind(server),
   };
-};
+}
 
 class SecureProxyServer extends EventSourceServer {
   /**
@@ -56,7 +55,6 @@ class SecureProxyServer extends EventSourceServer {
    */
   start(serverOptions) {
     return new Promise((resolve, reject) => {
-      /** @type { DestroyableHttpsServer } */
       this.server = https.createServer(serverOptions, async (req, res) => {
         // @ts-ignore
         if (this.isReloadRequest(req)) {
@@ -68,6 +66,9 @@ class SecureProxyServer extends EventSourceServer {
           }
           return;
         }
+
+        req.headers['X-Forwarded-Host'] = req.headers.host;
+        req.headers.Forwarded = `host=${req.headers.host}`;
 
         const originOptions = {
           port: config.applicationPort,
@@ -166,13 +167,13 @@ function validateCert(certFileData) {
     const diff = expires.getTime() - now.getTime();
 
     if (diff < 0) {
-      throw Error('your ssl certificate has expired!');
+      error('your ssl certificate has expired!');
     } else if (diff / 86400000 < 10) {
-      // TODO warn
+      warn('cetificate will expire soon!');
     }
 
     return commonName;
   } catch (err) {
-    // TODO: log error
+    fatal(err);
   }
 }

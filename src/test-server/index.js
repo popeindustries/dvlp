@@ -1,20 +1,19 @@
-'use strict';
+import { connectClient, destroyClients, pushEvent } from '../push-events/index.js';
+import config from '../config.js';
+import Debug from 'debug';
+import decorateWithServerDestroy from 'server-destroy';
+import fs from 'fs';
+import http from 'http';
+import { interceptClientRequest } from '../utils/intercept.js';
+import { isLocalhost } from '../utils/is.js';
+import Metrics from '../utils/metrics.js';
+import mime from 'mime';
+import Mock from '../mock/index.js';
+import path from 'path';
+import { URL } from 'url';
+import WebSocket from 'faye-websocket';
 
-const { connectClient, destroyClients, pushEvent } = require('../push-events/index.js');
-const config = require('../config.js');
-const debug = require('debug')('dvlp:test');
-const decorateWithServerDestroy = require('server-destroy');
-const fs = require('fs');
-const http = require('http');
-const { interceptClientRequest } = require('../utils/intercept.js');
-const { isLocalhost } = require('../utils/is.js');
-const Metrics = require('../utils/metrics.js');
-const mime = require('mime');
-const Mock = require('../mock/index.js');
-const path = require('path');
-const { URL } = require('url');
-const WebSocket = require('faye-websocket');
-
+const debug = Debug('dvlp:test');
 const { EventSource } = WebSocket;
 /** @type { Set<TestServer> } */
 const instances = new Set();
@@ -29,7 +28,7 @@ let uninterceptClientRequest;
  * @param { TestServerOptions } [options]
  * @returns { Promise<TestServer> }
  */
-module.exports = async function testServerFactory(options) {
+export default async function testServerFactory(options) {
   enableRequestIntercept();
 
   const server = new TestServer(options || {});
@@ -44,7 +43,7 @@ module.exports = async function testServerFactory(options) {
   instances.add(server);
 
   return server;
-};
+}
 
 /**
  * Disable all external network connections
@@ -53,7 +52,7 @@ module.exports = async function testServerFactory(options) {
  * @param { boolean } [rerouteAllRequests]
  * @returns { void }
  */
-module.exports.disableNetwork = function disableNetwork(rerouteAllRequests = false) {
+testServerFactory.disableNetwork = function disableNetwork(rerouteAllRequests = false) {
   enableRequestIntercept();
   networkDisabled = true;
   reroute = rerouteAllRequests;
@@ -64,7 +63,7 @@ module.exports.disableNetwork = function disableNetwork(rerouteAllRequests = fal
  *
  * @returns { void }
  */
-module.exports.enableNetwork = function enableNetwork() {
+testServerFactory.enableNetwork = function enableNetwork() {
   enableRequestIntercept();
   networkDisabled = false;
   reroute = false;
@@ -77,7 +76,7 @@ module.exports.enableNetwork = function enableNetwork() {
  * @param { Res } res
  * @returns { undefined }
  */
-module.exports.mockHangResponseHandler = function mockHangResponseHandler(req, res) {
+testServerFactory.mockHangResponseHandler = function mockHangResponseHandler(req, res) {
   return;
 };
 
@@ -88,7 +87,7 @@ module.exports.mockHangResponseHandler = function mockHangResponseHandler(req, r
  * @param { Res } res
  * @returns { undefined }
  */
-module.exports.mockErrorResponseHandler = function mockErrorResponseHandler(req, res) {
+testServerFactory.mockErrorResponseHandler = function mockErrorResponseHandler(req, res) {
   res.writeHead(500);
   res.error = Error('error');
   res.end('error');
@@ -102,7 +101,7 @@ module.exports.mockErrorResponseHandler = function mockErrorResponseHandler(req,
  * @param { Res } res
  * @returns { undefined }
  */
-module.exports.mockMissingResponseHandler = function mockMissingResponseHandler(req, res) {
+testServerFactory.mockMissingResponseHandler = function mockMissingResponseHandler(req, res) {
   res.writeHead(404);
   res.end('missing');
   return;
@@ -115,7 +114,7 @@ module.exports.mockMissingResponseHandler = function mockMissingResponseHandler(
  * @param { Res } res
  * @returns { undefined }
  */
-module.exports.mockOfflineResponseHandler = function mockOfflineResponseHandler(req, res) {
+testServerFactory.mockOfflineResponseHandler = function mockOfflineResponseHandler(req, res) {
   req.socket.destroy();
   return;
 };

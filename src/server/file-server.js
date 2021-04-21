@@ -1,20 +1,20 @@
-'use strict';
+import chalk from 'chalk';
+import Debug from 'debug';
+import { find } from '../utils/file.js';
+import http from 'http';
+import { info } from '../utils/log.js';
+import { isHtmlRequest } from '../utils/is.js';
+import send from 'send';
 
-const chalk = require('chalk');
-const debug = require('debug')('dvlp:fileserver');
-const { find } = require('../utils/file.js');
-const http = require('http');
-const { info } = require('../utils/log.js');
-const { isHtmlRequest } = require('../utils/is.js');
-const send = require('send');
+const debug = Debug('dvlp:fileserver');
 
 /**
  * Create default file server instance
  */
-module.exports = function createFileServer() {
+export default function createFileServer() {
   // @ts-ignore
   http.createServer(createRequestHandler()).listen(process.env.PORT);
-};
+}
 
 /**
  * Create request handler

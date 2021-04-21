@@ -1,16 +1,7 @@
-'use strict';
-
-const config = require('../config.js');
-const { URL } = require('url');
+import config from '../config.js';
+import { URL } from 'url';
 
 const RE_WEB_SOCKET = /wss?:/;
-
-module.exports = {
-  filePathToUrl,
-  getUrl,
-  getUrlCacheKey,
-  isWebSocketUrl,
-};
 
 /**
  * Determine if 'url' is a WebSocket
@@ -18,7 +9,7 @@ module.exports = {
  * @param { URL } url
  * @returns { boolean }
  */
-function isWebSocketUrl(url) {
+export function isWebSocketUrl(url) {
   return RE_WEB_SOCKET.test(url.protocol);
 }
 
@@ -28,7 +19,7 @@ function isWebSocketUrl(url) {
  * @param { string | { url: string } | URL } req
  * @returns { URL }
  */
-function getUrl(req) {
+export function getUrl(req) {
   if (!(req instanceof URL)) {
     req = new URL(
       typeof req === 'string' ? decodeURIComponent(req) : req.url,
@@ -53,7 +44,7 @@ function getUrl(req) {
  * @returns { string }
  * @private
  */
-function getUrlCacheKey(url) {
+export function getUrlCacheKey(url) {
   // Map loopback address to localhost
   const host = url.host === '127.0.0.1' ? 'localhost' : url.host;
   let key = `${host}${url.pathname}`;
@@ -72,6 +63,6 @@ function getUrlCacheKey(url) {
  * @param { string } filePath
  * @returns { string }
  */
-function filePathToUrl(filePath) {
+export function filePathToUrl(filePath) {
   return encodeURI(filePath.replace(/^[A-Z]:\\/, '/').replace(/\\/g, '/'));
 }

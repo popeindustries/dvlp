@@ -1,18 +1,17 @@
-'use strict';
+import { findClosest, getProjectPath, getTypeFromPath } from '../utils/file.js';
+import Debug from 'debug';
+import { error } from '../utils/log.js';
+import { extname } from 'path';
+import { isTransformableJsFile } from '../utils/is.js';
+import Metrics from '../utils/metrics.js';
+import mime from 'mime';
+import { parseEsbuildTarget } from '../utils/platform.js';
+import { readFileSync } from 'fs';
 
-const { error } = require('../utils/log.js');
-const { findClosest, getProjectPath, getTypeFromPath } = require('../utils/file.js');
-const debug = require('debug')('dvlp:transform');
-const { extname } = require('path');
-const { isTransformableJsFile } = require('../utils/is.js');
-const Metrics = require('../utils/metrics.js');
-const mime = require('mime');
-const { parseEsbuildTarget } = require('../utils/platform.js');
-const { readFileSync } = require('fs');
-
+const debug = Debug('dvlp:transform');
 const tsconfigPath = findClosest('tsconfig.json');
 const tsconfig = tsconfigPath
-  ? require(tsconfigPath)
+  ? JSON.parse(readFileSync(tsconfigPath, 'utf8'))
   : {
       compilerOptions: {
         useDefineForClassFields: true,
@@ -27,19 +26,11 @@ const tsconfig = tsconfigPath
  * @param { Res } res
  * @param { TransformHookContext["client"] } clientPlatform
  * @param { Map<string, string> } cache
- * @param { import("esbuild").Service } buildService
+ * @param { esbuild } esbuild
  * @param { Hooks["onTransform"] } hookFn
  * @returns { Promise<void> }
  */
-module.exports = async function transform(
-  filePath,
-  lastChangedFilePath,
-  res,
-  clientPlatform,
-  cache,
-  buildService,
-  hookFn,
-) {
+export default async function transform(filePath, lastChangedFilePath, res, clientPlatform, cache, esbuild, hookFn) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
 
   // Segment cache by user agent to support different transforms based on client
@@ -64,7 +55,7 @@ module.exports = async function transform(
       if (hookFn) {
         code = await hookFn(filePath, fileContents, {
           client: clientPlatform,
-          esbuildService: buildService,
+          esbuild,
         });
       }
       if (code === undefined) {
@@ -87,7 +78,7 @@ module.exports = async function transform(
           options.tsconfigRaw = tsconfig;
         }
 
-        code = (await buildService.transform(fileContents, options)).code;
+        code = (await esbuild.transform(fileContents, options)).code;
       }
       if (code !== undefined) {
         transformed = true;
@@ -114,4 +105,4 @@ module.exports = async function transform(
     res.end(code);
     res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
   }
-};
+}

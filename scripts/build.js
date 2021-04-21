@@ -1,19 +1,14 @@
-'use strict';
+import { build } from 'esbuild';
+import fs from 'fs';
+import { minify } from 'terser';
+import path from 'path';
 
-const { buildSync } = require('esbuild');
-const fs = require('fs');
-const path = require('path');
-const pkg = require('../package.json');
-const terser = require('terser');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
-(async function build() {
-  const reloadClient = (
-    await terser.minify(
-      fs.readFileSync('src/reloader/reload-client.js', 'utf8'),
-    )
-  ).code;
+(async function main() {
+  const reloadClient = (await minify(fs.readFileSync('src/reloader/reload-client.js', 'utf8'))).code;
   const mockClient = (
-    await terser.minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
+    await minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
       // Preserve 'cache' var for regex replacement
       mangle: { reserved: ['cache'] },
     })
@@ -21,12 +16,10 @@ const terser = require('terser');
 
   fs.writeFileSync(
     path.resolve('dvlp.d.ts'),
-    fs
-      .readFileSync(path.resolve('src/types.d.ts'), 'utf8')
-      .replace(/\/\*\s+export\s+\*\//g, 'export'),
+    fs.readFileSync(path.resolve('src/types.d.ts'), 'utf8').replace(/\/\*\s+export\s+\*\//g, 'export'),
   );
 
-  buildSync({
+  await build({
     bundle: true,
     entryPoints: ['./src/test-browser/index.js'],
     format: 'esm',
@@ -34,7 +27,11 @@ const terser = require('terser');
     outfile: 'dvlp-browser.js',
   });
 
-  buildSync({
+  await build({
+    banner: {
+      js:
+        "import { createRequire as createRequireBecauseEsbuild } from 'module'; \nconst require = createRequireBecauseEsbuild(import.meta.url);",
+    },
     bundle: true,
     define: {
       'global.$RELOAD_CLIENT': `'${reloadClient}'`,
@@ -43,7 +40,7 @@ const terser = require('terser');
     },
     entryPoints: ['./src/index.js'],
     external: ['esbuild', 'fsevents'],
-    format: 'cjs',
+    format: 'esm',
     target: 'node12',
     platform: 'node',
     outfile: 'dvlp.js',

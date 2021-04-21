@@ -1,14 +1,13 @@
-'use strict';
-
-const { bundleDir } = require('../config.js');
-const debug = require('debug')('dvlp:watch');
-const { FSWatcher } = require('chokidar');
-const { getProjectPath } = require('./file.js');
-const os = require('os');
-const path = require('path');
+import config from '../config.js';
+import Debug from 'debug';
+import { FSWatcher } from 'chokidar';
+import { getProjectPath } from './file.js';
+import os from 'os';
+import path from 'path';
 
 const TIMEOUT = 1000;
 
+const debug = Debug('dvlp:watch');
 const tmpdir = os.tmpdir();
 
 /**
@@ -17,7 +16,7 @@ const tmpdir = os.tmpdir();
  * @param { (callback: string) => void } fn
  * @returns { Watcher }
  */
-module.exports = function watch(fn) {
+export default function watch(fn) {
   const watcher = new FSWatcher({
     ignoreInitial: true,
     persistent: true,
@@ -54,7 +53,7 @@ module.exports = function watch(fn) {
       if (
         !files.has(filePath) &&
         !filePath.startsWith(tmpdir) &&
-        !filePath.startsWith(bundleDir) &&
+        !filePath.startsWith(config.bundleDir) &&
         !path.basename(filePath).startsWith('.')
       ) {
         debug(`watching file "${getProjectPath(filePath)}"`);
@@ -67,4 +66,4 @@ module.exports = function watch(fn) {
       files.clear();
     },
   };
-};
+}

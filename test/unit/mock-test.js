@@ -1,8 +1,6 @@
-'use strict';
-
-const { expect } = require('chai');
-const Mock = require('../src/mock/index.js');
-const { pushEvent } = require('../src/push-events/index.js');
+import { expect } from 'chai';
+import Mock from '../../src/mock/index.js';
+import { pushEvent } from '../../src/push-events/index.js';
 
 const mocks = new Mock();
 
@@ -189,34 +187,34 @@ describe('mock', () => {
 
   describe('load()', () => {
     it('should load individual mock file', () => {
-      mocks.load('test/fixtures/mock/1234.json');
+      mocks.load('test/unit/fixtures/mock/1234.json');
       expect(mocks.cache.size).to.equal(1);
     });
     it('should load array of mock files', () => {
-      mocks.load(['test/fixtures/mock/1234.json', 'test/fixtures/mock/5678.json']);
+      mocks.load(['test/unit/fixtures/mock/1234.json', 'test/unit/fixtures/mock/5678.json']);
       expect(mocks.cache.size).to.equal(2);
     });
     it('should load a single file referencing multiple mocks', () => {
-      mocks.load('test/fixtures/mock/multi.json');
+      mocks.load('test/unit/fixtures/mock/multi.json');
       expect(mocks.cache.size).to.equal(2);
     });
     it('should load mock files from directory path', () => {
-      mocks.load('test/fixtures/mock');
+      mocks.load('test/unit/fixtures/mock');
       expect(mocks.cache.size).to.equal(9);
     });
     it('should load mock files from directory path and update client string', () => {
-      mocks.load('test/fixtures/mock-push');
+      mocks.load('test/unit/fixtures/mock-push');
       expect(mocks.client).to.include('"pathRegex": "^\\\\/feed[\\\\/#\\\\?]?$"');
     });
     it('should prepare inlineable client string', () => {
-      mocks.load('test/fixtures/mock');
+      mocks.load('test/unit/fixtures/mock');
       expect(mocks.client).to.include('"pathRegex": "^\\\\/1234\\\\.jpg[\\\\/#\\\\?]?$"');
     });
   });
 
   describe('matchResponse()', () => {
     beforeEach(() => {
-      mocks.load('test/fixtures/mock');
+      mocks.load('test/unit/fixtures/mock');
     });
 
     it('should return "false" if no match', () => {
@@ -363,7 +361,7 @@ describe('mock', () => {
 
   describe('matchPushEvent()', () => {
     beforeEach(() => {
-      mocks.load('test/fixtures/mock-push');
+      mocks.load('test/unit/fixtures/mock-push');
     });
 
     it('should return "false" if no match', () => {
