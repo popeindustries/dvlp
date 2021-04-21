@@ -204,10 +204,12 @@ export default class Hooker {
     const result = await (this.serverBundleRebuild
       ? this.serverBundleRebuild()
       : esbuild.build({
-          banner:
-            applicationFormat === 'cjs'
-              ? ''
-              : "import { createRequire as createDvlpTopLevelRequire } from 'module'; \nconst require = createDvlpTopLevelRequire(import.meta.url);",
+          banner: {
+            js:
+              applicationFormat === 'cjs'
+                ? ''
+                : "import { createRequire as createDvlpTopLevelRequire } from 'module'; \nconst require = createDvlpTopLevelRequire(import.meta.url);",
+          },
           bundle: true,
           entryPoints: [filePath],
           format: applicationFormat,
