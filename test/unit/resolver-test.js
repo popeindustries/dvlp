@@ -44,7 +44,7 @@ describe('resolver', () => {
       });
       it('should return details for the project root package', () => {
         const pkg = getPackage(process.cwd());
-        expect(pkg).to.have.property('isNodeModule', false);
+        expect(pkg).to.have.property('isProjectPackage', true);
         expect(pkg).to.have.property('manifestPath', path.resolve('package.json'));
       });
       it('should return details for the project root package from a nested project file', () => {

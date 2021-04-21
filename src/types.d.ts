@@ -135,7 +135,8 @@ declare interface SecureProxy extends Reloader {
 
 declare interface Package {
   aliases: { [key: string]: string };
-  isNodeModule: boolean;
+  exports?: string | { [key: string]: string | { [key: string]: string } };
+  isProjectPackage: boolean;
   manifestPath: string;
   main?: string;
   name: string;

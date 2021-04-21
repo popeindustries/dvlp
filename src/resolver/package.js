@@ -2,6 +2,7 @@ import { find, resolveNodeModulesDirectories } from '../utils/file.js';
 import fs from 'fs';
 import { isRelativeFilePath } from '../utils/is.js';
 import path from 'path';
+// import { resolve as resolveExports } from 'resolve.exports';
 
 const MAX_FILE_SYSTEM_DEPTH = 10;
 const RE_TRAILING = /\/+$|\\+$/;
@@ -19,12 +20,12 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
   }
 
   const manifestPath = path.join(packagePath, 'package.json');
-  const isNodeModule = packagePath !== process.cwd();
+  const isProjectPackage = packagePath === process.cwd();
   const paths = resolveNodeModulesDirectories(packagePath);
   /** @type { Package } */
   const pkg = {
     aliases: {},
-    isNodeModule,
+    isProjectPackage,
     manifestPath,
     main: '',
     name: '',
@@ -42,12 +43,13 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
     const hasModuleField = json.module !== undefined;
     let main = find(json.module || json.main || 'index.js', findOptions);
 
-    /**
-     * Resolve "main" and resource aliases.
-     * A "module" field takes precedence over aliases for "main" in "browser".
-     */
-    if (json.browser) {
-      // Illegal to overwrite "module" via "browser"
+    if (json.exports) {
+      pkg.exports = json.exports;
+    } else if (json.browser) {
+      /**
+       * Resolve "main" and resource aliases.
+       * A "module" field takes precedence over aliases for "main" in "browser".
+       */
       if (!hasModuleField && typeof json.browser === 'string') {
         main = find(json.browser, findOptions);
       } else {
@@ -152,4 +154,15 @@ export function resolvePackagePath(filePath) {
     // Walk
     dir = parent;
   }
+}
+
+/**
+ * Determine whether "specifier" is self-referential based on "pkg"
+ *
+ * @param { string } specifier
+ * @param { Package } pkg
+ * @returns { boolean }
+ */
+export function isSelfReferentialSpecifier(specifier, pkg) {
+  return !isRelativeFilePath(specifier) && specifier.split('/')[0] === pkg.name;
 }

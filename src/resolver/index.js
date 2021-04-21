@@ -1,5 +1,5 @@
 import { find, getProjectPath, resolveRealFilePath } from '../utils/file.js';
-import { getPackage, resolveAliasPath, resolvePackagePath } from './package.js';
+import { getPackage, isSelfReferentialSpecifier, resolveAliasPath, resolvePackagePath } from './package.js';
 import { isAbsoluteFilePath, isRelativeFilePath } from '../utils/is.js';
 import path from 'path';
 
@@ -39,7 +39,7 @@ export function resolve(specifier, importer = 'index.js') {
 }
 
 /**
- * Retrieve file path for "specifier" relative to "fromDirPath"
+ * Retrieve file path for "specifier" relative to "importerDirPath"
  *
  * @param { string } specifier
  * @param { string } importerDirPath
@@ -52,15 +52,15 @@ function doResolve(specifier, importerDirPath) {
     return;
   }
 
-  const isIdRelative = isRelativeFilePath(specifier);
-
-  // Handle self-referential package reference
-  if (!isIdRelative && specifier.split('/')[0] === pkg.name) {
+  if (isSelfReferentialSpecifier(specifier, pkg)) {
     specifier = path.join(pkg.path, specifier.replace(pkg.name, '.'));
   }
 
   /** @type { string | undefined } */
-  let filePath = resolveAliasPath(isIdRelative ? path.join(importerDirPath, specifier) : specifier, pkg);
+  let filePath = resolveAliasPath(
+    isRelativeFilePath(specifier) ? path.join(importerDirPath, specifier) : specifier,
+    pkg,
+  );
 
   if (isAbsoluteFilePath(filePath)) {
     // @ts-ignore
