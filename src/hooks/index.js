@@ -1,7 +1,7 @@
-import { build as esBuild, transform as esTransform } from 'esbuild';
 import { readFileSync, writeFileSync } from 'fs';
 import bundle from './bundle.js';
 import config from '../config.js';
+import esbuild from 'esbuild';
 import { isNodeModuleFilePath } from '../utils/is.js';
 import { join } from 'path';
 import { resolve } from '../resolver/index.js';
@@ -91,7 +91,7 @@ export default class Hooker {
           });
         },
       };
-      this.patchedESBuild = new Proxy(esBuild, {
+      this.patchedESBuild = new Proxy(esbuild.build, {
         apply(target, context, args) {
           if (!args[0].plugins) {
             args[0].plugins = [];
@@ -101,7 +101,7 @@ export default class Hooker {
         },
       });
     } else {
-      this.patchedESBuild = esBuild;
+      this.patchedESBuild = esbuild.build;
     }
 
     this.bundle = this.bundle.bind(this);
@@ -123,7 +123,7 @@ export default class Hooker {
       filePath,
       res,
       {
-        build: esBuild,
+        build: esbuild.build,
       },
       this.hooks && this.hooks.onDependencyBundle,
     );
@@ -147,7 +147,7 @@ export default class Hooker {
       this.transformCache,
       {
         build: this.patchedESBuild,
-        transform: esTransform,
+        transform: esbuild.transform,
       },
       this.hooks && this.hooks.onTransform,
     );
@@ -203,13 +203,11 @@ export default class Hooker {
 
     const result = await (this.serverBundleRebuild
       ? this.serverBundleRebuild()
-      : esBuild({
-          banner: {
-            js:
-              applicationFormat === 'cjs'
-                ? ''
-                : "import { createRequire as createDvlpTopLevelRequire } from 'module'; \nconst require = createDvlpTopLevelRequire(import.meta.url);",
-          },
+      : esbuild.build({
+          banner:
+            applicationFormat === 'cjs'
+              ? ''
+              : "import { createRequire as createDvlpTopLevelRequire } from 'module'; \nconst require = createDvlpTopLevelRequire(import.meta.url);",
           bundle: true,
           entryPoints: [filePath],
           format: applicationFormat,

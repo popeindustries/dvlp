@@ -1,4 +1,4 @@
-import { build } from 'esbuild';
+import esbuild from 'esbuild';
 import fs from 'fs';
 import { minify } from 'terser';
 import path from 'path';
@@ -19,7 +19,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     fs.readFileSync(path.resolve('src/types.d.ts'), 'utf8').replace(/\/\*\s+export\s+\*\//g, 'export'),
   );
 
-  await build({
+  await esbuild.build({
     bundle: true,
     entryPoints: ['./src/test-browser/index.js'],
     format: 'esm',
@@ -27,11 +27,9 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     outfile: 'dvlp-browser.js',
   });
 
-  await build({
-    banner: {
-      js:
-        "import { createRequire as createRequireBecauseEsbuild } from 'module'; \nconst require = createRequireBecauseEsbuild(import.meta.url);",
-    },
+  await esbuild.build({
+    banner:
+      "import { createRequire as createRequireBecauseEsbuild } from 'module'; \nconst require = createRequireBecauseEsbuild(import.meta.url);",
     bundle: true,
     define: {
       'global.$RELOAD_CLIENT': `'${reloadClient}'`,
