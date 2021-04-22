@@ -4,12 +4,6 @@
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
   "main": "dvlp.js",
   "browser": "dvlp-browser.js",
-  "exports": {
-    ".": {
-      "import": "./dvlp.js",
-      "browser": "./dvlp-browser.js"
-    }
-  },
   "type": "module",
   "types": "dvlp.d.ts",
   "repository": "https://github.com/popeindustries/dvlp.git",
