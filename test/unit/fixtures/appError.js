@@ -1,24 +1,27 @@
 'use strict';
 
-const Koa = require('koa');
-const send = require('koa-send');
+const fastify = require('fastify');
+const fastifyStatic = require('fastify-static');
 
-const app = new Koa();
+const server = fastify();
 
-app.use(async (ctx) => {
-  if (ctx.accepts('html')) {
-    return (ctx.body = `<!doctype html>
+server.get('/', async (req, reply) => {
+  reply.type('text/html').send(`<!doctype html>
     <html lang="en-gb">
       <head>
         <meta charset="utf-8">
-        <script type="module" src="./www/module.js"></script>
+        <script type="module" src="www/module.js"></script>
       </head>
       <body>
-      ${errorddddd}
+      ${errrrrrrrrrrrr}
       </body>
     </html>`);
-  }
-  await send(ctx, ctx.path, { root: __dirname + '/www' });
 });
 
-app.listen(process.env.PORT || 8100);
+server.register(fastifyStatic, {
+  root: __dirname,
+});
+
+server.listen(process.env.PORT || 8100, (err, address) => {
+  err && console.error(err);
+});

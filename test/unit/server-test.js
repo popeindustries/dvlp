@@ -375,7 +375,7 @@ describe('server', () => {
       expect(await res.text()).to.contain('ok');
     });
     it('should start an esm app server', async () => {
-      server = await serverFactory('test/unit/fixtures/appEsm.js', { port: 8100 });
+      server = await serverFactory('test/unit/fixtures/app.mjs', { port: 8100 });
       const res = await fetch('http://localhost:8100/', {
         headers: { Accept: 'text/html; charset=utf-8' },
       });
@@ -383,7 +383,7 @@ describe('server', () => {
       expect(await res.text()).to.contain('hi');
     });
     it('should polyfill process.env', async () => {
-      server = await serverFactory('test/unit/fixtures/appEsm.js', { port: 8100 });
+      server = await serverFactory('test/unit/fixtures/app.mjs', { port: 8100 });
       const res = await fetch('http://localhost:8100/', {
         headers: { Accept: 'text/html; charset=utf-8' },
       });
