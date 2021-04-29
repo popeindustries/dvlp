@@ -39,7 +39,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
       'global.$VERSION': `'${pkg.version}'`,
     },
     entryPoints: ['./src/index.js'],
-    external: ['esbuild', 'fsevents'],
+    external: ['esbuild', 'fsevents', 'undici'],
     format: 'esm',
     target: 'node13.2',
     platform: 'node',
