@@ -69,6 +69,11 @@ export default async function serverFactory(
   }
 
   config.applicationPort = server.port;
+
+  if (secureProxy) {
+    secureProxy.setApplicationPort(server.port);
+  }
+
   const parentDir = path.resolve(process.cwd(), '..');
   // prettier-ignore
   const paths = entry.isStatic

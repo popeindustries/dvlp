@@ -131,6 +131,7 @@ declare interface Reloader {
 
 declare interface SecureProxy extends Reloader {
   commonName?: string;
+  setApplicationPort(port: number): void;
 }
 
 declare interface Package {

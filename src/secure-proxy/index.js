@@ -33,6 +33,12 @@ export default async function secureProxy(certsPath, reload, port) {
     reloadPort: 443,
     reloadUrl: `https://localhost:${443}${config.reloadEndpoint}`,
     send: server.send.bind(server),
+    /**
+     * @param { number } port
+     */
+    setApplicationPort(port) {
+      server.applicationPort = port;
+    },
   };
 }
 
@@ -47,6 +53,14 @@ class SecureProxyServer extends EventSourceServer {
     super();
     this.reload = reload;
     this.server;
+    /** @type { import('undici').Client } */
+    this.client;
+  }
+
+  /**
+   * @param { number } port
+   */
+  set applicationPort(port) {
     this.client = new undici.Client(`http://localhost:${port}`);
   }
 
