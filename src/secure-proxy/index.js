@@ -6,9 +6,9 @@ import EventSourceServer from '../reloader/event-source-server.js';
 import fs from 'fs';
 import { getDirectoryContents } from '../utils/file.js';
 import { getReloadClientEmbed } from '../reloader/reload-client-embed.js';
-import http from 'http';
 import https from 'https';
 import path from 'path';
+import undici from 'undici';
 
 /**
  * Create secure proxy server.
@@ -16,12 +16,13 @@ import path from 'path';
  *
  * @param { string | Array<string> } certsPath
  * @param { boolean } reload
+ * @param { number } port
  * @returns { Promise<SecureProxy> }
  */
-export default async function secureProxy(certsPath, reload) {
+export default async function secureProxy(certsPath, reload, port) {
   const serverOptions = resolveCerts(certsPath);
   const commonName = validateCert(serverOptions.cert);
-  const server = new SecureProxyServer(reload);
+  const server = new SecureProxyServer(reload, port);
 
   await server.start(serverOptions);
 
@@ -40,11 +41,13 @@ class SecureProxyServer extends EventSourceServer {
    * Constructor
    *
    * @param { boolean } reload
+   * @param { number } port
    */
-  constructor(reload) {
+  constructor(reload, port) {
     super();
     this.reload = reload;
     this.server;
+    this.client = new undici.Client(`http://localhost:${port}`);
   }
 
   /**
@@ -67,20 +70,25 @@ class SecureProxyServer extends EventSourceServer {
           return;
         }
 
-        const originOptions = {
-          port: config.applicationPort,
-          path: req.url,
-          method: req.method,
-          headers: req.headers,
-        };
+        // Remove ilegal headers
+        const headers = { ...req.headers };
+        headers.connection = undefined;
+        headers['transfer-encoding'] = undefined;
 
-        const originRequest = http.request(originOptions, (originResponse) => {
-          const { statusCode } = originResponse;
-          res.writeHead(statusCode || 200, originResponse.headers);
-          originResponse.pipe(res);
-        });
-
-        req.pipe(originRequest);
+        this.client.stream(
+          {
+            headers,
+            // @ts-ignore
+            maxRedirections: 10,
+            method: req.method || 'GET',
+            path: req.url || '/',
+            opaque: res,
+          },
+          ({ statusCode, headers, opaque }) => {
+            res.writeHead(statusCode || 200, headers);
+            return opaque;
+          },
+        );
       });
 
       decorateWithServerDestroy(this.server);
@@ -101,6 +109,8 @@ class SecureProxyServer extends EventSourceServer {
   destroy() {
     return new Promise((resolve) => {
       super.destroy();
+
+      this.client.destroy();
 
       if (!this.server) {
         return resolve();
