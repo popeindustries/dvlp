@@ -90,10 +90,9 @@ class SecureProxyServer extends EventSourceServer {
         headers['transfer-encoding'] = undefined;
 
         this.client.stream(
+          // @ts-ignore
           {
             headers,
-            // @ts-ignore
-            maxRedirections: 10,
             method: req.method || 'GET',
             path: req.url || '/',
             opaque: res,

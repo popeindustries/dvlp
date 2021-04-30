@@ -2,7 +2,7 @@
   "name": "dvlp",
   "version": "13.0.0-beta.4",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
-  "main": "dvlp.js",
+  "main": "src/index.js",
   "browser": "dvlp-browser.js",
   "type": "module",
   "types": "dvlp.d.ts",
@@ -16,7 +16,7 @@
   "dependencies": {
     "commander": "^7.0.0",
     "esbuild": "^0.11.12",
-    "undici": "^3.3.6"
+    "undici": "^4.0.0-rc.1"
   },
   "devDependencies": {
     "@fidm/x509": "^1.2.1",
