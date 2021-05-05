@@ -16,13 +16,12 @@ import undici from 'undici';
  *
  * @param { string | Array<string> } certsPath
  * @param { boolean } reload
- * @param { number } port
  * @returns { Promise<SecureProxy> }
  */
-export default async function secureProxy(certsPath, reload, port) {
+export default async function secureProxy(certsPath, reload) {
   const serverOptions = resolveCerts(certsPath);
   const commonName = validateCert(serverOptions.cert);
-  const server = new SecureProxyServer(reload, port);
+  const server = new SecureProxyServer(reload);
 
   await server.start(serverOptions);
 
@@ -47,9 +46,8 @@ class SecureProxyServer extends EventSourceServer {
    * Constructor
    *
    * @param { boolean } reload
-   * @param { number } port
    */
-  constructor(reload, port) {
+  constructor(reload) {
     super();
     this.reload = reload;
     this.server;

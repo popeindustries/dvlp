@@ -52,7 +52,7 @@ export default async function serverFactory(
   }
   if (certsPath) {
     certsPath = expandPath(certsPath);
-    secureProxy = await secureProxyServer(certsPath, reload, port);
+    secureProxy = await secureProxyServer(certsPath, reload);
   } else if (reload) {
     reloader = await reloadServer();
   }
