@@ -95,7 +95,7 @@
   },
   "files": [
     "bin",
-    "dvlp*",
+    "*.d.ts",
     "*.js",
     "README.MD"
   ]
