@@ -16,7 +16,7 @@ import undici from 'undici';
  *
  * @param { string | Array<string> } certsPath
  * @param { boolean } reload
- * @returns { Promise<SecureProxy> }
+ * @returns { Promise<_dvlp.SecureProxy> }
  */
 export default async function secureProxy(certsPath, reload) {
   const serverOptions = resolveCerts(certsPath);

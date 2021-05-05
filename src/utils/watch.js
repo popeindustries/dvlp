@@ -14,7 +14,7 @@ const tmpdir = os.tmpdir();
  * Instantiate a file watcher and begin watching for changes
  *
  * @param { (callback: string) => void } fn
- * @returns { Watcher }
+ * @returns { _dvlp.Watcher }
  */
 export default function watch(fn) {
   const watcher = new FSWatcher({

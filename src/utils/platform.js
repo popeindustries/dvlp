@@ -7,7 +7,7 @@ const ESBUILD_BROWSER_ENGINES = ['chrome', 'edge', 'firefox', 'ios', 'safari'];
  * Parse platform information from User-Agent
  *
  * @param { string } [userAgent]
- * @returns { Platform }
+ * @returns { _dvlp.Platform }
  */
 export function parseUserAgent(userAgent) {
   const dvlpUA = `dvlp/${config.version} (+https://github.com/popeindustries/dvlp)`;
@@ -38,7 +38,7 @@ export function parseUserAgent(userAgent) {
 /**
  * Parse valid esbuild transform target from "platform" instance
  *
- * @param { Platform } platform
+ * @param { _dvlp.Platform } platform
  * @returns { string }
  */
 export function parseEsbuildTarget(platform) {

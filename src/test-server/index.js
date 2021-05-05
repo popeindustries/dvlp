@@ -25,7 +25,7 @@ let uninterceptClientRequest;
 /**
  * Create test server
  *
- * @param { TestServerOptions } [options]
+ * @param { _dvlp.TestServerOptions } [options]
  * @returns { Promise<TestServer> }
  */
 export default async function testServerFactory(options) {
@@ -72,8 +72,8 @@ testServerFactory.enableNetwork = function enableNetwork() {
 /**
  * Default mock response handler for network hang
  *
- * @param { Req } req
- * @param { Res } res
+ * @param { _dvlp.Req } req
+ * @param { _dvlp.Res } res
  * @returns { undefined }
  */
 testServerFactory.mockHangResponseHandler = function mockHangResponseHandler(req, res) {
@@ -83,8 +83,8 @@ testServerFactory.mockHangResponseHandler = function mockHangResponseHandler(req
 /**
  * Default mock response handler for 500 response
  *
- * @param { Req } req
- * @param { Res } res
+ * @param { _dvlp.Req } req
+ * @param { _dvlp.Res } res
  * @returns { undefined }
  */
 testServerFactory.mockErrorResponseHandler = function mockErrorResponseHandler(req, res) {
@@ -97,8 +97,8 @@ testServerFactory.mockErrorResponseHandler = function mockErrorResponseHandler(r
 /**
  * Default mock response handler for 404 response
  *
- * @param { Req } req
- * @param { Res } res
+ * @param { _dvlp.Req } req
+ * @param { _dvlp.Res } res
  * @returns { undefined }
  */
 testServerFactory.mockMissingResponseHandler = function mockMissingResponseHandler(req, res) {
@@ -110,8 +110,8 @@ testServerFactory.mockMissingResponseHandler = function mockMissingResponseHandl
 /**
  * Default mock response handler for offline
  *
- * @param { Req } req
- * @param { Res } res
+ * @param { _dvlp.Req } req
+ * @param { _dvlp.Res } res
  * @returns { undefined }
  */
 testServerFactory.mockOfflineResponseHandler = function mockOfflineResponseHandler(req, res) {
@@ -123,7 +123,7 @@ class TestServer {
   /**
    * Constructor
    *
-   * @param { TestServerOptions } options
+   * @param { _dvlp.TestServerOptions } options
    */
   constructor(options) {
     const { autorespond = true, latency = config.latency, port = config.port, webroot = '' } = options;
@@ -280,8 +280,8 @@ class TestServer {
   /**
    * Register mock 'response' for 'request'
    *
-   * @param { string | MockRequest } request
-   * @param { MockResponse | MockResponseHandler } response
+   * @param { string | _dvlp.MockRequest } request
+   * @param { _dvlp.MockResponse | _dvlp.MockResponseHandler } response
    * @param { boolean } [once]
    * @param { () => void } [onMockCallback]
    * @returns { () => void } remove mock
@@ -293,8 +293,8 @@ class TestServer {
   /**
    * Register mock push 'events' for 'stream'
    *
-   * @param { string | MockPushStream } stream
-   * @param { MockPushEvent | Array<MockPushEvent> } events
+   * @param { string | _dvlp.MockPushStream } stream
+   * @param { _dvlp.MockPushEvent | Array<_dvlp.MockPushEvent> } events
    * @returns { () => void } remove mock
    */
   mockPushEvents(stream, events) {
@@ -305,8 +305,8 @@ class TestServer {
    * Push data to WebSocket/EventSource clients
    * A string passed as 'event' will be handled as a named mock push event
    *
-   * @param { string | PushStream } stream
-   * @param { string | PushEvent } [event]
+   * @param { string | _dvlp.PushStream } stream
+   * @param { string | _dvlp.PushEvent } [event]
    * @returns { void }
    */
   pushEvent(stream, event) {

@@ -14,10 +14,9 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     })
   ).code.replace(/(["\\])/g, '\\$1');
 
-  fs.writeFileSync(
-    path.resolve('dvlp.d.ts'),
-    fs.readFileSync(path.resolve('src/types.d.ts'), 'utf8').replace(/\/\*\s+export\s+\*\//g, 'export'),
-  );
+  for (const filename of ['_dvlp.d.ts', 'dvlp.d.ts', 'dvlp-browser.d.ts']) {
+    fs.writeFileSync(path.resolve(filename), fs.readFileSync(path.resolve(`src/${filename}`), 'utf8'));
+  }
 
   await esbuild.build({
     bundle: true,

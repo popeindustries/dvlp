@@ -19,7 +19,7 @@ export default class Metrics {
   /**
    * Constructor
    *
-   * @param { Res } res
+   * @param { _dvlp.Res } res
    */
   constructor(res) {
     /** @type { Map<string, [number, number]> } */

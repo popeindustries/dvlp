@@ -13,7 +13,7 @@ const debug = Debug('dvlp:reload');
 /**
  * Create reload server
  *
- * @returns { Promise<Reloader> }
+ * @returns { Promise<_dvlp.Reloader> }
  */
 export async function reloadServer() {
   const server = new ReloadServer();

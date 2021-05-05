@@ -14,19 +14,19 @@ import secureProxyServer from '../secure-proxy/index.js';
  * Server instance factory
  *
  * @param { string | Array<string> | (() => void) } filePath
- * @param { ServerOptions } options
- * @returns { Promise<Server> }
+ * @param { _dvlp.ServerOptions } options
+ * @returns { Promise<_dvlp.Server> }
  */
 export default async function serverFactory(
   filePath = process.cwd(),
   { certsPath, directories, hooksPath, mockPath, port = config.applicationPort, reload = true, silent } = {},
 ) {
   const entry = resolveEntry(filePath, directories);
-  /** @type { Hooks | undefined } */
+  /** @type { _dvlp.Hooks | undefined } */
   let hooks;
-  /** @type { Reloader | undefined } */
+  /** @type { _dvlp.Reloader | undefined } */
   let reloader;
-  /** @type { SecureProxy | undefined } */
+  /** @type { _dvlp.SecureProxy | undefined } */
   let secureProxy;
 
   config.directories = Array.from(new Set(entry.directories));
@@ -112,10 +112,10 @@ export default async function serverFactory(
  *
  * @param { string | Array<string> | (() => void) } filePath
  * @param { Array<string> } directories
- * @returns { Entry }
+ * @returns { _dvlp.Entry }
  */
 function resolveEntry(filePath, directories = []) {
-  /** @type { Entry } */
+  /** @type { _dvlp.Entry } */
   const entry = {
     directories: [],
     isApp: false,

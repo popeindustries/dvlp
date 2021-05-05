@@ -23,8 +23,8 @@ export default class EventSourceServer {
   /**
    * Register new client connection
    *
-   * @param { IncomingMessage } req
-   * @param { ServerResponse } res
+   * @param { _dvlp.IncomingMessage } req
+   * @param { _dvlp.ServerResponse } res
    * @returns { void }
    */
   registerClient(req, res) {
@@ -64,7 +64,7 @@ export default class EventSourceServer {
   /**
    * Determine if "req" should be handled by reload server
    *
-   * @param { Req } req
+   * @param { _dvlp.Req } req
    * @returns { boolean }
    */
   isReloadRequest(req) {

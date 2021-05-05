@@ -28,7 +28,7 @@ export default class Mock {
    * @param { string | Array<string> } [filePaths]
    */
   constructor(filePaths) {
-    /** @type { Set<MockResponseData | MockStreamData> } */
+    /** @type { Set<_dvlp.MockResponseData | _dvlp.MockStreamData> } */
     this.cache = new Set();
     this.client = mockClient;
     this.clear = this.clear.bind(this);
@@ -42,8 +42,8 @@ export default class Mock {
   /**
    * Add new mock for 'res'
    *
-   * @param { string | MockRequest } req
-   * @param { MockResponse | MockResponseHandler } res
+   * @param { string | _dvlp.MockRequest } req
+   * @param { _dvlp.MockResponse | _dvlp.MockResponseHandler } res
    * @param { boolean } [once]
    * @param { () => void } [onMockCallback]
    * @returns { () => void } remove mock instance
@@ -52,7 +52,7 @@ export default class Mock {
     const ignoreSearch = (isMockRequest(req) && req.ignoreSearch) || false;
     const filePath = (isMockRequest(req) && req.filePath) || path.join(process.cwd(), 'mock');
     const [url, originRegex, pathRegex, paramsMatch, searchParams] = getUrlSegmentsForMatching(req, ignoreSearch);
-    /** @type { MockResponseDataType } */
+    /** @type { _dvlp.MockResponseDataType } */
     let type = 'json';
 
     if (typeof res !== 'function') {
@@ -92,8 +92,8 @@ export default class Mock {
   /**
    * Add new push mock for 'events'
    *
-   * @param { string | MockPushStream } stream
-   * @param { MockPushEvent | Array<MockPushEvent> } events
+   * @param { string | _dvlp.MockPushStream } stream
+   * @param { _dvlp.MockPushEvent | Array<_dvlp.MockPushEvent> } events
    * @returns { () => void } remove mock instance
    */
   addPushEvents(stream, events) {
@@ -103,20 +103,20 @@ export default class Mock {
     const ignoreSearch = (isMockPushStream(stream) && stream.ignoreSearch) || false;
     const filePath = (isMockPushStream(stream) && stream.filePath) || path.join(process.cwd(), 'mock');
     const [url, originRegex, pathRegex, paramsMatch, searchParams] = getUrlSegmentsForMatching(stream, ignoreSearch);
-    /** @type { MockStreamDataType } */
+    /** @type { _dvlp.MockStreamDataType } */
     const type = originRegex.source.includes('ws') ? 'ws' : 'es';
     // Default to socket.io protocol for ws
     const protocol = (isMockPushStream(stream) && stream.protocol) || type;
-    /** @type { MockStreamData["events"] } */
+    /** @type { _dvlp.MockStreamData["events"] } */
     const eventsData = {};
 
     for (const event of events) {
       // Ignore events without a name
       if (event.name) {
-        /** @type { MockStreamEventData["options"] } */
+        /** @type { _dvlp.MockStreamEventData["options"] } */
         const options = { delay: 0, ...event.options, protocol };
 
-        /** @type { Array<MockStreamEventData> } */
+        /** @type { Array<_dvlp.MockStreamEventData> } */
         const sequence = [];
 
         if (event.sequence) {
@@ -145,7 +145,7 @@ export default class Mock {
       }
     }
 
-    /** @type { MockStreamData } */
+    /** @type { _dvlp.MockStreamData } */
     const mock = {
       url,
       originRegex,
@@ -223,9 +223,9 @@ export default class Mock {
    * Will respond if 'res' passed
    *
    * @param { string } href
-   * @param { Req } [req]
-   * @param { Res } [res]
-   * @returns { boolean | MockResponseData | undefined | void }
+   * @param { _dvlp.Req } [req]
+   * @param { _dvlp.Res } [res]
+   * @returns { boolean | _dvlp.MockResponseData | undefined | void }
    */
   matchResponse(href, req, res) {
     const mock = this.getMockData(href);
@@ -331,9 +331,9 @@ export default class Mock {
   /**
    * Match and handle mock push event for 'stream'
    *
-   * @param { string | MockPushStream } stream
+   * @param { string | _dvlp.MockPushStream } stream
    * @param { string } name
-   * @param { (stream: string | PushStream, event: PushEvent) => void } push
+   * @param { (stream: string | _dvlp.PushStream, event: _dvlp.PushEvent) => void } push
    * @returns { boolean }
    */
   matchPushEvent(stream, name, push) {
@@ -359,7 +359,7 @@ export default class Mock {
   /**
    * Determine if 'reqOrMockData' matches cached mock data
    *
-   * @param { string | URL | { url: string } | MockResponseData | MockStreamData } reqOrMockData
+   * @param { string | URL | { url: string } | _dvlp.MockResponseData | _dvlp.MockStreamData } reqOrMockData
    * @returns { boolean }
    */
   hasMatch(reqOrMockData) {
@@ -372,7 +372,7 @@ export default class Mock {
   /**
    * Remove existing mock data
    *
-   * @param { string | URL | { url: string } | MockResponseData | MockStreamData } reqOrMockData
+   * @param { string | URL | { url: string } | _dvlp.MockResponseData | _dvlp.MockStreamData } reqOrMockData
    * @returns { void }
    */
   remove(reqOrMockData) {
@@ -431,7 +431,7 @@ export default class Mock {
    * Retrieve mock response/stream data
    *
    * @param { string | URL | { url: string } } req
-   * @returns { MockResponseData | MockStreamData | undefined }
+   * @returns { _dvlp.MockResponseData | _dvlp.MockStreamData | undefined }
    * @private
    */
   getMockData(req) {
@@ -476,7 +476,7 @@ export default class Mock {
     }
 
     try {
-      /** @type { Array<MockResponseJSONSchema | MockPushEventJSONSchema> } */
+      /** @type { Array<_dvlp.MockResponseJSONSchema | _dvlp.MockPushEventJSONSchema> } */
       let mocks = JSON.parse(fs.readFileSync(filePath, 'utf8'));
       let count = 0;
       let type = '';
@@ -523,7 +523,7 @@ export default class Mock {
 /**
  * Retrieve origin, path regex, and search params for "req"
  *
- * @param { string | MockRequest } req
+ * @param { string | _dvlp.MockRequest } req
  * @param { boolean } ignoreSearch
  * @returns { [URL, RegExp, RegExp, import('path-to-regexp').MatchFunction, URLSearchParams] }
  */
@@ -608,9 +608,9 @@ function isEqualSearchParams(params1, params2) {
 /**
  * Match and handle mock push event for 'stream'
  *
- * @param { string | MockPushStream } stream
- * @param { Array<MockStreamEventData> } eventSequence
- * @param { (stream: string | PushStream, event: PushEvent) => void } push
+ * @param { string | _dvlp.MockPushStream } stream
+ * @param { Array<_dvlp.MockStreamEventData> } eventSequence
+ * @param { (stream: string | _dvlp.PushStream, event: _dvlp.PushEvent) => void } push
  * @returns { Promise<void> }
  * @private
  */
@@ -663,7 +663,7 @@ function isValidJSONSchema(json) {
  * Determine if "req" is a MockRequest
  *
  * @param { any } req
- * @returns { req is MockRequest }
+ * @returns { req is _dvlp.MockRequest }
  */
 function isMockRequest(req) {
   return req && typeof req === 'object' && req.url !== undefined && req.type === undefined;
@@ -673,7 +673,7 @@ function isMockRequest(req) {
  * Determine if "req" is a MockPushStream
  *
  * @param { any } req
- * @returns { req is MockPushStream }
+ * @returns { req is _dvlp.MockPushStream }
  */
 function isMockPushStream(req) {
   return req && typeof req === 'object' && req.url !== undefined && req.type !== undefined;
@@ -683,7 +683,7 @@ function isMockPushStream(req) {
  * Determine if "mock" is a MockResponseData
  *
  * @param { any } mock
- * @returns { mock is MockResponseData }
+ * @returns { mock is _dvlp.MockResponseData }
  */
 function isMockResponseData(mock) {
   return mock && typeof mock === 'object' && 'once' in mock;
@@ -693,7 +693,7 @@ function isMockResponseData(mock) {
  * Determine if "mock" is a MockStreamData
  *
  * @param { any } mock
- * @returns { mock is MockStreamData }
+ * @returns { mock is _dvlp.MockStreamData }
  */
 function isMockStreamData(mock) {
   return mock && typeof mock === 'object' && 'events' in mock;

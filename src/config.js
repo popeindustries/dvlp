@@ -74,7 +74,7 @@ if (TESTING) {
 }
 
 /**
- * @type { Config }
+ * @type { _dvlp.Config }
  */
 const config = {
   applicationDir,

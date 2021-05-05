@@ -1,31 +1,23 @@
-declare namespace NodeJS {
-  interface Global {
-    $MOCK_CLIENT?: string;
-    $RELOAD_CLIENT?: string;
-    $VERSION: string;
-  }
-}
-
-declare type IncomingMessage = import('http').IncomingMessage;
-declare type ServerResponse = import('http').ServerResponse;
-declare type HttpServer = import('http').Server;
-declare type HttpsServer = import('https').Server;
-declare type URL = import('url').URL;
-declare type URLSearchParams = import('url').URLSearchParams;
-declare type esbuild = {
+type IncomingMessage = import('http').IncomingMessage;
+type ServerResponse = import('http').ServerResponse;
+type HttpServer = import('http').Server;
+type HttpsServer = import('https').Server;
+type URL = import('url').URL;
+type URLSearchParams = import('url').URLSearchParams;
+type esbuild = {
   build(
     options: import('esbuild').BuildOptions & { write: false },
   ): Promise<import('esbuild').BuildResult & { outputFiles: import('esbuild').OutputFile[] }>;
   transform(input: string, options?: import('esbuild').TransformOptions): Promise<import('esbuild').TransformResult>;
 };
 
-declare interface Req extends IncomingMessage {
+interface Req extends IncomingMessage {
   filePath: string;
   type: string;
   url: string;
   params?: { [key: string]: string } | {};
 }
-declare interface Res extends ServerResponse {
+interface Res extends ServerResponse {
   bundled: boolean;
   encoding: string;
   metrics: Metrics;
@@ -35,11 +27,11 @@ declare interface Res extends ServerResponse {
   url: string;
   error?: Error;
 }
-declare type RequestHandler = (req: Req, res: Res) => void;
-declare interface DestroyableHttpServer extends HttpServer {
+type RequestHandler = (req: Req, res: Res) => void;
+interface DestroyableHttpServer extends HttpServer {
   destroy?(): void;
 }
-declare interface DestroyableHttpsServer extends HttpsServer {
+interface DestroyableHttpsServer extends HttpsServer {
   destroy?(): void;
 }
 
@@ -60,6 +52,7 @@ declare namespace Metrics {
     transpile = 'transpile file',
   }
 }
+
 declare interface Config {
   applicationDir: string;
   applicationDirName: string;
@@ -83,7 +76,7 @@ declare interface Config {
   version: string;
 }
 
-declare interface Entry {
+interface Entry {
   directories: Array<string>;
   isApp: boolean;
   isFunction: boolean;
@@ -91,7 +84,7 @@ declare interface Entry {
   main: string | (() => void) | undefined;
 }
 
-declare interface PatchResponseOptions {
+interface PatchResponseOptions {
   directories?: Array<string>;
   footerScript?: {
     hash?: string;
@@ -111,17 +104,17 @@ declare interface PatchResponseOptions {
   ) => string | false | undefined;
 }
 
-declare interface FindOptions {
+interface FindOptions {
   directories?: Array<string>;
   type?: string;
 }
 
-declare interface Watcher {
+interface Watcher {
   add: (filePath: string) => void;
   close: () => void;
 }
 
-declare interface Reloader {
+interface Reloader {
   destroy: () => Promise<void>;
   reloadEmbed: string;
   reloadPort: number;
@@ -129,12 +122,12 @@ declare interface Reloader {
   send: (filePath: string) => void;
 }
 
-declare interface SecureProxy extends Reloader {
+interface SecureProxy extends Reloader {
   commonName?: string;
   setApplicationPort(port: number): void;
 }
 
-declare interface Package {
+interface Package {
   aliases: { [key: string]: string };
   exports?: string | { [key: string]: string | { [key: string]: string } };
   isProjectPackage: boolean;
@@ -146,7 +139,7 @@ declare interface Package {
   version: string;
 }
 
-declare interface Platform {
+interface Platform {
   manufacturer?: string;
   name?: string;
   os?: {
@@ -158,15 +151,12 @@ declare interface Platform {
   version?: string;
 }
 
-declare type InterceptClientRequestCallback = (url: URL) => boolean;
+type InterceptClientRequestCallback = (url: URL) => boolean;
+type InterceptFileReadCallback = (filePath: string) => void;
+type InterceptProcessOnCallback = (event: string, callback: () => void) => void;
+type MockResponseDataType = 'html' | 'file' | 'json';
 
-declare type InterceptFileReadCallback = (filePath: string) => void;
-
-declare type InterceptProcessOnCallback = (event: string, callback: () => void) => void;
-
-declare type MockResponseDataType = 'html' | 'file' | 'json';
-
-declare interface MockResponseData {
+interface MockResponseData {
   url: URL;
   originRegex: RegExp;
   pathRegex: RegExp;
@@ -180,9 +170,9 @@ declare interface MockResponseData {
   callback?: () => void;
 }
 
-declare type MockStreamDataType = 'ws' | 'es';
+type MockStreamDataType = 'ws' | 'es';
 
-declare interface MockStreamEventData {
+interface MockStreamEventData {
   name?: string;
   message: string | { [key: string]: any };
   options: MockPushEventOptions & {
@@ -190,7 +180,7 @@ declare interface MockStreamEventData {
   };
 }
 
-declare interface MockStreamData {
+interface MockStreamData {
   url: URL;
   originRegex: RegExp;
   pathRegex: RegExp;
@@ -228,7 +218,7 @@ declare class Mock {
   clean(): void;
 }
 
-declare interface MockResponseJSONSchema {
+interface MockResponseJSONSchema {
   request: MockRequest;
   response: MockResponse;
 }
@@ -273,11 +263,11 @@ declare class TestServer {
   destroy(): Promise<void>;
 }
 
-declare interface DependencyBundleHookContext {
+interface DependencyBundleHookContext {
   esbuild: Pick<esbuild, 'build'>;
 }
 
-declare interface TransformHookContext {
+interface TransformHookContext {
   client: {
     manufacturer?: string;
     name?: string;
@@ -287,14 +277,14 @@ declare interface TransformHookContext {
   esbuild: esbuild;
 }
 
-declare interface ResolveHookContext {
+interface ResolveHookContext {
   importer: string;
   isDynamic: boolean;
 }
 
-declare type DefaultResolve = (specifier: string, importer: string) => string | undefined;
+type DefaultResolve = (specifier: string, importer: string) => string | undefined;
 
-/* export */ declare interface Hooks {
+export interface Hooks {
   onDependencyBundle?(
     id: string,
     filePath: string,
@@ -315,15 +305,15 @@ declare type DefaultResolve = (specifier: string, importer: string) => string | 
   onServerTransform?(filePath: string, fileContents: string): string | undefined;
 }
 
-/* export */ declare interface MockRequest {
+export interface MockRequest {
   url: string;
   filePath?: string;
   ignoreSearch?: boolean;
 }
 
-/* export */ declare type MockResponseHandler = (req: Req, res: Res) => void;
+export type MockResponseHandler = (req: Req, res: Res) => void;
 
-/* export */ declare interface MockResponse {
+export interface MockResponse {
   body: string | { [key: string]: any };
   hang?: boolean;
   headers?: { [key: string]: any };
@@ -333,12 +323,12 @@ declare type DefaultResolve = (specifier: string, importer: string) => string | 
   status?: number;
 }
 
-declare interface MockPushEventJSONSchema {
+interface MockPushEventJSONSchema {
   stream: MockPushStream;
   events: Array<MockPushEvent>;
 }
 
-/* export */ declare interface MockPushStream {
+export interface MockPushStream {
   url: string;
   type: string;
   filePath?: string;
@@ -346,7 +336,7 @@ declare interface MockPushEventJSONSchema {
   protocol?: string;
 }
 
-/* export */ declare interface MockPushEventOptions {
+export interface MockPushEventOptions {
   delay?: number;
   connect?: boolean;
   event?: string;
@@ -354,38 +344,38 @@ declare interface MockPushEventJSONSchema {
   namespace?: string;
 }
 
-/* export */ declare interface MockPushEvent {
+export interface MockPushEvent {
   name: string;
   message?: string | { [key: string]: any };
   sequence?: Array<MockPushEvent>;
   options?: MockPushEventOptions;
 }
 
-declare interface PushClient {
+interface PushClient {
   on(event: string, callback: (event: { data: string }) => void): void;
   send(msg: string, options?: PushEventOptions): void;
   removeAllListeners(): void;
   close(): void;
 }
 
-/* export */ declare interface PushStream {
+export interface PushStream {
   url: string;
   type: string;
 }
 
-/* export */ declare interface PushEventOptions {
+export interface PushEventOptions {
   event?: string;
   id?: string;
   namespace?: string;
   protocol?: string;
 }
 
-/* export */ declare interface PushEvent {
+export interface PushEvent {
   message: string | { [key: string]: any };
   options?: PushEventOptions;
 }
 
-/* export */ declare interface ServerOptions {
+export interface ServerOptions {
   /**
    * The path or glob pattern containing ".crt" and ".key" files.
    * This enables secure https mode by proxying all requests through a secure server (default `''`).
@@ -418,7 +408,7 @@ declare interface PushClient {
   silent?: boolean;
 }
 
-/* export */ declare interface Server {
+export interface Server {
   port: number;
   /**
    * Restart running server
@@ -430,12 +420,9 @@ declare interface PushClient {
   destroy(): Promise<void>;
 }
 
-/* export */ declare function server(
-  filePath: string | Array<string> | (() => void),
-  options?: ServerOptions,
-): Promise<Server>;
+export function server(filePath: string | Array<string> | (() => void), options?: ServerOptions): Promise<Server>;
 
-/* export */ declare interface TestServerOptions {
+export interface TestServerOptions {
   /**
    * Enable/disable automatic dummy responses.
    * If unable to resolve a request to a local file or mock,
@@ -456,62 +443,34 @@ declare interface PushClient {
   webroot?: string;
 }
 
-/* export */ declare function testServer(options: TestServerOptions): Promise<TestServer>;
+export function testServer(options: TestServerOptions): Promise<TestServer>;
 
-/* export */ declare namespace testServer {
+export namespace testServer {
   /**
    * Disable all external network connections,
    * and optionally reroute all external requests to this server with `rerouteAllRequests=true`
    */
-  /* export */ function disableNetwork(rerouteAllRequests?: boolean): void;
+  function disableNetwork(rerouteAllRequests?: boolean): void;
   /**
    * Re-enable all external network connections
    */
-  /* export */ function enableNetwork(): void;
+  function enableNetwork(): void;
   /**
    * Default mock response handler for network hang
    */
-  /* export */ function mockHangResponseHandler(url: URL, req: Req, res: Res): undefined;
+  function mockHangResponseHandler(url: URL, req: Req, res: Res): undefined;
   /**
    * Default mock response handler for 500 response
    */
-  /* export */ function mockErrorResponseHandler(url: URL, req: Req, res: Res): undefined;
+  function mockErrorResponseHandler(url: URL, req: Req, res: Res): undefined;
   /**
    * Default mock response handler for 404 response
    */
-  /* export */ function mockMissingResponseHandler(url: URL, req: Req, res: Res): undefined;
+  function mockMissingResponseHandler(url: URL, req: Req, res: Res): undefined;
   /**
    * Default mock response handler for offline
    */
-  /* export */ function mockOfflineResponseHandler(url: URL, req: Req, res: Res): undefined;
+  function mockOfflineResponseHandler(url: URL, req: Req, res: Res): undefined;
 }
 
-/* export  */ declare namespace testBrowser {
-  /**
-   * Disable all external network connections,
-   * and optionally reroute all external requests to this server with `rerouteAllRequests=true`
-   */
-  /* export  */ function disableNetwork(rerouteAllRequests?: boolean): void;
-  /**
-   * Re-enable all external network connections
-   */
-  /* export  */ function enableNetwork(): void;
-  /**
-   * Add mock response for "req"
-   */
-  /* export  */ function mockResponse(
-    req: string | MockRequest,
-    res?: MockResponse | MockResponseHandler,
-    once?: boolean,
-    onMockCallback?: () => void,
-  ): () => void;
-  /**
-   * Push data to WebSocket/EventSource clients
-   * A string passed as `event` will be handled as a named mock push event
-   */
-  /* export  */ function pushEvent(stream: string, event?: string | PushEvent): void;
-}
-
-interface Window {
-  dvlp: typeof testBrowser;
-}
+export as namespace _dvlp;

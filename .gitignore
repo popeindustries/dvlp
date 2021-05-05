@@ -2,6 +2,6 @@
 /node_modules
 .DS_Store
 .dvlp
-/dvlp.js
-/dvlp-browser.js
-/dvlp.d.ts
+/dvlp*.js
+/dvlp*.d.ts
+/_dvlp.d.ts

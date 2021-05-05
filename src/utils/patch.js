@@ -31,9 +31,9 @@ const debug = Debug('dvlp:patch');
  * and resolves import ids for js/css response.
  *
  * @param { string } filePath
- * @param { Req } req
- * @param { Res } res
- * @param { PatchResponseOptions } options
+ * @param { _dvlp.Req } req
+ * @param { _dvlp.Res } res
+ * @param { _dvlp.PatchResponseOptions } options
  */
 export function patchResponse(filePath, req, res, { footerScript, headerScript, resolveImport, send }) {
   // req.filepath set after file.find(), filepath passed if cached
@@ -120,7 +120,7 @@ export function patchResponse(filePath, req, res, { footerScript, headerScript, 
 /**
  * Disable Content-Encoding headers
  *
- * @param { Res } res
+ * @param { _dvlp.Res } res
  * @param { string } headerKey
  * @param { string } headerValue
  * @returns { string | undefined }
@@ -139,7 +139,7 @@ function disableContentEncodingHeader(res, headerKey, headerValue) {
 /**
  * Disable Cache-Control, Content-Encoding headers
  *
- * @param { Res } res
+ * @param { _dvlp.Res } res
  * @param { string } url
  * @returns { void }
  */
@@ -154,7 +154,7 @@ function disableCacheControlHeader(res, url) {
 /**
  * Enable Access-Control-Allow-Origin header
  *
- * @param { Res } res
+ * @param { _dvlp.Res } res
  */
 function enableCrossOriginHeader(res) {
   if (!res.headersSent) {
@@ -165,7 +165,7 @@ function enableCrossOriginHeader(res) {
 /**
  * Inject header/footer script tags into 'data'
  *
- * @param { Res } res
+ * @param { _dvlp.Res } res
  * @param { { footer: string, header: string } } scripts
  * @param { string } html
  * @returns { string }
@@ -191,7 +191,7 @@ function injectScripts(res, scripts, html) {
 /**
  * Inject CSP headers allowing inline script tag
  *
- * @param { Res } res
+ * @param { _dvlp.Res } res
  * @param { Array<string> } urls
  * @param { Array<string> } hashes
  * @param { string } key
@@ -241,10 +241,10 @@ function injectCSPHeader(res, urls, hashes, key, value) {
 /**
  * Rewrite bare import references in 'code'
  *
- * @param { Res } res
+ * @param { _dvlp.Res } res
  * @param { string } filePath
  * @param { string } code
- * @param { PatchResponseOptions["resolveImport"] } resolveImport
+ * @param { _dvlp.PatchResponseOptions["resolveImport"] } resolveImport
  * @returns { string }
  */
 function rewriteImports(res, filePath, code, resolveImport) {
@@ -364,7 +364,7 @@ function rewriteImports(res, filePath, code, resolveImport) {
 /**
  * Proxy set header for 'res', performing 'action' on write()/end()
  *
- * @param { Res } res
+ * @param { _dvlp.Res } res
  * @param { (key: string, value: string) => string | undefined } action
  */
 function proxySetHeader(res, action) {
@@ -403,7 +403,7 @@ function proxySetHeader(res, action) {
 /**
  * Proxy body write for 'res', performing 'action' on write()/end()
  *
- * @param { Res } res
+ * @param { _dvlp.Res } res
  * @param { (data: string) => string } action
  */
 function proxyBodyWrite(res, action) {

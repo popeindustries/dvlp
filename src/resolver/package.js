@@ -12,7 +12,7 @@ const RE_TRAILING = /\/+$|\\+$/;
  *
  * @param { string } filePath
  * @param { string } [packagePath]
- * @returns { Package | undefined }
+ * @returns { _dvlp.Package | undefined }
  */
 export function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
   if (packagePath === undefined || !fs.existsSync(packagePath)) {
@@ -22,7 +22,7 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
   const manifestPath = path.join(packagePath, 'package.json');
   const isProjectPackage = packagePath === process.cwd();
   const paths = resolveNodeModulesDirectories(packagePath);
-  /** @type { Package } */
+  /** @type { _dvlp.Package } */
   const pkg = {
     aliases: {},
     isProjectPackage,
@@ -101,7 +101,7 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
  * Resolve alias for "filePath"
  *
  * @param { string } filePath
- * @param { Package } pkg
+ * @param { _dvlp.Package } pkg
  * @returns { string }
  */
 export function resolveAliasPath(filePath, pkg) {
@@ -160,7 +160,7 @@ export function resolvePackagePath(filePath) {
  * Determine whether "specifier" is self-referential based on "pkg"
  *
  * @param { string } specifier
- * @param { Package } pkg
+ * @param { _dvlp.Package } pkg
  * @returns { boolean }
  */
 export function isSelfReferentialSpecifier(specifier, pkg) {

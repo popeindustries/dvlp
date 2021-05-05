@@ -70,6 +70,7 @@
   },
   "scripts": {
     "build": "node ./scripts/build.js",
+    "clean": "git clean -x -f",
     "format": "prettier --write './{src,test}/**/*.{js,json}'",
     "lint": "npm run lint:types && npm run lint:src",
     "lint:src": "eslint './{src,test}/**/*.js'",
