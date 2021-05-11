@@ -1,5 +1,5 @@
 declare module 'server-destroy' {
-  function destroy(server: import('http').Server): void;
+  function destroy(server: import('http').Server | import('http2').Http2Server): void;
   export = destroy;
 }
 

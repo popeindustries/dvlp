@@ -561,10 +561,10 @@ describe('server', () => {
   });
 
   if (!process.env.CI) {
-    describe('ssl', () => {
+    describe.only('ssl', () => {
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
       describe('static', () => {
-        it('should implicitly serve index.html over https', async () => {
+        it.only('should implicitly serve index.html over https', async () => {
           server = await serverFactory('test/unit/fixtures/www', {
             certsPath: 'test/unit/fixtures/certificates',
             port: 8100,

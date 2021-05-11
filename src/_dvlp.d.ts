@@ -1,5 +1,5 @@
-type IncomingMessage = import('http').IncomingMessage;
-type ServerResponse = import('http').ServerResponse;
+type IncomingMessage = import('http').IncomingMessage | import('http2').Http2ServerRequest;
+type ServerResponse = import('http').ServerResponse | import('http2').Http2ServerResponse;
 type HttpServer = import('http').Server;
 type HttpsServer = import('https').Server;
 type URL = import('url').URL;
