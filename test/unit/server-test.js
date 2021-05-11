@@ -9,6 +9,8 @@ import path from 'path';
 import serverFactory from '../../src/server/index.js';
 import websocket from 'faye-websocket';
 
+const DEBUG_VERSION = '4.3.1';
+
 const { Client: WebSocket } = websocket;
 let es, server, ws;
 
@@ -75,7 +77,7 @@ describe('server', () => {
     });
     it('should serve a bundled module js file with correct mime type', async () => {
       server = await serverFactory('test/unit/fixtures/www', { port: 8100 });
-      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/lodash__array-4.17.10.js`);
+      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/debug-${DEBUG_VERSION}.js`);
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include('application/javascript');
     });
@@ -408,20 +410,20 @@ describe('server', () => {
     });
     it('should serve a bundled module js file', async () => {
       server = await serverFactory('test/unit/fixtures/app.js', { port: 8100 });
-      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/lodash__array-4.17.20.js`);
+      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/debug-${DEBUG_VERSION}.js`);
       expect(res.status).to.eql(200);
       const body = await res.text();
-      expect(body).to.contain('function baseSlice');
+      expect(body).to.contain('function parse(str)');
       expect(body).to.contain('export_default as default');
     });
     it('should serve a bundled module js file from server listening for "request" event', async () => {
       server = await serverFactory('test/unit/fixtures/appListener.js', {
         port: 8100,
       });
-      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/lodash__array-4.17.20.js`);
+      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/debug-${DEBUG_VERSION}.js`);
       expect(res.status).to.eql(200);
       const body = await res.text();
-      expect(body).to.contain('function baseSlice');
+      expect(body).to.contain('function parse(str)');
       expect(body).to.contain('export_default as default');
     });
     it('should serve a node_modules module js file', async () => {

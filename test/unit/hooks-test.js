@@ -9,7 +9,6 @@ import transformFixture from './fixtures/hooks-transform.js';
 
 const DEBUG = 'debug-4.3.1.js';
 const REACT = 'react-17.0.1.js';
-const LODASH = 'lodash-4.17.20.js';
 
 function getResponse() {
   return {
@@ -42,7 +41,7 @@ describe('hooks()', () => {
     });
     it('should bundle filePath', async () => {
       const hooks = new Hooks();
-      const filePath = path.join(config.bundleDir, LODASH);
+      const filePath = path.join(config.bundleDir, DEBUG);
       await hooks.bundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.include('export_default as default');
@@ -57,11 +56,12 @@ describe('hooks()', () => {
     });
     it('should return cached bundle', async () => {
       const hooks = new Hooks();
-      const filePath = path.join(config.bundleDir, LODASH);
+      const filePath = path.join(config.bundleDir, DEBUG);
       fs.writeFileSync(filePath, 'this is cached');
       await hooks.bundle(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.equal('this is cached');
+      fs.unlinkSync(filePath);
     });
     it('should bundle with custom hook', async () => {
       const hooks = new Hooks(hooksFixture);

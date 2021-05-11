@@ -8,7 +8,6 @@ import path from 'path';
 import { ServerResponse } from 'http';
 
 const DEBUG_VERSION = '4.3.1';
-const LODASH_VERSION = '4.17.20';
 const NODE_PATH = process.env.NODE_PATH;
 
 const cwd = process
@@ -281,8 +280,8 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import lodash from "lodash";');
-        expect(getBody(res)).to.equal(`import lodash from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`);
+        res.end('import debug from "debug";');
+        expect(getBody(res)).to.equal(`import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`);
       });
       it('should escape "$" when resolving js import id', () => {
         const req = getRequest('/index.js', {
@@ -292,8 +291,8 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import $$observable from "lodash";');
-        expect(getBody(res)).to.equal(`import $$observable from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`);
+        res.end('import $$observable from "./$$.js";');
+        expect(getBody(res)).to.equal(`import $$observable from "${cwd}/test/unit/fixtures/www/$$.js";`);
       });
       it('should resolve import at the start of a line', () => {
         const req = getRequest('/index.js', {
@@ -303,9 +302,9 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end(`const foo = 'bar'\nimport lodash from "lodash";`);
+        res.end(`const foo = 'bar'\nimport debug from "debug";`);
         expect(getBody(res)).to.equal(
-          `const foo = 'bar'\nimport lodash from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`,
+          `const foo = 'bar'\nimport debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
         );
       });
       it('should resolve import following a semi-colon', () => {
@@ -316,9 +315,9 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end(`function foo(value) { return value; };import lodash from "lodash";`);
+        res.end(`function foo(value) { return value; };import debug from "debug";`);
         expect(getBody(res)).to.equal(
-          `function foo(value) { return value; };import lodash from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`,
+          `function foo(value) { return value; };import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
         );
       });
       it('should resolve import following a closing curly bracket', () => {
@@ -329,9 +328,9 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end(`function foo(value) { return value; } import lodash from "lodash";`);
+        res.end(`function foo(value) { return value; } import debug from "debug";`);
         expect(getBody(res)).to.equal(
-          `function foo(value) { return value; } import lodash from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`,
+          `function foo(value) { return value; } import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
         );
       });
       it('should resolve import following a closing parethesis', () => {
@@ -342,9 +341,9 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end(`const foo = ('bar') import lodash from "lodash";`);
+        res.end(`const foo = ('bar') import debug from "debug";`);
         expect(getBody(res)).to.equal(
-          `const foo = ('bar') import lodash from "/${bundleDir}/lodash-${LODASH_VERSION}.js";`,
+          `const foo = ('bar') import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
         );
       });
       it('should not resolve import following an invalid character', () => {
@@ -367,9 +366,11 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import lodashArr from "lodash/array";\nimport { foo } from "./foo.js";\nimport debug from "debug";');
+        res.end(
+          'import debugBrowser from "debug/src/browser.js";\nimport { foo } from "./foo.js";\nimport debug from "debug";',
+        );
         expect(getBody(res)).to.equal(
-          `import lodashArr from "/${bundleDir}/lodash__array-${LODASH_VERSION}.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
+          `import debugBrowser from "/${bundleDir}/debug__src__browser.js-${DEBUG_VERSION}.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
         );
       });
       it('should resolve bare js import id for es module', () => {
@@ -505,9 +506,9 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {
           resolveImport: hooks.resolveImport,
         });
-        res.end('import lodashArr from "lodash/array";\nimport(foo);\nimport("debug");\n');
+        res.end('import debugBrowser from "debug/src/browser.js";\nimport(foo);\nimport("debug");\n');
         expect(getBody(res)).to.equal(
-          `import lodashArr from "/${bundleDir}/lodash__array-${LODASH_VERSION}.js";\nimport(foo);\nimport("/${bundleDir}/debug-${DEBUG_VERSION}.js");\n`,
+          `import debugBrowser from "/${bundleDir}/debug__src__browser.js-${DEBUG_VERSION}.js";\nimport(foo);\nimport("/${bundleDir}/debug-${DEBUG_VERSION}.js");\n`,
         );
       });
       it('should resolve js import with resolve hook', () => {
