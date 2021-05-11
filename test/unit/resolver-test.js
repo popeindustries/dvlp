@@ -204,7 +204,7 @@ describe('resolver', () => {
     it('should resolve self-referential package reference', () => {
       expect(resolve('project', path.resolve('baz.js'))).to.equal(path.resolve('foo.js'));
     });
-    it.only('should resolve package exports entry', () => {
+    it('should resolve package exports entry', () => {
       expect(resolve('exports', path.resolve('baz.js'))).to.equal(path.resolve('node_modules/exports/browser.js'));
     });
     it.only('should resolve nested package exports entry', () => {
@@ -217,7 +217,7 @@ describe('resolver', () => {
         path.resolve('node_modules/exports/nested/index.js'),
       );
     });
-    it.only('should not resolve nested package module missing exports entry', () => {
+    it('should not resolve nested package module missing exports entry', () => {
       expect(resolve('exports/foo.js', path.resolve('baz.js'))).to.equal(undefined);
     });
   });
