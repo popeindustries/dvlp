@@ -212,6 +212,11 @@ describe('resolver', () => {
         path.resolve('node_modules/exports/sub-browser-dev.js'),
       );
     });
+    it('should resolve wildcard nested package exports entry', () => {
+      expect(resolve('exports/nested/index.js', path.resolve('baz.js'))).to.equal(
+        path.resolve('node_modules/exports/nested/index.js'),
+      );
+    });
     it('should not resolve nested package module missing exports entry', () => {
       expect(resolve('exports/foo.js', path.resolve('baz.js'))).to.equal(undefined);
     });
