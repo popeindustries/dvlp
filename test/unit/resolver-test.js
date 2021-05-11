@@ -204,5 +204,16 @@ describe('resolver', () => {
     it('should resolve self-referential package reference', () => {
       expect(resolve('project', path.resolve('baz.js'))).to.equal(path.resolve('foo.js'));
     });
+    it('should resolve package exports entry', () => {
+      expect(resolve('exports', path.resolve('baz.js'))).to.equal(path.resolve('node_modules/exports/browser.js'));
+    });
+    it('should resolve nested package exports entry', () => {
+      expect(resolve('exports/sub', path.resolve('baz.js'))).to.equal(
+        path.resolve('node_modules/exports/sub-browser-dev.js'),
+      );
+    });
+    it('should not resolve nested package module missing exports entry', () => {
+      expect(resolve('exports/foo.js', path.resolve('baz.js'))).to.equal(undefined);
+    });
   });
 });

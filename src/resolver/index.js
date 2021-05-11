@@ -1,5 +1,5 @@
-import { find, getProjectPath, resolveRealFilePath } from '../utils/file.js';
 import { getPackage, isSelfReferentialSpecifier, resolveAliasPath, resolvePackagePath } from './package.js';
+import { getProjectPath, resolveRealFilePath } from '../utils/file.js';
 import { isAbsoluteFilePath, isRelativeFilePath } from '../utils/is.js';
 import path from 'path';
 
@@ -62,17 +62,13 @@ function doResolve(specifier, importerDirPath) {
     pkg,
   );
 
-  if (isAbsoluteFilePath(filePath)) {
-    // @ts-ignore
-    filePath = resolveAliasPath(find(filePath, { type: 'js' }), pkg);
-
-    // Allow package references to fall through (isAbsoluteFilePath ==> false)
-    if (!filePath || isAbsoluteFilePath(filePath)) {
-      return resolveRealFilePath(filePath);
-    }
+  if (!filePath) {
+    return;
+  } else if (isAbsoluteFilePath(filePath)) {
+    return resolveRealFilePath(filePath);
   }
 
-  // filePath must be a package reference, so restart search from each package dir working upwards
+  // "filePath" must be a package reference, so restart search from each package dir working upwards
   specifier = filePath;
 
   for (const packageDirPath of pkg.paths) {

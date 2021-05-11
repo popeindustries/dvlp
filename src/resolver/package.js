@@ -1,8 +1,9 @@
 import { find, resolveNodeModulesDirectories } from '../utils/file.js';
+import { isAbsoluteFilePath, isRelativeFilePath, isValidFilePath } from '../utils/is.js';
+import { error } from '../utils/log.js';
 import fs from 'fs';
-import { isRelativeFilePath } from '../utils/is.js';
 import path from 'path';
-// import { resolve as resolveExports } from 'resolve.exports';
+import { resolve as resolveExports } from 'resolve.exports';
 
 const MAX_FILE_SYSTEM_DEPTH = 10;
 const RE_TRAILING = /\/+$|\\+$/;
@@ -102,13 +103,39 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
  *
  * @param { string } filePath
  * @param { _dvlp.Package } pkg
- * @returns { string }
+ * @returns { string | undefined }
  */
 export function resolveAliasPath(filePath, pkg) {
-  // Follow chain of aliases
-  // a => b; b => c; c => d
-  while (filePath in pkg.aliases) {
-    filePath = pkg.aliases[filePath];
+  if (pkg.exports) {
+    const entry = filePath.replace(pkg.path, '.');
+
+    try {
+      const resolved = resolveExports(pkg, entry, { browser: true, conditions: ['development', 'dvlp'] });
+
+      if (resolved) {
+        return path.resolve(pkg.path, resolved);
+      }
+      /** @param { Error } err */
+    } catch (err) {
+      if (err.message.includes('Missing')) {
+        error(
+          `unable to resolve package entry. The ${pkg.name} package does not specify ${entry} in it's "exports" map.`,
+        );
+      }
+      return;
+    }
+  } else {
+    filePath = resolvePackageAlias(filePath, pkg);
+
+    if (isAbsoluteFilePath(filePath) && !isValidFilePath(filePath)) {
+      const foundFilePath = find(filePath, { type: 'js' });
+
+      if (foundFilePath) {
+        filePath = resolvePackageAlias(foundFilePath, pkg);
+      } else {
+        return;
+      }
+    }
   }
 
   return filePath;
@@ -165,4 +192,21 @@ export function resolvePackagePath(filePath) {
  */
 export function isSelfReferentialSpecifier(specifier, pkg) {
   return !isRelativeFilePath(specifier) && specifier.split('/')[0] === pkg.name;
+}
+
+/**
+ * Resolve alias for "filePath"
+ *
+ * @param { string } filePath
+ * @param { _dvlp.Package } pkg
+ * @returns { string }
+ */
+function resolvePackageAlias(filePath, pkg) {
+  // Follow chain of aliases
+  // a => b; b => c; c => d
+  while (filePath in pkg.aliases) {
+    filePath = pkg.aliases[filePath];
+  }
+
+  return filePath;
 }
