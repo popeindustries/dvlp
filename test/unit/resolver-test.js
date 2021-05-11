@@ -209,7 +209,7 @@ describe('resolver', () => {
     });
     it('should resolve nested package exports entry', () => {
       expect(resolve('exports/sub', path.resolve('baz.js'))).to.equal(
-        path.resolve('node_modules/exports/sub-browser-dev.js'),
+        path.resolve('node_modules/exports/sub/sub-browser-dev.js'),
       );
     });
     it('should resolve wildcard nested package exports entry', () => {
