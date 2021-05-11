@@ -207,17 +207,17 @@ describe('resolver', () => {
     it.only('should resolve package exports entry', () => {
       expect(resolve('exports', path.resolve('baz.js'))).to.equal(path.resolve('node_modules/exports/browser.js'));
     });
-    it('should resolve nested package exports entry', () => {
+    it.only('should resolve nested package exports entry', () => {
       expect(resolve('exports/sub', path.resolve('baz.js'))).to.equal(
         path.resolve('node_modules/exports/sub/sub-browser-dev.js'),
       );
     });
-    it('should resolve wildcard nested package exports entry', () => {
+    it.only('should resolve wildcard nested package exports entry', () => {
       expect(resolve('exports/nested/index.js', path.resolve('baz.js'))).to.equal(
         path.resolve('node_modules/exports/nested/index.js'),
       );
     });
-    it('should not resolve nested package module missing exports entry', () => {
+    it.only('should not resolve nested package module missing exports entry', () => {
       expect(resolve('exports/foo.js', path.resolve('baz.js'))).to.equal(undefined);
     });
   });
