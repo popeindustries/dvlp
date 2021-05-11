@@ -111,12 +111,13 @@ export function resolveAliasPath(filePath, pkg) {
 
     try {
       const resolved = resolveExports(pkg, entry, { browser: true, conditions: ['development', 'dvlp'] });
-
+      console.log(resolved, path.resolve(pkg.path, resolved));
       if (resolved) {
         return path.resolve(pkg.path, resolved);
       }
       /** @param { Error } err */
     } catch (err) {
+      console.error(err);
       if (err.message.includes('Missing')) {
         error(
           `unable to resolve package entry. The ${pkg.name} package does not specify ${entry} in it's "exports" map.`,
