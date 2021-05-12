@@ -70,8 +70,7 @@ class SecureProxyServer extends EventSourceServer {
    */
   start(serverOptions) {
     return new Promise((resolve, reject) => {
-      this.server = http2.createSecureServer(serverOptions, async (req, res) => {
-        // @ts-ignore
+      this.server = http2.createSecureServer({ allowHTTP1: true, ...serverOptions }, async (req, res) => {
         if (this.isReloadRequest(req)) {
           if (this.reload) {
             super.registerClient(req, res);
@@ -103,7 +102,7 @@ class SecureProxyServer extends EventSourceServer {
       });
 
       decorateWithServerDestroy(this.server);
-      // this.server.timeout = this.server.keepAliveTimeout = 0;
+      this.server.setTimeout(0);
       this.server.unref();
       this.server.on('error', reject);
       this.server.on('listening', resolve);

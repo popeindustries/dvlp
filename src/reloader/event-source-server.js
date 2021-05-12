@@ -64,12 +64,12 @@ export default class EventSourceServer {
   /**
    * Determine if "req" should be handled by reload server
    *
-   * @param { _dvlp.Req } req
+   * @param { _dvlp.IncomingMessage } req
    * @returns { boolean }
    */
   isReloadRequest(req) {
     return (
-      req.url.startsWith(config.reloadEndpoint) ||
+      (req.url && req.url.startsWith(config.reloadEndpoint)) ||
       // @ts-ignore
       EventSource.isEventSource(req)
     );
