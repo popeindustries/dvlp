@@ -83,8 +83,8 @@ class SecureProxyServer extends EventSourceServer {
 
         // Remove ilegal headers
         const headers = { ...req.headers };
-        headers.connection = undefined;
-        headers['transfer-encoding'] = undefined;
+        delete headers.connection;
+        delete headers['transfer-encoding'];
 
         this.client.stream(
           // @ts-ignore
@@ -95,7 +95,10 @@ class SecureProxyServer extends EventSourceServer {
             opaque: res,
           },
           ({ statusCode, headers, opaque }) => {
+            delete headers.connection;
+            delete headers['transfer-encoding'];
             res.writeHead(statusCode || 200, headers);
+
             return opaque;
           },
         );

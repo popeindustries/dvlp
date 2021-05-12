@@ -40,6 +40,7 @@ function createRequestHandler() {
 
     // Re-write to root index.html
     if (!filePath && isHtmlRequest(req)) {
+      // @ts-ignore
       req.url = '/';
       filePath = find(req);
     }

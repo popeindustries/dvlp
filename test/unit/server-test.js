@@ -5,6 +5,7 @@ import { expect } from 'chai';
 import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
 import http from 'http';
+import http2 from 'http2';
 import path from 'path';
 import serverFactory from '../../src/server/index.js';
 import websocket from 'faye-websocket';
@@ -530,7 +531,7 @@ describe('server', () => {
         });
       });
     });
-    it('should handle push mock event via EventSource', (done) => {
+    it('should handle push mock event via WebSocket', (done) => {
       serverFactory('test/unit/fixtures/app.js', {
         mockPath: 'test/unit/fixtures/mock-push',
         port: 8100,
@@ -583,6 +584,34 @@ describe('server', () => {
           const res = await fetch('https://localhost:443/');
           expect(res.status).to.eql(200);
           expect(await res.text()).to.contain('<!doctype html>');
+        });
+        it.skip('should handle mock EventSource connection', (done) => {
+          serverFactory('test/unit/fixtures/www', {
+            certsPath: 'test/unit/fixtures/certificates',
+            mockPath: 'test/unit/fixtures/mock-push',
+            port: 8100,
+            reload: false,
+          }).then((srvr) => {
+            server = srvr;
+            const client = http2.connect('https://localhost:443');
+            client.on('error', console.error);
+            const req = client.request({ ':path': '/dvlpmock=http%3A%2F%2Flocalhost%3A8100%2Ffeed' });
+            req.on('response', (headers) => console.log(headers));
+            req.setEncoding('utf8');
+            let data = '';
+            req.on('data', (chunk) => (data += chunk));
+            req.on('end', () => {
+              console.log('data', data);
+              client.close();
+              done();
+            });
+            req.end();
+            // es = new EventSource('http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed');
+            // es.onopen = () => {
+            //   expect(es.readyState).to.equal(1);
+            //   done();
+            // };
+          });
         });
         it('should serve a js file with correct mime type over https', async () => {
           server = await serverFactory('test/unit/fixtures/www', {

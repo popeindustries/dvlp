@@ -10,6 +10,7 @@ import config from '../config.js';
 import createFileServer from './file-server.js';
 import { createRequire } from 'module';
 import Debug from 'debug';
+import { EventSource } from '../reloader/event-source.js';
 import fs from 'fs';
 import Hooker from '../hooks/index.js';
 import http from 'http';
@@ -24,7 +25,6 @@ import WebSocket from 'faye-websocket';
 const START_TIMEOUT_DURATION = 4000;
 
 const debug = Debug('dvlp:server');
-const { EventSource } = WebSocket;
 const originalCreateServer = http.createServer;
 const require = createRequire(import.meta.url);
 /** @type { Array<string> } */
@@ -484,7 +484,6 @@ function handleMockResponse(req, res, mocks) {
   if (mocks && mock) {
     mock = decodeURIComponent(mock);
 
-    // @ts-ignore
     if (EventSource.isEventSource(req)) {
       connectClient(
         {
