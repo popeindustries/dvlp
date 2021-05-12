@@ -107,7 +107,7 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
  */
 export function resolveAliasPath(filePath, pkg) {
   if (pkg.exports) {
-    const entry = filePath.replace(pkg.path, '.');
+    const entry = filePath.replace(pkg.path, '.').replace(/\\/g, '/');
 
     try {
       const resolved = resolveExports(pkg, entry, { browser: true, conditions: ['development', 'dvlp'] });

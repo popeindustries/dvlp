@@ -52,7 +52,11 @@ export function resolveBundleFileName(id, filePath) {
 export function cleanBundledFiles() {
   if (existsSync(config.bundleDir)) {
     for (const filePath of readdirSync(config.bundleDir).filter(isJsFilePath)) {
-      unlinkSync(path.join(config.bundleDir, filePath));
+      try {
+        unlinkSync(path.join(config.bundleDir, filePath));
+      } catch (err) {
+        // ignore
+      }
     }
   }
 }
