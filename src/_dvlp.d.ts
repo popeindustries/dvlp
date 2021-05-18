@@ -302,7 +302,7 @@ export interface Hooks {
     defaultResolve: DefaultResolve,
   ): string | false | undefined;
   onSend?(filePath: string, responseBody: string): string | undefined;
-  onServerTransform?(filePath: string, fileContents: string): string | undefined;
+  onServerTransform?(filePath: string, fileContents: string): Promise<string> | string | undefined;
 }
 
 export interface MockRequest {
