@@ -322,6 +322,7 @@ export default class Mock {
       'Content-Length': Buffer.byteLength(content),
       'Access-Control-Allow-Origin': '*',
     });
+    // @ts-ignore
     res.end(content);
     res.metrics.recordEvent(Metrics.EVENT_NAMES.mock);
 

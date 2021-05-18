@@ -2,6 +2,7 @@ import { connectClient, destroyClients, pushEvent } from '../push-events/index.j
 import config from '../config.js';
 import Debug from 'debug';
 import decorateWithServerDestroy from 'server-destroy';
+import { EventSource } from '../reloader/event-source.js';
 import fs from 'fs';
 import http from 'http';
 import { interceptClientRequest } from '../utils/intercept.js';
@@ -14,7 +15,6 @@ import { URL } from 'url';
 import WebSocket from 'faye-websocket';
 
 const debug = Debug('dvlp:test');
-const { EventSource } = WebSocket;
 /** @type { Set<TestServer> } */
 const instances = new Set();
 let reroute = false;
@@ -148,7 +148,6 @@ class TestServer {
         // @ts-ignore
         res.metrics = new Metrics(res);
 
-        // @ts-ignore
         if (EventSource.isEventSource(req)) {
           connectClient(
             {

@@ -6,7 +6,7 @@ import EventSourceServer from '../reloader/event-source-server.js';
 import fs from 'fs';
 import { getDirectoryContents } from '../utils/file.js';
 import { getReloadClientEmbed } from '../reloader/reload-client-embed.js';
-import https from 'https';
+import http2 from 'http2';
 import path from 'path';
 import undici from 'undici';
 
@@ -70,8 +70,7 @@ class SecureProxyServer extends EventSourceServer {
    */
   start(serverOptions) {
     return new Promise((resolve, reject) => {
-      this.server = https.createServer(serverOptions, async (req, res) => {
-        // @ts-ignore
+      this.server = http2.createSecureServer({ allowHTTP1: true, ...serverOptions }, async (req, res) => {
         if (this.isReloadRequest(req)) {
           if (this.reload) {
             super.registerClient(req, res);
@@ -84,8 +83,8 @@ class SecureProxyServer extends EventSourceServer {
 
         // Remove ilegal headers
         const headers = { ...req.headers };
-        headers.connection = undefined;
-        headers['transfer-encoding'] = undefined;
+        delete headers.connection;
+        delete headers['transfer-encoding'];
 
         this.client.stream(
           // @ts-ignore
@@ -96,14 +95,17 @@ class SecureProxyServer extends EventSourceServer {
             opaque: res,
           },
           ({ statusCode, headers, opaque }) => {
+            delete headers.connection;
+            delete headers['transfer-encoding'];
             res.writeHead(statusCode || 200, headers);
+
             return opaque;
           },
         );
       });
 
       decorateWithServerDestroy(this.server);
-      this.server.timeout = this.server.keepAliveTimeout = 0;
+      this.server.setTimeout(0);
       this.server.unref();
       this.server.on('error', reject);
       this.server.on('listening', resolve);

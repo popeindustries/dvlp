@@ -2,13 +2,9 @@ import { getUrl, getUrlCacheKey, isWebSocketUrl } from '../utils/url.js';
 import Debug from 'debug';
 import deflate from 'permessage-deflate';
 import { error } from '../utils/log.js';
+import { EventSource } from '../reloader/event-source.js';
 import WebSocket from 'faye-websocket';
 
-const DEFAULT_ES_CONFIG = {
-  headers: { 'Access-Control-Allow-Origin': '*' },
-  ping: 15,
-  retry: 10,
-};
 const RE_SOCKETIO_PROTOCOL = /socket\.?io|EIO/;
 
 /**
@@ -16,7 +12,6 @@ const RE_SOCKETIO_PROTOCOL = /socket\.?io|EIO/;
  */
 const cache = new Map();
 const debug = Debug('dvlp:push');
-const { EventSource } = WebSocket;
 
 /**
  * Initialize EventSource/WebSocket client
@@ -60,8 +55,7 @@ export function connectClient(stream, ...args) {
   } else {
     const [req, res] = args;
 
-    // @ts-ignore
-    client = new EventSource(req, res, DEFAULT_ES_CONFIG);
+    client = new EventSource(req, res);
   }
 
   clients.add(client);

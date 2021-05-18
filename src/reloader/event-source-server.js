@@ -1,18 +1,11 @@
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
+import { EventSource } from './event-source.js';
 import { getTypeFromPath } from '../utils/file.js';
 import { noisyInfo } from '../utils/log.js';
-import WebSocket from 'faye-websocket';
-
-const DEFAULT_CLIENT_CONFIG = {
-  headers: { 'Access-Control-Allow-Origin': '*' },
-  ping: 15,
-  retry: 10,
-};
 
 const debug = Debug('dvlp:es');
-const { EventSource } = WebSocket;
 
 export default class EventSourceServer {
   constructor() {
@@ -23,13 +16,12 @@ export default class EventSourceServer {
   /**
    * Register new client connection
    *
-   * @param { _dvlp.IncomingMessage } req
-   * @param { _dvlp.ServerResponse } res
+   * @param { _dvlp.IncomingMessage | _dvlp.Http2ServerRequest } req
+   * @param { _dvlp.ServerResponse | _dvlp.Http2ServerResponse } res
    * @returns { void }
    */
   registerClient(req, res) {
-    // @ts-ignore
-    const client = new EventSource(req, res, DEFAULT_CLIENT_CONFIG);
+    const client = new EventSource(req, res);
 
     this.clients.add(client);
     debug('added reload connection', this.clients.size);
@@ -55,7 +47,6 @@ export default class EventSourceServer {
       noisyInfo(`${chalk.yellow(`  ⟲ ${event}ing`)} ${this.clients.size} client${this.clients.size > 1 ? 's' : ''}`);
 
       for (const client of this.clients) {
-        // @ts-ignore
         client.send(data, { event });
       }
     }
@@ -64,15 +55,11 @@ export default class EventSourceServer {
   /**
    * Determine if "req" should be handled by reload server
    *
-   * @param { _dvlp.Req } req
-   * @returns { boolean }
+   * @param { _dvlp.IncomingMessage | _dvlp.Http2ServerRequest } req
+   * @returns { req is _dvlp.Req }
    */
   isReloadRequest(req) {
-    return (
-      req.url.startsWith(config.reloadEndpoint) ||
-      // @ts-ignore
-      EventSource.isEventSource(req)
-    );
+    return (req.url && req.url.startsWith(config.reloadEndpoint)) || EventSource.isEventSource(req);
   }
 
   /**

@@ -1,3 +1,5 @@
+type Http2ServerRequest = import('http2').Http2ServerRequest;
+type Http2ServerResponse = import('http2').Http2ServerResponse;
 type IncomingMessage = import('http').IncomingMessage;
 type ServerResponse = import('http').ServerResponse;
 type HttpServer = import('http').Server;
@@ -11,13 +13,13 @@ type esbuild = {
   transform(input: string, options?: import('esbuild').TransformOptions): Promise<import('esbuild').TransformResult>;
 };
 
-interface Req extends IncomingMessage {
+type Req = (IncomingMessage | Http2ServerRequest) & {
   filePath: string;
   type: string;
   url: string;
   params?: { [key: string]: string } | {};
-}
-interface Res extends ServerResponse {
+};
+type Res = (ServerResponse | Http2ServerResponse) & {
   bundled: boolean;
   encoding: string;
   metrics: Metrics;
@@ -26,7 +28,7 @@ interface Res extends ServerResponse {
   unhandled: boolean;
   url: string;
   error?: Error;
-}
+};
 type RequestHandler = (req: Req, res: Res) => void;
 interface DestroyableHttpServer extends HttpServer {
   destroy?(): void;

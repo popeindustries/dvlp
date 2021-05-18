@@ -5,6 +5,7 @@ import { expect } from 'chai';
 import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
 import http from 'http';
+import http2 from 'http2';
 import path from 'path';
 import serverFactory from '../../src/server/index.js';
 import websocket from 'faye-websocket';
@@ -530,7 +531,7 @@ describe('server', () => {
         });
       });
     });
-    it('should handle push mock event via EventSource', (done) => {
+    it('should handle push mock event via WebSocket', (done) => {
       serverFactory('test/unit/fixtures/app.js', {
         mockPath: 'test/unit/fixtures/mock-push',
         port: 8100,
@@ -583,6 +584,25 @@ describe('server', () => {
           const res = await fetch('https://localhost:443/');
           expect(res.status).to.eql(200);
           expect(await res.text()).to.contain('<!doctype html>');
+        });
+        it('should handle EventSource connection', (done) => {
+          serverFactory('test/unit/fixtures/www', {
+            certsPath: 'test/unit/fixtures/certificates',
+            mockPath: 'test/unit/fixtures/mock-push',
+            port: 8100,
+            reload: true,
+          }).then((srvr) => {
+            server = srvr;
+            const client = http2.connect('https://localhost:443');
+            const req = client.request({ ':path': '/dvlpreload' });
+            req.setEncoding('utf8');
+            req.on('data', (chunk) => {
+              expect(chunk).to.include('retry: 10000');
+              client.destroy();
+              done();
+            });
+            req.end();
+          });
         });
         it('should serve a js file with correct mime type over https', async () => {
           server = await serverFactory('test/unit/fixtures/www', {
