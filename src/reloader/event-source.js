@@ -29,33 +29,29 @@ export class EventSource extends EventEmitter {
   constructor(req, res) {
     super();
     this.readyState = READY_STATE.CONNECTING;
-    this._isHttp2 = req.httpVersion.startsWith('2');
     this._res = res;
 
     if (res.finished) {
       return;
     }
 
-    const handshake =
-      'HTTP/1.1 200 OK\r\n' +
-      'Content-Type: text/event-stream\r\n' +
-      'Cache-Control: no-cache, no-store\r\n' +
-      'Connection: close\r\n' +
-      'Access-Control-Allow-Origin: *\r\n' +
-      '\r\n' +
-      'retry: ' +
-      Math.floor(DEFAULT_RETRY) +
-      '\r\n\r\n';
+    req.socket.setKeepAlive(true);
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-store',
+      'Access-Control-Allow-Origin': '*',
+    });
 
-    this._write(handshake);
+    this._write(`retry: ${Math.floor(DEFAULT_RETRY)}\r\n\r\n`);
     this._pingIntervalId = setInterval(() => {
       this.ping();
     }, DEFAULT_PING);
 
-    // TODO: listen for socket error event?
-    res.on('close', () => {
-      this.close();
-    });
+    for (const event of ['close', 'error']) {
+      req.on(event, () => {
+        this.close();
+      });
+    }
 
     process.nextTick(() => this._open());
   }
@@ -113,7 +109,8 @@ export class EventSource extends EventEmitter {
       return false;
     }
 
-    this.readyState = READY_STATE.CLOSED;
+    this.readyState = READY_STATE.CLOSING;
+
     if (this._pingIntervalId) {
       clearInterval(this._pingIntervalId);
     }
@@ -122,6 +119,8 @@ export class EventSource extends EventEmitter {
     this._res = undefined;
 
     this.emit('close');
+
+    this.readyState = READY_STATE.CLOSED;
 
     return true;
   }
@@ -146,9 +145,10 @@ export class EventSource extends EventEmitter {
   _write(chunk) {
     try {
       // @ts-ignore
-      return this._res.write(chunk);
+      this._res.write(chunk);
+      return true;
     } catch (err) {
-      console.log(err);
+      this.close();
       return false;
     }
   }

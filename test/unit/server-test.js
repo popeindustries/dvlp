@@ -585,32 +585,23 @@ describe('server', () => {
           expect(res.status).to.eql(200);
           expect(await res.text()).to.contain('<!doctype html>');
         });
-        it.skip('should handle mock EventSource connection', (done) => {
+        it('should handle EventSource connection', (done) => {
           serverFactory('test/unit/fixtures/www', {
             certsPath: 'test/unit/fixtures/certificates',
             mockPath: 'test/unit/fixtures/mock-push',
             port: 8100,
-            reload: false,
+            reload: true,
           }).then((srvr) => {
             server = srvr;
             const client = http2.connect('https://localhost:443');
-            client.on('error', console.error);
-            const req = client.request({ ':path': '/dvlpmock=http%3A%2F%2Flocalhost%3A8100%2Ffeed' });
-            req.on('response', (headers) => console.log(headers));
+            const req = client.request({ ':path': '/dvlpreload' });
             req.setEncoding('utf8');
-            let data = '';
-            req.on('data', (chunk) => (data += chunk));
-            req.on('end', () => {
-              console.log('data', data);
-              client.close();
+            req.on('data', (chunk) => {
+              expect(chunk).to.include('retry: 10000');
+              client.destroy();
               done();
             });
             req.end();
-            // es = new EventSource('http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed');
-            // es.onopen = () => {
-            //   expect(es.readyState).to.equal(1);
-            //   done();
-            // };
           });
         });
         it('should serve a js file with correct mime type over https', async () => {
