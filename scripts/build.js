@@ -28,8 +28,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
   await esbuild.build({
     banner: {
-      js:
-        "import { createRequire as createRequireBecauseEsbuild } from 'module'; \nconst require = createRequireBecauseEsbuild(import.meta.url);",
+      js: "import { createRequire as createRequireBecauseEsbuild } from 'module'; \nconst require = createRequireBecauseEsbuild(import.meta.url);",
     },
     bundle: true,
     define: {
@@ -40,8 +39,10 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     entryPoints: ['./src/index.js'],
     external: ['esbuild', 'fsevents', 'undici'],
     format: 'esm',
+    // Force keep dynamic import that has been back-ported to 12.2
     target: 'node13.2',
     platform: 'node',
+    sourcemap: true,
     outfile: 'dvlp.js',
   });
 })();

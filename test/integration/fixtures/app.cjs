@@ -1,4 +1,4 @@
-import { createServer } from 'http';
+const { createServer } = require('http');
 
 createServer((req, res) => {
   res.writeHead(200);

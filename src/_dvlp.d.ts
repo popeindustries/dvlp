@@ -72,6 +72,7 @@ declare interface Config {
   maxAge: string;
   port: number;
   reloadEndpoint: string;
+  sourceMapsDir: string;
   testing: boolean;
   typesByExtension: {
     [extension: string]: 'css' | 'html' | 'js';

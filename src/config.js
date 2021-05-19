@@ -13,6 +13,8 @@ const TESTING = process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefin
 // Replaced during build
 const VERSION = global.$VERSION || 'dev';
 
+const sourceMapsDirName = `${path.join(DIR, `sourcemaps`)}`;
+const sourceMapsDir = path.resolve(sourceMapsDirName);
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
 const bundleDir = path.resolve(bundleDirName);
 const port = process.env.PORT ? Number(process.env.PORT) : 8080;
@@ -22,6 +24,7 @@ mime.define(JS_MIME_TYPES, true);
 send.mime.define(JS_MIME_TYPES, true);
 
 const dir = path.resolve(DIR);
+const sourceMapsDirExists = fs.existsSync(sourceMapsDir);
 const bundleDirExists = fs.existsSync(bundleDir);
 const dirExists = fs.existsSync(dir);
 
@@ -35,9 +38,13 @@ if (dirExists && !bundleDirExists) {
     }
   }
 }
+if (sourceMapsDirExists) {
+  rimraf.sync(sourceMapsDir);
+}
 if (!dirExists) {
   fs.mkdirSync(dir);
 }
+fs.mkdirSync(sourceMapsDir);
 if (!bundleDirExists) {
   fs.mkdirSync(bundleDir);
 } else {
@@ -95,6 +102,7 @@ const config = {
   maxAge: '10m',
   port,
   reloadEndpoint: '/dvlpreload',
+  sourceMapsDir,
   testing: TESTING,
   typesByExtension: {
     '.css': 'css',

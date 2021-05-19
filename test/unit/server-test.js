@@ -577,7 +577,6 @@ describe('server', () => {
 
   if (!process.env.CI) {
     describe('ssl', () => {
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
       describe('static', () => {
         it('should implicitly serve index.html over https', async () => {
           server = await serverFactory('test/unit/fixtures/www', {

@@ -1,12 +1,13 @@
+import { getProjectPath, isCjsFile } from '../utils/file.js';
 import bundleDependency from './bundle-dependency.js';
 import config from '../config.js';
 import esbuild from 'esbuild';
-import { extname } from 'path';
-import { isCjsFile } from '../utils/file.js';
 import { isNodeModuleFilePath } from '../utils/is.js';
+import path from 'path';
 import { resolve } from '../resolver/index.js';
 import transform from './transform.js';
 import { warn } from '../utils/log.js';
+import { writeFileSync } from 'fs';
 
 const HOOK_NAMES = ['onDependencyBundle', 'onTransform', 'onResolveImport', 'onSend', 'onServerTransform'];
 
@@ -165,14 +166,21 @@ export default class Hooker {
       result = this.hooks.onServerTransform(filePath, fileContents);
     }
     if (result === undefined && !isCjsFile(filePath, fileContents)) {
-      result = esbuild.transformSync(fileContents, {
+      const { code, map } = esbuild.transformSync(fileContents, {
         format: 'cjs',
         // @ts-ignore
-        loader: config.esbuildTargetByExtension[extname(filePath)] || 'default',
+        loader: config.esbuildTargetByExtension[path.extname(filePath)] || 'default',
+        sourcesContent: false,
         sourcefile: filePath,
-        sourcemap: 'inline',
+        sourcemap: true,
+        sourceRoot: config.sourceMapsDir,
         target: `node${process.versions.node}`,
-      }).code;
+      });
+      const sourceMapPath =
+        path.resolve(config.sourceMapsDir, getProjectPath(filePath).replace(/\/|\\/g, '_')) + '.map';
+
+      writeFileSync(sourceMapPath, map);
+      result = code + `//# sourceMappingURL=${sourceMapPath}`;
     }
 
     return result || fileContents;
