@@ -21,7 +21,7 @@ const debug = Debug('dvlp:bundle');
  * @param { _dvlp.Hooks["onDependencyBundle"] } hookFn
  * @returns { Promise<void> }
  */
-export default async function bundle(filePath, res, esbuild, hookFn) {
+export default async function bundleDependency(filePath, res, esbuild, hookFn) {
   if (existsSync(filePath)) {
     return;
   }

@@ -1,9 +1,9 @@
-import { readFileSync, writeFileSync } from 'fs';
-import bundle from './bundle.js';
+import bundleDependency from './bundle-dependency.js';
 import config from '../config.js';
 import esbuild from 'esbuild';
+import { extname } from 'path';
+import { isCjsFile } from '../utils/file.js';
 import { isNodeModuleFilePath } from '../utils/is.js';
-import { join } from 'path';
 import { resolve } from '../resolver/index.js';
 import transform from './transform.js';
 import { warn } from '../utils/log.js';
@@ -31,46 +31,6 @@ export default class Hooker {
     /** @type { Map<string, string> } */
     this.transformCache = new Map();
     this.watcher = watcher;
-
-    /** @type { Array<import('esbuild').Plugin> } */
-    this.serverBundlePlugins = [
-      {
-        name: 'bundle-server-project-files',
-        setup(build) {
-          build.onResolve({ filter: /.*/ }, function (args) {
-            const { importer, path } = args;
-            const filePath = importer ? resolve(path, importer) : path;
-            const external = filePath === undefined || isNodeModuleFilePath(filePath);
-
-            if (external) {
-              return { path, external };
-            }
-
-            filePath && watcher && watcher.add(filePath);
-            return { path: filePath };
-          });
-
-          build.onLoad({ filter: /^[./]/ }, async function (args) {
-            try {
-              if (hooks && hooks.onServerTransform) {
-                let contents = readFileSync(args.path, 'utf8');
-                const code = await hooks.onServerTransform(args.path, contents);
-
-                if (code !== undefined) {
-                  contents = code;
-                }
-
-                return { contents };
-              }
-            } catch (err) {
-              return { errors: [{ text: err.message }] };
-            }
-          });
-        },
-      },
-    ];
-    /** @type { import('esbuild').BuildInvalidate } */
-    this.serverBundleRebuild;
 
     // Patch build to watch files when used in transform hook,
     // since esbuild file reads don't use fs.readFile API
@@ -104,11 +64,11 @@ export default class Hooker {
       this.patchedESBuild = esbuild.build;
     }
 
-    this.bundle = this.bundle.bind(this);
+    this.bundleDependency = this.bundleDependency.bind(this);
     this.transform = this.transform.bind(this);
     this.resolveImport = this.resolveImport.bind(this);
     this.send = this.send.bind(this);
-    this.serverBundle = this.serverBundle.bind(this);
+    this.serverTransform = this.serverTransform.bind(this);
   }
 
   /**
@@ -118,8 +78,8 @@ export default class Hooker {
    * @param { _dvlp.Res } res
    * @returns { Promise<void> }
    */
-  async bundle(filePath, res) {
-    await bundle(
+  async bundleDependency(filePath, res) {
+    await bundleDependency(
       filePath,
       res,
       {
@@ -192,52 +152,36 @@ export default class Hooker {
   }
 
   /**
-   * Bundle server content for 'filePath' entry
+   * Transform server content for 'filePath'
    *
    * @param { string } filePath
-   * @returns { Promise<string> }
+   * @param { string } fileContents
+   * @returns { string }
    */
-  async serverBundle(filePath) {
-    const { applicationFormat } = config;
-    const outputPath = join(config.applicationDir, `app-${Date.now()}.${applicationFormat === 'cjs' ? 'cjs' : 'mjs'}`);
+  serverTransform(filePath, fileContents) {
+    let result;
 
-    const result = await (this.serverBundleRebuild
-      ? this.serverBundleRebuild()
-      : esbuild.build({
-          banner: {
-            js:
-              applicationFormat === 'cjs'
-                ? ''
-                : "import { createRequire as createDvlpTopLevelRequire } from 'module'; \nconst require = createDvlpTopLevelRequire(import.meta.url);",
-          },
-          bundle: true,
-          entryPoints: [filePath],
-          format: applicationFormat,
-          incremental: true,
-          platform: 'node',
-          plugins: this.serverBundlePlugins,
-          sourcemap: true,
-          target: `node${process.versions.node}`,
-          write: false,
-        }));
-
-    if (!result.outputFiles) {
-      throw Error(`unknown bundling error: ${result.warnings.join('\n')}`);
+    if (this.hooks && this.hooks.onServerTransform) {
+      result = this.hooks.onServerTransform(filePath, fileContents);
     }
-    if (result.rebuild) {
-      this.serverBundleRebuild = result.rebuild;
+    if (result === undefined && !isCjsFile(filePath, fileContents)) {
+      result = esbuild.transformSync(fileContents, {
+        format: 'cjs',
+        // @ts-ignore
+        loader: config.esbuildTargetByExtension[extname(filePath)] || 'default',
+        sourcefile: filePath,
+        sourcemap: 'inline',
+        target: `node${process.versions.node}`,
+      }).code;
     }
 
-    writeFileSync(outputPath, result.outputFiles[0].text, 'utf8');
-
-    return outputPath;
+    return result || fileContents;
   }
 
   /**
    * Destroy instance
    */
   destroy() {
-    this.serverBundleRebuild && this.serverBundleRebuild.dispose();
     this.transformCache.clear();
     this.watcher = undefined;
   }

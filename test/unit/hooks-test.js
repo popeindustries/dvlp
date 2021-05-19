@@ -37,19 +37,19 @@ describe('hooks()', () => {
 
     it('should return "undefined" if no module bundle found', async () => {
       const hooks = new Hooks();
-      expect(await hooks.bundle('./dvlp/bundle-xxx/foofoo-0.0.0.js')).to.equal(undefined);
+      expect(await hooks.bundleDependency('./dvlp/bundle-xxx/foofoo-0.0.0.js')).to.equal(undefined);
     });
     it('should bundle filePath', async () => {
       const hooks = new Hooks();
       const filePath = path.join(config.bundleDir, DEBUG);
-      await hooks.bundle(filePath, getResponse());
+      await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.include('export_default as default');
     });
     it('should bundle and add missing named exports', async () => {
       const hooks = new Hooks();
       const filePath = path.join(config.bundleDir, REACT);
-      await hooks.bundle(filePath, getResponse());
+      await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.include('export_default as default');
       expect(module).to.include('export_Children as Children');
@@ -58,7 +58,7 @@ describe('hooks()', () => {
       const hooks = new Hooks();
       const filePath = path.join(config.bundleDir, DEBUG);
       fs.writeFileSync(filePath, 'this is cached');
-      await hooks.bundle(filePath, getResponse());
+      await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.equal('this is cached');
       fs.unlinkSync(filePath);
@@ -66,7 +66,7 @@ describe('hooks()', () => {
     it('should bundle with custom hook', async () => {
       const hooks = new Hooks(hooksFixture);
       const filePath = path.join(config.bundleDir, DEBUG);
-      await hooks.bundle(filePath, getResponse());
+      await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.contain('this is bundled content for: debug-4.3.1.js');
     });

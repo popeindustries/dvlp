@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 process.env.NODE_NO_WARNINGS = '1';
+process.env.ESBUILD_WORKER_THREADS = '1';
 
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';

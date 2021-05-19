@@ -56,14 +56,15 @@ declare namespace Metrics {
 }
 
 declare interface Config {
-  applicationDir: string;
-  applicationDirName: string;
   applicationFormat: 'cjs' | 'esm';
   applicationPort: number;
   brokenNamedExportsPackages: Record<string, Array<string>>;
   bundleDir: string;
   bundleDirName: string;
   directories: Array<string>;
+  esbuildTargetByExtension: {
+    [extension: string]: string;
+  };
   extensionsByType: {
     [type: string]: Array<string>;
   };
@@ -304,7 +305,7 @@ export interface Hooks {
     defaultResolve: DefaultResolve,
   ): string | false | undefined;
   onSend?(filePath: string, responseBody: string): string | undefined;
-  onServerTransform?(filePath: string, fileContents: string): Promise<string> | string | undefined;
+  onServerTransform?(filePath: string, fileContents: string): string | undefined;
 }
 
 export interface MockRequest {

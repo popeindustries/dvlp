@@ -53,6 +53,7 @@
     "node-fetch": "^2.6.0",
     "path-to-regexp": "^6.2.0",
     "permessage-deflate": "^0.1.7",
+    "pirates": "^4.0.1",
     "platform": "^1.3.6",
     "prettier": "^2.2.0",
     "react": "^17.0.0",
@@ -75,9 +76,9 @@
     "lint:src": "eslint './{src,test}/**/*.js'",
     "lint:types": "tsc --noEmit --skipLibCheck --project jsconfig.json",
     "prepublishOnly": "npm run build",
-    "test": "cross-env NODE_ENV=dvlptest mocha test/unit/*-test.js --reporter spec --exit --timeout 10000",
+    "test": "cross-env NODE_ENV=dvlptest ESBUILD_WORKER_THREADS=1 mocha test/unit/*-test.js --reporter spec --exit --timeout 10000",
     "test:browser": "npm run build && ./bin/dvlp.js --mock test/browser/fixtures/mock test/browser",
-    "test:integration": "npm run build && cross-env NODE_ENV=dvlptest mocha test/integration/*-test.js --reporter spec --exit --timeout 10000",
+    "test:integration": "npm run build && cross-env NODE_ENV=dvlptest ESBUILD_WORKER_THREADS=1 mocha test/integration/*-test.js --reporter spec --exit --timeout 10000",
     "prepare": "husky install"
   },
   "prettier": {

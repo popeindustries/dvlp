@@ -8,12 +8,14 @@ import {
   isNodeModuleFilePath,
 } from './is.js';
 import { warn, WARN_MISSING_EXTENSION, WARN_PACKAGE_INDEX } from './log.js';
+import { addHook } from 'pirates';
 import config from '../config.js';
 import favicon from './favicon.js';
 import fs from 'fs';
 import glob from 'glob';
 import isFileEsm from 'is-file-esm';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { URL } from 'url';
 
 export const favIcon = Buffer.from(favicon, 'base64');
@@ -27,6 +29,30 @@ const RE_SEPARATOR = /[,;]\s?|\s/g;
 const fileFormatCache = new Map();
 
 init();
+
+/**
+ * Create transform hook for `require(filePath)`
+ *
+ * @param { (filePath: string, fileContents: string) => string } onTransform
+ * @return { () => void } revert hook registration
+ */
+export function createRequireHook(onTransform) {
+  return addHook(
+    (code, filePath) => {
+      const transformed = onTransform(filePath, code);
+
+      if (transformed !== undefined) {
+        code = transformed;
+      }
+
+      return code;
+    },
+    {
+      exts: config.extensionsByType.js,
+      ignoreNodeModules: false,
+    },
+  );
+}
 
 /**
  * Validate that all file paths exist
@@ -268,6 +294,25 @@ export function isCjsFile(filePath, fileContents) {
   fileFormatCache.set(filePath, isCjs ? 'cjs' : 'esm');
 
   return isCjs;
+}
+
+/**
+ * Import module at 'filePath'
+ *
+ * @template ModuleType
+ * @param { string } filePath
+ * @returns { Promise<ModuleType> }
+ */
+export async function importModule(filePath) {
+  /** @type { ModuleType } */ // @ts-ignore
+  let module = await import(pathToFileURL(filePath));
+
+  if (module && 'default' in module) {
+    // @ts-ignore
+    module = module.default;
+  }
+
+  return module;
 }
 
 /**

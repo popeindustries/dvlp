@@ -1,4 +1,4 @@
-import { exists, expandPath, getProjectPath, isCjsFile } from '../utils/file.js';
+import { exists, expandPath, getProjectPath, importModule, isCjsFile } from '../utils/file.js';
 import logger, { error, info } from '../utils/log.js';
 import chalk from 'chalk';
 import config from '../config.js';
@@ -6,7 +6,6 @@ import DvlpServer from './server.js';
 import fs from 'fs';
 import { init } from 'cjs-module-lexer';
 import path from 'path';
-import { pathToFileURL } from 'url';
 import { reloadServer } from '../reloader/index.js';
 import secureProxyServer from '../secure-proxy/index.js';
 
@@ -42,12 +41,7 @@ export default async function serverFactory(
   }
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
-    // @ts-ignore
-    hooks = await import(pathToFileURL(hooksPath));
-    if (hooks && 'default' in hooks) {
-      // @ts-ignore
-      hooks = hooks.default;
-    }
+    hooks = await importModule(hooksPath);
     info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
   }
   if (certsPath) {

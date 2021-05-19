@@ -1,10 +1,9 @@
 import { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } from '../utils/scripts.js';
 import { connectClient, pushEvent } from '../push-events/index.js';
+import { createRequireHook, favIcon, find, getProjectPath, getTypeFromRequest } from '../utils/file.js';
 import { error, fatal, info, noisyInfo } from '../utils/log.js';
-import { favIcon, find, getProjectPath, getTypeFromRequest } from '../utils/file.js';
 import { interceptFileRead, interceptProcessOn } from '../utils/intercept.js';
 import { isBundledFilePath, isNodeModuleFilePath } from '../utils/is.js';
-import { pathToFileURL, URL } from 'url';
 import chalk from 'chalk';
 import config from '../config.js';
 import createFileServer from './file-server.js';
@@ -19,6 +18,7 @@ import Mock from '../mock/index.js';
 import { parseUserAgent } from '../utils/platform.js';
 import { patchResponse } from '../utils/patch.js';
 import send from 'send';
+import { URL } from 'url';
 import watch from '../utils/watch.js';
 import WebSocket from 'faye-websocket';
 
@@ -27,6 +27,9 @@ const START_TIMEOUT_DURATION = 4000;
 const debug = Debug('dvlp:server');
 const originalCreateServer = http.createServer;
 const require = createRequire(import.meta.url);
+const moduleCache = require.cache;
+/** @type { Array<string> } */
+let dvlpModules;
 /** @type { Array<string> } */
 let globalKeys;
 
@@ -47,15 +50,19 @@ export default class DvlpServer {
       this.addWatchFiles(filePath);
     });
 
+    if (dvlpModules === undefined) {
+      dvlpModules = Object.keys(moduleCache);
+    }
     if (globalKeys === undefined) {
       globalKeys = Object.keys(global);
     }
 
+    /** @type { Array<string> } */
+    this.appModules = [];
     this.connections = new Map();
     this.exitHandler = null;
     this.lastChanged = '';
     this.main = main;
-    this.mainPath = '';
     this.mocks = mockPath ? new Mock(mockPath) : undefined;
     this.staticMode = main === undefined;
 
@@ -71,6 +78,7 @@ export default class DvlpServer {
     /** @type { _dvlp.HttpServer | null } */
     this.server = null;
     this.hooks = new Hooker(hooks, this.watcher);
+    this.revertRequireHook = createRequireHook(this.hooks.serverTransform);
     this.urlToFilePath = new Map();
     /** @type { _dvlp.PatchResponseOptions } */
     this.patchResponseOptions = {
@@ -185,6 +193,8 @@ export default class DvlpServer {
           server.on('listening', () => {
             debug('server started');
             clearTimeout(timeoutID);
+            instance.appModules = getAppModules();
+            instance.addWatchFiles(instance.appModules);
             const address = server.address();
             if (address && typeof address !== 'string') {
               instance.port = address.port;
@@ -297,7 +307,7 @@ export default class DvlpServer {
       if (filePath) {
         if (isBundledFilePath(filePath)) {
           // Will write new file to disk
-          await server.hooks.bundle(filePath, res);
+          await server.hooks.bundleDependency(filePath, res);
         }
         // Transform all files that aren't bundled or node_modules
         // This ensures that all symlinked workspace files are transformed even though they are dependencies
@@ -351,9 +361,7 @@ export default class DvlpServer {
     } else if (typeof this.main === 'function') {
       this.main();
     } else {
-      this.mainPath = await this.hooks.serverBundle(this.main);
-      // @ts-ignore
-      await import(pathToFileURL(this.mainPath));
+      require(this.main);
     }
   }
 
@@ -370,11 +378,9 @@ export default class DvlpServer {
     if (this.exitHandler) {
       await this.exitHandler();
     }
-    if (config.applicationFormat === 'cjs') {
-      delete require.cache[this.mainPath];
-    }
     process.removeListener('uncaughtException', this.onUncaught);
     process.removeListener('unhandledRejection', this.onUncaught);
+    clearAppModules(this.appModules, this.main);
     clearGlobals();
   }
 
@@ -443,6 +449,7 @@ export default class DvlpServer {
     this.unlistenForFileRead();
     this.watcher.close();
     this.hooks.destroy();
+    this.revertRequireHook();
     return this.stop();
   }
 }
@@ -569,6 +576,49 @@ function handlePushEvent(req, res, mocks) {
   }
 
   return false;
+}
+
+/**
+ * Retrieve app modules (excluding node_modules)
+ *
+ * @returns { Array<string> }
+ */
+function getAppModules() {
+  const modules = Object.keys(moduleCache).filter((m) => !dvlpModules.includes(m));
+
+  debug(`found ${modules.length} app modules`);
+
+  return modules;
+}
+
+/**
+ * Clear app modules from module cache
+ *
+ * @param { Array<string> } appModules
+ * @param { string | (() => void) | undefined } main
+ */
+function clearAppModules(appModules, main) {
+  // @ts-ignore
+  const mainModule = moduleCache[main];
+
+  // Remove main from parent
+  // (No children when bundled)
+  if (mainModule != undefined && mainModule.parent != null && mainModule.parent.children != null) {
+    const parent = mainModule.parent;
+    let i = parent.children.length;
+
+    while (--i) {
+      if (parent.children[i].id === mainModule.id) {
+        parent.children.splice(i, 1);
+      }
+    }
+  }
+
+  for (const m of appModules) {
+    delete moduleCache[m];
+  }
+
+  debug(`cleared ${appModules.length} app modules from require.cache`);
 }
 
 /**

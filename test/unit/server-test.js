@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import http from 'http';
 import http2 from 'http2';
 import path from 'path';
-import serverFactory from '../../src/server/index.js';
+import { server as serverFactory } from '../../src/index.js';
 import websocket from 'faye-websocket';
 
 const DEBUG_VERSION = '4.3.1';
@@ -401,7 +401,7 @@ describe('server', () => {
       await server.restart();
       expect(global.context.beforeExitCalled).to.equal(true);
     });
-    it('should trigger exit handlers for clean up', async () => {
+    it('should clear globals on exit', async () => {
       server = await serverFactory('test/unit/fixtures/appGlobals.js', {
         port: 8100,
       });
@@ -446,7 +446,21 @@ describe('server', () => {
       expect(await res.text()).to.contain('sse = new EventSource');
     });
     it('should start with initial error', async () => {
-      server = await serverFactory('test/unit/fixtures/appError.js', {
+      server = await serverFactory('test/unit/fixtures/appError.mjs', {
+        port: 8100,
+        reload: false,
+      });
+      try {
+        await fetch('http://localhost:8100/', {
+          headers: { accept: 'text/html' },
+        });
+        throw Error("sholdn't have come this far!");
+      } catch (err) {
+        expect(err.code).to.eql('ECONNREFUSED');
+      }
+    });
+    it('should handle request error', async () => {
+      server = await serverFactory('test/unit/fixtures/appRequestError.js', {
         port: 8100,
         reload: false,
       });

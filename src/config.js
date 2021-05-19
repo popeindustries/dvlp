@@ -13,8 +13,6 @@ const TESTING = process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefin
 // Replaced during build
 const VERSION = global.$VERSION || 'dev';
 
-const applicationDirName = `${path.join(DIR, `app-${VERSION}`)}`;
-const applicationDir = path.resolve(applicationDirName);
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
 const bundleDir = path.resolve(bundleDirName);
 const port = process.env.PORT ? Number(process.env.PORT) : 8080;
@@ -24,7 +22,6 @@ mime.define(JS_MIME_TYPES, true);
 send.mime.define(JS_MIME_TYPES, true);
 
 const dir = path.resolve(DIR);
-const applicationDirExists = fs.existsSync(applicationDir);
 const bundleDirExists = fs.existsSync(bundleDir);
 const dirExists = fs.existsSync(dir);
 
@@ -38,13 +35,9 @@ if (dirExists && !bundleDirExists) {
     }
   }
 }
-if (applicationDirExists) {
-  rimraf.sync(applicationDir);
-}
 if (!dirExists) {
   fs.mkdirSync(dir);
 }
-fs.mkdirSync(applicationDir);
 if (!bundleDirExists) {
   fs.mkdirSync(bundleDir);
 } else {
@@ -77,14 +70,21 @@ if (TESTING) {
  * @type { _dvlp.Config }
  */
 const config = {
-  applicationDir,
-  applicationDirName,
   applicationFormat: 'esm',
   applicationPort: port,
   brokenNamedExportsPackages,
   bundleDir,
   bundleDirName,
   directories: [],
+  esbuildTargetByExtension: {
+    '.js': 'js',
+    '.mjs': 'js',
+    '.cjs': 'js',
+    '.json': 'json',
+    '.jsx': 'jsx',
+    '.ts': 'ts',
+    '.tsx': 'tsx',
+  },
   // Ordered to trigger transpiling if necessary
   extensionsByType: {
     css: ['.pcss', '.sass', '.scss', '.less', '.styl', '.stylus', '.css'],
