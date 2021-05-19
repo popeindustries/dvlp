@@ -91,7 +91,7 @@ module.exports = {
    * @param { string } id
    * @param { string } filePath
    * @param { string } fileContents
-   * @param { { esbuildService: import('esbuild').Service } } context
+   * @param { { esbuild: Pick<import("esbuild"), 'build'> } } context
    */
   async onDependencyBundle(id, filePath, fileContents, context) {
     if (id === 'some/package') {
@@ -105,7 +105,7 @@ module.exports = {
    *
    * @param { string } filePath
    * @param { string } fileContents
-   * @param { { client: { manufacturer: string, name: string, ua: string, version: string }, esbuildService: import("esbuild").Service } } context
+   * @param { { client: { manufacturer: string, name: string, ua: string, version: string }, esbuild: Pick<import("esbuild"), 'build', 'transform'> } } context
    */
   async onTransform(filePath, fileContents, context) {
     // Note: .ts, .tsx, .jsx files are transformed by default
@@ -450,7 +450,7 @@ In the (rare) case you need to customise bundling to work with the packages you'
 
 ### SSL
 
-Enable development against a secure server by passing the path or glob pattern to your `.crt` and `.key` files with the `--ssl` option.
+Enable development against a secure http2 server by passing the path or glob pattern to your `.crt` and `.key` files with the `--ssl` option.
 
 > Follow the directions [here](https://deliciousbrains.com/ssl-certificate-authority-for-local-https-development/) to generate a self-signed certificate for local development
 
@@ -470,6 +470,8 @@ Serve files at `filePath`, starting static file server if one or more directorie
 
 `options` include:
 
+- **`certsPath: string|[string]`**: the path or glob pattern containing ".crt" and ".key" files (default `''`)
+- **`directories: [string]`**: additional directories to use for resolving file requests (default `[]`)
 - **`hooksPath: string`**: the path to a hooks registration file (default `''`)
 - **`mockPath: string|[string]`** the path(s) to load mock files from (default `''`)
 - **`port: number`**: port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
