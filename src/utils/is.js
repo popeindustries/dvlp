@@ -205,7 +205,7 @@ export function isPromise(obj) {
 }
 
 /**
- * Determine if 'filePath' is in project
+ * Determine if 'filePath' is in project source
  *
  * @param { string } filePath
  * @returns { boolean }
@@ -215,7 +215,7 @@ export function isProjectFilePath(filePath) {
     filePath = path.resolve(filePath);
   }
 
-  return filePath.includes(process.cwd());
+  return filePath.includes(process.cwd()) && !isNodeModuleFilePath(filePath);
 }
 
 /**

@@ -53,7 +53,7 @@ export default function watch(fn) {
       if (
         !files.has(filePath) &&
         !filePath.startsWith(tmpdir) &&
-        !filePath.startsWith(config.bundleDir) &&
+        !filePath.startsWith(config.dvlpDir) &&
         !path.basename(filePath).startsWith('.')
       ) {
         debug(`watching file "${getProjectPath(filePath)}"`);

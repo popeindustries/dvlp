@@ -62,6 +62,7 @@ declare interface Config {
   bundleDir: string;
   bundleDirName: string;
   directories: Array<string>;
+  dvlpDir: string;
   esbuildTargetByExtension: {
     [extension: string]: string;
   };

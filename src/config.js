@@ -83,6 +83,7 @@ const config = {
   bundleDir,
   bundleDirName,
   directories: [],
+  dvlpDir: path.resolve(DIR),
   esbuildTargetByExtension: {
     '.js': 'js',
     '.mjs': 'js',
