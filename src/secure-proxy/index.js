@@ -81,10 +81,12 @@ class SecureProxyServer extends EventSourceServer {
           return;
         }
 
-        // Remove ilegal headers
         const headers = { ...req.headers };
+        headers.host = req.headers[':authority'];
+        // Remove ilegal headers
         delete headers.connection;
         delete headers['transfer-encoding'];
+        delete headers['keep-alive'];
 
         this.client.stream(
           // @ts-ignore
@@ -97,6 +99,7 @@ class SecureProxyServer extends EventSourceServer {
           ({ statusCode, headers, opaque }) => {
             delete headers.connection;
             delete headers['transfer-encoding'];
+            delete headers['keep-alive'];
             res.writeHead(statusCode || 200, headers);
 
             return opaque;
