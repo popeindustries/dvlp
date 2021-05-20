@@ -1,10 +1,11 @@
 import { exists, expandPath, getProjectPath, importModule, isCjsFile } from '../utils/file.js';
 import logger, { error, info } from '../utils/log.js';
 import chalk from 'chalk';
+import { init as cjsLexerInit } from 'cjs-module-lexer';
 import config from '../config.js';
 import DvlpServer from './server.js';
+import { init as esLexerInit } from 'es-module-lexer';
 import fs from 'fs';
-import { init } from 'cjs-module-lexer';
 import path from 'path';
 import { reloadServer } from '../reloader/index.js';
 import secureProxyServer from '../secure-proxy/index.js';
@@ -28,11 +29,12 @@ export default async function serverFactory(
   /** @type { _dvlp.SecureProxy | undefined } */
   let secureProxy;
 
+  await cjsLexerInit();
+  await esLexerInit;
+
   config.directories = Array.from(new Set(entry.directories));
   // Set format based on application entry
   if (entry.isApp) {
-    // This is also called in utils/file.js, but not awaited, so ensure that the lexer is actually initialised first
-    await init();
     // @ts-ignore
     config.applicationFormat = isCjsFile(entry.main, fs.readFileSync(entry.main, 'utf8')) ? 'cjs' : 'esm';
   }

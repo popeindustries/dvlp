@@ -165,8 +165,12 @@ describe('file', () => {
 
   describe('isEsmFile()', () => {
     it('should return true for .js file with "import"', () => {
-      const filePath = path.resolve('test/unit/fixtures/appEsm.js');
+      const filePath = path.resolve('test/unit/fixtures/config.esm.js');
       expect(isEsmFile(filePath)).to.be.true;
+    });
+    it('should return false for script with no imports/exports', () => {
+      const filePath = path.resolve('test/unit/fixtures/script.js');
+      expect(isEsmFile(filePath)).to.be.false;
     });
     it('should return true for .mjs file', () => {
       const filePath = path.resolve('test/unit/fixtures/hooks-bundle.mjs');

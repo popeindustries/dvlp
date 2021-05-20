@@ -1,4 +1,3 @@
-import { init, parse } from 'cjs-module-lexer';
 import {
   isAbsoluteFilePath,
   isBundledUrl,
@@ -14,6 +13,7 @@ import favicon from './favicon.js';
 import fs from 'fs';
 import glob from 'glob';
 import isFileEsm from 'is-file-esm';
+import { parse } from 'es-module-lexer';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { URL } from 'url';
@@ -27,8 +27,6 @@ const RE_SEPARATOR = /[,;]\s?|\s/g;
 
 /** @type { Map<string, 'cjs' | 'esm'> } */
 const fileFormatCache = new Map();
-
-init();
 
 /**
  * Create transform hook for `require(filePath)`
@@ -332,6 +330,7 @@ export function isEsmFile(filePath, fileContents) {
 
   if (extension === '.js') {
     try {
+      // Check package.json for metadata to avoid parsing file contents
       if (isFileEsm.sync(filePath).esm) {
         isEsm = true;
       }
@@ -341,10 +340,11 @@ export function isEsmFile(filePath, fileContents) {
 
     if (!isEsm) {
       try {
-        parse(fileContents || fs.readFileSync(filePath, 'utf8'));
-        isEsm = false;
+        fileContents = fileContents || fs.readFileSync(filePath, 'utf8');
+        const [imports, exports] = parse(fileContents);
+        isEsm = imports.length > 0 || exports.length > 0;
       } catch (err) {
-        isEsm = true;
+        isEsm = false;
       }
     }
   } else if (extension === '.mjs') {

@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import fs from 'fs';
 import Hooks from '../../src/hooks/index.js';
 import hooksFixture from './fixtures/hooks-bundle.mjs';
+import { init } from 'cjs-module-lexer';
 import path from 'path';
 import transformBundleFixture from './fixtures/hooks-transform-bundle.js';
 import transformFixture from './fixtures/hooks-transform.js';
@@ -30,6 +31,10 @@ function getResponse() {
 let hooks;
 
 describe('hooks()', () => {
+  before(async () => {
+    await init();
+  });
+
   describe('bundle', () => {
     afterEach(() => {
       hooks && hooks.destroy();
@@ -68,7 +73,7 @@ describe('hooks()', () => {
       const filePath = path.join(config.bundleDir, DEBUG);
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
-      expect(module).to.contain('this is bundled content for: debug-4.3.1.js');
+      expect(module).to.contain('this is bundled content for: browser.js');
     });
   });
 

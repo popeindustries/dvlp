@@ -5,7 +5,6 @@ import config from '../config.js';
 import Debug from 'debug';
 import { error } from '../utils/log.js';
 import { isBundledFilePath } from '../utils/is.js';
-import { isEsmFile } from '../utils/file.js';
 import Metrics from '../utils/metrics.js';
 import { parse } from 'cjs-module-lexer';
 import { resolve } from '../resolver/index.js';
@@ -41,33 +40,30 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
 
     try {
       const moduleContents = readFileSync(modulePath, 'utf8');
-      const isEsm = isEsmFile(modulePath, moduleContents);
       let entryFilePath = modulePath;
       let entryFileContents = moduleContents;
-
-      // Fix named exports for cjs
-      if (!isEsm) {
-        const brokenNamedExports = config.brokenNamedExportsPackages[moduleId] || [];
-        const inlineableModulePath = modulePath.replace(/\\/g, '\\\\');
-        const { exports } = parse(moduleContents);
-        const namedExports = exports.filter((e) => e !== 'default').concat(brokenNamedExports);
-        const fileContents = namedExports.length
-          ? `export { default } from "${inlineableModulePath}"; export {${namedExports.join(
-              ', ',
-            )}} from '${inlineableModulePath}';`
-          : `export { default } from "${inlineableModulePath}"`;
-
-        entryFilePath = filePath;
-        entryFileContents = fileContents;
-        writeFileSync(filePath, fileContents);
-      }
 
       if (hookFn) {
         code = await hookFn(moduleId, entryFilePath, entryFileContents, {
           esbuild,
         });
       }
+
       if (code === undefined) {
+        const { exports } = parse(moduleContents);
+        const brokenNamedExports = config.brokenNamedExportsPackages[moduleId] || [];
+
+        // Fix named exports for cjs
+        if (exports.length > 0 || brokenNamedExports.length > 0) {
+          const inlineableModulePath = modulePath.replace(/\\/g, '\\\\');
+          const namedExports = Array.from(new Set(['default', ...exports, ...brokenNamedExports]));
+          const fileContents = `export {${namedExports.join(', ')}} from '${inlineableModulePath}';`;
+
+          entryFilePath = filePath;
+          entryFileContents = fileContents;
+          writeFileSync(filePath, fileContents);
+        }
+
         const result = await esbuild.build({
           bundle: true,
           define: { 'process.env.NODE_ENV': '"development"' },
