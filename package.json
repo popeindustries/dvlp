@@ -1,6 +1,6 @@
 {
   "name": "dvlp",
-  "version": "13.0.0-beta.7",
+  "version": "13.0.0-beta.8",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
   "main": "dvlp.js",
   "browser": "dvlp-browser.js",
