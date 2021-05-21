@@ -9,13 +9,13 @@ export const testBrowser = {
    * @param { boolean } [rerouteAllRequests]
    */
   disableNetwork(rerouteAllRequests) {
-    return window._dvlp.disableNetwork(rerouteAllRequests);
+    return window.dvlp.disableNetwork(rerouteAllRequests);
   },
   /**
    * Re-enable all external network connections
    */
   enableNetwork() {
-    return window._dvlp.enableNetwork();
+    return window.dvlp.enableNetwork();
   },
   /**
    * Add mock response for "req"
@@ -27,7 +27,7 @@ export const testBrowser = {
    * @returns { () => void } remove mock instance
    */
   mockResponse(req, res, once, onMockCallback) {
-    return window._dvlp.mockResponse(req, res, once, onMockCallback);
+    return window.dvlp.mockResponse(req, res, once, onMockCallback);
   },
   /**
    * Trigger EventSource/WebSocket event
@@ -36,6 +36,6 @@ export const testBrowser = {
    * @param { string | { message: string | object, options: { event: string, id: string } } } event
    */
   pushEvent(stream, event) {
-    return window._dvlp.pushEvent(stream, event);
+    return window.dvlp.pushEvent(stream, event);
   },
 };
