@@ -214,7 +214,7 @@ export default class Hooker {
           result = code;
         }
       } catch (err) {
-        console.log(err);
+        error(err);
       }
     }
 
