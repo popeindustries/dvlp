@@ -156,6 +156,18 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('this is sent content for: style.css');
     });
+    it('should handle request when using an onRequest hook', async () => {
+      server = await serverFactory('test/unit/fixtures/www', {
+        port: 8100,
+        reload: false,
+        hooksPath: 'test/unit/fixtures/hooks-request.mjs',
+      });
+      let res = await fetch('http://localhost:8100/favicon.ico');
+      expect(res.headers.get('content-type')).to.include('image/x-icon');
+      res = await fetch('http://localhost:8100/api');
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('handled');
+    });
     it('should cache transformed file content when using an onTransform hook', async () => {
       server = await serverFactory('test/unit/fixtures/www', {
         port: 8100,

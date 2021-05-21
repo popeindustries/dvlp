@@ -146,6 +146,22 @@ module.exports = {
   },
 
   /**
+   * Manually handle response for incoming server request.
+   * If returns "true", further processing by dvlp will be aborted.
+   *
+   * @param { IncomingMessage | Http2ServerRequest } request
+   * @param { ServerResponse | Http2ServerResponse } response
+   * @returns { Promise<boolean> | boolean | undefined }
+   */
+  onRequest(request, response) {
+    if (request.url === '/something') {
+      response.writeHead(200);
+      response.end('handled');
+      return true;
+    }
+  },
+
+  /**
    * Modify response body before sending to the browser.
    * This hook is run after all modifications by dvlp, and before sending to the browser.
    *
