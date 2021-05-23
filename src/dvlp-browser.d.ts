@@ -1,4 +1,4 @@
-/// <reference path="_dvlp.d.ts" />
+import { MockResponse, MockResponseHandler, PushEvent } from './_dvlp';
 
 export namespace testBrowser {
   /**
@@ -14,8 +14,8 @@ export namespace testBrowser {
    * Add mock response for "req"
    */
   function mockResponse(
-    req: string | _dvlp.MockRequest,
-    res?: _dvlp.MockResponse | _dvlp.MockResponseHandler,
+    req: string | MockRequest,
+    res?: MockResponse | MockResponseHandler,
     once?: boolean,
     onMockCallback?: () => void,
   ): () => void;
@@ -23,7 +23,7 @@ export namespace testBrowser {
    * Push data to WebSocket/EventSource clients
    * A string passed as `event` will be handled as a named mock push event
    */
-  function pushEvent(stream: string, event?: string | _dvlp.PushEvent): void;
+  function pushEvent(stream: string, event?: string | PushEvent): void;
 }
 
 declare global {
