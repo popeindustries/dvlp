@@ -21,6 +21,11 @@ const originalReadFileSync = fs.readFileSync;
 
 /** @typedef { import("http").ClientRequestArgs & { href?: string } } ClientRequestArgs */
 
+// Early init to ensure that 3rd-party libraries use proxied versions
+initInterceptFileRead();
+initInterceptClientRequest();
+initInterceptProcessOn();
+
 /**
  * Listen for file system reads and report
  *
@@ -28,6 +33,15 @@ const originalReadFileSync = fs.readFileSync;
  * @returns { () => void }
  */
 export function interceptFileRead(fn) {
+  initInterceptFileRead();
+  fileReadListeners.add(fn);
+  return restoreFileRead.bind(null, fn);
+}
+
+/**
+ * Initialise `fileRead` proxy
+ */
+function initInterceptFileRead() {
   if (!isProxy(fs.readFile)) {
     // Proxy ReadStream private method to work around patching by graceful-fs
     const ReadStream = fs.ReadStream.prototype;
@@ -53,9 +67,6 @@ export function interceptFileRead(fn) {
       });
     }
   }
-
-  fileReadListeners.add(fn);
-  return restoreFileRead.bind(null, fn);
 }
 
 /**
@@ -79,6 +90,15 @@ function restoreFileRead(fn) {
  * @returns { () => void }
  */
 export function interceptClientRequest(fn) {
+  initInterceptClientRequest();
+  clientRequestListeners.add(fn);
+  return restoreClientRequest.bind(null, fn);
+}
+
+/**
+ * Initialise `http.request` proxy
+ */
+function initInterceptClientRequest() {
   if (!isProxy(http.request)) {
     // @ts-ignore
     http.request = new Proxy(http.request, {
@@ -95,9 +115,6 @@ export function interceptClientRequest(fn) {
       apply: clientRequestApplyTrap('https'),
     });
   }
-
-  clientRequestListeners.add(fn);
-  return restoreClientRequest.bind(null, fn);
 }
 
 /**
@@ -193,6 +210,15 @@ function getHrefFromRequestOptions(options, protocol) {
  * @returns { () => void }
  */
 export function interceptProcessOn(fn) {
+  initInterceptProcessOn();
+  processOnListeners.add(fn);
+  return restoreProcessOn.bind(null, fn);
+}
+
+/**
+ * Initialise `process.on` proxy
+ */
+function initInterceptProcessOn() {
   if (!isProxy(process.on)) {
     process.on = new Proxy(process.on, {
       apply: (target, ctx, args) => {
@@ -203,9 +229,6 @@ export function interceptProcessOn(fn) {
       },
     });
   }
-
-  processOnListeners.add(fn);
-  return restoreProcessOn.bind(null, fn);
 }
 
 /**
