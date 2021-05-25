@@ -1,6 +1,6 @@
 import { Hooks, Req, Res, Server, ServerOptions, TestServer, TestServerOptions } from './_dvlp';
 
-export { Hooks };
+export { Hooks, TestServer, TestServerOptions, Server, ServerOptions };
 
 export function server(filePath: string | Array<string> | (() => void), options?: ServerOptions): Promise<Server>;
 
