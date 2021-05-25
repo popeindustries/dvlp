@@ -106,7 +106,7 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
  * @returns { string | undefined }
  */
 export function resolveAliasPath(filePath, pkg) {
-  if (pkg.exports) {
+  if (pkg.exports && !pkg.isProjectPackage) {
     const entry = filePath.replace(pkg.path, '.').replace(/\\/g, '/');
 
     try {
