@@ -1,7 +1,7 @@
 import EventSource from 'eventsource';
 import { expect } from 'chai';
 import fetch from 'node-fetch';
-import testServer from '../../src/test-server/index.js';
+import testServer from '../../src/dvlp-test.js';
 import websocket from 'faye-websocket';
 
 const { Client: WebSocket } = websocket;
@@ -42,7 +42,7 @@ describe('testServer', () => {
   });
   it('should respond to requests for resources using default "webroot"', async () => {
     server = await testServer();
-    const res = await fetch('http://localhost:8080/src/index.js');
+    const res = await fetch('http://localhost:8080/src/dvlp-test.js');
     expect(res).to.exist;
     expect(await res.text()).to.contain('testServer');
   });
@@ -51,7 +51,7 @@ describe('testServer', () => {
     const res = await fetch('http://localhost:8080/test-server/index.js');
     expect(res).to.exist;
     const module = await res.text();
-    expect(module).to.contain('testServerFactory.disableNetwork');
+    expect(module).to.contain('TestServer');
   });
   it('should add default connection latency to each request', async () => {
     server = await testServer();
@@ -129,7 +129,7 @@ describe('testServer', () => {
   it('should reroute external request when network disabled and rerouting enabled', async () => {
     testServer.disableNetwork(true);
     server = await testServer();
-    const res = await fetch('http://www.google.com/src/index.js');
+    const res = await fetch('http://www.google.com/src/dvlp-test.js');
     expect(res).to.exist;
     expect(await res.text()).to.contain('testServer');
     testServer.disableNetwork(false);

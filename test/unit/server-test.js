@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import http from 'http';
 import http2 from 'http2';
 import path from 'path';
-import { server as serverFactory } from '../../src/index.js';
+import { server as serverFactory } from '../../src/dvlp.js';
 import websocket from 'faye-websocket';
 
 const DEBUG_VERSION = '4.3.1';

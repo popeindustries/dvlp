@@ -2,7 +2,6 @@
 /node_modules
 .DS_Store
 .dvlp
-/dvlp*.js
-/dvlp*.d.ts
-/_dvlp.d.ts
-/dvlp.js.map
+/*.js
+/*.d.ts
+/*.map

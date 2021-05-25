@@ -13,6 +13,14 @@
   "bin": {
     "dvlp": "bin/dvlp.js"
   },
+  "exports": {
+    ".": {
+      "browser": "./dvlp-browser.js",
+      "import": "./dvlp.js"
+    },
+    "./browser": "./dvlp-browser.js",
+    "./test": "./dvlp-test.js"
+  },
   "dependencies": {
     "commander": "^7.0.0",
     "esbuild": "^0.12.0",
