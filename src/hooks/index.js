@@ -1,3 +1,4 @@
+import { error, warn } from '../utils/log.js';
 import { getProjectPath, isCjsFile } from '../utils/file.js';
 import { isNodeModuleFilePath, isProjectFilePath } from '../utils/is.js';
 import bundleDependency from './bundle-dependency.js';
@@ -6,10 +7,9 @@ import esbuild from 'esbuild';
 import path from 'path';
 import { resolve } from '../resolver/index.js';
 import transform from './transform.js';
-import { warn } from '../utils/log.js';
 import { writeFileSync } from 'fs';
 
-const HOOK_NAMES = ['onDependencyBundle', 'onTransform', 'onResolveImport', 'onSend', 'onServerTransform'];
+const HOOK_NAMES = ['onDependencyBundle', 'onTransform', 'onResolveImport', 'onRequest', 'onSend', 'onServerTransform'];
 
 export default class Hooker {
   /**
@@ -136,6 +136,31 @@ export default class Hooker {
   }
 
   /**
+   * Allow external response handling
+   *
+   * @param { _dvlp.Req } req
+   * @param { _dvlp.Res } res
+   * @returns { Promise<boolean> }
+   */
+  async handleRequest(req, res) {
+    if (this.hooks && this.hooks.onRequest) {
+      try {
+        // Check if finished in case no return value
+        if ((await this.hooks.onRequest(req, res)) || res.finished) {
+          return true;
+        }
+      } catch (err) {
+        res.writeHead(500);
+        res.end(err.message);
+        error(err);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Allow modification of 'filePath' content before sending the request
    *
    * @param { string } filePath
@@ -167,25 +192,29 @@ export default class Hooker {
     }
     if (result === undefined && !isCjsFile(filePath, fileContents)) {
       const sourcemap = isProjectFilePath(filePath);
-      const { code, map } = esbuild.transformSync(fileContents, {
-        format: 'cjs',
-        // @ts-ignore
-        loader: config.esbuildTargetByExtension[path.extname(filePath)] || 'default',
-        sourcesContent: false,
-        sourcefile: filePath,
-        sourcemap,
-        sourceRoot: config.sourceMapsDir,
-        target: `node${process.versions.node}`,
-      });
+      try {
+        const { code, map } = esbuild.transformSync(fileContents, {
+          format: 'cjs',
+          // @ts-ignore
+          loader: config.esbuildTargetByExtension[path.extname(filePath)] || 'default',
+          sourcesContent: false,
+          sourcefile: filePath,
+          sourcemap,
+          sourceRoot: config.sourceMapsDir,
+          target: `node${process.versions.node}`,
+        });
 
-      if (sourcemap) {
-        const sourceMapPath =
-          path.resolve(config.sourceMapsDir, getProjectPath(filePath).replace(/\/|\\/g, '_')) + '.map';
+        if (sourcemap) {
+          const sourceMapPath =
+            path.resolve(config.sourceMapsDir, getProjectPath(filePath).replace(/\/|\\/g, '_')) + '.map';
 
-        writeFileSync(sourceMapPath, map);
-        result = code + `//# sourceMappingURL=${sourceMapPath}`;
-      } else {
-        result = code;
+          writeFileSync(sourceMapPath, map);
+          result = code + `//# sourceMappingURL=${sourceMapPath}`;
+        } else {
+          result = code;
+        }
+      } catch (err) {
+        error(err);
       }
     }
 

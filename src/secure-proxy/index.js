@@ -85,26 +85,29 @@ class SecureProxyServer extends EventSourceServer {
         headers.host = req.headers[':authority'];
         // Remove ilegal headers
         delete headers.connection;
-        delete headers['transfer-encoding'];
         delete headers['keep-alive'];
+        delete headers['transfer-encoding'];
 
-        this.client.stream(
-          // @ts-ignore
-          {
-            headers,
-            method: req.method || 'GET',
-            path: req.url || '/',
-            opaque: res,
-          },
-          ({ statusCode, headers, opaque }) => {
-            delete headers.connection;
-            delete headers['transfer-encoding'];
-            delete headers['keep-alive'];
-            res.writeHead(statusCode || 200, headers);
+        /** @type { import('undici').Dispatcher.RequestOptions } */ // @ts-ignore
+        const options = {
+          headers,
+          method: req.method || 'GET',
+          opaque: res,
+          path: req.url || '/',
+        };
 
-            return opaque;
-          },
-        );
+        if (req.method !== 'GET' && req.method !== 'HEAD') {
+          options.body = req;
+        }
+
+        this.client.stream(options, ({ statusCode, headers, opaque }) => {
+          delete headers.connection;
+          delete headers['keep-alive'];
+          delete headers['transfer-encoding'];
+          res.writeHead(statusCode || 200, headers);
+
+          return /** @type { import('stream').Writable } */ (opaque);
+        });
       });
 
       decorateWithServerDestroy(this.server);

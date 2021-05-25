@@ -7,12 +7,12 @@ import {
   isNodeModuleFilePath,
 } from './is.js';
 import { warn, WARN_MISSING_EXTENSION, WARN_PACKAGE_INDEX } from './log.js';
-import { addHook } from 'pirates';
 import config from '../config.js';
 import favicon from './favicon.js';
 import fs from 'fs';
 import glob from 'glob';
 import isFileEsm from 'is-file-esm';
+import Module from 'module';
 import { parse } from 'es-module-lexer';
 import path from 'path';
 import { pathToFileURL } from 'url';
@@ -29,27 +29,40 @@ const RE_SEPARATOR = /[,;]\s?|\s/g;
 const fileFormatCache = new Map();
 
 /**
- * Create transform hook for `require(filePath)`
+ * Create transform hook for `require(filePath)`.
  *
  * @param { (filePath: string, fileContents: string) => string } onTransform
- * @return { () => void } revert hook registration
+ * @returns { () => void }
+ * @see https://github.com/ariporad/pirates
  */
 export function createRequireHook(onTransform) {
-  return addHook(
-    (code, filePath) => {
-      const transformed = onTransform(filePath, code);
+  const extensions = config.extensionsByType.js.filter((ext) => ext !== '.json');
+  /** @type { { [extension: string]: (module: NodeModule, filePath: string) => void } } */ // @ts-ignore
+  const requireExtensions = Module._extensions;
+  let reverted = false;
 
-      if (transformed !== undefined) {
-        code = transformed;
+  for (const ext of extensions) {
+    // @ts-ignore
+    requireExtensions[ext] = function loader(module, filePath) {
+      let code = fs.readFileSync(filePath, 'utf8');
+
+      if (!reverted) {
+        const transformed = onTransform(filePath, code);
+
+        if (transformed !== undefined) {
+          code = transformed;
+        }
       }
 
-      return code;
-    },
-    {
-      exts: config.extensionsByType.js,
-      ignoreNodeModules: false,
-    },
-  );
+      // Skip over native loader to avoid error when requiring .js file from an esm project (package.json#type === 'module')
+      // @ts-ignore
+      module._compile(code, filePath);
+    };
+  }
+
+  return function revert() {
+    reverted = true;
+  };
 }
 
 /**

@@ -286,6 +286,11 @@ export default class DvlpServer {
         return;
       }
 
+      // Allow manual response handling via user hook
+      if (await server.hooks.handleRequest(req, res)) {
+        return;
+      }
+
       // Ignore html or uncached or no longer available at previously known path
       if (type !== 'html' && (!filePath || !fs.existsSync(filePath))) {
         filePath = find(req, { type });
