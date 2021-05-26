@@ -1,4 +1,4 @@
-import { MockResponse, MockResponseHandler, PushEvent } from './_dvlp';
+import { MockRequest, MockResponse, MockResponseHandler, PushEvent } from './_dvlp';
 
 export namespace testBrowser {
   /**

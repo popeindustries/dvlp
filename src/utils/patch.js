@@ -447,6 +447,7 @@ function proxyBodyWrite(res, action) {
       if (!res.headersSent) {
         if (size) {
           debug(`setting Content-Length to ${size}`);
+          // @ts-ignore
           originalSetHeader.call(res, 'Content-Length', size);
         }
       }
