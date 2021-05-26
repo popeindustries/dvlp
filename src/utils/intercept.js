@@ -23,8 +23,6 @@ const originalReadFileSync = fs.readFileSync;
 
 // Early init to ensure that 3rd-party libraries use proxied versions
 initInterceptFileRead();
-initInterceptClientRequest();
-initInterceptProcessOn();
 
 /**
  * Listen for file system reads and report
@@ -140,37 +138,39 @@ function restoreClientRequest(fn) {
  */
 function clientRequestApplyTrap(protocol) {
   return function apply(target, ctx, args) {
-    const url = new URL(typeof args[0] === 'string' ? args[0] : getHrefFromRequestOptions(args[0], protocol));
+    if (clientRequestListeners.size > 0) {
+      const url = new URL(typeof args[0] === 'string' ? args[0] : getHrefFromRequestOptions(args[0], protocol));
 
-    // TODO: pass method/headers
-    if (notifyListeners(clientRequestListeners, url) === false) {
-      return;
-    }
+      // TODO: pass method/headers
+      if (notifyListeners(clientRequestListeners, url) === false) {
+        return;
+      }
 
-    if (isLocalhost(url.hostname)) {
-      // Force to http
-      url.protocol = 'http:';
-      target = target === originalHttpsGet || target === originalHttpGet ? originalHttpGet : originalHttpRequest;
-    }
-    if (typeof args[0] === 'string') {
-      args[0] = url.href;
-    } else {
-      args[0].protocol = url.protocol;
-      args[0].host = url.host;
-      args[0].hostname = url.hostname;
-      args[0].port = url.port;
-      args[0].path = `${url.href.replace(url.origin, '')}`;
-      args[0].href = url.href;
-      // Force http agent when localhost (due to mocking most likely)
-      if (
-        args[0].agent &&
-        args[0].agent instanceof http.Agent &&
-        // @ts-ignore
-        args[0].agent.protocol === 'https:' &&
-        isLocalhost(url.hostname)
-      ) {
-        // @ts-ignore
-        args[0].agent = new http.Agent(args[0].agent.options || {});
+      if (isLocalhost(url.hostname)) {
+        // Force to http
+        url.protocol = 'http:';
+        target = target === originalHttpsGet || target === originalHttpGet ? originalHttpGet : originalHttpRequest;
+      }
+      if (typeof args[0] === 'string') {
+        args[0] = url.href;
+      } else {
+        args[0].protocol = url.protocol;
+        args[0].host = url.host;
+        args[0].hostname = url.hostname;
+        args[0].port = url.port;
+        args[0].path = `${url.href.replace(url.origin, '')}`;
+        args[0].href = url.href;
+        // Force http agent when localhost (due to mocking most likely)
+        if (
+          args[0].agent &&
+          args[0].agent instanceof http.Agent &&
+          // @ts-ignore
+          args[0].agent.protocol === 'https:' &&
+          isLocalhost(url.hostname)
+        ) {
+          // @ts-ignore
+          args[0].agent = new http.Agent(args[0].agent.options || {});
+        }
       }
     }
 
