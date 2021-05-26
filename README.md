@@ -79,7 +79,7 @@ Create a Node.js module that exposes one or more supported lifecycle hook functi
 
 ```js
 // scripts/hooks.js
-const sass = require('sass');
+import sass from 'sass';
 
 const RE_SASS = /\.s[ac]ss$/;
 
@@ -430,7 +430,7 @@ dvlp.pushEvent('ws://www.somesocket.com/stream', 'hello Ernie');
 All mocks registered with the `-m, --mock` option are also enabled by default in the browser. In addition, similar to the [`testServer`](#--testserveroptions-promisetestserver), you can register mocks programatically:
 
 ```js
-import { testBrowser } from 'dvlp';
+import { testBrowser } from 'dvlp/browser';
 
 describe('some test', () => {
   before(() => {
@@ -495,7 +495,7 @@ Serve files at `filePath`, starting static file server if one or more directorie
 - **`silent: boolean`**: disable/enable default logging (default `false`)
 
 ```js
-const { server } = require('dvlp');
+import { server } from 'dvlp';
 const appServer = await server('path/to/app.js', { port: 8080 });
 ```
 
@@ -505,13 +505,13 @@ Create a server for handling network requests during testing.
 
 `options` include:
 
-- **`autorespond: boolean`** enable/disable automatic dummy responses. If unable to resolve a request to a local file or mock, the server will respond with a dummy file of the appropriate type (default `true`)
+- **`autorespond: boolean`** enable/disable automatic dummy responses. If unable to resolve a request to a local file or mock, the server will respond with a dummy response of the appropriate type (default `false`)
 - **`latency: number`** the amount of artificial latency to introduce (in `ms`) for responses (default `50`)
 - **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
 - **`webroot: String`** the subpath from `process.cwd()` to prepend to relative paths (default `''`)
 
 ```js
-const { testServer } = require('dvlp');
+import { testServer } from 'dvlp/test';
 const mockApi = await testServer({ port: 8080, latency: 20, webroot: 'src' });
 ```
 
@@ -634,7 +634,7 @@ Add a mock `response` for `request`, optionally removing it after first use, and
 
 ```js
 // Also available as "window.dvlp"
-import { testBrowser } from 'dvlp';
+import { testBrowser } from 'dvlp/browser';
 
 testBrowser.mockResponse(
   'http://localhost:8080/api/user/1234',
