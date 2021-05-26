@@ -14,9 +14,13 @@
   },
   "exports": {
     ".": "./dvlp.js",
-    "./test": {
-      "browser": "./dvlp-browser.js",
-      "import": "./dvlp-test.js"
+    "./browser": "./dvlp-browser.js",
+    "./test": "./dvlp-test.js"
+  },
+  "typesVersions": {
+    "*": {
+      "browser": ["dvlp-browser"],
+      "test": ["dvlp-test"]
     }
   },
   "dependencies": {

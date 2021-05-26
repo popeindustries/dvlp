@@ -1,4 +1,4 @@
-import { testBrowser } from 'dvlp/test';
+import { testBrowser } from 'dvlp/browser';
 
 var expect = window.chai.expect;
 
