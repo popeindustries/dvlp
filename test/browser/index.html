@@ -14,8 +14,8 @@
       mocha.setup('bdd');
       mocha.checkLeaks(false);
     </script>
-    <script src="./mock-test.js"></script>
-    <script class="mocha-exec">
+    <script type="module" src="./mock-test.js"></script>
+    <script type="module" class="mocha-exec">
       mocha.run();
     </script>
   </body>

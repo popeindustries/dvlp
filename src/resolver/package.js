@@ -106,7 +106,7 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
  * @returns { string | undefined }
  */
 export function resolveAliasPath(filePath, pkg) {
-  if (pkg.exports && !pkg.isProjectPackage) {
+  if (pkg.exports) {
     const entry = filePath.replace(pkg.path, '.').replace(/\\/g, '/');
 
     try {
@@ -117,24 +117,31 @@ export function resolveAliasPath(filePath, pkg) {
       }
       /** @param { Error } err */
     } catch (err) {
-      if (err.message.includes('Missing')) {
-        error(
-          `unable to resolve package entry. The ${pkg.name} package does not specify ${entry} in it's "exports" map.`,
-        );
-      }
-      return;
-    }
-  } else {
-    filePath = resolvePackageAlias(filePath, pkg);
-
-    if (isAbsoluteFilePath(filePath) && !isValidFilePath(filePath)) {
-      const foundFilePath = find(filePath, { type: 'js' });
-
-      if (foundFilePath) {
-        filePath = resolvePackageAlias(foundFilePath, pkg);
-      } else {
+      // Handle error if not trying to resolve a project reference
+      if (!pkg.isProjectPackage) {
+        if (err.message.includes('Missing')) {
+          error(
+            `unable to resolve package entry. The ${pkg.name} package does not specify ${entry} in it's "exports" map.`,
+          );
+        }
         return;
       }
+    }
+  }
+
+  if (isSelfReferentialSpecifier(filePath, pkg)) {
+    filePath = path.join(pkg.path, filePath.replace(pkg.name, '.'));
+  }
+
+  filePath = resolvePackageAlias(filePath, pkg);
+
+  if (isAbsoluteFilePath(filePath) && !isValidFilePath(filePath)) {
+    const foundFilePath = find(filePath, { type: 'js' });
+
+    if (foundFilePath) {
+      filePath = resolvePackageAlias(foundFilePath, pkg);
+    } else {
+      return;
     }
   }
 
@@ -190,7 +197,7 @@ export function resolvePackagePath(filePath) {
  * @param { _dvlp.Package } pkg
  * @returns { boolean }
  */
-export function isSelfReferentialSpecifier(specifier, pkg) {
+function isSelfReferentialSpecifier(specifier, pkg) {
   return !isRelativeFilePath(specifier) && specifier.split('/')[0] === pkg.name;
 }
 

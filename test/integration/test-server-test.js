@@ -16,7 +16,7 @@ describe('testServer', () => {
   });
 
   it('should respond to requests for fake resources', async () => {
-    server = await testServer({ port: 8888 });
+    server = await testServer({ autorespond: true, port: 8888 });
     const res = await fetch('http://localhost:8888/foo.js');
     expect(res).to.exist;
     expect(await res.text()).to.contain('hello');

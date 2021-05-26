@@ -3,7 +3,6 @@
   "version": "13.0.0-beta.13",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
   "main": "dvlp.js",
-  "browser": "dvlp-browser.js",
   "type": "module",
   "types": "dvlp.d.ts",
   "repository": "https://github.com/popeindustries/dvlp.git",
@@ -14,12 +13,11 @@
     "dvlp": "bin/dvlp.js"
   },
   "exports": {
-    ".": {
+    ".": "./dvlp.js",
+    "./test": {
       "browser": "./dvlp-browser.js",
-      "import": "./dvlp.js"
-    },
-    "./browser": "./dvlp-browser.js",
-    "./test": "./dvlp-test.js"
+      "import": "./dvlp-test.js"
+    }
   },
   "dependencies": {
     "commander": "^7.0.0",

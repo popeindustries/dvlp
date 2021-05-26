@@ -1,4 +1,4 @@
-import { getPackage, isSelfReferentialSpecifier, resolveAliasPath, resolvePackagePath } from './package.js';
+import { getPackage, resolveAliasPath, resolvePackagePath } from './package.js';
 import { getProjectPath, resolveRealFilePath } from '../utils/file.js';
 import { isAbsoluteFilePath, isRelativeFilePath } from '../utils/is.js';
 import path from 'path';
@@ -50,10 +50,6 @@ function doResolve(specifier, importerDirPath) {
 
   if (!pkg) {
     return;
-  }
-
-  if (isSelfReferentialSpecifier(specifier, pkg)) {
-    specifier = path.join(pkg.path, specifier.replace(pkg.name, '.'));
   }
 
   /** @type { string | undefined } */
