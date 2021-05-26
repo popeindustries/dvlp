@@ -100,14 +100,20 @@ class SecureProxyServer extends EventSourceServer {
           options.body = req;
         }
 
-        this.client.stream(options, ({ statusCode, headers, opaque }) => {
-          delete headers.connection;
-          delete headers['keep-alive'];
-          delete headers['transfer-encoding'];
-          res.writeHead(statusCode || 200, headers);
+        try {
+          this.client.stream(options, ({ statusCode, headers, opaque }) => {
+            delete headers.connection;
+            delete headers['keep-alive'];
+            delete headers['transfer-encoding'];
+            res.writeHead(statusCode || 200, headers);
 
-          return /** @type { import('stream').Writable } */ (opaque);
-        });
+            return /** @type { import('stream').Writable } */ (opaque);
+          });
+        } catch (err) {
+          error(err);
+          res.writeHead(500);
+          res.end(err.message);
+        }
       });
 
       decorateWithServerDestroy(this.server);
