@@ -68,7 +68,7 @@ describe('testServer', () => {
     expect(Date.now() - start).to.be.within(0, 50);
   });
   it('should respond to requests for fake resources', async () => {
-    server = await testServer();
+    server = await testServer({ autorespond: true });
     const res = await fetch('http://localhost:8080/foo.js');
     expect(res).to.exist;
     expect(await res.text()).to.contain('hello');
@@ -112,7 +112,7 @@ describe('testServer', () => {
     }
   });
   it('should respond with custon "max-age"', async () => {
-    server = await testServer();
+    server = await testServer({ autorespond: true });
     const res = await fetch('http://localhost:8080/foo.js?maxage=10');
     expect(res).to.exist;
     expect(res.headers.get('Cache-Control')).to.contain('max-age=10');

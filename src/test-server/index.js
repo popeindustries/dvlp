@@ -21,7 +21,7 @@ export class TestServer {
    * @param { _dvlp.TestServerOptions } options
    */
   constructor(options) {
-    const { autorespond = true, latency = config.latency, port = config.port, webroot = '' } = options;
+    const { autorespond = false, latency = config.latency, port = config.port, webroot = '' } = options;
 
     this.latency = latency;
     this.mocks = new Mock();
