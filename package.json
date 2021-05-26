@@ -14,12 +14,12 @@
   },
   "exports": {
     ".": "./dvlp.js",
-    "./browser": "./dvlp-browser.js",
+    "./test-browser": "./dvlp-test-browser.js",
     "./test": "./dvlp-test.js"
   },
   "typesVersions": {
     "*": {
-      "browser": ["dvlp-browser"],
+      "test-browser": ["dvlp-test-browser"],
       "test": ["dvlp-test"]
     }
   },

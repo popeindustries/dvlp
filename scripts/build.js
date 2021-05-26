@@ -22,16 +22,16 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     'global.$VERSION': `'${pkg.version}'`,
   };
 
-  for (const filename of ['_dvlp.d.ts', 'dvlp.d.ts', 'dvlp-browser.d.ts', 'dvlp-test.d.ts']) {
+  for (const filename of ['_dvlp.d.ts', 'dvlp.d.ts', 'dvlp-test-browser.d.ts', 'dvlp-test.d.ts']) {
     fs.writeFileSync(path.resolve(filename), fs.readFileSync(path.resolve(`src/${filename}`), 'utf8'));
   }
 
   await esbuild.build({
     bundle: true,
-    entryPoints: ['./src/dvlp-browser.js'],
+    entryPoints: ['./src/dvlp-test-browser.js'],
     format: 'esm',
     target: 'es2020',
-    outfile: 'dvlp-browser.js',
+    outfile: 'dvlp-test-browser.js',
   });
 
   await esbuild.build({

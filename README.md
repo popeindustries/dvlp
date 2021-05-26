@@ -430,7 +430,7 @@ dvlp.pushEvent('ws://www.somesocket.com/stream', 'hello Ernie');
 All mocks registered with the `-m, --mock` option are also enabled by default in the browser. In addition, similar to the [`testServer`](#--testserveroptions-promisetestserver), you can register mocks programatically:
 
 ```js
-import { testBrowser } from 'dvlp/browser';
+import { testBrowser } from 'dvlp/test-browser';
 
 describe('some test', () => {
   before(() => {
@@ -634,7 +634,7 @@ Add a mock `response` for `request`, optionally removing it after first use, and
 
 ```js
 // Also available as "window.dvlp"
-import { testBrowser } from 'dvlp/browser';
+import { testBrowser } from 'dvlp/test-browser';
 
 testBrowser.mockResponse(
   'http://localhost:8080/api/user/1234',
