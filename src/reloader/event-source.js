@@ -14,7 +14,7 @@ export class EventSource extends EventEmitter {
   /**
    * Determine if "req" is an EventSource request
    *
-   * @param { _dvlp.IncomingMessage | _dvlp.Http2ServerRequest } req
+   * @param { IncomingMessage | Http2ServerRequest } req
    */
   static isEventSource(req) {
     return req.method === 'GET' && req.headers.accept !== undefined && req.headers.accept.includes('text/event-stream');
@@ -23,8 +23,8 @@ export class EventSource extends EventEmitter {
   /**
    * Constructor
    *
-   * @param { _dvlp.IncomingMessage | _dvlp.Http2ServerRequest } req
-   * @param { _dvlp.ServerResponse | _dvlp.Http2ServerResponse } res
+   * @param { IncomingMessage | Http2ServerRequest } req
+   * @param { ServerResponse | Http2ServerResponse } res
    */
   constructor(req, res) {
     super();

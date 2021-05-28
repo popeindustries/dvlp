@@ -38,8 +38,8 @@ export default class DvlpServer {
    * Constructor
    *
    * @param { string | (() => void) | undefined } main
-   * @param { _dvlp.Reloader } [reloader]
-   * @param { _dvlp.Hooks } [hooks]
+   * @param { Reloader } [reloader]
+   * @param { Hooks } [hooks]
    * @param { string | Array<string> } [mockPath]
    */
   constructor(main, reloader, hooks, mockPath) {
@@ -75,12 +75,12 @@ export default class DvlpServer {
     this.origin = '';
     this.port = Number(process.env.PORT);
     this.reloader = reloader;
-    /** @type { _dvlp.HttpServer | null } */
+    /** @type { HttpServer | null } */
     this.server = null;
     this.hooks = new Hooker(hooks, this.watcher);
     this.revertRequireHook = createRequireHook(this.hooks.serverTransform);
     this.urlToFilePath = new Map();
-    /** @type { _dvlp.PatchResponseOptions } */
+    /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
       footerScript: {
         hash: reloader && hashScript(reloader.reloadEmbed),
@@ -99,7 +99,7 @@ export default class DvlpServer {
   /**
    * Create watcher instance and react to file changes
    *
-   * @returns { _dvlp.Watcher }
+   * @returns { Watcher }
    */
   createWatcher() {
     return watch(async (filePath) => {
@@ -173,7 +173,7 @@ export default class DvlpServer {
             handler = undefined;
           }
 
-          /** @type { _dvlp.HttpServer } */
+          /** @type { HttpServer } */
           const server = (instance.server = Reflect.apply(target, ctx, args));
 
           server.timeout = server.keepAliveTimeout = 0;
@@ -243,8 +243,8 @@ export default class DvlpServer {
    * Create request handler wrapper for 'originalRequestHandler'
    *
    * @param { DvlpServer } server
-   * @param { _dvlp.RequestHandler } originalRequestHandler
-   * @returns { _dvlp.RequestHandler }
+   * @param { RequestHandler } originalRequestHandler
+   * @returns { RequestHandler }
    */
   createRequestHandler(server, originalRequestHandler) {
     return async function requestHandler(req, res) {
@@ -463,8 +463,8 @@ export default class DvlpServer {
  * Handle request for favicon
  * Returns 'true' if handled
  *
- * @param { _dvlp.Req } req
- * @param { _dvlp.Res } res
+ * @param { Req } req
+ * @param { Res } res
  * @returns { boolean }
  */
 function handleFavicon(req, res) {
@@ -484,8 +484,8 @@ function handleFavicon(req, res) {
  * Handle mock responses, including EventSource connection
  * Returns 'true' if handled
  *
- * @param { _dvlp.Req } req
- * @param { _dvlp.Res } res
+ * @param { Req } req
+ * @param { Res } res
  * @param { Mock } [mocks]
  * @returns { boolean }
  */
@@ -521,7 +521,7 @@ function handleMockResponse(req, res, mocks) {
 /**
  * Handle mock WebSocket connection
  *
- * @param { _dvlp.Req } req
+ * @param { Req } req
  * @param { object } socket
  * @param { object } body
  * @param { Mock } [mocks]
@@ -552,8 +552,8 @@ function handleMockWebSocket(req, socket, body, mocks) {
  * Handle push event request
  * Returns 'true' if handled
  *
- * @param { _dvlp.Req } req
- * @param { _dvlp.Res } res
+ * @param { Req } req
+ * @param { Res } res
  * @param { Mock } [mocks]
  * @returns { boolean }
  */

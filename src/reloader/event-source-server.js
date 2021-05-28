@@ -16,8 +16,8 @@ export default class EventSourceServer {
   /**
    * Register new client connection
    *
-   * @param { _dvlp.IncomingMessage | _dvlp.Http2ServerRequest } req
-   * @param { _dvlp.ServerResponse | _dvlp.Http2ServerResponse } res
+   * @param { IncomingMessage | Http2ServerRequest } req
+   * @param { ServerResponse | Http2ServerResponse } res
    * @returns { void }
    */
   registerClient(req, res) {
@@ -55,8 +55,8 @@ export default class EventSourceServer {
   /**
    * Determine if "req" should be handled by reload server
    *
-   * @param { _dvlp.IncomingMessage | _dvlp.Http2ServerRequest } req
-   * @returns { req is _dvlp.Req }
+   * @param { IncomingMessage | Http2ServerRequest } req
+   * @returns { req is Req }
    */
   isReloadRequest(req) {
     return (req.url && req.url.startsWith(config.reloadEndpoint)) || EventSource.isEventSource(req);

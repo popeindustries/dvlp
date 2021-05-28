@@ -19,7 +19,7 @@ export default function createFileServer() {
 /**
  * Create request handler
  *
- * @returns { _dvlp.RequestHandler }
+ * @returns { RequestHandler }
  */
 function createRequestHandler() {
   return function requestHandler(req, res) {

@@ -18,7 +18,7 @@ export class TestServer {
   /**
    * Constructor
    *
-   * @param { _dvlp.TestServerOptions } options
+   * @param { TestServerOptions } options
    */
   constructor(options) {
     const { autorespond = false, latency = config.latency, port = config.port, webroot = '' } = options;
@@ -174,8 +174,8 @@ export class TestServer {
   /**
    * Register mock 'response' for 'request'
    *
-   * @param { string | _dvlp.MockRequest } request
-   * @param { _dvlp.MockResponse | _dvlp.MockResponseHandler } response
+   * @param { string | MockRequest } request
+   * @param { MockResponse | MockResponseHandler } response
    * @param { boolean } [once]
    * @param { () => void } [onMockCallback]
    * @returns { () => void } remove mock
@@ -187,8 +187,8 @@ export class TestServer {
   /**
    * Register mock push 'events' for 'stream'
    *
-   * @param { string | _dvlp.MockPushStream } stream
-   * @param { _dvlp.MockPushEvent | Array<_dvlp.MockPushEvent> } events
+   * @param { string | MockPushStream } stream
+   * @param { MockPushEvent | Array<MockPushEvent> } events
    * @returns { () => void } remove mock
    */
   mockPushEvents(stream, events) {
@@ -199,8 +199,8 @@ export class TestServer {
    * Push data to WebSocket/EventSource clients
    * A string passed as 'event' will be handled as a named mock push event
    *
-   * @param { string | _dvlp.PushStream } stream
-   * @param { string | _dvlp.PushEvent } [event]
+   * @param { string | PushStream } stream
+   * @param { string | PushEvent } [event]
    * @returns { void }
    */
   pushEvent(stream, event) {

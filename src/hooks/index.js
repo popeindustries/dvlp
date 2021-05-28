@@ -15,8 +15,8 @@ export default class Hooker {
   /**
    * Constructor
    *
-   * @param { _dvlp.Hooks } [hooks]
-   * @param { _dvlp.Watcher } [watcher]
+   * @param { Hooks } [hooks]
+   * @param { Watcher } [watcher]
    */
   constructor(hooks, watcher) {
     if (hooks) {
@@ -27,7 +27,7 @@ export default class Hooker {
       }
     }
 
-    /** @type { _dvlp.Hooks | undefined } */
+    /** @type { Hooks | undefined } */
     this.hooks = hooks;
     /** @type { Map<string, string> } */
     this.transformCache = new Map();
@@ -76,7 +76,7 @@ export default class Hooker {
    * Bundle node_modules cjs dependency and store at 'filePath'
    *
    * @param { string } filePath
-   * @param { _dvlp.Res } res
+   * @param { Res } res
    * @returns { Promise<void> }
    */
   async bundleDependency(filePath, res) {
@@ -95,8 +95,8 @@ export default class Hooker {
    *
    * @param { string } filePath
    * @param { string } lastChangedFilePath
-   * @param { _dvlp.Res } res
-   * @param { _dvlp.TransformHookContext["client"] } clientPlatform
+   * @param { Res } res
+   * @param { TransformHookContext["client"] } clientPlatform
    * @returns { Promise<void> }
    */
   async transform(filePath, lastChangedFilePath, res, clientPlatform) {
@@ -118,8 +118,8 @@ export default class Hooker {
    * Resolve module import 'specifier'
    *
    * @param { string } specifier
-   * @param { _dvlp.ResolveHookContext } context
-   * @param { _dvlp.DefaultResolve } defaultResolve
+   * @param { ResolveHookContext } context
+   * @param { DefaultResolve } defaultResolve
    * @returns { string | false | undefined}
    */
   resolveImport(specifier, context, defaultResolve) {
@@ -138,8 +138,8 @@ export default class Hooker {
   /**
    * Allow external response handling
    *
-   * @param { _dvlp.Req } req
-   * @param { _dvlp.Res } res
+   * @param { Req } req
+   * @param { Res } res
    * @returns { Promise<boolean> }
    */
   async handleRequest(req, res) {

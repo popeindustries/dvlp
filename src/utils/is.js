@@ -72,7 +72,7 @@ export function isCssFilePath(filePath) {
  * Determine if 'req' is for a css file
  *
  * @param { any } req
- * @returns { req is _dvlp.Req }
+ * @returns { req is Req }
  */
 export function isCssRequest(req) {
   return req.type === 'css' || (req.headers.accept && RE_TYPE_CSS.test(req.headers.accept)) || isCssFilePath(req.url);
@@ -92,7 +92,7 @@ export function isHtmlFilePath(filePath) {
  * Determine if 'req' is for an html file
  *
  * @param { any } req
- * @returns { req is _dvlp.Req }
+ * @returns { req is Req }
  */
 export function isHtmlRequest(req) {
   return (
@@ -124,7 +124,7 @@ export function isJsFilePath(filePath) {
  * Determine if 'req' is for a js file
  *
  * @param { any } req
- * @returns { req is _dvlp.Req }
+ * @returns { req is Req }
  */
 export function isJsRequest(req) {
   return (

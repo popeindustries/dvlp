@@ -74,7 +74,7 @@ if (TESTING) {
 }
 
 /**
- * @type { _dvlp.Config }
+ * @type { Config }
  */
 const config = {
   applicationFormat: 'esm',

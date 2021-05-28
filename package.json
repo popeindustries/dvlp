@@ -15,17 +15,9 @@
   "exports": {
     ".": "./dvlp.js",
     "./test-browser": "./dvlp-test-browser.js",
-    "./test": "./dvlp-test.js"
-  },
-  "typesVersions": {
-    "*": {
-      "test-browser": [
-        "dvlp-test-browser"
-      ],
-      "test": [
-        "dvlp-test"
-      ]
-    }
+    "./dvlp-test-browser.js": "./dvlp-test-browser.js",
+    "./test": "./dvlp-test.js",
+    "./dvlp-test.js": "./dvlp-test.js"
   },
   "dependencies": {
     "commander": "^7.0.0",

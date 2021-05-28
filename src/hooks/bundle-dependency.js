@@ -15,9 +15,9 @@ const debug = Debug('dvlp:bundle');
  * Bundle node_modules cjs dependency and store at 'filePath'
  *
  * @param { string } filePath
- * @param { _dvlp.Res } res
- * @param { Pick<_dvlp.esbuild, 'build'> } esbuild
- * @param { _dvlp.Hooks["onDependencyBundle"] } hookFn
+ * @param { Res } res
+ * @param { Pick<esbuild, "build"> } esbuild
+ * @param { Hooks["onDependencyBundle"] } hookFn
  * @returns { Promise<void> }
  */
 export default async function bundleDependency(filePath, res, esbuild, hookFn) {

@@ -1,6 +1,4 @@
-import { Hooks, Req, Res, Server, ServerOptions } from './_dvlp';
-
-export { Hooks, Server, ServerOptions };
+/// <reference types="node" />
 
 /**
  * Factory for creating `Server` instances

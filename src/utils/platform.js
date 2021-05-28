@@ -7,7 +7,7 @@ const ESBUILD_BROWSER_ENGINES = ['chrome', 'edge', 'firefox', 'ios', 'safari'];
  * Parse platform information from User-Agent
  *
  * @param { string } [userAgent]
- * @returns { _dvlp.Platform }
+ * @returns { Platform }
  */
 export function parseUserAgent(userAgent) {
   const dvlpUA = `dvlp/${config.version} (+https://github.com/popeindustries/dvlp)`;
@@ -21,7 +21,13 @@ export function parseUserAgent(userAgent) {
     };
   }
 
-  const { manufacturer, name, os, ua = dvlpUA, version } = platform.parse(
+  const {
+    manufacturer,
+    name,
+    os,
+    ua = dvlpUA,
+    version,
+  } = platform.parse(
     // Some platforms (Tizen smart-tv) are missing browser name, so assume Chrome
     userAgent.replace(/(Gecko\) )([0-9])/, '$1Chrome/$2'),
   );
@@ -38,7 +44,7 @@ export function parseUserAgent(userAgent) {
 /**
  * Parse valid esbuild transform target from "platform" instance
  *
- * @param { _dvlp.Platform } platform
+ * @param { Platform } platform
  * @returns { string }
  */
 export function parseEsbuildTarget(platform) {

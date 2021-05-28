@@ -130,8 +130,8 @@ export function expandPath(filePath) {
 /**
  * Find filePath for 'req'
  *
- * @param { _dvlp.Req | string } req
- * @param { _dvlp.FindOptions } options
+ * @param { Req | string } req
+ * @param { FindOptions } options
  * @returns { string | undefined }
  */
 export function find(req, { directories = config.directories, type } = {}) {
@@ -238,7 +238,7 @@ export function getAbsoluteProjectPath(filePath) {
 /**
  * Retrieve resource type
  *
- * @param { _dvlp.Req } req
+ * @param { Req } req
  * @returns { string }
  */
 export function getTypeFromRequest(req) {
@@ -470,7 +470,7 @@ export function resolveRealFilePath(filePath) {
  * Determine whether "req" is a request object
  *
  * @param { unknown } req
- * @returns { req is _dvlp.Req }
+ * @returns { req is Req }
  */
 function isRequestObject(req) {
   return typeof req !== 'string';

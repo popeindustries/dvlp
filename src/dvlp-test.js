@@ -3,7 +3,7 @@ import { interceptClientRequest } from './utils/intercept.js';
 import { isLocalhost } from './utils/is.js';
 import { TestServer } from './test-server/index.js';
 
-/** @type { Set<_dvlp.TestServer> } */
+/** @type { Set<TestServer> } */
 const instances = new Set();
 let reroute = false;
 let networkDisabled = false;
@@ -13,8 +13,8 @@ let uninterceptClientRequest;
 /**
  * Create test server
  *
- * @param { _dvlp.TestServerOptions } [options]
- * @returns { Promise<_dvlp.TestServer> }
+ * @param { TestServerOptions } [options]
+ * @returns { Promise<TestServer> }
  */
 export default async function testServerFactory(options) {
   enableRequestIntercept();
@@ -67,8 +67,8 @@ testServerFactory.enableNetwork = function enableNetwork() {
 /**
  * Default mock response handler for network hang
  *
- * @param { _dvlp.Req } req
- * @param { _dvlp.Res } res
+ * @param { Req } req
+ * @param { Res } res
  * @returns { undefined }
  */
 testServerFactory.mockHangResponseHandler = function mockHangResponseHandler(req, res) {
@@ -78,8 +78,8 @@ testServerFactory.mockHangResponseHandler = function mockHangResponseHandler(req
 /**
  * Default mock response handler for 500 response
  *
- * @param { _dvlp.Req } req
- * @param { _dvlp.Res } res
+ * @param { Req } req
+ * @param { Res } res
  * @returns { undefined }
  */
 testServerFactory.mockErrorResponseHandler = function mockErrorResponseHandler(req, res) {
@@ -92,8 +92,8 @@ testServerFactory.mockErrorResponseHandler = function mockErrorResponseHandler(r
 /**
  * Default mock response handler for 404 response
  *
- * @param { _dvlp.Req } req
- * @param { _dvlp.Res } res
+ * @param { Req } req
+ * @param { Res } res
  * @returns { undefined }
  */
 testServerFactory.mockMissingResponseHandler = function mockMissingResponseHandler(req, res) {
@@ -105,8 +105,8 @@ testServerFactory.mockMissingResponseHandler = function mockMissingResponseHandl
 /**
  * Default mock response handler for offline
  *
- * @param { _dvlp.Req } req
- * @param { _dvlp.Res } res
+ * @param { Req } req
+ * @param { Res } res
  * @returns { undefined }
  */
 testServerFactory.mockOfflineResponseHandler = function mockOfflineResponseHandler(req, res) {

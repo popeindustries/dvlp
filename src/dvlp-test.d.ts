@@ -1,6 +1,4 @@
-import { Req, Res, TestServer, TestServerOptions } from './_dvlp';
-
-export { TestServer, TestServerOptions };
+import { Req, Res, TestServer, TestServerOptions } from './dvlp';
 
 /**
  * Factory for creating `TestServer` instances

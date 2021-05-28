@@ -1,5 +1,6 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
+import glob from 'glob';
 import { minify } from 'terser';
 import path from 'path';
 
@@ -21,10 +22,17 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     'global.$MOCK_CLIENT': `"${mockClient}"`,
     'global.$VERSION': `'${pkg.version}'`,
   };
+  let types = '';
 
-  for (const filename of ['_dvlp.d.ts', 'dvlp.d.ts', 'dvlp-test-browser.d.ts', 'dvlp-test.d.ts']) {
-    fs.writeFileSync(path.resolve(filename), fs.readFileSync(path.resolve(`src/${filename}`), 'utf8'));
+  for (const typePath of glob.sync('src/**/_.d.ts')) {
+    types += `// ${typePath}\n${fs.readFileSync(path.resolve(typePath), 'utf-8')}\n`;
   }
+
+  types = types.replace(/(declare) (interface|type|enum|namespace|function|class)/g, 'export $2');
+
+  fs.writeFileSync('dvlp.d.ts', `${fs.readFileSync('src/dvlp.d.ts', 'utf-8')}\n${types}`, 'utf8');
+  fs.copyFileSync('src/dvlp-test.d.ts', 'dvlp-test.d.ts');
+  fs.copyFileSync('src/dvlp-test-browser.d.ts', 'dvlp-test-browser.d.ts');
 
   await esbuild.build({
     bundle: true,

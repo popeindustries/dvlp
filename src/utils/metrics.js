@@ -19,14 +19,14 @@ export default class Metrics {
   /**
    * Constructor
    *
-   * @param { _dvlp.Res } res
+   * @param { Res } res
    */
   constructor(res) {
     /** @type { Map<string, [number, number]> } */
     this.events = new Map();
-    this.recordEvent(Metrics.EVENT_NAMES.response);
+    this.recordEvent(EVENT_NAMES.response);
     res.once('finish', () => {
-      this.recordEvent(Metrics.EVENT_NAMES.response);
+      this.recordEvent(EVENT_NAMES.response);
       if (debug.enabled) {
         let results = '';
         for (const [name, times] of this.events) {

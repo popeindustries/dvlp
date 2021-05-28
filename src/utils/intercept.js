@@ -4,11 +4,11 @@ import http from 'http';
 import https from 'https';
 import { URL } from 'url';
 
-/** @type { Set<_dvlp.InterceptClientRequestCallback> } */
+/** @type { Set<InterceptClientRequestCallback> } */
 const clientRequestListeners = new Set();
-/** @type { Set<_dvlp.InterceptFileReadCallback> } */
+/** @type { Set<InterceptFileReadCallback> } */
 const fileReadListeners = new Set();
-/** @type { Set<_dvlp.InterceptProcessOnCallback> } */
+/** @type { Set<InterceptProcessOnCallback> } */
 const processOnListeners = new Set();
 const originalHttpRequest = http.request;
 const originalHttpGet = http.get;
@@ -27,7 +27,7 @@ initInterceptFileRead();
 /**
  * Listen for file system reads and report
  *
- * @param { _dvlp.InterceptFileReadCallback } fn
+ * @param { InterceptFileReadCallback } fn
  * @returns { () => void }
  */
 export function interceptFileRead(fn) {
@@ -70,7 +70,7 @@ function initInterceptFileRead() {
 /**
  * Restore unproxied file reading behaviour
  *
- * @param { _dvlp.InterceptFileReadCallback } fn
+ * @param { InterceptFileReadCallback } fn
  */
 function restoreFileRead(fn) {
   fileReadListeners.delete(fn);
@@ -84,7 +84,7 @@ function restoreFileRead(fn) {
 /**
  * Listen for client requests
  *
- * @param { _dvlp.InterceptClientRequestCallback } fn
+ * @param { InterceptClientRequestCallback } fn
  * @returns { () => void }
  */
 export function interceptClientRequest(fn) {
@@ -118,7 +118,7 @@ function initInterceptClientRequest() {
 /**
  * Restore unproxied client request behaviour
  *
- * @param { _dvlp.InterceptClientRequestCallback } fn
+ * @param { InterceptClientRequestCallback } fn
  */
 function restoreClientRequest(fn) {
   clientRequestListeners.delete(fn);
@@ -134,7 +134,7 @@ function restoreClientRequest(fn) {
  * Create client request Proxy apply trap for 'protocol'
  *
  * @param { string } protocol
- * @returns { (target: object, ctx: object, args: [string | ClientRequestArgs]) => _dvlp.Res }
+ * @returns { (target: object, ctx: object, args: [string | ClientRequestArgs]) => Res }
  */
 function clientRequestApplyTrap(protocol) {
   return function apply(target, ctx, args) {
@@ -206,7 +206,7 @@ function getHrefFromRequestOptions(options, protocol) {
 /**
  * Listen for process event registration
  *
- * @param { _dvlp.InterceptProcessOnCallback } fn
+ * @param { InterceptProcessOnCallback } fn
  * @returns { () => void }
  */
 export function interceptProcessOn(fn) {
@@ -234,7 +234,7 @@ function initInterceptProcessOn() {
 /**
  * Restore unproxied process event registration
  *
- * @param { _dvlp.InterceptProcessOnCallback } fn
+ * @param { InterceptProcessOnCallback } fn
  */
 function restoreProcessOn(fn) {
   processOnListeners.delete(fn);
@@ -246,7 +246,7 @@ function restoreProcessOn(fn) {
 /**
  * Notify 'listeners' with 'args'
  *
- * @param { Set<_dvlp.InterceptClientRequestCallback | _dvlp.InterceptFileReadCallback | _dvlp.InterceptProcessOnCallback> } listeners
+ * @param { Set<InterceptClientRequestCallback | InterceptFileReadCallback | InterceptProcessOnCallback> } listeners
  * @param { ...unknown } args
  */
 function notifyListeners(listeners, ...args) {

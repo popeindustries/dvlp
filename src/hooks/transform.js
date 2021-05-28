@@ -23,11 +23,11 @@ const tsconfig = tsconfigPath
  *
  * @param { string } filePath
  * @param { string } lastChangedFilePath
- * @param { _dvlp.Res } res
- * @param { _dvlp.TransformHookContext["client"] } clientPlatform
+ * @param { Res } res
+ * @param { TransformHookContext["client"] } clientPlatform
  * @param { Map<string, string> } cache
- * @param { _dvlp.esbuild } esbuild
- * @param { _dvlp.Hooks["onTransform"] } hookFn
+ * @param { esbuild } esbuild
+ * @param { Hooks["onTransform"] } hookFn
  * @returns { Promise<void> }
  */
 export default async function transform(filePath, lastChangedFilePath, res, clientPlatform, cache, esbuild, hookFn) {

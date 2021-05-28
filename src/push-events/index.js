@@ -8,7 +8,7 @@ import WebSocket from 'faye-websocket';
 const RE_SOCKETIO_PROTOCOL = /socket\.?io|EIO/;
 
 /**
- * @type { Map<string, Set<_dvlp.PushClient>> }
+ * @type { Map<string, Set<PushClient>> }
  */
 const cache = new Map();
 const debug = Debug('dvlp:push');
@@ -16,7 +16,7 @@ const debug = Debug('dvlp:push');
 /**
  * Initialize EventSource/WebSocket client
  *
- * @param { string | _dvlp.PushStream } stream
+ * @param { string | PushStream } stream
  * @param { ...any } args
  * @returns { void }
  */
@@ -24,7 +24,7 @@ export function connectClient(stream, ...args) {
   const { type, url } = getStream(stream);
   const cacheKey = getUrlCacheKey(getUrl(url));
   const clients = cache.get(cacheKey) || new Set();
-  /** @type { _dvlp.PushClient } */
+  /** @type { PushClient } */
   let client;
 
   if (type === 'ws') {
@@ -74,8 +74,8 @@ export function connectClient(stream, ...args) {
 /**
  * Push event data to WebSocket/EventSource clients
  *
- * @param { string | _dvlp.PushStream } stream
- * @param { _dvlp.PushEvent } event
+ * @param { string | PushStream } stream
+ * @param { PushEvent } event
  * @returns { void }
  */
 export function pushEvent(stream, event) {
@@ -123,7 +123,7 @@ export function pushEvent(stream, event) {
  * Destroy all active push clients for connection at 'url'
  * If 'url' not defined, destroys all clients for all connections
  *
- * @param { string | _dvlp.PushStream } [stream]
+ * @param { string | PushStream } [stream]
  * @returns { void }
  */
 export function destroyClients(stream) {
@@ -164,8 +164,8 @@ function destroyClient(cacheKey) {
  * Retrieve PushStream from 'stream'
  * If passed as string, will determine type from url
  *
- * @param { string | _dvlp.PushStream } stream
- * @returns { _dvlp.PushStream }
+ * @param { string | PushStream } stream
+ * @returns { PushStream }
  * @private
  */
 function getStream(stream) {

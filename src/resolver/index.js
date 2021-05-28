@@ -5,7 +5,7 @@ import path from 'path';
 
 /** @type { Map<string, string> } */
 const resolveCache = new Map();
-/** @type { Map<string, _dvlp.Package | undefined> } */
+/** @type { Map<string, Package | undefined> } */
 const packageCache = new Map();
 
 /**
@@ -94,7 +94,7 @@ function getCacheKey(importerFilePath, specifier) {
  * Retrieve Package instance for "dir"
  *
  * @param { string } dir
- * @returns { _dvlp.Package | undefined }
+ * @returns { Package | undefined }
  */
 export function getCachedPackage(dir) {
   const pkgPath = resolvePackagePath(dir);
