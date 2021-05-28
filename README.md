@@ -83,7 +83,7 @@ import sass from 'sass';
 
 const RE_SASS = /\.s[ac]ss$/;
 
-module.exports = {
+export default {
   /**
    * Bundle non-esm node_modules dependency requested by the browser.
    * This hook is run after file read.
