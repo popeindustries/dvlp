@@ -198,14 +198,13 @@ describe('resolver', () => {
         expect(resolve('linked', path.resolve('baz.js'))).to.equal(path.resolve('linked/index.js'));
       });
     }
-    it('should resolve self-referential package source reference', () => {
-      expect(resolve('project/foo.js', path.resolve('baz.js'))).to.equal(path.resolve('foo.js'));
-    });
-    it('should resolve self-referential package reference', () => {
-      expect(resolve('project', path.resolve('baz.js'))).to.equal(path.resolve('foo.js'));
-    });
     it('should resolve package exports entry', () => {
       expect(resolve('exports', path.resolve('baz.js'))).to.equal(path.resolve('node_modules/exports/browser.js'));
+    });
+    it('should resolve relative path within package with exports entry', () => {
+      expect(resolve('./sub/sub.js', path.resolve('node_modules/exports/main.js'))).to.equal(
+        path.resolve('node_modules/exports/sub/sub.js'),
+      );
     });
     it('should resolve nested package exports entry', () => {
       expect(resolve('exports/sub', path.resolve('baz.js'))).to.equal(
@@ -219,6 +218,15 @@ describe('resolver', () => {
     });
     it('should not resolve nested package module missing exports entry', () => {
       expect(resolve('exports/foo.js', path.resolve('baz.js'))).to.equal(undefined);
+    });
+    it('should resolve self-referential package source reference', () => {
+      expect(resolve('project/foo.js', path.resolve('baz.js'))).to.equal(path.resolve('foo.js'));
+    });
+    it('should resolve self-referential package reference', () => {
+      expect(resolve('project', path.resolve('foo.js'))).to.equal(path.resolve('baz.js'));
+    });
+    it('should not resolve self-referential package reference missing exports entry', () => {
+      expect(resolve('project/foo.bar.js', path.resolve('foo.js'))).to.equal(undefined);
     });
   });
 });

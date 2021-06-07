@@ -1,5 +1,8 @@
 {
 	"name": "project",
 	"version": "1.0.0",
-  "browser": "./foo.js"
+  "exports": {
+    ".": "./baz.js",
+    "./foo.js": "./foo.js"
+  }
 }

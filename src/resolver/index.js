@@ -1,4 +1,4 @@
-import { getPackage, resolveAliasPath, resolvePackagePath } from './package.js';
+import { getPackage, isSelfReferentialSpecifier, resolveAliasPath, resolvePackagePath } from './package.js';
 import { getProjectPath, resolveRealFilePath } from '../utils/file.js';
 import { isAbsoluteFilePath, isRelativeFilePath } from '../utils/is.js';
 import path from 'path';
@@ -28,7 +28,7 @@ export function resolve(specifier, importer = 'index.js') {
     return resolveCache.get(key);
   }
 
-  const filePath = doResolve(specifier, path.dirname(importer));
+  const filePath = doResolve(specifier, path.dirname(importer), false);
 
   if (!filePath) {
     return;
@@ -43,9 +43,10 @@ export function resolve(specifier, importer = 'index.js') {
  *
  * @param { string } specifier
  * @param { string } importerDirPath
+ * @param { boolean } verifyExports
  * @returns { string | undefined }
  */
-function doResolve(specifier, importerDirPath) {
+function doResolve(specifier, importerDirPath, verifyExports) {
   const pkg = getCachedPackage(importerDirPath);
 
   if (!pkg) {
@@ -56,6 +57,9 @@ function doResolve(specifier, importerDirPath) {
   let filePath = resolveAliasPath(
     isRelativeFilePath(specifier) ? path.join(importerDirPath, specifier) : specifier,
     pkg,
+    // Verify exports map if not entry call, unless using self-referential import,
+    // in which case exports map restrictions also apply
+    verifyExports || isSelfReferentialSpecifier(specifier, pkg),
   );
 
   if (!filePath) {
@@ -70,7 +74,7 @@ function doResolve(specifier, importerDirPath) {
   for (const packageDirPath of pkg.paths) {
     if (importerDirPath !== packageDirPath) {
       filePath = path.join(packageDirPath, specifier);
-      filePath = doResolve(filePath, filePath);
+      filePath = doResolve(filePath, filePath, true);
 
       if (filePath) {
         return resolveRealFilePath(filePath);
