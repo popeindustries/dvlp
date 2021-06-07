@@ -22,7 +22,7 @@
   "dependencies": {
     "commander": "^7.0.0",
     "esbuild": "^0.12.0",
-    "undici": "^4.0.0-rc.4"
+    "undici": "^4.0.0-rc.5"
   },
   "devDependencies": {
     "@babel/core": "^7.14.0",
