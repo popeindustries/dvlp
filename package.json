@@ -20,7 +20,7 @@
     "./dvlp-test.js": "./dvlp-test.js"
   },
   "dependencies": {
-    "commander": "^7.0.0",
+    "commander": "^8.0.0",
     "esbuild": "^0.12.0",
     "undici": "^4.0.0"
   },
