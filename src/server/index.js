@@ -469,12 +469,23 @@ export default class DvlpServer {
  */
 function handleFavicon(req, res) {
   if (req.url.includes('/favicon.ico')) {
-    res.writeHead(200, {
-      'Content-Length': favIcon.length,
-      'Cache-Control': `public, max-age=${config.maxAge}`,
-      'Content-Type': 'image/x-icon;charset=UTF-8',
-    });
-    res.end(favIcon);
+    const customFavIcon = find(req);
+
+    if (customFavIcon) {
+      send(req, customFavIcon, {
+        cacheControl: true,
+        maxAge: config.maxAge,
+        etag: false,
+        lastModified: false,
+      }).pipe(res);
+    } else {
+      res.writeHead(200, {
+        'Content-Length': favIcon.length,
+        'Cache-Control': `public, max-age=${config.maxAge}`,
+        'Content-Type': 'image/x-icon;charset=UTF-8',
+      });
+      res.end(favIcon);
+    }
     return true;
   }
   return false;
