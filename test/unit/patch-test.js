@@ -7,7 +7,7 @@ import { patchResponse } from '../../src/utils/patch.js';
 import path from 'path';
 import { ServerResponse } from 'http';
 
-const DEBUG_VERSION = '4.3.1';
+const DEBUG_VERSION = '4.3.2';
 const NODE_PATH = process.env.NODE_PATH;
 
 const cwd = process

@@ -20,7 +20,7 @@
     "./dvlp-test.js": "./dvlp-test.js"
   },
   "dependencies": {
-    "commander": "^7.0.0",
+    "commander": "^8.1.0",
     "esbuild": "^0.12.0",
     "undici": "^4.0.0"
   },
@@ -31,7 +31,7 @@
     "@types/debug": "^4.1.5",
     "@types/glob": "^7.1.3",
     "@types/mime": "^2.0.3",
-    "@types/node": "^15.0.1",
+    "@types/node": "^16.4.6",
     "@types/platform": "^1.3.3",
     "@types/rimraf": "^3.0.0",
     "@types/send": "^0.17.0",
@@ -41,7 +41,7 @@
     "cjs-module-lexer": "^1.0.0",
     "cross-env": "^7.0.3",
     "debug": "^4.2.0",
-    "es-module-lexer": "^0.6.0",
+    "es-module-lexer": "^0.7.1",
     "eslint": "^7.11.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.1.4",
@@ -50,7 +50,7 @@
     "fastify-static": "^4.0.1",
     "faye-websocket": "^0.11.3",
     "glob": "^7.1.5",
-    "husky": "^6.0.0",
+    "husky": "^7.0.1",
     "is-file-esm": "^1.0.0",
     "lint-staged": "^11.0.0",
     "lit-html": "^1.3.0",

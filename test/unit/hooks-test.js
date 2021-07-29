@@ -8,7 +8,7 @@ import path from 'path';
 import transformBundleFixture from './fixtures/hooks-transform-bundle.js';
 import transformFixture from './fixtures/hooks-transform.js';
 
-const DEBUG = 'debug-4.3.1.js';
+const DEBUG = 'debug-4.3.2.js';
 const REACT = 'react-17.0.1.js';
 
 function getResponse() {

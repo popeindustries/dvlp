@@ -10,7 +10,7 @@ import path from 'path';
 import { server as serverFactory } from '../../src/dvlp.js';
 import websocket from 'faye-websocket';
 
-const DEBUG_VERSION = '4.3.1';
+const DEBUG_VERSION = '4.3.2';
 
 const { Client: WebSocket } = websocket;
 let es, server, ws;
