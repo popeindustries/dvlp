@@ -43,6 +43,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   });
 
   await esbuild.build({
+    banner,
     bundle: true,
     define,
     entryPoints: ['./src/dvlp-test.js'],
