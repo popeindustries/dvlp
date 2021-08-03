@@ -16,6 +16,7 @@ declare interface Config {
   maxAge: string;
   port: number;
   reloadEndpoint: string;
+  serverStartTimeout: number;
   sourceMapsDir: string;
   testing: boolean;
   typesByExtension: {

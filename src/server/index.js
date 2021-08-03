@@ -22,8 +22,6 @@ import { URL } from 'url';
 import watch from '../utils/watch.js';
 import WebSocket from 'faye-websocket';
 
-const START_TIMEOUT_DURATION = 4000;
-
 const debug = Debug('dvlp:server');
 const originalCreateServer = http.createServer;
 const require = createRequire(import.meta.url);
@@ -158,7 +156,7 @@ export default class DvlpServer {
       const timeoutID = setTimeout(() => {
         debug('server not started after timeout');
         reject(Error('unable to start server'));
-      }, START_TIMEOUT_DURATION);
+      }, config.serverStartTimeout);
       const instance = this;
 
       http.createServer = new Proxy(http.createServer, {

@@ -103,6 +103,7 @@ const config = {
   maxAge: '10m',
   port,
   reloadEndpoint: '/dvlpreload',
+  serverStartTimeout: TESTING ? 4000 : 10000,
   sourceMapsDir,
   testing: TESTING,
   typesByExtension: {
