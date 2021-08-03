@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import fetch from 'node-fetch';
-import testServer from 'dvlp/test';
+import { testServer } from 'dvlp/test';
 
 let server;
 

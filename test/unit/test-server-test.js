@@ -1,7 +1,7 @@
 import EventSource from 'eventsource';
 import { expect } from 'chai';
 import fetch from 'node-fetch';
-import testServer from '../../src/dvlp-test.js';
+import { testServer } from '../../src/dvlp-test.js';
 import websocket from 'faye-websocket';
 
 const { Client: WebSocket } = websocket;
