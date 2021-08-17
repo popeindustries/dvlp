@@ -1,5 +1,7 @@
 import { MockRequest, MockResponse, MockResponseHandler, PushEvent } from './dvlp';
 
+export { MockRequest, MockResponse, MockResponseHandler, PushEvent };
+
 export namespace testBrowser {
   /**
    * Disable all external network connections,

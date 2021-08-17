@@ -1,5 +1,7 @@
 import { Req, Res, TestServer, TestServerOptions } from './dvlp';
 
+export { Req, Res, TestServer, TestServerOptions };
+
 /**
  * Factory for creating `TestServer` instances
  */
