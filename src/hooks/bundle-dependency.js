@@ -56,8 +56,9 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
         // Fix named exports for cjs
         if (exports.length > 0 || brokenNamedExports.length > 0) {
           const inlineableModulePath = modulePath.replace(/\\/g, '\\\\');
-          const namedExports = Array.from(new Set(['default', ...exports, ...brokenNamedExports]));
-          const fileContents = `export {${namedExports.join(', ')}} from '${inlineableModulePath}';`;
+          const namedExports = new Set(['default', ...exports, ...brokenNamedExports]);
+          namedExports.delete('__esModule');
+          const fileContents = `export {${Array.from(namedExports).join(', ')}} from '${inlineableModulePath}';`;
 
           entryFilePath = filePath;
           entryFileContents = fileContents;
