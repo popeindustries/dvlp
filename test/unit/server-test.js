@@ -397,6 +397,14 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
     });
+    it('should start an esm app server with "import.meta.url" substitution', async () => {
+      server = await serverFactory('test/unit/fixtures/appImportMeta.mjs', { port: 8100 });
+      const res = await fetch('http://localhost:8100/', {
+        headers: { Accept: 'text/html; charset=utf-8' },
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('test/unit/fixtures/appImportMeta.mjs');
+    });
     it('should polyfill process.env', async () => {
       server = await serverFactory('test/unit/fixtures/app.mjs', { port: 8100 });
       const res = await fetch('http://localhost:8100/', {

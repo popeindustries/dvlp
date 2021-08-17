@@ -194,6 +194,9 @@ export default class Hooker {
       const sourcemap = isProjectFilePath(filePath);
       try {
         const { code, map } = esbuild.transformSync(fileContents, {
+          define: {
+            'import.meta.url': `"file://${filePath.replace(/\\/g, '/')}"`,
+          },
           format: 'cjs',
           // @ts-ignore
           loader: config.esbuildTargetByExtension[path.extname(filePath)] || 'default',
