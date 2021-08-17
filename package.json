@@ -1,6 +1,6 @@
 {
   "name": "dvlp",
-  "version": "13.2.0",
+  "version": "13.2.1",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
   "main": "dvlp.js",
   "type": "module",
