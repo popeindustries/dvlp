@@ -106,8 +106,9 @@ export default class DvlpServer {
       this.lastChanged = filePath;
 
       try {
-        // TODO: conditional upon client-only file?
-        await this.restart();
+        if (this.appModules.includes(filePath)) {
+          await this.restart();
+        }
 
         for (const [url, fp] of this.urlToFilePath) {
           if (fp === filePath) {
