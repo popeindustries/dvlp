@@ -50,7 +50,15 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
       }
 
       if (code === undefined) {
-        const { exports } = parse(moduleContents);
+        /** @type { Array<string> } */
+        let exports = [];
+
+        try {
+          ({ exports } = parse(moduleContents));
+        } catch (err) {
+          // ignore
+        }
+
         const brokenNamedExports = config.brokenNamedExportsPackages[moduleId] || [];
 
         // Fix named exports for cjs
