@@ -201,7 +201,7 @@ export default class DvlpServer {
             resolve();
           });
           server.on('upgrade', (req, socket, body) => {
-            handleMockWebSocket(req, socket, body, instance.mocks);
+            handleMockWebSocket(/** @type { Req } */ (req), socket, body, instance.mocks);
           });
 
           // No handler registered so proxy "request" listener

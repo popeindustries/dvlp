@@ -144,9 +144,11 @@ export class TestServer {
       this._server.on('listening', resolve);
       this._server.on('upgrade', (req, socket, body) => {
         if (WebSocket.isWebSocket(req)) {
+          const url = /** @type { string } */ (req.url);
+
           connectClient(
             {
-              url: req.url,
+              url,
               type: 'ws',
             },
             req,
@@ -154,7 +156,7 @@ export class TestServer {
             body,
           );
 
-          this.pushEvent(new URL(req.url, `ws://${req.headers.host}`).href, 'connect');
+          this.pushEvent(new URL(url, `ws://${req.headers.host}`).href, 'connect');
         }
       });
 

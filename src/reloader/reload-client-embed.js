@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 const reloadClient =
+  // @ts-ignore
   global.$RELOAD_CLIENT ||
   fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'reload-client.js'), 'utf8');
 

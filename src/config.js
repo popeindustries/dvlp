@@ -10,7 +10,7 @@ const JS_MIME_TYPES = {
   'application/javascript': ['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx'],
 };
 const TESTING = process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefined;
-// Replaced during build
+// @ts-ignore - Replaced during build
 const VERSION = global.$VERSION || 'dev';
 
 const sourceMapsDirName = `${path.join(DIR, `sourcemaps`)}`;

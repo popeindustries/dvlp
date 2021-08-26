@@ -18,6 +18,7 @@ const RE_MAX_AGE = /max-age=(\d+)/;
 
 const debug = Debug('dvlp:mock');
 const mockClient =
+  // @ts-ignore
   global.$MOCK_CLIENT ||
   fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'mock-client.js'), 'utf8');
 

@@ -91,6 +91,7 @@ class SecureProxyServer extends EventSourceServer {
         /** @type { import('undici').Dispatcher.RequestOptions } */ // @ts-ignore
         const options = {
           headers,
+          // @ts-ignore
           method: req.method || 'GET',
           opaque: res,
           path: req.url || '/',
