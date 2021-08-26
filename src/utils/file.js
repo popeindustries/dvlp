@@ -289,8 +289,10 @@ export function getDirectoryContents(dirPath) {
  * @returns { boolean }
  */
 export function isCjsFile(filePath, fileContents) {
-  if (fileFormatCache.has(filePath)) {
-    return fileFormatCache.get(filePath) === 'cjs';
+  const cached = fileFormatCache.get(filePath);
+
+  if (cached !== undefined) {
+    return cached === 'cjs';
   }
 
   const extension = path.extname(filePath);
@@ -334,8 +336,10 @@ export async function importModule(filePath) {
  * @returns { boolean }
  */
 export function isEsmFile(filePath, fileContents) {
-  if (fileFormatCache.has(filePath)) {
-    return fileFormatCache.get(filePath) === 'esm';
+  const cached = fileFormatCache.get(filePath);
+
+  if (cached !== undefined) {
+    return cached === 'esm';
   }
 
   const extension = path.extname(filePath);

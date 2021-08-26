@@ -23,9 +23,10 @@ export function resolve(specifier, importer = 'index.js') {
 
   importer = path.resolve(importer);
   const key = getCacheKey(importer, specifier);
+  const cached = resolveCache.get(key);
 
-  if (resolveCache.has(key)) {
-    return resolveCache.get(key);
+  if (cached !== undefined) {
+    return cached;
   }
 
   const filePath = doResolve(specifier, path.dirname(importer), false);
