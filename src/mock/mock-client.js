@@ -367,7 +367,7 @@
     href = typeof href === 'string' ? href : href.url;
 
     try {
-      return new URL(href);
+      return new URL(href, location.href);
     } catch (err) {
       var a = document.createElement('a');
       a.href = href;
