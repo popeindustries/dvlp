@@ -382,7 +382,7 @@ describe('patch', () => {
           resolveImport: hooks.resolveImport,
         });
         res.end('import { html } from "lit-html";');
-        expect(getBody(res)).to.equal(`import { html } from "${cwd}/node_modules/lit-html/lit-html.js";`);
+        expect(getBody(res)).to.equal(`import { html } from "${cwd}/node_modules/lit-html/development/lit-html.js";`);
       });
       it.skip('should resolve NODE_PATH js import id', () => {
         setNodePath('test/unit/fixtures');
