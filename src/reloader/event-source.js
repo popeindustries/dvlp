@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 
 const DEFAULT_PING = 15 * 1000;
-const DEFAULT_RETRY = 10 * 1000;
+const DEFAULT_RETRY = 5 * 1000;
 /** @enum { number } */
 const READY_STATE = {
   CONNECTING: 0,
