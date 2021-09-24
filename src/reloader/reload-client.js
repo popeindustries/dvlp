@@ -29,6 +29,8 @@
           url.hostname = hostnames[retries % 2];
           connect();
         }
+      } else {
+        connected = false;
       }
     };
     sse.addEventListener('reload', function () {
