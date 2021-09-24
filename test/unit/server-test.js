@@ -630,7 +630,7 @@ describe('server', () => {
             const req = client.request({ ':path': '/dvlpreload' });
             req.setEncoding('utf8');
             req.on('data', (chunk) => {
-              expect(chunk).to.include('retry: 10000');
+              expect(chunk).to.include('retry: 5000');
               client.destroy();
               done();
             });
