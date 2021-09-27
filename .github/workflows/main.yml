@@ -12,18 +12,13 @@ jobs:
     name: Install, build, and test (OS ${{ matrix.os }} - Node ${{ matrix.node }})
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
-
-      - name: Cache node_modules
-        uses: actions/cache@v1
-        with:
-          path: node_modules
-          key: os-${{ matrix.os }}-node-${{ matrix.node }}-${{ hashFiles('**/package-lock.json') }} # Cache key based on Node version + hashed package-lock.json contents
+          cache: 'npm'
 
       - name: Install
         run: npm install
