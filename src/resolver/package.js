@@ -116,9 +116,8 @@ export function resolveAliasPath(filePath, pkg, verifyExport) {
       if (resolved) {
         return path.resolve(pkg.path, resolved);
       }
-      /** @param { Error } err */
     } catch (err) {
-      if (err.message.includes('Missing')) {
+      if (/** @type { Error } */ (err).message.includes('Missing')) {
         error(
           `unable to resolve package entry. The ${pkg.name} package does not specify ${entry} in it's "exports" map.`,
         );
