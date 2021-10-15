@@ -93,7 +93,7 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
     } catch (err) {
       debug(`error bundling "${moduleId}"`);
       res.writeHead(500);
-      res.end(err.message);
+      res.end(/** @type { Error } */ (err).message);
       error(err);
       return;
     }

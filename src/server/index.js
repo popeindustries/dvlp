@@ -349,7 +349,7 @@ export default class DvlpServer {
    * @returns { Promise<void> }
    */
   async startApplication() {
-    debug('starting application');
+    debug('loading application');
     process.on('uncaughtException', this.onUncaught);
     // @ts-ignore
     process.on('unhandledRejection', this.onUncaught);
@@ -367,6 +367,7 @@ export default class DvlpServer {
     } else {
       require(this.main);
     }
+    debug('application loaded');
   }
 
   /**
@@ -633,7 +634,7 @@ function clearAppModules(appModules, main) {
     delete moduleCache[m];
   }
 
-  debug(`cleared ${appModules.length} app modules from require.cache`);
+  debug(`cleared ${appModules.length} app modules from module cache`);
 }
 
 /**

@@ -52,7 +52,7 @@ export default async function transform(filePath, lastChangedFilePath, res, clie
       const fileContents = readFileSync(filePath, 'utf8');
       code = undefined;
 
-      if (hookFn) {
+      if (hookFn !== undefined) {
         code = await hookFn(filePath, fileContents, {
           client: clientPlatform,
           esbuild,
@@ -87,7 +87,7 @@ export default async function transform(filePath, lastChangedFilePath, res, clie
     } catch (err) {
       debug(`error transforming "${relativeFilePath}"`);
       res.writeHead(500);
-      res.end(err.message);
+      res.end(/** @type { Error } */ (err).message);
       error(err);
       return;
     }

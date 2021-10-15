@@ -27,6 +27,8 @@ const RE_SEPARATOR = /[,;]\s?|\s/g;
 
 /** @type { Map<string, 'cjs' | 'esm'> } */
 const fileFormatCache = new Map();
+// @ts-ignore
+const originalJSLoader = Module._extensions['.js'];
 
 /**
  * Create transform hook for `require(filePath)`.
@@ -43,10 +45,20 @@ export function createRequireHook(onTransform) {
 
   for (const ext of extensions) {
     // @ts-ignore
+    const oldLoader = Module._extensions[ext] || originalJSLoader;
+
+    // @ts-ignore
     requireExtensions[ext] = function loader(module, filePath) {
+      if (fileFormatCache.get(filePath) === 'cjs') {
+        oldLoader(module, filePath);
+        return;
+      }
+
       let code = fs.readFileSync(filePath, 'utf8');
 
       if (!reverted) {
+        // Trigger fileFormatCache storage
+        isCjsFile(filePath, code);
         const transformed = onTransform(filePath, code);
 
         if (transformed !== undefined) {
