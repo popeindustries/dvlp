@@ -54,7 +54,7 @@
     "is-file-esm": "^1.0.0",
     "lint-staged": "^11.0.0",
     "lit-html": "^2.0.0",
-    "mime": "^2.4.5",
+    "mime": "^3.0.0",
     "mocha": "^9.0.0",
     "node-fetch": "^3.0.0",
     "path-to-regexp": "^6.2.0",
