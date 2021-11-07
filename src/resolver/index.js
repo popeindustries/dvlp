@@ -1,6 +1,6 @@
 import { getPackage, isSelfReferentialSpecifier, resolveAliasPath, resolvePackagePath } from './package.js';
 import { getProjectPath, resolveRealFilePath } from '../utils/file.js';
-import { isAbsoluteFilePath, isRelativeFilePath } from '../utils/is.js';
+import { isAbsoluteFilePath, isBareSpecifier, isNodeModuleFilePath, isRelativeFilePath } from '../utils/is.js';
 import path from 'path';
 
 /** @type { Map<string, string> } */
@@ -95,6 +95,10 @@ function doResolve(specifier, importerDirPath, verifyExports) {
  * @returns { string }
  */
 function getCacheKey(importerFilePath, specifier) {
+  // Ensure that all node_modules imported by project source files resolves to same key
+  if (isBareSpecifier(specifier) && !isNodeModuleFilePath(importerFilePath)) {
+    return `src:${specifier}`;
+  }
   return `${getProjectPath(importerFilePath)}:${specifier}`;
 }
 
