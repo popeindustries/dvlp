@@ -505,10 +505,6 @@ export function resolveNodeModulesDirectories(filePath) {
   let depth = MAX_FILE_SYSTEM_DEPTH;
   let parent;
 
-  if (process.env.NODE_PATH !== undefined) {
-    dirs = process.env.NODE_PATH.split(path.delimiter).map((dir) => path.resolve(dir));
-  }
-
   while (true) {
     parent = path.dirname(dir);
     // Stop if we hit max file system depth or root
