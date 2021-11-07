@@ -1,9 +1,9 @@
 declare interface Config {
-  applicationFormat: 'cjs' | 'esm';
-  applicationPort: number;
+  activePort: number;
   brokenNamedExportsPackages: Record<string, Array<string>>;
   bundleDir: string;
   bundleDirName: string;
+  defaultPort: number;
   directories: Array<string>;
   dvlpDir: string;
   esbuildTargetByExtension: {
@@ -14,7 +14,6 @@ declare interface Config {
   };
   latency: number;
   maxAge: string;
-  port: number;
   reloadEndpoint: string;
   serverStartTimeout: number;
   sourceMapsDir: string;
@@ -29,6 +28,7 @@ declare interface Entry {
   directories: Array<string>;
   isApp: boolean;
   isFunction: boolean;
+  isSecure: boolean;
   isStatic: boolean;
   main: string | (() => void) | undefined;
 }
@@ -38,7 +38,9 @@ type Http2ServerResponse = import('http2').Http2ServerResponse;
 type IncomingMessage = import('http').IncomingMessage;
 type ServerResponse = import('http').ServerResponse;
 type HttpServer = import('http').Server;
-type HttpsServer = import('https').Server;
+type HttpServerOptions = import('http').ServerOptions;
+type Http2SecureServer = import('http2').Http2SecureServer;
+type Http2SecureServerOptions = import('http2').SecureServerOptions;
 type URL = import('url').URL;
 type URLSearchParams = import('url').URLSearchParams;
 type esbuild = {
@@ -59,6 +61,7 @@ type Res = (ServerResponse | Http2ServerResponse) & {
   encoding: string;
   metrics: Metrics;
   mocked: boolean;
+  rerouted: boolean;
   transformed: boolean;
   unhandled: boolean;
   url: string;
@@ -66,8 +69,5 @@ type Res = (ServerResponse | Http2ServerResponse) & {
 };
 type RequestHandler = (req: Req, res: Res) => void;
 interface DestroyableHttpServer extends HttpServer {
-  destroy(): void;
-}
-interface DestroyableHttpsServer extends HttpsServer {
   destroy(): void;
 }

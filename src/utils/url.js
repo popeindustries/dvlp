@@ -17,14 +17,11 @@ export function isWebSocketUrl(url) {
  * Retrieve URL instance from 'req'
  *
  * @param { string | { url: string } | URL } req
- * @returns { URL }
+ * @returns { import('url').URL }
  */
 export function getUrl(req) {
   if (!(req instanceof URL)) {
-    req = new URL(
-      typeof req === 'string' ? decodeURIComponent(req) : req.url,
-      `http://localhost:${config.applicationPort}`,
-    );
+    req = new URL(typeof req === 'string' ? decodeURIComponent(req) : req.url, `http://localhost:${config.activePort}`);
   }
   // Map loopback address to localhost
   if (req.hostname === '127.0.0.1') {

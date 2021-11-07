@@ -15,7 +15,7 @@ const DEBUG_VERSION = '4.3.2';
 const { Client: WebSocket } = websocket;
 let es, server, ws;
 
-describe('server', () => {
+describe.skip('server', () => {
   beforeEach(() => {
     cleanBundledFiles();
   });

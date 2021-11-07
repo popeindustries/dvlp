@@ -32,11 +32,6 @@ declare interface ServerOptions {
 }
 
 declare interface Server {
-  port: number;
-  /**
-   * Restart running server
-   */
-  restart(): Promise<void>;
   /**
    * Destroy server instance
    */

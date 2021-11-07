@@ -30,14 +30,15 @@ const debug = Debug('dvlp:patch');
  * Injects reload script into html response,
  * and resolves import ids for js/css response.
  *
- * @param { string } filePath
+ * @param { string | undefined } resolvedFilePath
  * @param { Req } req
  * @param { Res } res
  * @param { PatchResponseOptions } options
  */
-export function patchResponse(filePath, req, res, { footerScript, headerScript, resolveImport, send }) {
-  // req.filepath set after file.find(), filepath passed if cached
-  filePath = req.filePath || filePath || req.url;
+export function patchResponse(resolvedFilePath, req, res, { footerScript, headerScript, resolveImport, send }) {
+  // req.filepath set after file.find()
+  const filePath = req.filePath || resolvedFilePath || req.url;
+
   debug(`patching response for "${getProjectPath(filePath)}"`);
   proxySetHeader(res, disableContentEncodingHeader.bind(disableContentEncodingHeader, res));
   if (isHtmlRequest(req)) {
@@ -300,7 +301,7 @@ function rewriteImports(res, filePath, code, resolveImport) {
               resolve,
             );
           } catch (err) {
-            err.hooked = true;
+            /** @type { Error & { hooked: boolean } } */ (err).hooked = true;
             throw err;
           }
 
@@ -352,7 +353,7 @@ function rewriteImports(res, filePath, code, resolveImport) {
       debug(`no imports to rewrite in "${projectFilePath}"`);
     }
   } catch (err) {
-    if (err.hooked) {
+    if (/** @type { Error & { hooked: boolean } } */ (err).hooked) {
       fatal(err);
     }
   }

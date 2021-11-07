@@ -17,7 +17,7 @@ const sourceMapsDirName = `${path.join(DIR, `sourcemaps`)}`;
 const sourceMapsDir = path.resolve(sourceMapsDirName);
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
 const bundleDir = path.resolve(bundleDirName);
-const port = process.env.PORT ? Number(process.env.PORT) : 8080;
+const defaultPort = process.env.PORT ? Number(process.env.PORT) : 8080;
 
 mime.define(JS_MIME_TYPES, true);
 // @ts-ignore
@@ -77,11 +77,11 @@ if (TESTING) {
  * @type { Config }
  */
 const config = {
-  applicationFormat: 'esm',
-  applicationPort: port,
+  activePort: defaultPort,
   brokenNamedExportsPackages,
   bundleDir,
   bundleDirName,
+  defaultPort,
   directories: [],
   dvlpDir: path.resolve(DIR),
   esbuildTargetByExtension: {
@@ -101,7 +101,6 @@ const config = {
   },
   latency: 50,
   maxAge: '10m',
-  port,
   reloadEndpoint: '/dvlpreload',
   serverStartTimeout: TESTING ? 4000 : 10000,
   sourceMapsDir,

@@ -2,7 +2,7 @@ import { connectClient, destroyClients, pushEvent } from '../push-events/index.j
 import config from '../config.js';
 import Debug from 'debug';
 import decorateWithServerDestroy from 'server-destroy';
-import { EventSource } from '../reloader/event-source.js';
+import { EventSource } from '../reload/event-source.js';
 import fs from 'fs';
 import http from 'http';
 import Metrics from '../utils/metrics.js';
@@ -21,7 +21,7 @@ export class TestServer {
    * @param { TestServerOptions } options
    */
   constructor(options) {
-    const { autorespond = false, latency = config.latency, port = config.port, webroot = '' } = options;
+    const { autorespond = false, latency = config.latency, port = config.defaultPort, webroot = '' } = options;
 
     this.latency = latency;
     this.mocks = new Mock();

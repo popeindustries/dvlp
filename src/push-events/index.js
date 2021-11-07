@@ -2,7 +2,7 @@ import { getUrl, getUrlCacheKey, isWebSocketUrl } from '../utils/url.js';
 import Debug from 'debug';
 import deflate from 'permessage-deflate';
 import { error } from '../utils/log.js';
-import { EventSource } from '../reloader/event-source.js';
+import { EventSource } from '../reload/event-source.js';
 import WebSocket from 'faye-websocket';
 
 const RE_SOCKETIO_PROTOCOL = /socket\.?io|EIO/;

@@ -8,7 +8,6 @@ import path from 'path';
 import { ServerResponse } from 'http';
 
 const DEBUG_VERSION = '4.3.2';
-const NODE_PATH = process.env.NODE_PATH;
 
 const cwd = process
   .cwd()
@@ -43,10 +42,6 @@ function getResponse(req) {
     recordEvent() {},
   };
   return res;
-}
-function setNodePath(nodePath) {
-  process.env.NODE_PATH = nodePath;
-  require('module').Module._initPaths();
 }
 
 describe('patch', () => {
@@ -383,32 +378,6 @@ describe('patch', () => {
         });
         res.end('import { html } from "lit-html";');
         expect(getBody(res)).to.equal(`import { html } from "${cwd}/node_modules/lit-html/development/lit-html.js";`);
-      });
-      it.skip('should resolve NODE_PATH js import id', () => {
-        setNodePath('test/unit/fixtures');
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
-        });
-        res.end('import module from "app.js";');
-        expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/app.js";`);
-        setNodePath(NODE_PATH);
-      });
-      it.skip('should resolve NODE_PATH js import id missing extension', () => {
-        setNodePath('test/unit/fixtures');
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
-        });
-        res.end('import module from "app";');
-        expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/app.js";`);
-        setNodePath(NODE_PATH);
       });
       it('should resolve js import id missing extension', () => {
         const req = getRequest('/index.js', {

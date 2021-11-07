@@ -423,7 +423,7 @@ export default class Mock {
       if (this.hasMatch(url.href)) {
         url.searchParams.append('dvlpmock', encodeURIComponent(url.href));
         // Reroute to active server
-        url.host = `localhost:${config.applicationPort}`;
+        url.host = `localhost:${config.activePort}`;
       }
       return true;
     });
@@ -443,7 +443,8 @@ export default class Mock {
     for (const mock of Array.from(this.cache).reverse()) {
       if (
         !mock.originRegex.test(url.origin) ||
-        (!mock.ignoreSearch && !isEqualSearchParams(url.searchParams, mock.searchParams))
+        (!mock.ignoreSearch &&
+          !isEqualSearchParams(url.searchParams, /** @type { URLSearchParams } */ (mock.searchParams)))
       ) {
         continue;
       }
@@ -536,7 +537,7 @@ function getUrlSegmentsForMatching(req, ignoreSearch) {
     href = href.replace('127.0.0.1', 'localhost');
   }
 
-  const url = new URL(href, `http://localhost:${config.applicationPort}`);
+  const url = new URL(href, `http://localhost:${config.activePort}`);
   // Allow matching of both secure/unsecure protocols
   const origin = new RegExp(
     url.origin

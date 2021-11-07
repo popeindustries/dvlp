@@ -1,4 +1,4 @@
-import { exists, expandPath, getProjectPath, importModule, isCjsFile } from './utils/file.js';
+import { exists, expandPath, getProjectPath, importModule } from './utils/file.js';
 import logger, { error, info } from './utils/log.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
@@ -7,8 +7,6 @@ import DvlpServer from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
 import fs from 'fs';
 import path from 'path';
-import { reloadServer } from './reloader/index.js';
-import secureProxyServer from './secure-proxy/index.js';
 
 /**
  * Server instance factory
@@ -19,25 +17,16 @@ import secureProxyServer from './secure-proxy/index.js';
  */
 export async function server(
   filePath = process.cwd(),
-  { certsPath, directories, hooksPath, mockPath, port = config.applicationPort, reload = true, silent } = {},
+  { certsPath, directories, hooksPath, mockPath, port, reload = true, silent } = {},
 ) {
   const entry = resolveEntry(filePath, directories);
   /** @type { Hooks | undefined } */
   let hooks;
-  /** @type { Reloader | undefined } */
-  let reloader;
-  /** @type { SecureProxy | undefined } */
-  let secureProxy;
 
   await cjsLexerInit();
   await esLexerInit;
 
   config.directories = Array.from(new Set(entry.directories));
-  // Set format based on application entry
-  if (entry.isApp) {
-    // @ts-ignore
-    config.applicationFormat = isCjsFile(entry.main, fs.readFileSync(entry.main, 'utf8')) ? 'cjs' : 'esm';
-  }
   if (mockPath) {
     mockPath = expandPath(mockPath);
   }
@@ -48,26 +37,20 @@ export async function server(
   }
   if (certsPath) {
     certsPath = expandPath(certsPath);
-    secureProxy = await secureProxyServer(certsPath, reload);
-  } else if (reload) {
-    reloader = await reloadServer();
+    entry.isSecure = true;
+    port = 443;
   }
   if (process.env.PORT === undefined) {
     process.env.PORT = String(port);
   }
 
-  const server = new DvlpServer(entry.main, reload ? secureProxy || reloader : undefined, hooks, mockPath);
+  const server = new DvlpServer(entry, port || config.defaultPort, reload, hooks, mockPath, certsPath);
 
   try {
     await server.start();
+    config.activePort = server.port;
   } catch (err) {
     error(err);
-  }
-
-  config.applicationPort = server.port;
-
-  if (secureProxy) {
-    secureProxy.setApplicationPort(server.port);
   }
 
   const parentDir = path.resolve(process.cwd(), '..');
@@ -80,7 +63,7 @@ export async function server(
     ? 'function'
     // @ts-ignore
     : getProjectPath(entry.main);
-  const origin = secureProxy && secureProxy.commonName ? `https://${secureProxy.commonName}` : server.origin;
+  const origin = server.origin;
 
   info(`\n  💥 serving ${chalk.green(paths)}`);
   info(`    ...at ${chalk.green.underline(origin)}`);
@@ -91,14 +74,8 @@ export async function server(
   }
 
   return {
-    port: server.port,
-    restart: server.restart.bind(server),
     destroy() {
-      return Promise.all([
-        reloader && reloader.destroy(),
-        secureProxy && secureProxy.destroy(),
-        server.destroy(),
-      ]).then();
+      return server.destroy();
     },
   };
 }
@@ -115,8 +92,9 @@ function resolveEntry(filePath, directories = []) {
   const entry = {
     directories: [],
     isApp: false,
-    isStatic: false,
     isFunction: false,
+    isSecure: false,
+    isStatic: false,
     main: undefined,
   };
 
