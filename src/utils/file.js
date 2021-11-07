@@ -471,7 +471,7 @@ function resolveFilePathExtension(filePath, extensions) {
  * @returns { string }
  */
 export function resolveRealFilePath(filePath) {
-  if (!filePath) {
+  if (!filePath || !path.isAbsolute(filePath)) {
     return filePath;
   }
 

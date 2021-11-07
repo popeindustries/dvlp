@@ -47,12 +47,11 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
     if (json.exports) {
       pkg.exports = json.exports;
     } else if (json.browser) {
-      /**
-       * Resolve "main" and resource aliases.
-       * A "module" field takes precedence over aliases for "main" in "browser".
-       */
-      if (!hasModuleField && typeof json.browser === 'string') {
-        main = find(json.browser, findOptions);
+      if (typeof json.browser === 'string') {
+        // A "module" field takes precedence over aliases for "main" in "browser"
+        if (!hasModuleField) {
+          main = find(json.browser, findOptions);
+        }
       } else {
         for (let key in json.browser) {
           let value = json.browser[key];

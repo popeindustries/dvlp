@@ -197,7 +197,7 @@ describe('resolver', () => {
       it('should resolve a symlinked js package file', () => {
         expect(resolve('linked', path.resolve('baz.js'))).to.equal(path.resolve('linked/index.js'));
       });
-      it.only('should resolve a pnpm style symlinked js package file', () => {
+      it('should resolve a pnpm style symlinked js package file', () => {
         expect(resolve('a', path.resolve('baz.js'))).to.equal(
           path.resolve('node_modules/.pnpm/a@1.0.0/node_modules/a/index.js'),
         );

@@ -48,7 +48,10 @@ export function resolve(specifier, importer = 'index.js') {
  * @returns { string | undefined }
  */
 function doResolve(specifier, importerDirPath, verifyExports) {
-  const pkg = getCachedPackage(importerDirPath);
+  const realImporterDirPath = resolveRealFilePath(importerDirPath);
+  const pkg = getCachedPackage(realImporterDirPath);
+
+  specifier = resolveRealFilePath(specifier);
 
   if (!pkg) {
     return;
@@ -56,7 +59,7 @@ function doResolve(specifier, importerDirPath, verifyExports) {
 
   /** @type { string | undefined } */
   let filePath = resolveAliasPath(
-    isRelativeFilePath(specifier) ? path.join(importerDirPath, specifier) : specifier,
+    isRelativeFilePath(specifier) ? path.join(realImporterDirPath, specifier) : specifier,
     pkg,
     // Verify exports map if not entry call, unless using self-referential import,
     // in which case exports map restrictions also apply
@@ -73,7 +76,7 @@ function doResolve(specifier, importerDirPath, verifyExports) {
   specifier = filePath;
 
   for (const packageDirPath of pkg.paths) {
-    if (importerDirPath !== packageDirPath) {
+    if (realImporterDirPath !== packageDirPath) {
       filePath = path.join(packageDirPath, specifier);
       filePath = doResolve(filePath, filePath, true);
 

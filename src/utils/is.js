@@ -4,7 +4,7 @@ import path from 'path';
 import util from 'util';
 
 const HAS_UTIL_IS_PROXY = util.types && util.types.isProxy !== undefined;
-const RE_BARE_IMPORT = /^[^./]/;
+const RE_BARE_SPECIFIER = /^[^./]/;
 const RE_INVALID = /[<>:"|?*]/;
 const RE_JSON = /.json$/i;
 const RE_LOCALHOST = /localhost|127\.0\.0\.1/;
@@ -34,8 +34,8 @@ export function isAbsoluteFilePath(filePath) {
  * @param { string } id
  * @returns { boolean }
  */
-export function isBareImport(id) {
-  return RE_BARE_IMPORT.test(id);
+export function isBareSpecifier(id) {
+  return RE_BARE_SPECIFIER.test(id);
 }
 
 /**
