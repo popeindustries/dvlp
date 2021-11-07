@@ -226,7 +226,7 @@ export default class Mock {
    * @param { string } href
    * @param { Req } [req]
    * @param { Res } [res]
-   * @returns { boolean | MockResponseData | undefined | void }
+   * @returns { boolean | MockResponseData }
    */
   matchResponse(href, req, res) {
     const mock = this.getMockData(href);
@@ -254,7 +254,8 @@ export default class Mock {
 
       req.params = matchObj ? matchObj.params : {};
 
-      return mock.response(req, res);
+      mock.response(req, res);
+      return true;
     }
 
     const {
@@ -263,17 +264,17 @@ export default class Mock {
 
     // Handle special status
     if (hang) {
-      return;
+      return true;
     } else if (error || missing) {
       const statusCode = error ? 500 : 404;
       const body = error ? 'error' : 'missing';
 
       res.writeHead(statusCode);
       res.end(body);
-      return;
+      return true;
     } else if (offline && req) {
       req.socket.destroy();
-      return;
+      return true;
     }
 
     debug(`sending mocked "${href}"`);
@@ -305,7 +306,7 @@ export default class Mock {
             maxAge: getMaxAgeFromHeaders(normaliseHeaderKeys(headers, ['Cache-Control'])) || config.maxAge,
           },
         ).pipe(res);
-        return;
+        return true;
       }
       case 'json': {
         content = JSON.stringify(body);

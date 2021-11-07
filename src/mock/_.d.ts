@@ -10,7 +10,7 @@ declare class Mock {
   ): () => void;
   addPushEvents(stream: string | MockPushStream, events: MockPushEvent | Array<MockPushEvent>): () => void;
   load(filePaths: string | Array<string>): void;
-  matchResponse(href: string, req?: Req, res?: Res): boolean | MockResponseData | undefined | void;
+  matchResponse(href: string, req?: Req, res?: Res): boolean | MockResponseData;
   matchPushEvent(
     stream: string | MockPushStream,
     name: string,

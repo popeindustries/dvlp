@@ -49,17 +49,30 @@ export default class DvlpServer {
     this.entry = entry;
     this.hooks = new Hooker(hooks, this.watcher);
     this.lastChanged = '';
+    /** @type { Http2SecureServerOptions } */
+    this.secureServerOptions;
+
+    if (certsPath) {
+      const serverOptions = resolveCerts(certsPath);
+      const commonName = validateCert(serverOptions.cert);
+
+      if (commonName) {
+        this.origin = `https://${commonName}`;
+      }
+      this.secureServerOptions = { allowHTTP1: true, ...serverOptions };
+    } else {
+      this.origin = `http://localhost:${port}`;
+    }
+
+    // Make sure mocks instance has access to active port
+    this.port = config.activePort = port;
     this.mocks = mockPath ? new Mock(mockPath) : undefined;
-    this.origin = `http://localhost:${port}`;
-    this.port = port;
     this.reload = reload;
     /** @type { Map<string, string> } */
     this.urlToFilePath = new Map();
     this.requestHandler = this.requestHandler.bind(this);
     /** @type { HttpServer | Http2SecureServer } */
     this.server;
-    /** @type { Http2SecureServerOptions } */
-    this.secureServerOptions;
 
     const headerScript = concatScripts([
       getProcessEnvString(),
@@ -82,16 +95,6 @@ export default class DvlpServer {
       resolveImport: this.hooks.resolveImport,
       send: this.hooks.send,
     };
-
-    if (certsPath) {
-      const serverOptions = resolveCerts(certsPath);
-      const commonName = validateCert(serverOptions.cert);
-
-      if (commonName) {
-        this.origin = `https://${commonName}`;
-      }
-      this.secureServerOptions = { allowHTTP1: true, ...serverOptions };
-    }
   }
 
   /**

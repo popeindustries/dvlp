@@ -15,7 +15,7 @@ const DEBUG_VERSION = '4.3.2';
 const { Client: WebSocket } = websocket;
 let es, server, ws;
 
-describe.skip('server', () => {
+describe('server', () => {
   beforeEach(() => {
     cleanBundledFiles();
   });
@@ -324,7 +324,7 @@ describe.skip('server', () => {
     });
   });
 
-  describe('application', () => {
+  describe.skip('application', () => {
     it('should start an app server', async () => {
       server = await serverFactory('test/unit/fixtures/app.js', {
         port: 8100,
@@ -648,7 +648,7 @@ describe.skip('server', () => {
           expect(res.headers.get('Content-type')).to.include('application/javascript');
         });
       });
-      describe('application', () => {
+      describe.skip('application', () => {
         it('should start an app server over https', async () => {
           server = await serverFactory('test/unit/fixtures/app.js', {
             certsPath: 'test/unit/fixtures/certificates',

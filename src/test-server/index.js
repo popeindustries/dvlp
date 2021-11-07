@@ -23,12 +23,13 @@ export class TestServer {
   constructor(options) {
     const { autorespond = false, latency = config.latency, port = config.defaultPort, webroot = '' } = options;
 
-    this.latency = latency;
-    this.mocks = new Mock();
-    this.webroot = webroot;
     this._autorespond = autorespond;
-    this.port = port;
-    this._server = null;
+    this._server;
+    this.latency = latency;
+    this.webroot = webroot;
+    // Make sure mocks instance has access to active port
+    this.port = config.activePort = port;
+    this.mocks = new Mock();
   }
 
   /**

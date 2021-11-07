@@ -57,28 +57,32 @@ export function handleFavicon(req, res) {
 export function handleMockResponse(req, res, mocks) {
   if (mocks !== undefined) {
     const url = new URL(req.url, `http://localhost:${config.activePort}`);
-    let mock = url.searchParams.get('dvlpmock');
+    let mockParam = url.searchParams.get('dvlpmock');
 
-    if (mock) {
-      mock = decodeURIComponent(mock);
+    if (mockParam) {
+      mockParam = decodeURIComponent(mockParam);
 
       if (EventSource.isEventSource(req)) {
         connectClient(
           {
-            url: mock,
+            url: mockParam,
             type: 'es',
           },
           req,
           res,
         );
         // Send 'connect' event if it exists
-        mocks.matchPushEvent(mock, 'connect', pushEvent);
-        noisyInfo(`${chalk.green('     0ms')} connected to EventSource client at ${chalk.green(mock)}`);
+        mocks.matchPushEvent(mockParam, 'connect', pushEvent);
+        noisyInfo(`${chalk.green('     0ms')} connected to EventSource client at ${chalk.green(mockParam)}`);
       } else {
-        mocks.matchResponse(mock, req, res);
+        mocks.matchResponse(mockParam, req, res);
       }
 
       return true;
+    } else if (mocks.hasMatch(req)) {
+      const handled = mocks.matchResponse(req.url, req, res);
+
+      return handled === true;
     }
   }
 

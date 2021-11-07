@@ -48,7 +48,6 @@ export async function server(
 
   try {
     await server.start();
-    config.activePort = server.port;
   } catch (err) {
     error(err);
   }
