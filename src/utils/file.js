@@ -16,7 +16,6 @@ import Module from 'module';
 import { parse } from 'es-module-lexer';
 import path from 'path';
 import { pathToFileURL } from 'url';
-import { URL } from 'url';
 
 export const favIcon = Buffer.from(favicon, 'base64');
 

@@ -6,7 +6,6 @@ import favicon from '../utils/favicon.js';
 import { find } from '../utils/file.js';
 import { noisyInfo } from '../utils/log.js';
 import send from 'send';
-import { URL } from 'url';
 import WebSocket from 'faye-websocket';
 
 const favIcon = Buffer.from(favicon, 'base64');

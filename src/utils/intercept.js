@@ -2,7 +2,6 @@ import { isLocalhost, isProxy } from './is.js';
 import fs from 'fs';
 import http from 'http';
 import https from 'https';
-import { URL } from 'url';
 
 /** @type { Set<InterceptClientRequestCallback> } */
 const clientRequestListeners = new Set();

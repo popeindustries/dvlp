@@ -1,5 +1,5 @@
 import { error, info, noisyInfo } from '../utils/log.js';
-import { fileURLToPath, URL, URLSearchParams } from 'url';
+import { fileURLToPath, URLSearchParams } from 'url';
 import { isInvalidFilePath, isJsonFilePath } from '../utils/is.js';
 import { match, pathToRegexp } from 'path-to-regexp';
 import chalk from 'chalk';
@@ -444,8 +444,8 @@ export default class Mock {
     for (const mock of Array.from(this.cache).reverse()) {
       if (
         !mock.originRegex.test(url.origin) ||
-        (!mock.ignoreSearch &&
-          !isEqualSearchParams(url.searchParams, /** @type { URLSearchParams } */ (mock.searchParams)))
+        // @ts-ignore
+        (!mock.ignoreSearch && !isEqualSearchParams(url.searchParams, mock.searchParams))
       ) {
         continue;
       }

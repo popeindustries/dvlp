@@ -9,7 +9,6 @@ import Metrics from '../utils/metrics.js';
 import mime from 'mime';
 import Mock from '../mock/index.js';
 import path from 'path';
-import { URL } from 'url';
 import WebSocket from 'faye-websocket';
 
 const debug = Debug('dvlp:test');

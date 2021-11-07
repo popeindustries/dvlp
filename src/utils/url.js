@@ -1,5 +1,4 @@
 import config from '../config.js';
-import { URL } from 'url';
 
 const RE_WEB_SOCKET = /wss?:/;
 
@@ -17,7 +16,7 @@ export function isWebSocketUrl(url) {
  * Retrieve URL instance from 'req'
  *
  * @param { string | { url: string } | URL } req
- * @returns { import('url').URL }
+ * @returns { URL }
  */
 export function getUrl(req) {
   if (!(req instanceof URL)) {

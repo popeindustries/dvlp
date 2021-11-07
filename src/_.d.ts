@@ -41,8 +41,6 @@ type HttpServer = import('http').Server;
 type HttpServerOptions = import('http').ServerOptions;
 type Http2SecureServer = import('http2').Http2SecureServer;
 type Http2SecureServerOptions = import('http2').SecureServerOptions;
-type URL = import('url').URL;
-type URLSearchParams = import('url').URLSearchParams;
 type esbuild = {
   build(
     options: import('esbuild').BuildOptions & { write: false },

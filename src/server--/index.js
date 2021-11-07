@@ -18,7 +18,6 @@ import Mock from '../mock/index.js';
 import { parseUserAgent } from '../utils/platform.js';
 import { patchResponse } from '../utils/patch.js';
 import send from 'send';
-import { URL } from 'url';
 import watch from '../utils/watch.js';
 import WebSocket from 'faye-websocket';
 
