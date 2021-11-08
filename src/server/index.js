@@ -1,9 +1,10 @@
 import { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } from '../utils/scripts.js';
-import { error, info, noisyInfo } from '../utils/log.js';
+import { error, fatal, info, noisyInfo } from '../utils/log.js';
 import { find, getProjectPath, getTypeFromPath, getTypeFromRequest } from '../utils/file.js';
 import { handleFavicon, handleFile, handleMockResponse, handleMockWebSocket, handlePushEvent } from './handlers.js';
 import { isBundledFilePath, isHtmlRequest, isNodeModuleFilePath } from '../utils/is.js';
 import { resolveCerts, validateCert } from './certificate-validation.js';
+import ApplicationHost from './application-host.js';
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
@@ -94,6 +95,10 @@ export default class DvlpServer {
       resolveImport: this.hooks.resolveImport,
       send: this.hooks.send,
     };
+
+    if (entry.main !== undefined) {
+      this.applicationHost = new ApplicationHost(entry.main);
+    }
   }
 
   /**
@@ -119,7 +124,7 @@ export default class DvlpServer {
         // 1. single css refresh if css and a link.href matches filePath
         // 2. multiple css refreshes if css and no link.href matches filePath (ie. it's a dependency)
         // 3. full page reload
-        this.reload && this.send(filePath);
+        this.reload && this.reloadFile(filePath);
       } catch (err) {
         error(err);
       }
@@ -160,8 +165,16 @@ export default class DvlpServer {
       }
 
       this.server.on('error', reject);
-      this.server.on('listening', () => {
+      this.server.on('listening', async () => {
         debug('server started');
+        if (this.applicationHost) {
+          try {
+            await this.applicationHost.start();
+            debug('application started');
+          } catch (err) {
+            fatal(err);
+          }
+        }
         resolve();
       });
       this.server.on('connection', (connection) => {
@@ -192,7 +205,7 @@ export default class DvlpServer {
     const { url } = req;
 
     if (isReloadRequest(req)) {
-      this.registerClient(req, res);
+      this.registerReloadClient(req, res);
       return;
     }
 
@@ -279,7 +292,7 @@ export default class DvlpServer {
 
       res.unhandled = true;
 
-      if (this.entry.isStatic) {
+      if (!this.applicationHost) {
         // Reroute to root index.html
         if (isHtmlRequest(req)) {
           res.rerouted = true;
@@ -300,19 +313,24 @@ export default class DvlpServer {
         return;
       } else {
         noisyInfo(`  allowing app to handle "${req.url}"`);
-        // send to application server
+        try {
+          console.log(`  allowing app to handle "${req.url}"`);
+          await this.applicationHost.handle(req.url);
+        } catch (err) {
+          //
+        }
       }
     }
   }
 
   /**
-   * Register new client connection
+   * Register new reload client connection
    *
    * @param { IncomingMessage | Http2ServerRequest } req
    * @param { ServerResponse | Http2ServerResponse } res
    * @returns { void }
    */
-  registerClient(req, res) {
+  registerReloadClient(req, res) {
     const client = new EventSource(req, res);
 
     this.clients.add(client);
@@ -330,7 +348,7 @@ export default class DvlpServer {
    * @param { string } filePath
    * @returns { void }
    */
-  send(filePath) {
+  reloadFile(filePath) {
     const type = getTypeFromPath(filePath);
     const event = type === 'css' ? 'refresh' : 'reload';
     const data = JSON.stringify({ type, filePath });
@@ -365,6 +383,10 @@ export default class DvlpServer {
     }
     this.clients.clear();
 
+    if (this.applicationHost) {
+      this.applicationHost.destroy();
+    }
+
     return new Promise(async (resolve) => {
       if (!this.server) {
         return resolve();
@@ -384,7 +406,7 @@ export default class DvlpServer {
 }
 
 /**
- * Determine if "req" should be handled by reload server
+ * Determine if "req" is reload client connection
  *
  * @param { IncomingMessage | Http2ServerRequest } req
  */

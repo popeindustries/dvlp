@@ -1,4 +1,3 @@
-import { brotliDecompressSync, unzipSync } from 'zlib';
 import { fatal, warn, WARN_BARE_IMPORT } from './log.js';
 import { getAbsoluteProjectPath, getProjectPath, isEsmFile } from './file.js';
 import {
@@ -16,6 +15,7 @@ import { filePathToUrl } from './url.js';
 import Metrics from './metrics.js';
 import { parse } from 'es-module-lexer';
 import path from 'path';
+import { proxyBodyWrite } from './patch-body-write.js';
 import { resolve } from '../resolver/index.js';
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
@@ -392,98 +392,6 @@ function proxySetHeader(res, action) {
 
           if (value) {
             headers[key] = value;
-          }
-        }
-      }
-
-      return Reflect.apply(target, ctx, args);
-    },
-  });
-}
-
-/**
- * Proxy body write for 'res', performing 'action' on write()/end()
- *
- * @param { Res } res
- * @param { (data: string) => string } action
- */
-function proxyBodyWrite(res, action) {
-  const originalSetHeader = res.setHeader;
-  /** @type { Buffer } */
-  let buffer;
-
-  // Proxy write() to buffer streaming response
-  res.write = new Proxy(res.write, {
-    // @ts-ignore
-    apply(target, ctx, args) {
-      let [chunk] = args;
-
-      if (typeof chunk === 'string') {
-        chunk = Buffer.from(chunk);
-      }
-      buffer = Buffer.concat([buffer || Buffer.from(''), chunk]);
-      return;
-    },
-  });
-
-  // Proxy end() to intercept response body
-  res.end = new Proxy(res.end, {
-    apply(target, ctx, args) {
-      let [data = buffer, ...extraArgs] = args;
-      let size = 0;
-
-      if (data) {
-        if (Buffer.isBuffer(data)) {
-          if (res.encoding === 'gzip') {
-            data = unzipSync(data);
-          } else if (res.encoding === 'br') {
-            data = brotliDecompressSync(data);
-          }
-          data = data.toString();
-        }
-        data = action(data);
-        size = Buffer.byteLength(data);
-      }
-
-      if (!res.headersSent) {
-        if (size) {
-          debug(`setting Content-Length to ${size}`);
-          // @ts-ignore
-          originalSetHeader.call(res, 'Content-Length', size);
-        }
-      }
-
-      return Reflect.apply(target, ctx, [data, ...extraArgs]);
-    },
-  });
-
-  // Prevent setting of Content-Length
-  res.setHeader = new Proxy(res.setHeader, {
-    apply(target, ctx, args) {
-      let [key, value] = args;
-
-      if (key.toLowerCase() === 'content-length') {
-        // debug(`prevented setting Content-Length to ${value}`);
-        return;
-      }
-
-      return Reflect.apply(target, ctx, [key, value]);
-    },
-  });
-
-  // Prevent setting of Content-Length
-  res.writeHead = new Proxy(res.writeHead, {
-    apply(target, ctx, args) {
-      // First argument is always statusCode
-      if (args.length > 1) {
-        for (const key in args[args.length - 1]) {
-          if (key.toLowerCase() === 'content-length') {
-            // debug(
-            //   `prevented setting Content-Length to ${
-            //     args[args.length - 1][key]
-            //   }`,
-            // );
-            delete args[args.length - 1][key];
           }
         }
       }
