@@ -156,3 +156,24 @@ export function handlePushEvent(req, res, mocks) {
 
   return false;
 }
+
+/**
+ * Handle file request
+ *
+ * @param { string } filePath
+ * @param { Req } req
+ * @param { Res } res
+ * @param { boolean } cacheControl
+ */
+export function handleFile(filePath, req, res, cacheControl) {
+  /** @type { import('send').SendOptions } */
+  const options = {
+    cacheControl,
+    dotfiles: 'allow',
+    etag: false,
+    lastModified: false,
+    maxAge: cacheControl ? config.maxAge : 0,
+  };
+
+  send(req, filePath, options).pipe(res);
+}

@@ -1,7 +1,7 @@
 import { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } from '../utils/scripts.js';
 import { error, info, noisyInfo } from '../utils/log.js';
 import { find, getProjectPath, getTypeFromPath, getTypeFromRequest } from '../utils/file.js';
-import { handleFavicon, handleMockResponse, handleMockWebSocket, handlePushEvent } from './handlers.js';
+import { handleFavicon, handleFile, handleMockResponse, handleMockWebSocket, handlePushEvent } from './handlers.js';
 import { isBundledFilePath, isHtmlRequest, isNodeModuleFilePath } from '../utils/is.js';
 import { resolveCerts, validateCert } from './certificate-validation.js';
 import chalk from 'chalk';
@@ -18,7 +18,6 @@ import Metrics from '../utils/metrics.js';
 import Mock from '../mock/index.js';
 import { parseUserAgent } from '../utils/platform.js';
 import { patchResponse } from '../utils/patch.js';
-import send from 'send';
 import watch from '../utils/watch.js';
 
 const debug = Debug('dvlp:server');
@@ -269,20 +268,15 @@ export default class DvlpServer {
         // Will respond if transformer exists for this type
         await this.hooks.transform(filePath, this.lastChanged, res, parseUserAgent(req.headers['user-agent']));
       }
-
-      // Handle bundled, node_modules, and external files if not already handled by transformer
-      if (!res.finished) {
-        return send(req, filePath, {
-          cacheControl: true,
-          dotfiles: 'allow',
-          maxAge: config.maxAge,
-          etag: false,
-          lastModified: false,
-        }).pipe(res);
-      }
     }
 
     if (!res.finished) {
+      if (filePath) {
+        debug(`sending "${filePath}"`);
+        handleFile(filePath, req, res, true);
+        return;
+      }
+
       res.unhandled = true;
 
       if (this.entry.isStatic) {
@@ -294,20 +288,16 @@ export default class DvlpServer {
           filePath = find(req);
         }
 
-        if (!filePath) {
-          debug(`not found "${req.url}"`);
-          res.writeHead(404);
-          return res.end();
+        if (filePath) {
+          debug(`sending "${filePath}"`);
+          handleFile(filePath, req, res, false);
+          return;
         }
 
-        debug(`sending "${filePath}"`);
-        return send(req, filePath, {
-          // Prevent caching of project files
-          cacheControl: false,
-          dotfiles: 'allow',
-          etag: false,
-          lastModified: false,
-        }).pipe(res);
+        debug(`not found "${req.url}"`);
+        res.writeHead(404);
+        res.end();
+        return;
       } else {
         noisyInfo(`  allowing app to handle "${req.url}"`);
         // send to application server
