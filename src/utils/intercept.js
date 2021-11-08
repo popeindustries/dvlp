@@ -7,13 +7,10 @@ import https from 'https';
 const clientRequestListeners = new Set();
 /** @type { Set<InterceptFileReadCallback> } */
 const fileReadListeners = new Set();
-/** @type { Set<InterceptProcessOnCallback> } */
-const processOnListeners = new Set();
 const originalHttpRequest = http.request;
 const originalHttpGet = http.get;
 const originalHttpsRequest = https.request;
 const originalHttpsGet = https.get;
-const originalProcessOn = process.on;
 const originalReadStreamRead = fs.ReadStream.prototype._read;
 const originalReadFile = fs.readFile;
 const originalReadFileSync = fs.readFileSync;
@@ -200,46 +197,6 @@ function getHrefFromRequestOptions(options, protocol) {
   }
 
   return `${protocol}://${host}${path}`;
-}
-
-/**
- * Listen for process event registration
- *
- * @param { InterceptProcessOnCallback } fn
- * @returns { () => void }
- */
-export function interceptProcessOn(fn) {
-  initInterceptProcessOn();
-  processOnListeners.add(fn);
-  return restoreProcessOn.bind(null, fn);
-}
-
-/**
- * Initialise `process.on` proxy
- */
-function initInterceptProcessOn() {
-  if (!isProxy(process.on)) {
-    process.on = new Proxy(process.on, {
-      apply: (target, ctx, args) => {
-        if (notifyListeners(processOnListeners, ...args) === false) {
-          return;
-        }
-        return Reflect.apply(target, ctx, args);
-      },
-    });
-  }
-}
-
-/**
- * Restore unproxied process event registration
- *
- * @param { InterceptProcessOnCallback } fn
- */
-function restoreProcessOn(fn) {
-  processOnListeners.delete(fn);
-  if (!processOnListeners.size) {
-    process.on = originalProcessOn;
-  }
 }
 
 /**
