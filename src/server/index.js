@@ -1,7 +1,7 @@
 import { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } from '../utils/scripts.js';
-import { error, fatal, info, noisyInfo } from '../utils/log.js';
 import { find, getProjectPath, getTypeFromPath, getTypeFromRequest } from '../utils/file.js';
 import { handleFavicon, handleFile, handleMockResponse, handleMockWebSocket, handlePushEvent } from './handlers.js';
+import { info, noisyInfo } from '../utils/log.js';
 import { isBundledFilePath, isHtmlRequest, isNodeModuleFilePath } from '../utils/is.js';
 import { resolveCerts, validateCert } from './certificate-validation.js';
 import ApplicationHost from './application-host.js';
@@ -35,9 +35,12 @@ export default class DvlpServer {
    * @param { string | Array<string> } [certsPath]
    */
   constructor(entry, port, reload = false, hooks, mockPath, certsPath) {
+    this.requestHandler = this.requestHandler.bind(this);
+    this.triggerClientReload = this.triggerClientReload.bind(this);
+
     // Listen for all upcoming file system reads
     // Register early to catch all reads, including transformers that patch fs.readFile
-    this.watcher = this.createWatcher();
+    this.watcher = watch(this.triggerClientReload);
     this.unlistenForFileRead = interceptFileRead((filePath) => {
       this.addWatchFiles(filePath);
     });
@@ -70,7 +73,6 @@ export default class DvlpServer {
     this.reload = reload;
     /** @type { Map<string, string> } */
     this.urlToFilePath = new Map();
-    this.requestHandler = this.requestHandler.bind(this);
     /** @type { HttpServer | Http2SecureServer } */
     this.server;
 
@@ -97,54 +99,7 @@ export default class DvlpServer {
     };
 
     if (entry.main !== undefined) {
-      this.applicationHost = new ApplicationHost(entry.main);
-    }
-  }
-
-  /**
-   * Create watcher instance and react to file changes
-   *
-   * @returns { Watcher }
-   */
-  createWatcher() {
-    return watch(async (filePath) => {
-      noisyInfo(`\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.yellow(getProjectPath(filePath))}`);
-
-      this.lastChanged = filePath;
-
-      try {
-        for (const [url, fp] of this.urlToFilePath) {
-          if (fp === filePath) {
-            filePath = url;
-            break;
-          }
-        }
-
-        // Will trigger one of:
-        // 1. single css refresh if css and a link.href matches filePath
-        // 2. multiple css refreshes if css and no link.href matches filePath (ie. it's a dependency)
-        // 3. full page reload
-        this.reload && this.reloadFile(filePath);
-      } catch (err) {
-        error(err);
-      }
-    });
-  }
-
-  /**
-   * Add "filePaths" to watcher
-   *
-   * @param { string | Array<string> } filePaths
-   */
-  addWatchFiles(filePaths) {
-    if (!Array.isArray(filePaths)) {
-      filePaths = [filePaths];
-    }
-
-    for (const filePath of filePaths) {
-      if (!isNodeModuleFilePath(filePath)) {
-        this.watcher.add(filePath);
-      }
+      this.applicationHost = new ApplicationHost(entry.main, reload ? this.triggerClientReload : undefined);
     }
   }
 
@@ -168,12 +123,7 @@ export default class DvlpServer {
       this.server.on('listening', async () => {
         debug('server started');
         if (this.applicationHost) {
-          try {
-            await this.applicationHost.start();
-            debug('application started');
-          } catch (err) {
-            fatal(err);
-          }
+          await this.applicationHost.start();
         }
         resolve();
       });
@@ -194,10 +144,51 @@ export default class DvlpServer {
   }
 
   /**
+   * Send refresh/reload message to clients for changed 'filePath'.
+   * Will trigger one of:
+   *  1. single css refresh if css and a link.href matches filePath
+   *  2. multiple css refreshes if css and no link.href matches filePath (ie. it's a dependency)
+   *  3. full page reload
+   *
+   * @param { string } filePath
+   * @returns { void }
+   */
+  triggerClientReload(filePath) {
+    this.lastChanged = filePath;
+
+    if (!this.reload) {
+      return;
+    }
+
+    noisyInfo(`\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.yellow(getProjectPath(filePath))}`);
+
+    // Find corresponding url
+    for (const [url, fp] of this.urlToFilePath) {
+      if (fp === filePath) {
+        filePath = url;
+        break;
+      }
+    }
+
+    const type = getTypeFromPath(filePath);
+    const event = type === 'css' ? 'refresh' : 'reload';
+    const data = JSON.stringify({ type, filePath });
+
+    if (this.clients.size) {
+      noisyInfo(`${chalk.yellow(`  ⟲ ${event}ing`)} ${this.clients.size} client${this.clients.size > 1 ? 's' : ''}`);
+
+      for (const client of this.clients) {
+        client.send(data, { event });
+      }
+    }
+  }
+
+  /**
    * Handle incoming request
    *
    * @param { IncomingMessage | Http2ServerRequest } request
    * @param { ServerResponse | Http2ServerResponse } response
+   * @private
    */
   async requestHandler(request, response) {
     const req = /** @type { Req } */ (request);
@@ -313,12 +304,25 @@ export default class DvlpServer {
         return;
       } else {
         noisyInfo(`  allowing app to handle "${req.url}"`);
-        try {
-          console.log(`  allowing app to handle "${req.url}"`);
-          await this.applicationHost.handle(req.url);
-        } catch (err) {
-          //
-        }
+        this.applicationHost.handle(req, res);
+      }
+    }
+  }
+
+  /**
+   * Add "filePaths" to watcher
+   *
+   * @param { string | Array<string> } filePaths
+   * @private
+   */
+  addWatchFiles(filePaths) {
+    if (!Array.isArray(filePaths)) {
+      filePaths = [filePaths];
+    }
+
+    for (const filePath of filePaths) {
+      if (!isNodeModuleFilePath(filePath)) {
+        this.watcher.add(filePath);
       }
     }
   }
@@ -329,6 +333,7 @@ export default class DvlpServer {
    * @param { IncomingMessage | Http2ServerRequest } req
    * @param { ServerResponse | Http2ServerResponse } res
    * @returns { void }
+   * @private
    */
   registerReloadClient(req, res) {
     const client = new EventSource(req, res);
@@ -340,26 +345,6 @@ export default class DvlpServer {
       this.clients.delete(client);
       debug('removed reload connection', this.clients.size);
     });
-  }
-
-  /**
-   * Send refresh/reload message to clients for changed 'filePath'
-   *
-   * @param { string } filePath
-   * @returns { void }
-   */
-  reloadFile(filePath) {
-    const type = getTypeFromPath(filePath);
-    const event = type === 'css' ? 'refresh' : 'reload';
-    const data = JSON.stringify({ type, filePath });
-
-    if (this.clients.size) {
-      noisyInfo(`${chalk.yellow(`  ⟲ ${event}ing`)} ${this.clients.size} client${this.clients.size > 1 ? 's' : ''}`);
-
-      for (const client of this.clients) {
-        client.send(data, { event });
-      }
-    }
   }
 
   /**

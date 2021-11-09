@@ -1,7 +1,7 @@
 import http from 'http';
+import { interceptFileRead } from '../utils/intercept.js';
+import { isNodeModuleFilePath } from '../utils/is.js';
 import { parentPort } from 'worker_threads';
-// import { proxyBodyWrite } from '../utils/patch-body-write.js';
-// import { Socket } from 'net';
 
 /** @type { import('worker_threads').MessagePort }*/
 let messagePort;
@@ -17,6 +17,7 @@ parentPort.once('message', (msg) => {
   messagePort.postMessage({ type: 'registered' });
 });
 
+// Intercept server creation to get instance with random port
 http.createServer = new Proxy(http.createServer, {
   apply(target, ctx, args) {
     server = Reflect.apply(target, ctx, args);
@@ -49,6 +50,12 @@ http.createServer = new Proxy(http.createServer, {
   },
 });
 
+interceptFileRead((filePath) => {
+  if (!isNodeModuleFilePath(filePath)) {
+    messagePort.postMessage({ type: 'read', path: filePath });
+  }
+});
+
 /**
  * Handle incoming message
  *
@@ -61,30 +68,16 @@ async function handleMessage(msg) {
     } catch (err) {
       notifyOnError(/** @type { Error } */ (err));
     }
-  } else {
-    console.log(serverPort, msg.href);
-    // const { href } = msg;
-    // const req = new http.IncomingMessage(new Socket());
-    // req.url = href;
-    // const res = /** @type { Res } */ (new http.ServerResponse(req));
-
-    // proxyBodyWrite(res, (body) => {
-    //   console.log(body);
-    //   messagePort.postMessage({ type: 'handled', body, href });
-    //   return body;
-    // });
-
-    // server.emit('request', req, res);
   }
 }
 
 function notifyOnStart() {
-  messagePort.postMessage({ type: 'started' });
+  messagePort.postMessage({ type: 'started', port: serverPort });
 }
 
 /**
  * @param { Error } error
  */
 function notifyOnError(error) {
-  messagePort.postMessage({ type: 'error', error });
+  messagePort.postMessage({ type: 'errored', error });
 }

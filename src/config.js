@@ -1,5 +1,6 @@
 import brokenNamedExportsPackages from './utils/broken-named-exports.js';
 import fs from 'fs';
+import { isMainThread } from 'worker_threads';
 import mime from 'mime';
 import path from 'path';
 import rimraf from 'rimraf';
@@ -24,53 +25,56 @@ mime.define(JS_MIME_TYPES, true);
 send.mime.define(JS_MIME_TYPES, true);
 
 const dir = path.resolve(DIR);
-const sourceMapsDirExists = fs.existsSync(sourceMapsDir);
-const bundleDirExists = fs.existsSync(bundleDir);
-const dirExists = fs.existsSync(dir);
 
-if (dirExists && !bundleDirExists) {
-  const contents = fs.readdirSync(dir).map((item) => path.resolve(dir, item));
+if (isMainThread) {
+  const sourceMapsDirExists = fs.existsSync(sourceMapsDir);
+  const bundleDirExists = fs.existsSync(bundleDir);
+  const dirExists = fs.existsSync(dir);
 
-  for (const item of contents) {
-    // Delete all subdirectories
-    if (fs.statSync(item).isDirectory()) {
-      rimraf.sync(item);
-    }
-  }
-}
-if (sourceMapsDirExists) {
-  rimraf.sync(sourceMapsDir);
-}
-if (!dirExists) {
-  fs.mkdirSync(dir);
-}
-fs.mkdirSync(sourceMapsDir);
-if (!bundleDirExists) {
-  fs.mkdirSync(bundleDir);
-} else {
-  // Prune bundle dir of duplicates with different versions
-  const moduleIds = new Map();
+  if (dirExists && !bundleDirExists) {
+    const contents = fs.readdirSync(dir).map((item) => path.resolve(dir, item));
 
-  for (const fileName of fs.readdirSync(bundleDir)) {
-    if (fileName.endsWith('.js')) {
-      // Remove version
-      const moduleId = fileName.slice(0, fileName.lastIndexOf('-'));
-
-      if (!moduleIds.has(moduleId)) {
-        moduleIds.set(moduleId, path.join(bundleDir, fileName));
-      } else {
-        // Clear both instances if duplicates with different versions
-        fs.unlinkSync(moduleIds.get(moduleId));
-        fs.unlinkSync(path.join(bundleDir, fileName));
+    for (const item of contents) {
+      // Delete all subdirectories
+      if (fs.statSync(item).isDirectory()) {
+        rimraf.sync(item);
       }
     }
   }
-}
+  if (sourceMapsDirExists) {
+    rimraf.sync(sourceMapsDir);
+  }
+  if (!dirExists) {
+    fs.mkdirSync(dir);
+  }
+  fs.mkdirSync(sourceMapsDir);
+  if (!bundleDirExists) {
+    fs.mkdirSync(bundleDir);
+  } else {
+    // Prune bundle dir of duplicates with different versions
+    const moduleIds = new Map();
 
-if (TESTING) {
-  process.on('exit', () => {
-    rimraf.sync(dir);
-  });
+    for (const fileName of fs.readdirSync(bundleDir)) {
+      if (fileName.endsWith('.js')) {
+        // Remove version
+        const moduleId = fileName.slice(0, fileName.lastIndexOf('-'));
+
+        if (!moduleIds.has(moduleId)) {
+          moduleIds.set(moduleId, path.join(bundleDir, fileName));
+        } else {
+          // Clear both instances if duplicates with different versions
+          fs.unlinkSync(moduleIds.get(moduleId));
+          fs.unlinkSync(path.join(bundleDir, fileName));
+        }
+      }
+    }
+  }
+
+  if (TESTING) {
+    process.on('exit', () => {
+      rimraf.sync(dir);
+    });
+  }
 }
 
 /**

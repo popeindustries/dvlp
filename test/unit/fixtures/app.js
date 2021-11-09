@@ -6,12 +6,7 @@ const fastifyStatic = require('fastify-static');
 
 const server = fastify();
 
-server.get('*', async (req, reply) => {
-  console.log('hey');
-});
-
 server.get('/', async (req, reply) => {
-  console.log('get /');
   reply.type('text/html').send(`<!doctype html>
     <html lang="en-gb">
       <head>

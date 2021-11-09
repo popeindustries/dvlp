@@ -14,10 +14,10 @@ if (!isChildProcess) {
     env: {
       DVLP_CHILD_PROCESS: '1',
       ESBUILD_WORKER_THREADS: '1',
-      NODE_TLS_REJECT_UNAUTHORIZED: '0',
+      // NODE_TLS_REJECT_UNAUTHORIZED: '0',
       ...process.env,
     },
-    execArgv: ['--enable-source-maps', '--no-warnings'],
+    // execArgv: ['--enable-source-maps', '--no-warnings'],
     stdio: 'inherit',
   });
 

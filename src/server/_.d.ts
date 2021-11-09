@@ -1,10 +1,10 @@
-declare type ApplicationHostMessage = { type: 'start'; main: string } | { type: 'handle'; href: string };
+declare type ApplicationHostMessage = { type: 'start'; main: string };
 
 declare type ApplicationWorkerMessage =
-  | { type: 'started' }
-  | { type: 'startedError'; error: Error }
-  | { type: 'handled'; body: string; href: string }
-  | { type: 'handledError'; error: Error & { href: string; status: number } };
+  | { type: 'registered' }
+  | { type: 'started'; port: number }
+  | { type: 'read'; path: string }
+  | { type: 'errored'; error: Error };
 
 declare interface ApplicationWorkerPendingHandle {
   promise: Promise<{ body: string; href: string }>;
