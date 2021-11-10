@@ -44,10 +44,23 @@ declare interface Hooks {
    */
   onSend?(filePath: string, responseBody: string): string | undefined;
   /**
-   * Transform file contents for file imported by Node.js application server.
-   * This hook is run after file read.
+   * Manually resolve import specifiers for application server.
+   * @see https://nodejs.org/api/esm.html#resolvespecifier-context-defaultresolve
    */
-  onServerTransform?(filePath: string, fileContents: string): string | undefined;
+  onServerResolve?(
+    specifier: string,
+    context: { conditions: Array<string>; parentURL?: string },
+    defaultResolve: NodeResolveLoaderHook,
+  ): { format?: string; url: string };
+  /**
+   * Transform file contents for application server.
+   * @see https://nodejs.org/api/esm.html#loadurl-context-defaultload
+   */
+  onServerTransform?(
+    filePath: string,
+    context: { format?: string },
+    defaultLoad: NodeLoadLoaderHook,
+  ): { format: string; source: string | SharedArrayBuffer | Uint8Array };
 }
 
 declare interface DependencyBundleHookContext {
@@ -70,3 +83,15 @@ declare interface ResolveHookContext {
 }
 
 declare type DefaultResolve = (specifier: string, importer: string) => string | undefined;
+
+declare type NodeResolveLoaderHook = (
+  specifier: string,
+  context: { conditions: Array<string>; parentURL?: string },
+  defaultResolve: NodeResolveLoaderHook,
+) => { format?: string; url: string };
+
+declare type NodeLoadLoaderHook = (
+  url: string,
+  context: { format?: string },
+  defaultLoad: NodeLoadLoaderHook,
+) => { format: string; source: string | SharedArrayBuffer | Uint8Array };

@@ -1,6 +1,4 @@
-'use strict';
-
-const { createServer } = require('http');
+import { createServer } from 'http';
 
 const server = createServer();
 

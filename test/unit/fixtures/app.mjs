@@ -1,4 +1,4 @@
-import body from './body.js';
+import body from './body.mjs';
 import fastify from 'fastify';
 
 const server = fastify();

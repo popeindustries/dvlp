@@ -3,10 +3,13 @@ import logger, { error, info } from './utils/log.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
 import config from './config.js';
+import { createApplicationLoader } from './hooks/loader.js';
 import DvlpServer from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
 import fs from 'fs';
 import path from 'path';
+
+export * as esbuild from 'esbuild';
 
 /**
  * Server instance factory
@@ -17,7 +20,7 @@ import path from 'path';
  */
 export async function server(
   filePath = process.cwd(),
-  { certsPath, directories, hooksPath, mockPath, port, reload = true, silent } = {},
+  { certsPath, directories, hooksPath, mockPath, port = config.defaultPort, reload = true, silent } = {},
 ) {
   const entry = resolveEntry(filePath, directories);
   /** @type { Hooks | undefined } */
@@ -32,7 +35,7 @@ export async function server(
   }
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
-    hooks = await importModule(hooksPath);
+    hooks = /** @type { Hooks } */ (await importModule(hooksPath));
     info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
   }
   if (certsPath) {
@@ -44,7 +47,9 @@ export async function server(
     process.env.PORT = String(port);
   }
 
-  const server = new DvlpServer(entry, port || config.defaultPort, reload, hooks, mockPath, certsPath);
+  createApplicationLoader(config.applicationLoaderPath, hooksPath);
+
+  const server = new DvlpServer(entry, port, reload, hooks, mockPath, certsPath);
 
   try {
     await server.start();

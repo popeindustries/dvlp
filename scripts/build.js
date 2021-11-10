@@ -61,7 +61,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     define,
     entryNames: '[name]',
     entryPoints: ['./src/dvlp.js', './src/server/application-worker.js'],
-    external: ['esbuild', 'fsevents', 'undici'],
+    external: ['esbuild', 'fsevents'],
     format: 'esm',
     sourcemap: true,
     splitting: false,

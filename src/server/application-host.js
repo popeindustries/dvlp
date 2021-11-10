@@ -1,6 +1,7 @@
 import { dirname, join } from 'path';
 import { fatal, info } from '../utils/log.js';
-import { MessageChannel, SHARE_ENV, Worker } from 'worker_threads';
+import { MessageChannel, setEnvironmentData, SHARE_ENV, Worker } from 'worker_threads';
+import config from '../config.js';
 import Debug from 'debug';
 import { fileURLToPath } from 'url';
 import { request } from 'http';
@@ -8,15 +9,16 @@ import watch from '../utils/watch.js';
 
 const debug = Debug('dvlp:apphost');
 const workerPath = join(dirname(fileURLToPath(import.meta.url)), './application-worker.js');
-let id = 0;
 
 export default class ApplicationHost {
   /**
    * @param { string | (() => void) } main
+   * @param { number } port
    * @param { (filePath: string) => void } [triggerClientReload]
    */
-  constructor(main, triggerClientReload) {
+  constructor(main, port, triggerClientReload) {
     this.main = main;
+    this.port = port;
     /** @type { Watcher | undefined } */
     this.watcher;
 
@@ -28,6 +30,7 @@ export default class ApplicationHost {
     }
 
     if (typeof this.main === 'string') {
+      setEnvironmentData('port', port);
       if (this.watcher !== undefined) {
         this.watcher.add(this.main);
       }
@@ -51,14 +54,9 @@ export default class ApplicationHost {
 
     try {
       await this.activeThread.start(this.main);
-      info(`application server started on port "${this.activeThread.serverPort}"`);
-      return;
+      info(`application server started on port "${this.port}"`);
     } catch (err) {
-      await this.activeThread.terminate();
-      this.activeThread = this.pendingThread;
-      this.pendingThread = this.createThread();
-
-      fatal(err);
+      // Skip. Unable to recover until file save and restart
     }
   }
 
@@ -66,7 +64,10 @@ export default class ApplicationHost {
    * Restart application
    */
   async restart() {
-    await this.activeThread.terminate();
+    if (this.activeThread.isListening) {
+      debug(`terminating thread with id "${this.activeThread.threadId}"`);
+      await this.activeThread.terminate();
+    }
     this.activeThread = this.pendingThread;
     this.pendingThread = this.createThread();
     await this.start();
@@ -81,6 +82,12 @@ export default class ApplicationHost {
   handle(req, res) {
     debug(`handling request for "${req.url}"`);
 
+    if (!this.activeThread.isListening) {
+      res.writeHead(500);
+      res.end('application server failed to start');
+      return;
+    }
+
     const headers = { ...req.headers };
     delete headers[''];
     delete headers.host;
@@ -90,7 +97,7 @@ export default class ApplicationHost {
       headers,
       method: req.method,
       path: req.url,
-      port: this.activeThread.serverPort,
+      port: this.port,
     };
 
     const appRequest = request(requestOptions, (originResponse) => {
@@ -110,18 +117,20 @@ export default class ApplicationHost {
    * @private
    */
   createThread() {
-    const thread = new ApplicationThread(workerPath, this.watcher, {
+    return new ApplicationThread(workerPath, this.watcher, {
       env: SHARE_ENV,
-      execArgv: ['--enable-source-maps', '--no-warnings'],
+      execArgv: ['--enable-source-maps', '--no-warnings', '--experimental-loader', config.applicationLoaderPath],
     });
-
-    return thread;
   }
 
   /**
    * Destroy instance
    */
-  destroy() {}
+  destroy() {
+    this.activeThread.terminate();
+    this.pendingThread.terminate();
+    this.watcher?.close();
+  }
 }
 
 class ApplicationThread extends Worker {
@@ -135,10 +144,10 @@ class ApplicationThread extends Worker {
 
     const { port1, port2 } = new MessageChannel();
 
-    this.id = ++id;
+    /** @type { boolean } */
+    this.isListening;
     /** @type { import('worker_threads').MessagePort }*/
     this.messagePort = port1;
-    this.serverPort = 0;
     this.watcher = watcher;
     this.handleMessage = this.handleMessage.bind(this);
     /**
@@ -157,15 +166,29 @@ class ApplicationThread extends Worker {
         },
       );
     });
-    /** @type { (value?: void | PromiseLike<void>) => void | undefined } */
+    /** @type { ((value?: void | PromiseLike<void>) => void) | undefined } */
     this.resolveStarted;
-    /** @type { (value?: unknown) => void | undefined } */
+    /** @type { ((value?: unknown) => void) | undefined } */
     this.rejectStarted;
+
+    this.on('error', (err) => {
+      if (this.isListening === undefined) {
+        this.listen(err);
+      }
+      console.log(err);
+      fatal(err);
+    });
+    this.on('exit', (exitCode) => {
+      this.messagePort.close();
+      // @ts-ignore
+      this.messagePort = undefined;
+      this.watcher = undefined;
+    });
 
     // Send receiving port to worker over global parentPort
     this.postMessage({ port: port2 }, [port2]);
 
-    debug(`created application thread with id "${this.id}"`);
+    debug(`created application thread with id "${this.threadId}"`);
   }
 
   /**
@@ -187,13 +210,9 @@ class ApplicationThread extends Worker {
    * @private
    */
   handleMessage(msg) {
-    console.log(Date.now(), this.id, msg);
     switch (msg.type) {
       case 'started': {
-        if (this.resolveStarted !== undefined) {
-          this.resolveStarted();
-        }
-        this.serverPort = msg.port;
+        this.listen();
         break;
       }
       case 'read': {
@@ -202,12 +221,26 @@ class ApplicationThread extends Worker {
         }
         break;
       }
-      case 'errored': {
-        if (this.rejectStarted !== undefined) {
-          this.rejectStarted(msg.error);
-        }
-        break;
-      }
     }
+  }
+
+  /**
+   * @param { Error } [err]
+   * @private
+   */
+  listen(err) {
+    if (err) {
+      if (this.rejectStarted !== undefined) {
+        this.rejectStarted(err);
+      }
+      this.isListening = false;
+    } else {
+      if (this.resolveStarted !== undefined) {
+        this.resolveStarted();
+      }
+      this.isListening = true;
+    }
+
+    this.resolveStarted = this.rejectStarted = undefined;
   }
 }

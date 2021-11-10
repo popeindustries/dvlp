@@ -1,3 +1,4 @@
+import body from './body';
 import fastify from 'fastify';
 
 const server = fastify();
@@ -10,7 +11,7 @@ server.get('/', async (req, reply) => {
         <script type="module" src="www/module.js"></script>
       </head>
       <body>
-      ${import.meta.url}
+      ${body}
       </body>
     </html>`);
 });

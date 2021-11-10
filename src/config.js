@@ -14,6 +14,8 @@ const TESTING = process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefin
 // @ts-ignore - Replaced during build
 const VERSION = global.$VERSION || 'dev';
 
+const dir = path.resolve(DIR);
+const applicationLoaderPath = path.join(dir, 'app-loader.mjs');
 const sourceMapsDirName = `${path.join(DIR, `sourcemaps`)}`;
 const sourceMapsDir = path.resolve(sourceMapsDirName);
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
@@ -24,8 +26,12 @@ mime.define(JS_MIME_TYPES, true);
 // @ts-ignore
 send.mime.define(JS_MIME_TYPES, true);
 
-const dir = path.resolve(DIR);
-
+/**
+ * Create directory structure:
+ *  .dvlp
+ *    - bundle-xxx
+ *    - sourcemaps
+ */
 if (isMainThread) {
   const sourceMapsDirExists = fs.existsSync(sourceMapsDir);
   const bundleDirExists = fs.existsSync(bundleDir);
@@ -82,6 +88,7 @@ if (isMainThread) {
  */
 const config = {
   activePort: defaultPort,
+  applicationLoaderPath,
   brokenNamedExportsPackages,
   bundleDir,
   bundleDirName,

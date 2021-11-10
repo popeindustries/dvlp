@@ -1,5 +1,6 @@
 declare interface Config {
   activePort: number;
+  applicationLoaderPath: string;
   brokenNamedExportsPackages: Record<string, Array<string>>;
   bundleDir: string;
   bundleDirName: string;

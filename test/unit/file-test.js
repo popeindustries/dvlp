@@ -165,7 +165,7 @@ describe('file', () => {
 
   describe('isEsmFile()', () => {
     it('should return true for .js file with "import"', () => {
-      const filePath = path.resolve('test/unit/fixtures/config.esm.js');
+      const filePath = path.resolve('test/unit/fixtures/file.esm.js');
       expect(isEsmFile(filePath)).to.be.true;
     });
     it('should return false for script with no imports/exports', () => {

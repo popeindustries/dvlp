@@ -99,7 +99,11 @@ export default class DvlpServer {
     };
 
     if (entry.main !== undefined) {
-      this.applicationHost = new ApplicationHost(entry.main, reload ? this.triggerClientReload : undefined);
+      this.applicationHost = new ApplicationHost(
+        entry.main,
+        this.port === 443 ? config.defaultPort : this.port + 1,
+        reload ? this.triggerClientReload : undefined,
+      );
     }
   }
 

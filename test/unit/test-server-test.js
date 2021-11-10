@@ -135,7 +135,7 @@ describe('testServer', () => {
     testServer.disableNetwork(false);
   });
 
-  describe('mock()', () => {
+  describe.skip('mock()', () => {
     it('should respond to mocked json request', async () => {
       server = await testServer();
       server.mockResponse('/api/foo', { body: { foo: 'foo' } });
@@ -190,7 +190,7 @@ describe('testServer', () => {
     });
   });
 
-  describe('loadMockFiles()', () => {
+  describe.skip('loadMockFiles()', () => {
     it('should respond to mocked image request with custom headers', async () => {
       server = await testServer();
       server.loadMockFiles('test/unit/fixtures/mock');

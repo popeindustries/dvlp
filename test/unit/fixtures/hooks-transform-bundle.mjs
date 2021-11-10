@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   async onTransform(filePath, code, context) {
     return (
       await context.esbuild.build({

@@ -1,6 +1,6 @@
-const path = require('path');
+import path from 'path';
 
-module.exports = {
+export default {
   onTransform(filePath, code) {
     throw Error(`transform error ${path.basename(filePath)}`);
   },

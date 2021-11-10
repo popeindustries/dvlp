@@ -1,6 +1,6 @@
-const path = require('path');
+import path from 'path';
 
-module.exports = {
+export default {
   async onTransform(filePath, code, context) {
     await sleep(200);
     return `this is transformed content for: ${path.basename(filePath)} on ${context.client.name}:${
