@@ -2,27 +2,35 @@
   "name": "dvlp",
   "version": "13.3.2",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
-  "main": "dvlp.js",
+  "main": "./src/dvlp.js",
   "type": "module",
   "types": "dvlp.d.ts",
   "repository": "https://github.com/popeindustries/dvlp.git",
   "author": "Alexander Pope <alex@pope-industries.com>",
   "license": "MIT",
-  "private": false,
   "bin": {
     "dvlp": "bin/dvlp.js"
   },
   "exports": {
-    ".": "./dvlp.js",
-    "./test-browser": "./dvlp-test-browser.js",
-    "./dvlp-test-browser.js": "./dvlp-test-browser.js",
-    "./test": "./dvlp-test.js",
-    "./dvlp-test.js": "./dvlp-test.js"
+    ".": "./src/dvlp.js",
+    "./test-browser": "./src/dvlp-test-browser.js",
+    "./dvlp-test-browser.js": "./src/dvlp-test-browser.js",
+    "./test": "./src/dvlp-test.js",
+    "./dvlp-test.js": "./src/dvlp-test.js"
+  },
+  "publishConfig": {
+    "main": "./dvlp.js",
+    "exports": {
+      ".": "./dvlp.js",
+      "./test-browser": "./dvlp-test-browser.js",
+      "./dvlp-test-browser.js": "./dvlp-test-browser.js",
+      "./test": "./dvlp-test.js",
+      "./dvlp-test.js": "./dvlp-test.js"
+    }
   },
   "dependencies": {
     "commander": "^8.1.0",
-    "esbuild": "~0.13.0",
-    "undici": "^4.0.0"
+    "esbuild": "~0.13.0"
   },
   "devDependencies": {
     "@babel/core": "^7.14.0",
@@ -67,10 +75,12 @@
     "send": "~0.17.1",
     "server-destroy": "^1.0.1",
     "terser": "^5.5.0",
-    "typescript": "^4.0.3"
+    "typescript": "^4.0.3",
+    "undici": "^4.0.0"
   },
   "engines": {
-    "node": ">=12.2.0"
+    "node": ">=14",
+    "pnpm": ">=6"
   },
   "scripts": {
     "build": "node ./scripts/build.js",
