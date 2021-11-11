@@ -136,6 +136,7 @@ export default class ApplicationHost {
 
     return new ApplicationThread(workerPath, port1, this.watcher, {
       env: SHARE_ENV,
+      // @ts-ignore
       execArgv: ['--enable-source-maps', '--no-warnings', '--experimental-loader', config.applicationLoaderPath],
       workerData: { serverPort: this.port, messagePort: port2 },
       transferList: [port2],

@@ -34,7 +34,6 @@ function getLoaderContents(hooksPath) {
   const RE_IGNORE = /^[^.]/
 
   export function resolve(specifier, context, defaultResolve) {
-    console.log(specifier, context)
     if (customHooks.onServerResolve !== undefined) {
       return customHooks.onServerResolve(specifier, context, defaultResolve);
     }
