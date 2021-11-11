@@ -389,7 +389,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('ok');
     });
-    it.only('should start an app server with default server transform', async () => {
+    it('should start an app server with default server transform', async () => {
       server = await serverFactory('test/unit/fixtures/app.ts', {
         port: 8100,
         reload: false,

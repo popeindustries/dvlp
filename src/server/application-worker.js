@@ -39,11 +39,12 @@ http.createServer = new Proxy(http.createServer, {
     server.listen = new Proxy(server.listen, {
       apply(target, ctx, args) {
         // Override port
-        if (typeof args[0] === 'number') {
-          args[0] = serverPort;
-        } else if (typeof args[0] === 'object') {
+        if (typeof args[0] === 'object') {
           args[0].port = serverPort;
+        } else {
+          args[0] = serverPort;
         }
+
         return Reflect.apply(target, ctx, args);
       },
     });

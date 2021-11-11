@@ -29,16 +29,8 @@ describe('server', () => {
   });
 
   describe('application', () => {
-    it('should start esm app server', async () => {
+    it('should start app server', async () => {
       childProcess = await child('bin/dvlp.js', ['test/integration/fixtures/app.mjs']);
-      const res = await fetch('http://localhost:8080/', {
-        headers: { accept: 'text/html' },
-      });
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('hi');
-    });
-    it('should start cjs app server', async () => {
-      childProcess = await child('bin/dvlp.js', ['test/integration/fixtures/app.cjs']);
       const res = await fetch('http://localhost:8080/', {
         headers: { accept: 'text/html' },
       });
