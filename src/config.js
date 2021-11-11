@@ -3,6 +3,7 @@ import fs from 'fs';
 import { isMainThread } from 'worker_threads';
 import mime from 'mime';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import rimraf from 'rimraf';
 import send from 'send';
 
@@ -15,7 +16,7 @@ const TESTING = process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefin
 const VERSION = global.$VERSION || 'dev';
 
 const dir = path.resolve(DIR);
-const applicationLoaderPath = path.join(dir, 'app-loader.mjs');
+const applicationLoaderPath = pathToFileURL(path.join(dir, 'app-loader.mjs'));
 const sourceMapsDirName = `${path.join(DIR, `sourcemaps`)}`;
 const sourceMapsDir = path.resolve(sourceMapsDirName);
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;

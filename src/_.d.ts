@@ -1,6 +1,6 @@
 declare interface Config {
   activePort: number;
-  applicationLoaderPath: string;
+  applicationLoaderPath: import('url').URL;
   brokenNamedExportsPackages: Record<string, Array<string>>;
   bundleDir: string;
   bundleDirName: string;
