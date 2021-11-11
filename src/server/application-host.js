@@ -35,6 +35,7 @@ export default class ApplicationHost {
     }
 
     if (typeof this.main === 'string') {
+      this.main = pathToFileURL(this.main).href;
       if (this.watcher !== undefined) {
         this.watcher.add(this.main);
       }
@@ -193,6 +194,7 @@ class ApplicationThread extends Worker {
     return new Promise((resolve, reject) => {
       this.resolveStarted = resolve;
       this.rejectStarted = reject;
+      debug(`starting application at ${main}`);
       this.messagePort.postMessage({ type: 'start', main });
     });
   }

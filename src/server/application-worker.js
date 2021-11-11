@@ -1,7 +1,6 @@
 import http from 'http';
 import { interceptFileRead } from '../utils/intercept.js';
 import { isNodeModuleFilePath } from '../utils/is.js';
-import { pathToFileURL } from 'url';
 import { syncBuiltinESMExports } from 'module';
 import { workerData } from 'worker_threads';
 
@@ -17,7 +16,8 @@ messagePort.on(
     if (msg.type === 'start') {
       /* eslint no-useless-catch: 0 */
       try {
-        await import(pathToFileURL(msg.main).href);
+        console.log(msg.main);
+        await import(msg.main);
       } catch (err) {
         console.log(err);
         throw err;
