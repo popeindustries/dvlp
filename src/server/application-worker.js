@@ -9,6 +9,8 @@ const messagePort = /** @type { import('worker_threads').MessagePort } */ (worke
 /** @type { import('http').Server } */
 let server;
 
+console.log('thread started');
+
 messagePort.on(
   'message',
   /** @param { ApplicationHostMessage } msg */

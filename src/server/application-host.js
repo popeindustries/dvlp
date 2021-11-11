@@ -183,7 +183,7 @@ class ApplicationThread extends Worker {
       this.watcher = undefined;
     });
 
-    debug(`created application thread with id "${this.threadId}"`);
+    debug(`created application thread with id "${this.threadId}" at "${filePath}"`);
   }
 
   /**
