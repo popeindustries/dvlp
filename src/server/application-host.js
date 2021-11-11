@@ -26,15 +26,15 @@ if (!workerPath.startsWith('.')) {
 export default class ApplicationHost {
   /**
    * @param { string | (() => void) } main
-   * @param { number } port
-   * @param { string } gatewayOrigin
+   * @param { number } workerPort
+   * @param { string } hostOrigin
    * @param { (filePath: string, silent?: boolean) => void } [triggerClientReload]
    * @param { Array<SerializedMock> } [serializedMocks]
    */
-  constructor(main, port, gatewayOrigin, triggerClientReload, serializedMocks) {
+  constructor(main, workerPort, hostOrigin, triggerClientReload, serializedMocks) {
     this.main = main;
-    this.port = port;
-    this.gatewayOrigin = gatewayOrigin;
+    this.workerPort = workerPort;
+    this.hostOrigin = hostOrigin;
     this.serializedMocks = serializedMocks;
     /** @type { import('http').Server | undefined } */
     this.server;
@@ -78,7 +78,7 @@ export default class ApplicationHost {
 
       await this.activeThread.start(this.main);
       debug(`application server started in ${Date.now() - s}ms`);
-      noisyInfo(`    proxied application server started at ${chalk.bold(`http://localhost:${this.port}`)}`);
+      noisyInfo(`    proxied application server started at ${chalk.bold(`http://localhost:${this.workerPort}`)}`);
     } catch (err) {
       // Skip. Unable to recover until file save and restart
     }
@@ -121,7 +121,7 @@ export default class ApplicationHost {
       headers,
       method: req.method,
       path: req.url,
-      port: this.port,
+      port: this.workerPort,
     };
     const appRequest = request(requestOptions, (originResponse) => {
       const { statusCode, headers } = originResponse;
@@ -148,9 +148,9 @@ export default class ApplicationHost {
       // @ts-ignore
       execArgv: ['--enable-source-maps', '--no-warnings', '--experimental-loader', config.applicationLoaderPath],
       workerData: {
-        gatewayOrigin: this.gatewayOrigin,
+        hostOrigin: this.hostOrigin,
         messagePort: port2,
-        serverPort: this.port,
+        serverPort: this.workerPort,
         serializedMocks: this.serializedMocks,
       },
       transferList: [port2],
@@ -282,7 +282,7 @@ function proxyCreateServer(host) {
         });
         server.on('listening', () => {
           const address = server.address();
-          host.port = /** @type { import('net').AddressInfo } */ (address).port;
+          host.workerPort = /** @type { import('net').AddressInfo } */ (address).port;
         });
 
         server.destroy = () => {

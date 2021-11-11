@@ -60,7 +60,7 @@ declare interface Hooks {
   onServerTransform?(
     filePath: string,
     context: { format?: string },
-    defaultLoad: NodeLoadLoaderHook,
+    defaultTransform: NodeLoadLoaderHook,
   ): { format: string; source: string | SharedArrayBuffer | Uint8Array };
 }
 

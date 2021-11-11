@@ -118,17 +118,6 @@ export default {
   },
 
   /**
-   * Transform file contents for file imported by Node.js application server.
-   * This hook is run after file read.
-   *
-   * @param { string } filePath
-   * @param { string } fileContents
-   */
-  onServerTransform(filePath, fileContents) {
-    // Note: .ts, .tsx, .jsx files are transformed by default
-  },
-
-  /**
    * Manually resolve import specifier.
    * This hook is run for each import statement.
    * If returns "false", import re-writing is skipped.
@@ -173,6 +162,31 @@ export default {
       return responseBody.replace('__VERSION__', '1.0.0');
     }
   },
+
+  /**
+   * Transform file contents for application server.
+   *
+   * @param { string } filePath
+   * @param { { format?: string } } context
+   * @param { NodeLoadLoaderHook } defaultTransform
+   * @returns { { format: string; source: string | SharedArrayBuffer | Uint8Array } }
+   */
+  onServerTransform(filePath, context, defaultTransform) {
+    // Note: .ts, .tsx, .jsx files are transformed by default
+    // @see https://nodejs.org/api/esm.html#loadurl-context-defaultload
+  },
+
+  /**
+   * Manually resolve import specifiers for application server.
+   *
+   * @param { string } specifier
+   * @param { { conditions: Array<string>; parentURL?: string } } context
+   * @param { NodeResolveLoaderHook } defaultResolve
+   * @returns { { format?: string; url: string } }
+   */
+  onServerResolve(specifier, context, defaultResolve){
+    // @see https://nodejs.org/api/esm.html#resolvespecifier-context-defaultresolve
+  }
 };
 ```
 

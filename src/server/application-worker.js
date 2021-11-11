@@ -5,7 +5,7 @@ import { isNodeModuleFilePath } from '../utils/is.js';
 import { syncBuiltinESMExports } from 'module';
 import { workerData } from 'worker_threads';
 
-const gatewayUrl = /** @type { URL } */ (new URL(workerData.gatewayOrigin));
+const hostUrl = /** @type { URL } */ (new URL(workerData.hostOrigin));
 const serverPort = /** @type { number } */ (workerData.serverPort);
 const mocks = /** @type { Array<DeserializedMock> } */ (workerData.serializedMocks)?.map((mockData) => {
   mockData.originRegex = new RegExp(mockData.originRegex);
@@ -60,12 +60,14 @@ http.createServer = new Proxy(http.createServer, {
   },
 });
 
+// Notify host on file read to add to watch list
 interceptFileRead((filePath) => {
   if (!isNodeModuleFilePath(filePath)) {
     messagePort.postMessage({ type: 'read', path: filePath });
   }
 });
 
+// Redirect mocked request to host
 interceptClientRequest((url) => {
   for (const mock of mocks) {
     if (
@@ -77,7 +79,7 @@ interceptClientRequest((url) => {
 
     if (mock.pathRegex.exec(url.pathname) != null) {
       const href = url.href;
-      url.host = gatewayUrl.host;
+      url.host = hostUrl.host;
       url.search = `?dvlpmock=${encodeURIComponent(href)}`;
       break;
     }
