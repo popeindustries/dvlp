@@ -148,7 +148,7 @@ export default class ApplicationHost {
 
 class ApplicationThread extends Worker {
   /**
-   * @param { string } filePath
+   * @param { import('url').URL } filePath
    * @param { import('worker_threads').MessagePort } messagePort
    * @param { Watcher | undefined } watcher
    * @param { import('worker_threads').WorkerOptions } options
