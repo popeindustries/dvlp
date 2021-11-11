@@ -200,7 +200,6 @@ describe('mock', () => {
     });
     it.only('should load mock files from directory path', async () => {
       await mocks.load('test/unit/fixtures/mock');
-      console.log(mocks.cache);
       expect(mocks.cache.size).to.equal(10);
     });
     it('should load mock files from directory path and update client string', async () => {
