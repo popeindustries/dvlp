@@ -29,8 +29,11 @@ describe('server', () => {
   });
 
   describe('application', () => {
-    it('should start app server', async () => {
-      childProcess = await child('bin/dvlp.js', ['test/integration/fixtures/app.mjs']);
+    it.only('should start app server', async () => {
+      childProcess = await child('bin/dvlp.js', ['test/integration/fixtures/app.mjs'], {
+        env: { DEBUG: 'dvlp*' },
+        stdio: 'inherit',
+      });
       const res = await fetch('http://localhost:8080/', {
         headers: { accept: 'text/html' },
       });

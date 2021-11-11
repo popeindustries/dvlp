@@ -46,8 +46,5 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Test:unit
-        run: pnpm run test
-
       - name: Test:integration
         run: pnpm run test:integration
