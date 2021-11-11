@@ -359,7 +359,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('main');
     });
-    it('should start an app server', async () => {
+    it.only('should start an app server', async () => {
       server = await serverFactory('test/unit/fixtures/app.mjs', {
         port: 8100,
         reload: false,
