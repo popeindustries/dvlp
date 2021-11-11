@@ -26,7 +26,7 @@ function getLoaderContents(hooksPath) {
   import { fileURLToPath, pathToFileURL } from 'url';
   import { esbuild } from 'dvlp';
   import { extname } from 'path';
-  ${hooksPath ? `import * as customHooks from '${hooksPath}';` : 'const customHooks = {};'}
+  ${hooksPath ? `import customHooks from '${hooksPath}';` : 'const customHooks = {};'}
 
   const BASE_URL = pathToFileURL(process.cwd() + '/').href;
   const IS_WIN32 = process.platform === 'win32';
@@ -61,7 +61,7 @@ function getLoaderContents(hooksPath) {
 
   export function load(url, context, defaultLoad) {
     if (customHooks.onServerTransform !== undefined) {
-      return customHooks.onServerTransform(specifier, context, defaultResolve);
+      return customHooks.onServerTransform(url, context, defaultLoad);
     }
 
     if (RE_EXTS.test(new URL(url).pathname)) {

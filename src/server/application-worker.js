@@ -18,6 +18,7 @@ messagePort.on(
       try {
         await import(msg.main);
       } catch (err) {
+        console.log(err);
         throw err;
       }
     }
