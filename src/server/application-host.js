@@ -127,7 +127,7 @@ export default class ApplicationHost {
   createThread() {
     const { port1, port2 } = new MessageChannel();
 
-    return new ApplicationThread(workerPath, port1, this.watcher, {
+    return new ApplicationThread(pathToFileURL(workerPath), port1, this.watcher, {
       env: SHARE_ENV,
       execArgv: ['--enable-source-maps', '--no-warnings', '--experimental-loader', config.applicationLoaderPath],
       workerData: { serverPort: this.port, messagePort: port2 },
@@ -154,7 +154,7 @@ class ApplicationThread extends Worker {
    * @param { import('worker_threads').WorkerOptions } options
    */
   constructor(filePath, messagePort, watcher, options) {
-    super(pathToFileURL(filePath), options);
+    super(filePath, options);
 
     /** @type { boolean } */
     this.isListening;
