@@ -1,6 +1,6 @@
 import { dirname, join } from 'path';
 import { fatal, info } from '../utils/log.js';
-import { MessageChannel, setEnvironmentData, SHARE_ENV, Worker } from 'worker_threads';
+import { MessageChannel, SHARE_ENV, Worker } from 'worker_threads';
 import config from '../config.js';
 import Debug from 'debug';
 import { fileURLToPath } from 'url';
@@ -30,7 +30,6 @@ export default class ApplicationHost {
     }
 
     if (typeof this.main === 'string') {
-      setEnvironmentData('port', port);
       if (this.watcher !== undefined) {
         this.watcher.add(this.main);
       }
@@ -56,6 +55,7 @@ export default class ApplicationHost {
       await this.activeThread.start(this.main);
       info(`application server started on port "${this.port}"`);
     } catch (err) {
+      console.log(err);
       // Skip. Unable to recover until file save and restart
     }
   }
@@ -120,6 +120,7 @@ export default class ApplicationHost {
     return new ApplicationThread(workerPath, this.watcher, {
       env: SHARE_ENV,
       execArgv: ['--enable-source-maps', '--no-warnings', '--experimental-loader', config.applicationLoaderPath],
+      workerData: this.port,
     });
   }
 
@@ -175,7 +176,6 @@ class ApplicationThread extends Worker {
       if (this.isListening === undefined) {
         this.listen(err);
       }
-      console.log(err);
       fatal(err);
     });
     this.on('exit', (exitCode) => {

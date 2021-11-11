@@ -41,6 +41,7 @@ function getLoaderContents(hooksPath) {
     if (RE_EXTS.test(specifier)) {
       return { url: url.href, format: 'module' };
     }
+    // Resolve TS files missing extension
     if (!RE_IGNORE.test(specifier) && extname(pathname) === '') {
       for (const ext of ['.ts', '.tsx']) {
         url.pathname = pathname + ext;

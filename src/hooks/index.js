@@ -3,7 +3,6 @@ import bundleDependency from './bundle-dependency.js';
 import esbuild from 'esbuild';
 import { isNodeModuleFilePath } from '../utils/is.js';
 import { resolve } from '../resolver/index.js';
-import serverTransform from './serverTransform.js';
 import transform from './transform.js';
 
 const HOOK_NAMES = ['onDependencyBundle', 'onTransform', 'onResolveImport', 'onRequest', 'onSend', 'onServerTransform'];
@@ -66,7 +65,6 @@ export default class Hooker {
     this.transform = this.transform.bind(this);
     this.resolveImport = this.resolveImport.bind(this);
     this.send = this.send.bind(this);
-    this.serverTransform = this.serverTransform.bind(this);
   }
 
   /**
@@ -172,17 +170,6 @@ export default class Hooker {
     }
 
     return result || fileContents;
-  }
-
-  /**
-   * Transform server content for 'filePath'
-   *
-   * @param { string } filePath
-   * @param { string } fileContents
-   * @returns { string }
-   */
-  serverTransform(filePath, fileContents) {
-    return serverTransform(filePath, fileContents, this.hooks && this.hooks.onServerTransform);
   }
 
   /**

@@ -1,10 +1,10 @@
-import { getEnvironmentData, parentPort } from 'worker_threads';
+import { parentPort, workerData } from 'worker_threads';
 import http from 'http';
 import { interceptFileRead } from '../utils/intercept.js';
 import { isNodeModuleFilePath } from '../utils/is.js';
 import { syncBuiltinESMExports } from 'module';
 
-const serverPort = /** @type { number } */ (getEnvironmentData('port'));
+const serverPort = /** @type { number } */ (workerData);
 /** @type { import('worker_threads').MessagePort }*/
 let messagePort;
 /** @type { import('http').Server } */
@@ -58,7 +58,12 @@ syncBuiltinESMExports();
  */
 async function handleMessage(msg) {
   if (msg.type === 'start') {
-    import(msg.main);
+    /* eslint no-useless-catch: 0 */
+    try {
+      await import(msg.main);
+    } catch (err) {
+      throw err;
+    }
   }
 }
 
