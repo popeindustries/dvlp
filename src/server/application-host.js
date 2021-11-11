@@ -11,7 +11,10 @@ import { request } from 'http';
 import watch from '../utils/watch.js';
 
 const debug = Debug('dvlp:apphost');
-let workerPath = relative(process.cwd(), join(dirname(fileURLToPath(import.meta.url)), './application-worker.js'));
+let workerPath = relative(
+  process.cwd(),
+  join(dirname(fileURLToPath(import.meta.url)), './application-worker.js'),
+).replace(/\\/g, '/');
 
 if (!workerPath.startsWith('.')) {
   workerPath = `./${workerPath}`;
