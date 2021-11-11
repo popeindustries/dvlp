@@ -64,7 +64,7 @@ function getLoaderContents(hooksPath) {
       const { format } = context;
 
       const filename = IS_WIN32 ? url : fileURLToPath(url);
-      const source = fs.readFileSync(new URL(url), { encoding: 'utf8' });
+      const source = readFileSync(new URL(url), { encoding: 'utf8' });
       const { code } = transform(source, filename, url, format);
 
       return { format: 'module', source: code };
