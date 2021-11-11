@@ -460,7 +460,6 @@ export default class Mock {
    * @private
    */
   async loadFile(filePath) {
-    console.log(filePath);
     try {
       /** @type { Array<MockResponseJSONSchema | MockPushEventJSONSchema> } */
       let mocks;

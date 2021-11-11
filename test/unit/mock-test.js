@@ -198,7 +198,7 @@ describe('mock', () => {
       await mocks.load('test/unit/fixtures/mock/multi.json');
       expect(mocks.cache.size).to.equal(2);
     });
-    it.only('should load mock files from directory path', async () => {
+    it('should load mock files from directory path', async () => {
       await mocks.load('test/unit/fixtures/mock');
       expect(mocks.cache.size).to.equal(10);
     });
