@@ -90,7 +90,7 @@
     "lint:src": "eslint './{src,test}/**/*.js'",
     "lint:types": "tsc --noEmit --skipLibCheck --project jsconfig.json",
     "prepublishOnly": "npm run build",
-    "test": "cross-env DEBUG=dvlp* NODE_ENV=dvlptest NODE_OPTIONS=\"--enable-source-maps --no-warnings\" NODE_TLS_REJECT_UNAUTHORIZED=\"0\" ESBUILD_WORKER_THREADS=1 mocha test/unit/*-test.js --reporter spec --exit --timeout 10000",
+    "test": "cross-env NODE_ENV=dvlptest NODE_OPTIONS=\"--enable-source-maps --no-warnings\" NODE_TLS_REJECT_UNAUTHORIZED=\"0\" ESBUILD_WORKER_THREADS=1 mocha test/unit/*-test.js --reporter spec --exit --timeout 10000",
     "test:browser": "npm run build && ./bin/dvlp.js --mock test/browser/fixtures/mock test/browser",
     "test:integration": "npm run build && cross-env NODE_ENV=dvlptest mocha test/integration/*-test.js --reporter spec --exit --timeout 10000",
     "prepare": "husky install"
