@@ -1,5 +1,5 @@
 import { error, info, noisyInfo } from '../utils/log.js';
-import { fileURLToPath, URLSearchParams } from 'url';
+import { fileURLToPath, pathToFileURL, URLSearchParams } from 'url';
 import { getUrl, isEqualSearchParams } from '../utils/url.js';
 import { isInvalidFilePath, isJsFilePath, isJsonFilePath } from '../utils/is.js';
 import { match, pathToRegexp } from 'path-to-regexp';
@@ -468,7 +468,7 @@ export default class Mock {
       if (isJsonFilePath(filePath)) {
         mocks = JSON.parse(fs.readFileSync(filePath, 'utf8'));
       } else if (isJsFilePath(filePath)) {
-        mocks = (await import(filePath)).default;
+        mocks = (await import(pathToFileURL(filePath).href)).default;
       } else {
         return;
       }
