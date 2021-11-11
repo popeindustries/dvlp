@@ -10,6 +10,7 @@ import http from 'http';
 import { isProxy } from '../utils/is.js';
 import { pathToFileURL } from 'url';
 import { request } from 'http';
+import { syncBuiltinESMExports } from 'module';
 import watch from '../utils/watch.js';
 
 const debug = Debug('dvlp:apphost');
@@ -26,11 +27,15 @@ export default class ApplicationHost {
   /**
    * @param { string | (() => void) } main
    * @param { number } port
+   * @param { string } gatewayOrigin
    * @param { (filePath: string, silent?: boolean) => void } [triggerClientReload]
+   * @param { Array<SerializedMock> } [serializedMocks]
    */
-  constructor(main, port, triggerClientReload) {
+  constructor(main, port, gatewayOrigin, triggerClientReload, serializedMocks) {
     this.main = main;
     this.port = port;
+    this.gatewayOrigin = gatewayOrigin;
+    this.serializedMocks = serializedMocks;
     /** @type { import('http').Server | undefined } */
     this.server;
     /** @type { Watcher | undefined } */
@@ -142,7 +147,12 @@ export default class ApplicationHost {
       env: SHARE_ENV,
       // @ts-ignore
       execArgv: ['--enable-source-maps', '--no-warnings', '--experimental-loader', config.applicationLoaderPath],
-      workerData: { serverPort: this.port, messagePort: port2 },
+      workerData: {
+        gatewayOrigin: this.gatewayOrigin,
+        messagePort: port2,
+        serverPort: this.port,
+        serializedMocks: this.serializedMocks,
+      },
       transferList: [port2],
     });
   }
@@ -288,5 +298,6 @@ function proxyCreateServer(host) {
         return server;
       },
     });
+    syncBuiltinESMExports();
   }
 }

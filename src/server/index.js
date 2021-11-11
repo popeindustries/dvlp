@@ -52,6 +52,7 @@ export default class DvlpServer {
     this.entry = entry;
     this.hooks = new Hooker(hooks, this.watcher);
     this.lastChanged = '';
+    this.origin = `http://localhost:${port}`;
     /** @type { Http2SecureServerOptions } */
     this.secureServerOptions;
 
@@ -63,8 +64,6 @@ export default class DvlpServer {
         this.origin = `https://${commonName}`;
       }
       this.secureServerOptions = { allowHTTP1: true, ...serverOptions };
-    } else {
-      this.origin = `http://localhost:${port}`;
     }
 
     // Make sure mocks instance has access to active port
@@ -102,7 +101,9 @@ export default class DvlpServer {
       this.applicationHost = new ApplicationHost(
         entry.main,
         this.port === 443 ? config.defaultPort : this.port + 1,
+        this.origin,
         reload ? this.triggerClientReload : undefined,
+        this.mocks?.toJSON(),
       );
     }
   }

@@ -170,7 +170,7 @@ export class TestServer {
    * @param { string | Array<string> } filePath
    */
   loadMockFiles(filePath) {
-    this.mocks.load(filePath);
+    return this.mocks.load(filePath);
   }
 
   /**

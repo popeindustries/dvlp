@@ -135,7 +135,7 @@ describe('testServer', () => {
     testServer.disableNetwork(false);
   });
 
-  describe.skip('mock()', () => {
+  describe('mock()', () => {
     it('should respond to mocked json request', async () => {
       server = await testServer();
       server.mockResponse('/api/foo', { body: { foo: 'foo' } });
@@ -190,10 +190,10 @@ describe('testServer', () => {
     });
   });
 
-  describe.skip('loadMockFiles()', () => {
+  describe('loadMockFiles()', () => {
     it('should respond to mocked image request with custom headers', async () => {
       server = await testServer();
-      server.loadMockFiles('test/unit/fixtures/mock');
+      await server.loadMockFiles('test/unit/fixtures/mock');
       const res = await fetch('http://localhost:8080/1234.jpg');
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('image/jpeg');
@@ -202,7 +202,7 @@ describe('testServer', () => {
     });
     it('should respond to mocked external json request', async () => {
       server = await testServer();
-      server.loadMockFiles('test/unit/fixtures/mock');
+      await server.loadMockFiles('test/unit/fixtures/mock');
       const res = await fetch('http://www.someapi.com/v1/5678');
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('application/json');
@@ -210,11 +210,19 @@ describe('testServer', () => {
     });
     it('should respond to mocked external https json request', async () => {
       server = await testServer();
-      server.loadMockFiles('test/unit/fixtures/mock');
+      await server.loadMockFiles('test/unit/fixtures/mock');
       const res = await fetch('https://www.someapi.com/v1/9012');
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('application/json');
       expect(await res.json()).to.eql({ user: { name: 'Bob', id: 9012 } });
+    });
+    it('should respond to mocked request from dynamic js response', async () => {
+      server = await testServer();
+      await server.loadMockFiles('test/unit/fixtures/mock');
+      const res = await fetch('https://www.someapi.com/v1/4567');
+      expect(res).to.exist;
+      expect(res.headers.get('Content-type')).to.include('application/json');
+      expect(await res.json()).to.eql({ user: { name: 'Gus', id: 4567 } });
     });
   });
 

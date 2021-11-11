@@ -15,8 +15,6 @@ const originalReadStreamRead = fs.ReadStream.prototype._read;
 const originalReadFile = fs.readFile;
 const originalReadFileSync = fs.readFileSync;
 
-/** @typedef { import("http").ClientRequestArgs & { href?: string } } ClientRequestArgs */
-
 // Early init to ensure that 3rd-party libraries use proxied versions
 initInterceptFileRead();
 
@@ -130,12 +128,25 @@ function restoreClientRequest(fn) {
  * Create client request Proxy apply trap for 'protocol'
  *
  * @param { string } protocol
- * @returns { (target: object, ctx: object, args: [string | ClientRequestArgs]) => Res }
+ * @returns { (target: object, ctx: object, args: [import('http').RequestOptions | string | URL, Function?] | [string | URL, import('http').RequestOptions, Function?]) => Res }
  */
 function clientRequestApplyTrap(protocol) {
   return function apply(target, ctx, args) {
     if (clientRequestListeners.size > 0) {
-      const url = new URL(typeof args[0] === 'string' ? args[0] : getHrefFromRequestOptions(args[0], protocol));
+      let [urlOrOptions, optionsOrCallback, callback] = args;
+      /** @type { import('http').RequestOptions } */
+      let options;
+      /** @type { URL } */
+      let url;
+
+      if (typeof urlOrOptions === 'string' || urlOrOptions instanceof URL) {
+        url = new URL(urlOrOptions);
+        options = /** @type { import('http').RequestOptions } */ (optionsOrCallback);
+      } else {
+        url = new URL(getHrefFromRequestOptions(urlOrOptions, protocol));
+        callback = /** @type { Function } */ (optionsOrCallback);
+        options = urlOrOptions;
+      }
 
       // TODO: pass method/headers
       if (notifyListeners(clientRequestListeners, url) === false) {
@@ -147,27 +158,27 @@ function clientRequestApplyTrap(protocol) {
         url.protocol = 'http:';
         target = target === originalHttpsGet || target === originalHttpGet ? originalHttpGet : originalHttpRequest;
       }
-      if (typeof args[0] === 'string') {
-        args[0] = url.href;
-      } else {
-        args[0].protocol = url.protocol;
-        args[0].host = url.host;
-        args[0].hostname = url.hostname;
-        args[0].port = url.port;
-        args[0].path = `${url.href.replace(url.origin, '')}`;
-        args[0].href = url.href;
-        // Force http agent when localhost (due to mocking most likely)
-        if (
-          args[0].agent &&
-          args[0].agent instanceof http.Agent &&
-          // @ts-ignore
-          args[0].agent.protocol === 'https:' &&
-          isLocalhost(url.hostname)
-        ) {
-          // @ts-ignore
-          args[0].agent = new http.Agent(args[0].agent.options || {});
-        }
+
+      options.protocol = url.protocol;
+      options.host = url.host;
+      options.hostname = url.hostname;
+      options.port = url.port;
+      options.path = `${url.href.replace(url.origin, '')}`;
+      // @ts-ignore
+      options.href = url.href;
+      // Force http agent when localhost (due to mocking most likely)
+      if (
+        options.agent &&
+        options.agent instanceof http.Agent &&
+        // @ts-ignore
+        options.agent.protocol === 'https:' &&
+        isLocalhost(url.hostname)
+      ) {
+        // @ts-ignore
+        options.agent = new http.Agent(options.agent.options || {});
       }
+
+      args = [url, options, callback];
     }
 
     // @ts-ignore
@@ -178,7 +189,7 @@ function clientRequestApplyTrap(protocol) {
 /**
  * Retrieve href from 'options'
  *
- * @param { ClientRequestArgs } options
+ * @param { import('http').RequestOptions & { href?: string } } options
  * @param { string } protocol
  * @returns { string }
  */

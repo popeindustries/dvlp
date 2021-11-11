@@ -111,3 +111,21 @@ declare interface MockPushEvent {
   sequence?: Array<MockPushEvent>;
   options?: MockPushEventOptions;
 }
+
+declare interface SerializedMock {
+  href: string;
+  originRegex: string;
+  pathRegex: string;
+  search: string;
+  ignoreSearch: boolean;
+  events?: Array<string>;
+}
+
+declare interface DeserializedMock {
+  href: string;
+  originRegex: RegExp;
+  pathRegex: RegExp;
+  search: URLSearchParams;
+  ignoreSearch: boolean;
+  events?: Array<string>;
+}

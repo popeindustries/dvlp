@@ -222,13 +222,13 @@ describe('server', () => {
       server = await serverFactory('test/unit/fixtures/www', {
         port: 8100,
         reload: false,
-        hooksPath: 'test/unit/fixtures/hooksError.mjs',
+        hooksPath: 'test/unit/fixtures/hooks-error.mjs',
       });
       const res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(500);
       expect(await res.text()).to.equal('transform error style.css');
     });
-    it.skip('should respond to mocked requests', async () => {
+    it('should respond to mocked requests', async () => {
       server = await serverFactory('test/unit/fixtures/www', {
         mockPath: 'test/unit/fixtures/mock/1234.json',
         port: 8100,
@@ -380,7 +380,7 @@ describe('server', () => {
       expect(await res.text()).to.contain('main');
     });
     it('should start an app server listening for "request" event', async () => {
-      server = await serverFactory('test/unit/fixtures/appListener.mjs', {
+      server = await serverFactory('test/unit/fixtures/app-listener.mjs', {
         port: 8100,
       });
       const res = await fetch('http://localhost:8100/', {
@@ -431,7 +431,7 @@ describe('server', () => {
       expect(body).to.contain('export_default as default');
     });
     it('should serve a bundled module js file from server listening for "request" event', async () => {
-      server = await serverFactory('test/unit/fixtures/appListener.mjs', {
+      server = await serverFactory('test/unit/fixtures/app-listener.mjs', {
         port: 8100,
       });
       const res = await fetch(`http://localhost:8100/${config.bundleDirName}/debug-${DEBUG_VERSION}.js`);
@@ -459,7 +459,7 @@ describe('server', () => {
       expect(await res.text()).to.contain('sse = new EventSource');
     });
     it('should start with initial error', async () => {
-      server = await serverFactory('test/unit/fixtures/appError.mjs', {
+      server = await serverFactory('test/unit/fixtures/app-error.mjs', {
         port: 8100,
         reload: false,
       });
@@ -473,7 +473,7 @@ describe('server', () => {
       expect(await res.text()).to.eql('application server failed to start');
     });
     it('should handle request error', async () => {
-      server = await serverFactory('test/unit/fixtures/appRequestError.mjs', {
+      server = await serverFactory('test/unit/fixtures/app-request-error.mjs', {
         port: 8100,
         reload: false,
       });
@@ -493,7 +493,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('this is transformed content for: style.css');
     });
-    it.skip('should respond to mocked requests', async () => {
+    it('should respond to mocked requests', async () => {
       server = await serverFactory('test/unit/fixtures/app.mjs', {
         mockPath: 'test/unit/fixtures/mock/1234.json',
         port: 8100,
@@ -502,6 +502,16 @@ describe('server', () => {
       const res = await fetch('http://localhost:8100/1234.jpg');
       expect(res.status).to.eql(200);
       expect(res.headers.get('content-type')).to.equal('image/jpeg');
+    });
+    it('should respond to remote mocked requests', async () => {
+      server = await serverFactory('test/unit/fixtures/app-api.mjs', {
+        mockPath: 'test/unit/fixtures/mock/9012.json',
+        port: 8100,
+        reload: false,
+      });
+      const res = await fetch('http://localhost:8100');
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.include('Bob');
     });
     it('should handle mock EventSource connection', (done) => {
       serverFactory('test/unit/fixtures/app.mjs', {

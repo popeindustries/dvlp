@@ -186,35 +186,35 @@ describe('mock', () => {
   });
 
   describe('load()', () => {
-    it('should load individual mock file', () => {
-      mocks.load('test/unit/fixtures/mock/1234.json');
+    it('should load individual mock file', async () => {
+      await mocks.load('test/unit/fixtures/mock/1234.json');
       expect(mocks.cache.size).to.equal(1);
     });
-    it('should load array of mock files', () => {
-      mocks.load(['test/unit/fixtures/mock/1234.json', 'test/unit/fixtures/mock/5678.json']);
+    it('should load array of mock files', async () => {
+      await mocks.load(['test/unit/fixtures/mock/1234.json', 'test/unit/fixtures/mock/5678.json']);
       expect(mocks.cache.size).to.equal(2);
     });
-    it('should load a single file referencing multiple mocks', () => {
-      mocks.load('test/unit/fixtures/mock/multi.json');
+    it('should load a single file referencing multiple mocks', async () => {
+      await mocks.load('test/unit/fixtures/mock/multi.json');
       expect(mocks.cache.size).to.equal(2);
     });
-    it('should load mock files from directory path', () => {
-      mocks.load('test/unit/fixtures/mock');
-      expect(mocks.cache.size).to.equal(9);
+    it('should load mock files from directory path', async () => {
+      await mocks.load('test/unit/fixtures/mock');
+      expect(mocks.cache.size).to.equal(10);
     });
-    it('should load mock files from directory path and update client string', () => {
-      mocks.load('test/unit/fixtures/mock-push');
+    it('should load mock files from directory path and update client string', async () => {
+      await mocks.load('test/unit/fixtures/mock-push');
       expect(mocks.client).to.include('"pathRegex": "^\\\\/feed[\\\\/#\\\\?]?$"');
     });
-    it('should prepare inlineable client string', () => {
-      mocks.load('test/unit/fixtures/mock');
+    it('should prepare inlineable client string', async () => {
+      await mocks.load('test/unit/fixtures/mock');
       expect(mocks.client).to.include('"pathRegex": "^\\\\/1234\\\\.jpg[\\\\/#\\\\?]?$"');
     });
   });
 
   describe('matchResponse()', () => {
-    beforeEach(() => {
-      mocks.load('test/unit/fixtures/mock');
+    beforeEach(async () => {
+      await mocks.load('test/unit/fixtures/mock');
     });
 
     it('should return "false" if no match', () => {
