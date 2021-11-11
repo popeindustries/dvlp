@@ -36,7 +36,8 @@ export async function server(
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
     hooks = /** @type { Hooks } */ (await importModule(hooksPath));
-    info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
+    hooks.filePath = hooksPath;
+    info(`  ${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
   }
   if (certsPath) {
     certsPath = expandPath(certsPath);
@@ -47,7 +48,7 @@ export async function server(
     process.env.PORT = String(port);
   }
 
-  createApplicationLoader(config.applicationLoaderPath, hooksPath);
+  createApplicationLoader(config.applicationLoaderPath, hooks);
 
   const server = new DvlpServer(entry, port, reload, hooks, mockPath, certsPath);
 

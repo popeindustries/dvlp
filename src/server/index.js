@@ -155,16 +155,19 @@ export default class DvlpServer {
    *  3. full page reload
    *
    * @param { string } filePath
+   * @param { boolean } [silent]
    * @returns { void }
    */
-  triggerClientReload(filePath) {
+  triggerClientReload(filePath, silent) {
     this.lastChanged = filePath;
 
     if (!this.reload) {
       return;
     }
 
-    noisyInfo(`\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.yellow(getProjectPath(filePath))}`);
+    if (!silent) {
+      noisyInfo(`\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.cyan(getProjectPath(filePath))}`);
+    }
 
     // Find corresponding url
     for (const [url, fp] of this.urlToFilePath) {
@@ -179,7 +182,7 @@ export default class DvlpServer {
     const data = JSON.stringify({ type, filePath });
 
     if (this.clients.size) {
-      noisyInfo(`${chalk.yellow(`  ⟲ ${event}ing`)} ${this.clients.size} client${this.clients.size > 1 ? 's' : ''}`);
+      noisyInfo(`${chalk.yellow(` 💫 ${event}ing`)} ${this.clients.size} client${this.clients.size > 1 ? 's' : ''}`);
 
       for (const client of this.clients) {
         client.send(data, { event });
@@ -307,7 +310,7 @@ export default class DvlpServer {
         res.end();
         return;
       } else {
-        noisyInfo(`  allowing app to handle "${req.url}"`);
+        noisyInfo(`    allowing app to handle "${req.url}"`);
         this.applicationHost.handle(req, res);
       }
     }

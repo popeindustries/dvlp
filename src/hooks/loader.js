@@ -6,14 +6,14 @@ const t = String.raw;
 /**
  * Create application loader based on passed hooks
  *
- * @param { string } loaderPath
- * @param { string } [hooksPath]
+ * @param { import('url').URL } loaderPath
+ * @param { Hooks } [hooks]
  */
-export function createApplicationLoader(loaderPath, hooksPath) {
-  if (hooksPath) {
-    hooksPath = pathToFileURL(hooksPath).href;
-  }
+export function createApplicationLoader(loaderPath, hooks) {
+  const hooksPath =
+    hooks && (hooks.onServerTransform || hooks.onServerResolve) ? pathToFileURL(hooks.filePath).href : undefined;
   const contents = getLoaderContents(hooksPath);
+
   writeFileSync(loaderPath, contents);
 }
 

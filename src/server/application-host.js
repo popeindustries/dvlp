@@ -1,9 +1,11 @@
 import { dirname, join, relative } from 'path';
-import { fatal, info } from '../utils/log.js';
+import { fatal, noisyInfo } from '../utils/log.js';
 import { MessageChannel, SHARE_ENV, Worker } from 'worker_threads';
+import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
 import { fileURLToPath } from 'url';
+import { getProjectPath } from '../utils/file.js';
 import http from 'http';
 import { isProxy } from '../utils/is.js';
 import { pathToFileURL } from 'url';
@@ -24,7 +26,7 @@ export default class ApplicationHost {
   /**
    * @param { string | (() => void) } main
    * @param { number } port
-   * @param { (filePath: string) => void } [triggerClientReload]
+   * @param { (filePath: string, silent?: boolean) => void } [triggerClientReload]
    */
   constructor(main, port, triggerClientReload) {
     this.main = main;
@@ -36,16 +38,17 @@ export default class ApplicationHost {
 
     if (triggerClientReload !== undefined) {
       this.watcher = watch(async (filePath) => {
+        noisyInfo(`\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.cyan(getProjectPath(filePath))}`);
         await this.restart();
-        triggerClientReload(filePath);
+        triggerClientReload(filePath, true);
       });
     }
 
     if (typeof this.main === 'string') {
-      this.main = pathToFileURL(this.main).href;
       if (this.watcher !== undefined) {
         this.watcher.add(this.main);
       }
+      this.main = pathToFileURL(this.main).href;
       /** @type { ApplicationThread } */
       this.activeThread = this.createThread();
       /** @type { ApplicationThread } */
@@ -59,8 +62,6 @@ export default class ApplicationHost {
    * @returns { Promise<void> }
    */
   async start() {
-    const s = Date.now();
-
     if (typeof this.main === 'function') {
       proxyCreateServer(this);
       this.main();
@@ -68,9 +69,11 @@ export default class ApplicationHost {
     }
 
     try {
+      const s = Date.now();
+
       await this.activeThread.start(this.main);
       debug(`application server started in ${Date.now() - s}ms`);
-      info(`application server started on port "${this.port}"`);
+      noisyInfo(`    proxied application server started at ${chalk.bold(`http://localhost:${this.port}`)}`);
     } catch (err) {
       // Skip. Unable to recover until file save and restart
     }
@@ -86,6 +89,7 @@ export default class ApplicationHost {
     }
     this.activeThread = this.pendingThread;
     this.pendingThread = this.createThread();
+    noisyInfo('    restarting application server...');
     await this.start();
   }
 

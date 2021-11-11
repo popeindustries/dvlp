@@ -17,7 +17,7 @@ export default class Hooker {
   constructor(hooks, watcher) {
     if (hooks) {
       for (const name of Object.keys(hooks)) {
-        if (!HOOK_NAMES.includes(name)) {
+        if (!HOOK_NAMES.includes(name) && name !== 'filePath') {
           warn(`⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(', ')}`);
         }
       }
