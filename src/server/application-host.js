@@ -6,6 +6,7 @@ import Debug from 'debug';
 import { fileURLToPath } from 'url';
 import http from 'http';
 import { isProxy } from '../utils/is.js';
+import { pathToFileURL } from 'url';
 import { request } from 'http';
 import watch from '../utils/watch.js';
 
@@ -152,7 +153,7 @@ class ApplicationThread extends Worker {
    * @param { import('worker_threads').WorkerOptions } options
    */
   constructor(filePath, messagePort, watcher, options) {
-    super(filePath, options);
+    super(pathToFileURL(filePath), options);
 
     /** @type { boolean } */
     this.isListening;

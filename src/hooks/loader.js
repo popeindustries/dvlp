@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'url';
 import { writeFileSync } from 'fs';
 
 const t = String.raw;
@@ -9,6 +10,9 @@ const t = String.raw;
  * @param { string } [hooksPath]
  */
 export function createApplicationLoader(loaderPath, hooksPath) {
+  if (hooksPath) {
+    hooksPath = pathToFileURL(hooksPath).href;
+  }
   const contents = getLoaderContents(hooksPath);
   writeFileSync(loaderPath, contents);
 }

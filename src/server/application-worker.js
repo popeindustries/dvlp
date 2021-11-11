@@ -17,7 +17,7 @@ messagePort.on(
     if (msg.type === 'start') {
       /* eslint no-useless-catch: 0 */
       try {
-        await import(pathToFileURL(msg.main));
+        await import(pathToFileURL(msg.main).href);
       } catch (err) {
         console.log(err);
         throw err;
