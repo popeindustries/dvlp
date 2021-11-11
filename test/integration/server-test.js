@@ -29,17 +29,13 @@ describe('server', () => {
   });
 
   describe('application', () => {
-    it.only('should start app server', async () => {
-      childProcess = await child('bin/dvlp.js', ['test/integration/fixtures/app.mjs'], {
-        env: { DEBUG: 'dvlp:apphost' },
-        stdio: 'inherit',
-      });
+    it('should start app server', async () => {
+      childProcess = await child('bin/dvlp.js', ['test/integration/fixtures/app.mjs']);
       const res = await fetch('http://localhost:8080/', {
         headers: { accept: 'text/html' },
       });
-      // expect(res.status).to.eql(200);
-      // expect(await res.text()).to.contain('hi');
-      console.log(await res.text());
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('hi');
     });
   });
 });
@@ -49,7 +45,7 @@ function child(...args) {
     const childProcess = fork(...args);
     setTimeout(() => {
       resolve(childProcess);
-    }, 1000);
+    }, 2000);
     childProcess.on('error', reject);
   });
 }

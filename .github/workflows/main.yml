@@ -10,8 +10,8 @@ jobs:
   build_deploy:
     strategy:
       matrix:
-        os: [windows-latest]
-        node: ['14']
+        os: [ubuntu-latest, windows-latest]
+        node: ['14', '16', '17']
     runs-on: ${{ matrix.os }}
     name: Install, build, and test (OS ${{ matrix.os }} - Node ${{ matrix.node }})
     steps:
@@ -45,6 +45,9 @@ jobs:
 
       - name: Build
         run: pnpm run build
+
+      - name: Test:unit
+        run: pnpm run test
 
       - name: Test:integration
         run: pnpm run test:integration
