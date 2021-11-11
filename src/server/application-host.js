@@ -170,6 +170,7 @@ class ApplicationThread extends Worker {
       if (this.isListening === undefined) {
         this.listening(err);
       }
+      console.log(err);
       fatal(err);
     });
     this.on('exit', (exitCode) => {
