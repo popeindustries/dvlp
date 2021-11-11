@@ -1,4 +1,4 @@
-import { dirname, join } from 'path';
+import { dirname, join, relative } from 'path';
 import { fatal, info } from '../utils/log.js';
 import { MessageChannel, SHARE_ENV, Worker } from 'worker_threads';
 import config from '../config.js';
@@ -11,7 +11,11 @@ import { request } from 'http';
 import watch from '../utils/watch.js';
 
 const debug = Debug('dvlp:apphost');
-const workerPath = join(dirname(fileURLToPath(import.meta.url)), './application-worker.js');
+let workerPath = relative(process.cwd(), join(dirname(fileURLToPath(import.meta.url)), './application-worker.js'));
+
+if (!workerPath.startsWith('.')) {
+  workerPath = `./${workerPath}`;
+}
 
 export default class ApplicationHost {
   /**
@@ -127,7 +131,7 @@ export default class ApplicationHost {
   createThread() {
     const { port1, port2 } = new MessageChannel();
 
-    return new ApplicationThread(pathToFileURL(workerPath), port1, this.watcher, {
+    return new ApplicationThread(workerPath, port1, this.watcher, {
       env: SHARE_ENV,
       execArgv: ['--enable-source-maps', '--no-warnings', '--experimental-loader', config.applicationLoaderPath],
       workerData: { serverPort: this.port, messagePort: port2 },
@@ -148,7 +152,7 @@ export default class ApplicationHost {
 
 class ApplicationThread extends Worker {
   /**
-   * @param { import('url').URL } filePath
+   * @param { string } filePath
    * @param { import('worker_threads').MessagePort } messagePort
    * @param { Watcher | undefined } watcher
    * @param { import('worker_threads').WorkerOptions } options
