@@ -325,7 +325,7 @@ describe('server', () => {
   });
 
   describe('application', () => {
-    it.skip('should start a function server', async () => {
+    it('should start a function server', async () => {
       server = await serverFactory(
         () => {
           http
@@ -333,7 +333,7 @@ describe('server', () => {
               res.writeHead(200);
               res.end('hi');
             })
-            .listen(8100);
+            .listen(8102);
         },
         { port: 8100, reload: false },
       );
@@ -343,7 +343,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
     });
-    it.skip('should start a function server with additional directories', async () => {
+    it('should start a function server with additional directories', async () => {
       server = await serverFactory(
         () => {
           http
@@ -351,7 +351,7 @@ describe('server', () => {
               res.writeHead(200);
               res.end('hi');
             })
-            .listen(8100);
+            .listen(8102);
         },
         { directories: ['test/unit/fixtures/www'], port: 8100, reload: false },
       );

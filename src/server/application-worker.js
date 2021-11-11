@@ -1,23 +1,30 @@
-import { parentPort, workerData } from 'worker_threads';
 import http from 'http';
 import { interceptFileRead } from '../utils/intercept.js';
 import { isNodeModuleFilePath } from '../utils/is.js';
 import { syncBuiltinESMExports } from 'module';
+import { workerData } from 'worker_threads';
 
-const serverPort = /** @type { number } */ (workerData);
-/** @type { import('worker_threads').MessagePort }*/
-let messagePort;
+const serverPort = /** @type { number } */ (workerData.serverPort);
+const messagePort = /** @type { import('worker_threads').MessagePort } */ (workerData.messagePort);
 /** @type { import('http').Server } */
 let server;
 
-// @ts-ignore
-parentPort.once('message', (msg) => {
-  messagePort = msg.port;
-  messagePort.on('message', handleMessage);
-  messagePort.postMessage({ type: 'registered' });
-});
+messagePort.on(
+  'message',
+  /** @param { ApplicationHostMessage } msg */
+  async (msg) => {
+    if (msg.type === 'start') {
+      /* eslint no-useless-catch: 0 */
+      try {
+        await import(msg.main);
+      } catch (err) {
+        throw err;
+      }
+    }
+  },
+);
 
-// Intercept server creation to get instance with random port
+// Intercept server creation to override port
 http.createServer = new Proxy(http.createServer, {
   apply(target, ctx, args) {
     server = Reflect.apply(target, ctx, args);
@@ -25,7 +32,9 @@ http.createServer = new Proxy(http.createServer, {
     server.on('error', (err) => {
       throw err;
     });
-    server.on('listening', notifyOnStart);
+    server.on('listening', () => {
+      messagePort.postMessage({ type: 'started' });
+    });
     server.listen = new Proxy(server.listen, {
       apply(target, ctx, args) {
         // Override port
@@ -50,23 +59,3 @@ interceptFileRead((filePath) => {
 
 // Update live bindings to ensure that named exports get proxied versions
 syncBuiltinESMExports();
-
-/**
- * Handle incoming message
- *
- * @param { ApplicationHostMessage } msg
- */
-async function handleMessage(msg) {
-  if (msg.type === 'start') {
-    /* eslint no-useless-catch: 0 */
-    try {
-      await import(msg.main);
-    } catch (err) {
-      throw err;
-    }
-  }
-}
-
-function notifyOnStart() {
-  messagePort.postMessage({ type: 'started' });
-}

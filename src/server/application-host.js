@@ -4,6 +4,8 @@ import { MessageChannel, SHARE_ENV, Worker } from 'worker_threads';
 import config from '../config.js';
 import Debug from 'debug';
 import { fileURLToPath } from 'url';
+import http from 'http';
+import { isProxy } from '../utils/is.js';
 import { request } from 'http';
 import watch from '../utils/watch.js';
 
@@ -19,6 +21,8 @@ export default class ApplicationHost {
   constructor(main, port, triggerClientReload) {
     this.main = main;
     this.port = port;
+    /** @type { import('http').Server | undefined } */
+    this.server;
     /** @type { Watcher | undefined } */
     this.watcher;
 
@@ -46,16 +50,19 @@ export default class ApplicationHost {
    * @returns { Promise<void> }
    */
   async start() {
+    const s = Date.now();
+
     if (typeof this.main === 'function') {
-      // this.main();
+      proxyCreateServer(this);
+      this.main();
       return;
     }
 
     try {
       await this.activeThread.start(this.main);
+      debug(`application server started in ${Date.now() - s}ms`);
       info(`application server started on port "${this.port}"`);
     } catch (err) {
-      console.log(err);
       // Skip. Unable to recover until file save and restart
     }
   }
@@ -82,7 +89,7 @@ export default class ApplicationHost {
   handle(req, res) {
     debug(`handling request for "${req.url}"`);
 
-    if (!this.activeThread.isListening) {
+    if (this.activeThread !== undefined && !this.activeThread.isListening) {
       res.writeHead(500);
       res.end('application server failed to start');
       return;
@@ -92,19 +99,18 @@ export default class ApplicationHost {
     delete headers[''];
     delete headers.host;
     headers.connection = 'keep-alive';
-
     const requestOptions = {
       headers,
       method: req.method,
       path: req.url,
       port: this.port,
     };
-
     const appRequest = request(requestOptions, (originResponse) => {
       const { statusCode, headers } = originResponse;
       res.writeHead(statusCode || 200, headers);
       originResponse.pipe(res);
     });
+
     appRequest.on('error', (err) => {
       res.writeHead(500);
       res.end(err.message);
@@ -117,10 +123,13 @@ export default class ApplicationHost {
    * @private
    */
   createThread() {
-    return new ApplicationThread(workerPath, this.watcher, {
+    const { port1, port2 } = new MessageChannel();
+
+    return new ApplicationThread(workerPath, port1, this.watcher, {
       env: SHARE_ENV,
       execArgv: ['--enable-source-maps', '--no-warnings', '--experimental-loader', config.applicationLoaderPath],
-      workerData: this.port,
+      workerData: { serverPort: this.port, messagePort: port2 },
+      transferList: [port2],
     });
   }
 
@@ -128,8 +137,9 @@ export default class ApplicationHost {
    * Destroy instance
    */
   destroy() {
-    this.activeThread.terminate();
-    this.pendingThread.terminate();
+    this.activeThread?.terminate();
+    this.pendingThread?.terminate();
+    this.server?.destroy();
     this.watcher?.close();
   }
 }
@@ -137,56 +147,38 @@ export default class ApplicationHost {
 class ApplicationThread extends Worker {
   /**
    * @param { string } filePath
+   * @param { import('worker_threads').MessagePort } messagePort
    * @param { Watcher | undefined } watcher
    * @param { import('worker_threads').WorkerOptions } options
    */
-  constructor(filePath, watcher, options) {
+  constructor(filePath, messagePort, watcher, options) {
     super(filePath, options);
-
-    const { port1, port2 } = new MessageChannel();
 
     /** @type { boolean } */
     this.isListening;
-    /** @type { import('worker_threads').MessagePort }*/
-    this.messagePort = port1;
+    this.isRegistered = false;
+    this.messagePort = messagePort;
     this.watcher = watcher;
-    this.handleMessage = this.handleMessage.bind(this);
-    /**
-     * Wait for worker to receive private port
-     * @type { Promise<void> }
-     */
-    this.registered = new Promise((resolve, reject) => {
-      this.messagePort.once(
-        'message',
-        /** @type { ApplicationWorkerMessage } */
-        (msg) => {
-          if (msg.type === 'registered') {
-            resolve();
-          }
-          this.messagePort.on('message', this.handleMessage);
-        },
-      );
-    });
     /** @type { ((value?: void | PromiseLike<void>) => void) | undefined } */
     this.resolveStarted;
     /** @type { ((value?: unknown) => void) | undefined } */
     this.rejectStarted;
 
+    this.messagePort.on('message', this.handleMessage.bind(this));
+
     this.on('error', (err) => {
       if (this.isListening === undefined) {
-        this.listen(err);
+        this.listening(err);
       }
       fatal(err);
     });
     this.on('exit', (exitCode) => {
+      this.messagePort.removeAllListeners();
       this.messagePort.close();
       // @ts-ignore
       this.messagePort = undefined;
       this.watcher = undefined;
     });
-
-    // Send receiving port to worker over global parentPort
-    this.postMessage({ port: port2 }, [port2]);
 
     debug(`created application thread with id "${this.threadId}"`);
   }
@@ -199,9 +191,7 @@ class ApplicationThread extends Worker {
     return new Promise((resolve, reject) => {
       this.resolveStarted = resolve;
       this.rejectStarted = reject;
-      this.registered.then(() => {
-        this.messagePort.postMessage({ type: 'start', main });
-      });
+      this.messagePort.postMessage({ type: 'start', main });
     });
   }
 
@@ -212,7 +202,7 @@ class ApplicationThread extends Worker {
   handleMessage(msg) {
     switch (msg.type) {
       case 'started': {
-        this.listen();
+        this.listening();
         break;
       }
       case 'read': {
@@ -228,19 +218,60 @@ class ApplicationThread extends Worker {
    * @param { Error } [err]
    * @private
    */
-  listen(err) {
+  listening(err) {
     if (err) {
       if (this.rejectStarted !== undefined) {
         this.rejectStarted(err);
       }
-      this.isListening = false;
     } else {
       if (this.resolveStarted !== undefined) {
         this.resolveStarted();
       }
-      this.isListening = true;
     }
 
+    this.isListening = err === undefined;
     this.resolveStarted = this.rejectStarted = undefined;
+  }
+}
+
+/**
+ * Intercept server creation
+ *
+ * @param { ApplicationHost } host
+ */
+function proxyCreateServer(host) {
+  if (!isProxy(http.createServer)) {
+    http.createServer = new Proxy(http.createServer, {
+      apply(target, ctx, args) {
+        /** @type { import('http').Server } */
+        const server = Reflect.apply(target, ctx, args);
+        const connections = new Map();
+
+        server.on('connection', (connection) => {
+          const key = `${connection.remoteAddress}:${connection.remotePort}`;
+
+          connections.set(key, connection);
+          connection.on('close', () => {
+            connections.delete(key);
+          });
+        });
+        server.on('listening', () => {
+          const address = server.address();
+          host.port = /** @type { import('net').AddressInfo } */ (address).port;
+        });
+
+        server.destroy = () => {
+          for (const connection of connections.values()) {
+            connection.destroy();
+          }
+          connections.clear();
+          server.close();
+        };
+
+        host.server = server;
+
+        return server;
+      },
+    });
   }
 }
