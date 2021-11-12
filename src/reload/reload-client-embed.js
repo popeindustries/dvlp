@@ -14,5 +14,5 @@ const reloadClient =
  * @param { number } port
  */
 export function getReloadClientEmbed(port) {
-  return reloadClient.replace(/\$RELOAD_PORT/g, String(port)).replace(/\$RELOAD_PATHNAME/g, config.reloadEndpoint);
+  return reloadClient.replace(/\$RELOAD_PATHNAME/g, config.reloadEndpoint);
 }

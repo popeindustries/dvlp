@@ -3,34 +3,39 @@
   if (typeof URL === 'undefined' || typeof EventSource === 'undefined') {
     return;
   }
+  var INIT_RECONNECT_TIMEOUT = 1000;
+  var MAX_RECONNECT_TIMEOUT = 16000;
   var sse;
-  var retries = 4;
   var connected = false;
-  var hostnames = [location.hostname, 'localhost'];
+  var currentReconnectTimeout = INIT_RECONNECT_TIMEOUT;
+  var reconnectAttempts = 100;
+  var reconnectTimeoutId = 0;
   var url = new URL(location.protocol + '//' + location.hostname);
-  url.port = $RELOAD_PORT;
+  url.port = location.port;
   url.pathname = '$RELOAD_PATHNAME';
+
   connect();
 
   function connect() {
+    clearTimeout(reconnectTimeoutId);
     sse = new EventSource(url.href);
     sse.onopen = function () {
+      clearTimeout(reconnectTimeoutId);
       // Force reload after server restart
       if (connected) {
         location.reload();
       }
       connected = true;
+      currentReconnectTimeout = INIT_RECONNECT_TIMEOUT;
     };
-    sse.onerror = function () {
-      if (!connected) {
-        sse.close();
-        if (retries-- >= 0) {
-          // Try with alternate hostname
-          url.hostname = hostnames[retries % 2];
-          connect();
+    sse.onerror = function (event) {
+      sse.close();
+      if (--reconnectAttempts > 0) {
+        reconnectTimeoutId = setTimeout(connect, currentReconnectTimeout);
+        // Exponential backoff
+        if (currentReconnectTimeout < MAX_RECONNECT_TIMEOUT) {
+          currentReconnectTimeout *= 2;
         }
-      } else {
-        connected = false;
       }
     };
     sse.addEventListener('reload', function () {

@@ -51,6 +51,7 @@ export default class DvlpServer {
     this.connections = new Map();
     this.entry = entry;
     this.hooks = new Hooker(hooks, this.watcher);
+    this.isListening = false;
     this.lastChanged = '';
     this.origin = `http://localhost:${port}`;
     /** @type { Http2SecureServerOptions } */
@@ -130,6 +131,7 @@ export default class DvlpServer {
         if (this.applicationHost) {
           await this.applicationHost.start();
         }
+        this.isListening = true;
         resolve();
       });
       this.server.on('connection', (connection) => {
@@ -204,7 +206,13 @@ export default class DvlpServer {
     const { url } = req;
 
     if (isReloadRequest(req)) {
-      this.registerReloadClient(req, res);
+      if (!this.isListening) {
+        res.writeHead(500);
+        res.end('waiting for application server start');
+      } else {
+        this.registerReloadClient(req, res);
+      }
+
       return;
     }
 
