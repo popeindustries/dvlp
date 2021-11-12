@@ -59,9 +59,9 @@ http.createServer = new Proxy(http.createServer, {
             if (typeof args[1] === 'string') {
               args[1] = 'localhost';
             }
-            // TODO: listen(path)
+            // listen(path)
           } else {
-            // args[0] = `localhost:${serverPort}`;
+            args = [serverPort, 'localhost', ...args.slice(1)];
           }
         }
 

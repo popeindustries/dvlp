@@ -370,7 +370,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
     });
-    it.skip('should start an app server with listen "path"', async () => {
+    it('should start an app server with listen "path"', async () => {
       server = await serverFactory('test/unit/fixtures/app-create-server.mjs', {
         port: 8100,
         reload: false,
@@ -379,7 +379,7 @@ describe('server', () => {
         headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('hi');
+      expect(await res.text()).to.contain('ok');
     });
     it('should start an app server with additional directories', async () => {
       server = await serverFactory(['test/unit/fixtures/www', 'test/unit/fixtures/app.mjs'], {
