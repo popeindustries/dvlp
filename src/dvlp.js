@@ -37,7 +37,7 @@ export async function server(
     hooksPath = path.resolve(hooksPath);
     hooks = /** @type { Hooks } */ (await importModule(hooksPath));
     hooks.filePath = hooksPath;
-    info(`  ${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
+    info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
   }
   if (certsPath) {
     certsPath = expandPath(certsPath);

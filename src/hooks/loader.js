@@ -22,11 +22,13 @@ export function createApplicationLoader(loaderPath, hooks) {
  */
 function getLoaderContents(hooksPath) {
   return t`
-  import { existsSync, readFileSync } from 'fs';
   import { fileURLToPath, pathToFileURL } from 'url';
   import { esbuild } from 'dvlp';
   import { extname } from 'path';
+  import fs from 'fs';
   ${hooksPath ? `import customHooks from '${hooksPath}';` : 'const customHooks = {};'}
+
+  global.sources = new Set();
 
   const BASE_URL = pathToFileURL(process.cwd() + '/').href;
   const IS_WIN32 = process.platform === 'win32';
@@ -45,12 +47,12 @@ function getLoaderContents(hooksPath) {
     if (RE_EXTS.test(specifier)) {
       return { url: url.href, format: 'module' };
     }
-    // Resolve TS files missing extension
+    // Resolve relative TS files missing extension
     if (!RE_IGNORE.test(specifier) && extname(pathname) === '') {
       for (const ext of ['.ts', '.tsx']) {
         url.pathname = pathname + ext;
         const path = fileURLToPath(url.href);
-        if (existsSync(path)) {
+        if (fs.existsSync(path)) {
           return { url: url.href, format: 'module' };
         }
       }
@@ -60,6 +62,8 @@ function getLoaderContents(hooksPath) {
   }
 
   export function load(url, context, defaultLoad) {
+    storeSourcePath(url);
+
     if (customHooks.onServerTransform !== undefined) {
       return customHooks.onServerTransform(url, context, defaultLoad);
     }
@@ -68,7 +72,7 @@ function getLoaderContents(hooksPath) {
       const { format } = context;
 
       const filename = IS_WIN32 ? url : fileURLToPath(url);
-      const source = readFileSync(new URL(url), { encoding: 'utf8' });
+      const source = fs.readFileSync(new URL(url), { encoding: 'utf8' });
       const { code } = transform(source, filename, url, format);
 
       return { format: 'module', source: code };
@@ -87,6 +91,8 @@ function getLoaderContents(hooksPath) {
 
   export function transformSource(source, context, defaultTransformSource) {
     const { url, format } = context;
+
+    storeSourcePath(url)
 
     if (customHooks.onServerTransform !== undefined) {
       return customHooks.onServerTransform(url, context, () => {
@@ -124,6 +130,12 @@ function getLoaderContents(hooksPath) {
     }
 
     return { code };
+  }
+
+  function storeSourcePath(url) {
+    if (url.startsWith('file:') && !url.includes('node_modules')) {
+      global.sources.add(fileURLToPath(new URL(url)));
+    }
   }
   `;
 }

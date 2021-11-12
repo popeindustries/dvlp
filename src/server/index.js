@@ -88,7 +88,6 @@ export default class DvlpServer {
       footerScript: {
         hash: hashScript(reloadEmbed),
         string: reloadEmbed,
-        url: reload ? `/${config.reloadEndpoint}` : '',
       },
       headerScript: {
         hash: hashScript(headerScript),
@@ -101,7 +100,7 @@ export default class DvlpServer {
     if (entry.main !== undefined) {
       this.applicationHost = new ApplicationHost(
         entry.main,
-        this.port === 443 ? config.defaultPort : this.port + 1,
+        this.port === 443 ? config.defaultPort : this.port + 9,
         this.origin,
         reload ? this.triggerClientReload : undefined,
         this.mocks?.toJSON(),

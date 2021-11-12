@@ -13,7 +13,7 @@ import { request } from 'http';
 import { syncBuiltinESMExports } from 'module';
 import watch from '../utils/watch.js';
 
-const debug = Debug('dvlp:apphost');
+const debug = Debug('dvlp:host');
 let workerPath = relative(
   process.cwd(),
   join(dirname(fileURLToPath(import.meta.url)), './application-worker.js'),
@@ -245,9 +245,9 @@ class ApplicationThread extends Worker {
         this.listening();
         break;
       }
-      case 'read': {
+      case 'watch': {
         if (this.watcher !== undefined) {
-          this.watcher.add(msg.path);
+          this.watcher.add(msg.paths);
         }
         break;
       }

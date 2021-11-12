@@ -1,7 +1,6 @@
-import { interceptClientRequest, interceptFileRead } from '../utils/intercept.js';
 import http from 'http';
+import { interceptClientRequest } from '../utils/intercept.js';
 import { isEqualSearchParams } from '../utils/url.js';
-import { isNodeModuleFilePath } from '../utils/is.js';
 import { syncBuiltinESMExports } from 'module';
 import { workerData } from 'worker_threads';
 
@@ -14,6 +13,7 @@ const mocks = /** @type { Array<DeserializedMock> } */ (workerData.serializedMoc
   return mockData;
 });
 const messagePort = /** @type { import('worker_threads').MessagePort } */ (workerData.messagePort);
+const originalCreateServer = http.createServer;
 /** @type { import('http').Server } */
 let server;
 
@@ -25,6 +25,8 @@ messagePort.on(
       /* eslint no-useless-catch: 0 */
       try {
         await import(msg.main);
+        // @ts-ignore
+        messagePort.postMessage({ type: 'watch', paths: Array.from(global.sources) });
       } catch (err) {
         throw err;
       }
@@ -45,26 +47,35 @@ http.createServer = new Proxy(http.createServer, {
     });
     server.listen = new Proxy(server.listen, {
       apply(target, ctx, args) {
-        // Override port
+        // Override port and host
+        // listen(options)
         if (typeof args[0] === 'object') {
           args[0].port = serverPort;
+          args[0].host = 'localhost';
         } else {
-          args[0] = serverPort;
+          // listen(port[, host])
+          if (typeof args[0] === 'number') {
+            args[0] = serverPort;
+            if (typeof args[1] === 'string') {
+              args[1] = 'localhost';
+            }
+            // TODO: listen(path)
+          } else {
+            // args[0] = `localhost:${serverPort}`;
+          }
         }
 
         return Reflect.apply(target, ctx, args);
       },
     });
 
+    // Un-proxy in case more than one server created
+    // (assumes first server is application server)
+    http.createServer = originalCreateServer;
+    syncBuiltinESMExports();
+
     return server;
   },
-});
-
-// Notify host on file read to add to watch list
-interceptFileRead((filePath) => {
-  if (!isNodeModuleFilePath(filePath)) {
-    messagePort.postMessage({ type: 'read', path: filePath });
-  }
 });
 
 // Redirect mocked request to host
