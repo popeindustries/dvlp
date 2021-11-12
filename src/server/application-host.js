@@ -113,10 +113,21 @@ export default class ApplicationHost {
       return;
     }
 
-    const headers = { ...req.headers };
-    delete headers[''];
-    delete headers.host;
-    headers.connection = 'keep-alive';
+    /** @type { Record<string, string> } */
+    const headers = {
+      connection: 'keep-alive',
+      // @ts-ignore
+      host: req.headers.host || req.headers[':authority'],
+    };
+
+    // Prune http2 headers
+    for (const header in req.headers) {
+      if (header && !header.startsWith(':')) {
+        // @ts-ignore
+        headers[header] = req.headers[header];
+      }
+    }
+
     const requestOptions = {
       headers,
       method: req.method,
@@ -125,6 +136,10 @@ export default class ApplicationHost {
     };
     const appRequest = request(requestOptions, (originResponse) => {
       const { statusCode, headers } = originResponse;
+
+      delete headers.connection;
+      delete headers['keep-alive'];
+
       res.writeHead(statusCode || 200, headers);
       originResponse.pipe(res);
     });

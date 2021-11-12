@@ -55,9 +55,9 @@ export function validateCert(certFileData) {
     const diff = expires.getTime() - now.getTime();
 
     if (diff < 0) {
-      error('your ssl certificate has expired!');
+      error('ssl certificate has expired!');
     } else if (diff / 86400000 < 10) {
-      warn('cetificate will expire soon!');
+      warn('ssl certificate will expire soon!');
     }
 
     return commonName;

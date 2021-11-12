@@ -40,7 +40,9 @@ export function patchResponse(resolvedFilePath, req, res, { footerScript, header
   const filePath = req.filePath || resolvedFilePath || req.url;
 
   debug(`patching response for "${getProjectPath(filePath)}"`);
+
   proxySetHeader(res, disableContentEncodingHeader.bind(disableContentEncodingHeader, res));
+
   if (isHtmlRequest(req)) {
     const urls = [];
     const hashes = [];
@@ -409,12 +411,18 @@ function proxySetHeader(res, action) {
  */
 function proxyBodyWrite(res, action) {
   const originalSetHeader = res.setHeader;
+  let ended = false;
   /** @type { Buffer } */
   let buffer;
 
   // Proxy write() to buffer streaming response
   res.write = new Proxy(res.write, {
     apply(target, ctx, args) {
+      // When in HTTP2 compat mode, res.end triggers a final res.write
+      if (ended) {
+        return Reflect.apply(target, ctx, args);
+      }
+
       let [chunk] = args;
 
       if (typeof chunk === 'string') {
@@ -450,6 +458,8 @@ function proxyBodyWrite(res, action) {
           originalSetHeader.call(res, 'Content-Length', size);
         }
       }
+
+      ended = true;
 
       return Reflect.apply(target, ctx, [data, ...extraArgs]);
     },

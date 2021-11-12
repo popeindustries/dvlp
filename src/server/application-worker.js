@@ -69,21 +69,24 @@ interceptFileRead((filePath) => {
 
 // Redirect mocked request to host
 interceptClientRequest((url) => {
-  for (const mock of mocks) {
-    if (
-      !mock.originRegex.test(url.origin) ||
-      (!mock.ignoreSearch && mock.search && !isEqualSearchParams(url.searchParams, mock.search))
-    ) {
-      continue;
-    }
+  if (mocks) {
+    for (const mock of mocks) {
+      if (
+        !mock.originRegex.test(url.origin) ||
+        (!mock.ignoreSearch && mock.search && !isEqualSearchParams(url.searchParams, mock.search))
+      ) {
+        continue;
+      }
 
-    if (mock.pathRegex.exec(url.pathname) != null) {
-      const href = url.href;
-      url.host = hostUrl.host;
-      url.search = `?dvlpmock=${encodeURIComponent(href)}`;
-      break;
+      if (mock.pathRegex.exec(url.pathname) != null) {
+        const href = url.href;
+        url.host = hostUrl.host;
+        url.search = `?dvlpmock=${encodeURIComponent(href)}`;
+        break;
+      }
     }
   }
+
   return true;
 });
 
