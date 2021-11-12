@@ -69,10 +69,14 @@ export async function server(
     // @ts-ignore
     : getProjectPath(entry.main);
   const origin = server.origin;
+  const appOrigin = server.applicationHost?.appOrigin;
 
   info(`\n  💥 serving ${chalk.green(paths)}`);
   info(`    ...at ${chalk.green.underline(origin)}`);
-  info(' 👀 watching for changes...\n');
+  if (appOrigin) {
+    info(`    (proxied application server started at ${chalk.bold(appOrigin)})`);
+  }
+  info('\n  👀 watching for changes...\n');
 
   if (silent) {
     logger.silent = true;

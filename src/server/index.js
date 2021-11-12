@@ -98,9 +98,11 @@ export default class DvlpServer {
     };
 
     if (entry.main !== undefined) {
+      const appPort = this.port === 443 ? config.defaultPort : this.port + 9;
+
       this.applicationHost = new ApplicationHost(
         entry.main,
-        this.port === 443 ? config.defaultPort : this.port + 9,
+        appPort,
         this.origin,
         reload ? this.triggerClientReload : undefined,
         this.mocks?.toJSON(),
@@ -184,7 +186,9 @@ export default class DvlpServer {
     const data = JSON.stringify({ type, filePath });
 
     if (this.clients.size) {
-      noisyInfo(`${chalk.yellow(` 💫 ${event}ing`)} ${this.clients.size} client${this.clients.size > 1 ? 's' : ''}`);
+      noisyInfo(
+        `\n  ${chalk.yellow(`💫 ${event}ing`)} ${this.clients.size} client${this.clients.size > 1 ? 's' : ''}\n`,
+      );
 
       for (const client of this.clients) {
         client.send(data, { event });

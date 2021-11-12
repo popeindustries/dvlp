@@ -77,7 +77,7 @@ Metrics.EVENT_NAMES = EVENT_NAMES;
  * @param { [number, number] } times
  * @returns { number }
  */
-function msDiff(times) {
+export function msDiff(times) {
   return Math.ceil((times[1] - times[0]) * 100) / 100;
 }
 
@@ -87,12 +87,12 @@ function msDiff(times) {
  * @param { number } duration - ms
  * @returns { string }
  */
-function format(duration) {
+export function format(duration) {
   const colour = duration > 10 ? (duration > 100 ? 'red' : 'yellow') : 'green';
   let formatted = duration < 1000 ? `${duration}ms` : `${Math.floor((duration / 1000) * 100) / 100}s`;
 
   if ('padStart' in String.prototype) {
-    formatted = formatted.padStart(8, ' ');
+    formatted = formatted.padStart(6, ' ');
   }
 
   return chalk[colour](formatted);

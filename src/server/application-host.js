@@ -1,5 +1,6 @@
 import { dirname, join, relative } from 'path';
 import { fatal, noisyInfo } from '../utils/log.js';
+import { format, msDiff } from '../utils/metrics.js';
 import { MessageChannel, SHARE_ENV, Worker } from 'worker_threads';
 import chalk from 'chalk';
 import config from '../config.js';
@@ -9,6 +10,7 @@ import { getProjectPath } from '../utils/file.js';
 import http from 'http';
 import { isProxy } from '../utils/is.js';
 import { pathToFileURL } from 'url';
+import { performance } from 'perf_hooks';
 import { request } from 'http';
 import { syncBuiltinESMExports } from 'module';
 import watch from '../utils/watch.js';
@@ -26,14 +28,15 @@ if (!workerPath.startsWith('.')) {
 export default class ApplicationHost {
   /**
    * @param { string | (() => void) } main
-   * @param { number } workerPort
+   * @param { number } appPort
    * @param { string } hostOrigin
    * @param { (filePath: string, silent?: boolean) => void } [triggerClientReload]
    * @param { Array<SerializedMock> } [serializedMocks]
    */
-  constructor(main, workerPort, hostOrigin, triggerClientReload, serializedMocks) {
+  constructor(main, appPort, hostOrigin, triggerClientReload, serializedMocks) {
+    this.appOrigin = `http://localhost:${appPort}`;
+    this.appPort = appPort;
     this.main = main;
-    this.workerPort = workerPort;
     this.hostOrigin = hostOrigin;
     this.serializedMocks = serializedMocks;
     /** @type { import('http').Server | undefined } */
@@ -74,11 +77,15 @@ export default class ApplicationHost {
     }
 
     try {
-      const s = Date.now();
+      /** @type { [start: number, stop: number ]} */
+      const times = [performance.now(), 0];
 
       await this.activeThread.start(this.main);
-      debug(`application server started in ${Date.now() - s}ms`);
-      noisyInfo(`    (proxied application server started at ${chalk.bold(`http://localhost:${this.workerPort}`)})`);
+
+      times[1] = performance.now();
+      const duration = msDiff(times);
+
+      noisyInfo(`${format(duration)} application server started`);
     } catch (err) {
       // Skip. Unable to recover until file save and restart
     }
@@ -94,7 +101,7 @@ export default class ApplicationHost {
     }
     this.activeThread = this.pendingThread;
     this.pendingThread = this.createThread();
-    noisyInfo('    restarting application server...');
+    noisyInfo('\n  restarting application server...');
     await this.start();
   }
 
@@ -132,7 +139,7 @@ export default class ApplicationHost {
       headers,
       method: req.method,
       path: req.url,
-      port: this.workerPort,
+      port: this.appPort,
     };
     const appRequest = request(requestOptions, (originResponse) => {
       const { statusCode, headers } = originResponse;
@@ -165,7 +172,7 @@ export default class ApplicationHost {
       workerData: {
         hostOrigin: this.hostOrigin,
         messagePort: port2,
-        serverPort: this.workerPort,
+        serverPort: this.appPort,
         serializedMocks: this.serializedMocks,
       },
       transferList: [port2],
@@ -297,7 +304,7 @@ function proxyCreateServer(host) {
         });
         server.on('listening', () => {
           const address = server.address();
-          host.workerPort = /** @type { import('net').AddressInfo } */ (address).port;
+          host.appPort = /** @type { import('net').AddressInfo } */ (address).port;
         });
 
         server.destroy = () => {
