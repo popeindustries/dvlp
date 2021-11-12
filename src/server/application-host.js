@@ -78,7 +78,7 @@ export default class ApplicationHost {
 
       await this.activeThread.start(this.main);
       debug(`application server started in ${Date.now() - s}ms`);
-      noisyInfo(`    proxied application server started at ${chalk.bold(`http://localhost:${this.workerPort}`)}`);
+      noisyInfo(`    (proxied application server started at ${chalk.bold(`http://localhost:${this.workerPort}`)})`);
     } catch (err) {
       // Skip. Unable to recover until file save and restart
     }

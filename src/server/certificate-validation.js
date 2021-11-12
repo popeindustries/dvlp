@@ -1,5 +1,6 @@
-import { error, fatal, warn } from '../utils/log.js';
+import { fatal, warn } from '../utils/log.js';
 import { Certificate } from '@fidm/x509';
+import chalk from 'chalk';
 import fs from 'fs';
 import { getDirectoryContents } from '../utils/file.js';
 import path from 'path';
@@ -54,10 +55,10 @@ export function validateCert(certFileData) {
     const expires = new Date(validTo);
     const diff = expires.getTime() - now.getTime();
 
-    if (diff < 0) {
-      error('ssl certificate has expired!');
+    if (diff < 10) {
+      fatal('ssl certificate has expired!\n');
     } else if (diff / 86400000 < 10) {
-      warn('ssl certificate will expire soon!');
+      warn(`\n  ⚠️  ${chalk.yellow('ssl certificate will expire soon!')}\n`);
     }
 
     return commonName;

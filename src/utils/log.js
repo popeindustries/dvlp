@@ -7,15 +7,13 @@ export const WARN_MISSING_EXTENSION =
   '⚠️  adding missing extensions because browsers can only resolve valid URL identifiers';
 export const WARN_PACKAGE_INDEX =
   '⚠️  adding missing package index.js because browsers do not support Node-style package identifiers';
-export const WARN_SERVER_TRANSPILE =
-  '⚠️  ignoring async Promise returned when executing transpiler on a server file. Be sure to check the "isServer" argument before returning a transpiled value';
+export const WARN_CERTIFICATE_EXPIRY = '⚠️  ssl certificate will expire soon!';
 
 const SEG_LENGTH = 80;
 
 let maxBareImport = 1;
 let maxMissingExtension = 1;
 let maxPackageIndex = 1;
-let maxServerTranspile = 1;
 let silent = false;
 
 export default {
@@ -75,11 +73,6 @@ export function warn(...args) {
       case WARN_PACKAGE_INDEX:
         if (maxPackageIndex-- > 0) {
           msg = `${WARN_PACKAGE_INDEX}`;
-        }
-        break;
-      case WARN_SERVER_TRANSPILE:
-        if (maxServerTranspile-- > 0) {
-          msg = `${WARN_SERVER_TRANSPILE}`;
         }
         break;
       default:
