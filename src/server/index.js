@@ -76,12 +76,8 @@ export default class DvlpServer {
     /** @type { HttpServer | Http2SecureServer } */
     this.server;
 
-    const headerScript = concatScripts([
-      getProcessEnvString(),
-      getDvlpGlobalString(),
-      (this.mocks && this.mocks.client) || '',
-    ]);
     const reloadEmbed = reload ? getReloadClientEmbed(port) : '';
+    let headerScript = concatScripts([getProcessEnvString(), getDvlpGlobalString()]);
 
     /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
@@ -96,6 +92,17 @@ export default class DvlpServer {
       resolveImport: this.hooks.resolveImport,
       send: this.hooks.send,
     };
+
+    if (this.mocks !== undefined) {
+      this.mocks.loaded.then(() => {
+        // @ts-ignore
+        headerScript += `\n${this.mocks.client}`;
+        this.patchResponseOptions.headerScript = {
+          hash: hashScript(headerScript),
+          string: headerScript,
+        };
+      });
+    }
 
     if (entry.main !== undefined) {
       const appPort = this.port === 443 ? config.defaultPort : this.port + 9;
@@ -305,7 +312,7 @@ export default class DvlpServer {
       if (!this.applicationHost) {
         // Reroute to root index.html
         if (isHtmlRequest(req)) {
-          res.rerouted = true;
+          res.rerouted = req.url !== '/';
           // @ts-ignore
           req.url = '/';
           filePath = find(req);

@@ -35,9 +35,7 @@ export default class Mock {
     this.clear = this.clear.bind(this);
     this._uninterceptClientRequest;
 
-    if (filePaths) {
-      this.load(filePaths);
-    }
+    this.loaded = filePaths !== undefined ? this.load(filePaths) : Promise.resolve();
   }
 
   /**

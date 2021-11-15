@@ -1,6 +1,7 @@
 declare class Mock {
   cache: Set<MockResponseData | MockStreamData>;
   client: string;
+  loaded: Promise<void>;
   constructor(filePaths?: string | Array<string>);
   addResponse(
     req: string | MockRequest,
