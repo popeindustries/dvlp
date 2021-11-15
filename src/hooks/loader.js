@@ -7,11 +7,13 @@ const t = String.raw;
  * Create application loader based on passed hooks
  *
  * @param { import('url').URL } loaderPath
- * @param { Hooks } [hooks]
+ * @param { { hooks?: Hooks, hooksPath?: string } } hooksConfig
  */
-export function createApplicationLoader(loaderPath, hooks) {
+export function createApplicationLoader(loaderPath, hooksConfig) {
   const hooksPath =
-    hooks && (hooks.onServerTransform || hooks.onServerResolve) ? pathToFileURL(hooks.filePath).href : undefined;
+    hooksConfig.hooks && (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
+      ? pathToFileURL(/** @type { string } */ (hooksConfig.hooksPath)).href
+      : undefined;
   const contents = getLoaderContents(hooksPath);
 
   writeFileSync(loaderPath, contents);

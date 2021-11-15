@@ -9,6 +9,8 @@ import { init as esLexerInit } from 'es-module-lexer';
 import fs from 'fs';
 import path from 'path';
 
+// Export for easy import in loader hook
+// @see src/hooks/loader.js#L28
 export * as esbuild from 'esbuild';
 
 /**
@@ -36,7 +38,6 @@ export async function server(
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
     hooks = /** @type { Hooks } */ (await importModule(hooksPath));
-    hooks.filePath = hooksPath;
     info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
   }
   if (certsPath) {
@@ -48,7 +49,7 @@ export async function server(
     process.env.PORT = String(port);
   }
 
-  createApplicationLoader(config.applicationLoaderPath, hooks);
+  createApplicationLoader(config.applicationLoaderPath, { hooks, hooksPath });
 
   const server = new DvlpServer(entry, port, reload, hooks, mockPath, certsPath);
 
