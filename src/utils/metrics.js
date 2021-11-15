@@ -91,9 +91,7 @@ export function format(duration) {
   const colour = duration > 10 ? (duration > 100 ? 'red' : 'yellow') : 'green';
   let formatted = duration < 1000 ? `${duration}ms` : `${Math.floor((duration / 1000) * 100) / 100}s`;
 
-  if ('padStart' in String.prototype) {
-    formatted = formatted.padStart(6, ' ');
-  }
+  formatted = formatted.padStart(7, ' ');
 
   return chalk[colour](formatted);
 }

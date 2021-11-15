@@ -181,7 +181,7 @@ export default class Mock {
     const stringifiedCache = JSON.stringify(this.toJSON(), undefined, 2);
 
     // Client mocking only relevant for loaded mocks
-    this.client = mockClient.replace(/cache\s?=\s?\[\]/g, `cache=${stringifiedCache}`);
+    this.client = mockClient.replace(/cache\s?=\s?\[\]/, `cache=${stringifiedCache}`);
   }
 
   /**
@@ -318,7 +318,7 @@ export default class Mock {
     }
 
     triggerEventSequence(stream, eventSequence, push).then(() => {
-      noisyInfo(`${chalk.green('     0ms')} triggered mocked push event ${chalk.green(name)}`);
+      noisyInfo(`${chalk.green('    0ms')} triggered mocked push event ${chalk.green(name)}`);
     });
 
     return true;
