@@ -12,9 +12,8 @@
     "$RELOAD_PATHNAME": "readonly",
     "sourceFiles": "readonly"
   },
-  "parser": "@babel/eslint-parser",
   "parserOptions": {
-    "ecmaVersion": 2017,
+    "ecmaVersion": 2020,
     "sourceType": "module",
     "ecmaFeatures": {
       "experimentalObjectRestSpread": true

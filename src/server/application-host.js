@@ -39,7 +39,7 @@ export default class ApplicationHost {
     this.main = main;
     this.hostOrigin = hostOrigin;
     this.serializedMocks = serializedMocks;
-    /** @type { import('http').Server | undefined } */
+    /** @type { DestroyableHttpServer | undefined } */
     this.server;
     /** @type { Watcher | undefined } */
     this.watcher;
@@ -290,7 +290,7 @@ function proxyCreateServer(host) {
   if (!isProxy(http.createServer)) {
     http.createServer = new Proxy(http.createServer, {
       apply(target, ctx, args) {
-        /** @type { import('http').Server } */
+        /** @type { DestroyableHttpServer } */
         const server = Reflect.apply(target, ctx, args);
         const connections = new Map();
 
