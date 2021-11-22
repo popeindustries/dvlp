@@ -13,6 +13,11 @@ const RE_TYPE_CSS = /text\/css/i;
 const RE_TYPE_HTML = /text\/html/i;
 const RE_TYPE_JS = /application\/javascript/i;
 
+const realPath =
+  'native' in fs.realpathSync && typeof fs.realpathSync.native === 'function'
+    ? fs.realpathSync.native
+    : fs.realpathSync;
+
 /**
  * Determine if "filePath" is absolute
  *
@@ -170,7 +175,7 @@ export function isNodeModuleFilePath(filePath) {
 
   try {
     // Resolve symlinks to determine if really a node_module
-    return RE_NODE_MODULES.test(fs.realpathSync(filePath));
+    return RE_NODE_MODULES.test(realPath(filePath));
   } catch (err) {
     return true;
   }
@@ -250,7 +255,7 @@ export function isTransformableJsFile(filePath, fileContents) {
 
 /**
  * Determine if "filePath" is valid.
- * If relative, resolves against "fromFilePath".
+ * If relative, resolves against "fromDir".
  *
  * @param { string } filePath
  * @param { string } [fromDir]
