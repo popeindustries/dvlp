@@ -1,10 +1,5 @@
-'use strict';
-
-const body = require('./body.js');
-const fastify = require('fastify');
-const fastifyStatic = require('fastify-static');
-
-global.foo = 'foo';
+import body from './body';
+import fastify from 'fastify';
 
 const server = fastify();
 
@@ -19,10 +14,6 @@ server.get('/', async (req, reply) => {
       ${body}
       </body>
     </html>`);
-});
-
-server.register(fastifyStatic, {
-  root: __dirname,
 });
 
 server.listen(process.env.PORT || 8100, (err, address) => {

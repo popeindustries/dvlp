@@ -7,7 +7,7 @@ import path from 'path';
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 (async function main() {
-  const reloadClient = (await minify(fs.readFileSync('src/reloader/reload-client.js', 'utf8'))).code;
+  const reloadClient = (await minify(fs.readFileSync('src/reload/reload-client.js', 'utf8'))).code;
   const mockClient = (
     await minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
       // Preserve 'cache' var for regex replacement
@@ -59,13 +59,15 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     banner,
     bundle: true,
     define,
-    entryPoints: ['./src/dvlp.js'],
-    external: ['esbuild', 'fsevents', 'undici'],
+    entryNames: '[name]',
+    entryPoints: ['./src/dvlp.js', './src/server/application-worker.js'],
+    external: ['esbuild', 'fsevents'],
     format: 'esm',
+    sourcemap: true,
+    splitting: false,
     // Force keep dynamic import that has been back-ported to 12.2
     target: 'node13.2',
+    outdir: '.',
     platform: 'node',
-    sourcemap: true,
-    outfile: 'dvlp.js',
   });
 })();

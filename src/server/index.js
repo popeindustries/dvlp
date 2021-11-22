@@ -1,89 +1,89 @@
 import { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } from '../utils/scripts.js';
-import { connectClient, pushEvent } from '../push-events/index.js';
-import { createRequireHook, favIcon, find, getProjectPath, getTypeFromRequest } from '../utils/file.js';
-import { error, fatal, info, noisyInfo } from '../utils/log.js';
-import { interceptFileRead, interceptProcessOn } from '../utils/intercept.js';
-import { isBundledFilePath, isNodeModuleFilePath } from '../utils/is.js';
+import { find, getProjectPath, getTypeFromPath, getTypeFromRequest } from '../utils/file.js';
+import { handleFavicon, handleFile, handleMockResponse, handleMockWebSocket, handlePushEvent } from './handlers.js';
+import { info, noisyInfo } from '../utils/log.js';
+import { isBundledFilePath, isHtmlRequest, isNodeModuleFilePath } from '../utils/is.js';
+import { resolveCerts, validateCert } from './certificate-validation.js';
+import ApplicationHost from './application-host.js';
 import chalk from 'chalk';
 import config from '../config.js';
-import createFileServer from './file-server.js';
-import { createRequire } from 'module';
 import Debug from 'debug';
-import { EventSource } from '../reloader/event-source.js';
+import { EventSource } from '../reload/event-source.js';
 import fs from 'fs';
+import { getReloadClientEmbed } from '../reload/reload-client-embed.js';
 import Hooker from '../hooks/index.js';
 import http from 'http';
+import http2 from 'http2';
+import { interceptFileRead } from '../utils/intercept.js';
 import Metrics from '../utils/metrics.js';
 import Mock from '../mock/index.js';
 import { parseUserAgent } from '../utils/platform.js';
 import { patchResponse } from '../utils/patch.js';
-import send from 'send';
-import { URL } from 'url';
 import watch from '../utils/watch.js';
-import WebSocket from 'faye-websocket';
 
 const debug = Debug('dvlp:server');
-const originalCreateServer = http.createServer;
-const require = createRequire(import.meta.url);
-const moduleCache = require.cache;
-/** @type { Array<string> } */
-let dvlpModules;
-/** @type { Array<string> } */
-let globalKeys;
 
 export default class DvlpServer {
   /**
    * Constructor
    *
-   * @param { string | (() => void) | undefined } main
-   * @param { Reloader } [reloader]
+   * @param { Entry } entry
+   * @param { number } port
+   * @param { boolean } reload
    * @param { Hooks } [hooks]
    * @param { string | Array<string> } [mockPath]
+   * @param { string | Array<string> } [certsPath]
    */
-  constructor(main, reloader, hooks, mockPath) {
+  constructor(entry, port, reload = false, hooks, mockPath, certsPath) {
+    this.requestHandler = this.requestHandler.bind(this);
+    this.triggerClientReload = this.triggerClientReload.bind(this);
+
     // Listen for all upcoming file system reads
     // Register early to catch all reads, including transformers that patch fs.readFile
-    this.watcher = this.createWatcher();
+    this.watcher = watch(this.triggerClientReload);
     this.unlistenForFileRead = interceptFileRead((filePath) => {
       this.addWatchFiles(filePath);
     });
 
-    if (dvlpModules === undefined) {
-      dvlpModules = Object.keys(moduleCache);
-    }
-    if (globalKeys === undefined) {
-      globalKeys = Object.keys(global);
-    }
-
-    /** @type { Array<string> } */
-    this.appModules = [];
+    this.certsPath = certsPath;
+    /** @type { Set<EventSource> } */
+    this.clients = new Set();
     this.connections = new Map();
-    this.exitHandler = null;
-    this.lastChanged = '';
-    this.main = main;
-    this.mocks = mockPath ? new Mock(mockPath) : undefined;
-    this.staticMode = main === undefined;
-
-    const headerScript = concatScripts([
-      getProcessEnvString(),
-      getDvlpGlobalString(),
-      (this.mocks && this.mocks.client) || '',
-    ]);
-
-    this.origin = '';
-    this.port = Number(process.env.PORT);
-    this.reloader = reloader;
-    /** @type { HttpServer | null } */
-    this.server = null;
+    this.entry = entry;
     this.hooks = new Hooker(hooks, this.watcher);
-    this.revertRequireHook = createRequireHook(this.hooks.serverTransform);
+    this.isListening = false;
+    this.lastChanged = '';
+    this.origin = `http://localhost:${port}`;
+    /** @type { Http2SecureServerOptions } */
+    this.secureServerOptions;
+
+    if (certsPath) {
+      const serverOptions = resolveCerts(certsPath);
+      const commonName = validateCert(serverOptions.cert);
+
+      if (commonName) {
+        this.origin = `https://${commonName}`;
+      }
+      this.secureServerOptions = { allowHTTP1: true, ...serverOptions };
+    }
+
+    // Make sure mocks instance has access to active port
+    this.port = config.activePort = port;
+    this.mocks = mockPath ? new Mock(mockPath) : undefined;
+    this.reload = reload;
+    /** @type { Map<string, string> } */
     this.urlToFilePath = new Map();
+    /** @type { HttpServer | Http2SecureServer } */
+    this.server;
+
+    const reloadEmbed = reload ? getReloadClientEmbed(port) : '';
+    let headerScript = concatScripts([getProcessEnvString(), getDvlpGlobalString()]);
+
     /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
       footerScript: {
-        hash: reloader && hashScript(reloader.reloadEmbed),
-        string: reloader ? reloader.reloadEmbed : '',
-        url: reloader && reloader.reloadUrl,
+        hash: hashScript(reloadEmbed),
+        string: reloadEmbed,
       },
       headerScript: {
         hash: hashScript(headerScript),
@@ -92,46 +92,254 @@ export default class DvlpServer {
       resolveImport: this.hooks.resolveImport,
       send: this.hooks.send,
     };
+
+    if (this.mocks !== undefined) {
+      this.mocks.loaded.then(() => {
+        // @ts-ignore
+        headerScript += `\n${this.mocks.client}`;
+        this.patchResponseOptions.headerScript = {
+          hash: hashScript(headerScript),
+          string: headerScript,
+        };
+      });
+    }
+
+    if (entry.main !== undefined) {
+      const appPort = this.port === 443 ? config.defaultPort : this.port + 9;
+
+      this.applicationHost = new ApplicationHost(
+        entry.main,
+        appPort,
+        this.origin,
+        reload ? this.triggerClientReload : undefined,
+        this.mocks?.toJSON(),
+      );
+    }
   }
 
   /**
-   * Create watcher instance and react to file changes
+   * Start app server
+   * Proxies createServer to grab instance and register for events
    *
-   * @returns { Watcher }
+   * @returns { Promise<void> }
    */
-  createWatcher() {
-    return watch(async (filePath) => {
-      noisyInfo(`\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.yellow(getProjectPath(filePath))}`);
+  start() {
+    return new Promise((resolve, reject) => {
+      if (this.entry.isSecure) {
+        this.server = http2.createSecureServer(this.secureServerOptions, this.requestHandler);
+        this.server.setTimeout(0);
+      } else {
+        this.server = http.createServer(this.requestHandler);
+        this.server.timeout = this.server.keepAliveTimeout = 0;
+      }
 
-      this.lastChanged = filePath;
+      this.server.on('error', reject);
+      this.server.on('listening', async () => {
+        debug('server started');
+        if (this.applicationHost) {
+          await this.applicationHost.start();
+        }
+        this.isListening = true;
+        resolve();
+      });
+      this.server.on('connection', (connection) => {
+        const key = `${connection.remoteAddress}:${connection.remotePort}`;
 
-      try {
-        if (this.appModules.includes(filePath)) {
-          await this.restart();
+        this.connections.set(key, connection);
+        connection.on('close', () => {
+          this.connections.delete(key);
+        });
+      });
+      this.server.on('upgrade', (req, socket, body) => {
+        handleMockWebSocket(/** @type { Req } */ (req), socket, body, this.mocks);
+      });
+
+      this.server.listen(this.port);
+    });
+  }
+
+  /**
+   * Send refresh/reload message to clients for changed 'filePath'.
+   * Will trigger one of:
+   *  1. single css refresh if css and a link.href matches filePath
+   *  2. multiple css refreshes if css and no link.href matches filePath (ie. it's a dependency)
+   *  3. full page reload
+   *
+   * @param { string } filePath
+   * @param { boolean } [silent]
+   * @returns { void }
+   */
+  triggerClientReload(filePath, silent) {
+    this.lastChanged = filePath;
+
+    if (!this.reload) {
+      return;
+    }
+
+    if (!silent) {
+      noisyInfo(`\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.cyan(getProjectPath(filePath))}`);
+    }
+
+    // Find corresponding url
+    for (const [url, fp] of this.urlToFilePath) {
+      if (fp === filePath) {
+        filePath = url;
+        break;
+      }
+    }
+
+    const type = getTypeFromPath(filePath);
+    const event = type === 'css' ? 'refresh' : 'reload';
+    const data = JSON.stringify({ type, filePath });
+
+    if (this.clients.size) {
+      noisyInfo(
+        `\n  ${chalk.yellow(`💫 ${event}ing`)} ${this.clients.size} client${this.clients.size > 1 ? 's' : ''}\n`,
+      );
+
+      for (const client of this.clients) {
+        client.send(data, { event });
+      }
+    }
+  }
+
+  /**
+   * Handle incoming request
+   *
+   * @param { IncomingMessage | Http2ServerRequest } request
+   * @param { ServerResponse | Http2ServerResponse } response
+   * @private
+   */
+  async requestHandler(request, response) {
+    const req = /** @type { Req } */ (request);
+    const res = /** @type { Res } */ (response);
+    const { url } = req;
+
+    if (isReloadRequest(req)) {
+      if (!this.isListening) {
+        res.writeHead(500);
+        res.end('waiting for application server start');
+      } else {
+        this.registerReloadClient(req, res);
+      }
+
+      return;
+    }
+
+    res.metrics = new Metrics(res);
+
+    res.once('finish', () => {
+      if (!res.unhandled) {
+        const duration = res.metrics.getEvent('response', true);
+        const modifier = res.bundled ? ' bundled ' : res.mocked ? ' mocked ' : res.transformed ? ' transformed ' : ' ';
+        let url = getProjectPath(req.url);
+
+        if (res.mocked) {
+          // Decode query param and strip "?dvlpmock=" prefix (sometimes double encoded if coming from client)
+          url = decodeURIComponent(decodeURIComponent(url.slice(url.indexOf('?dvlpmock=') + 10)));
         }
 
-        for (const [url, fp] of this.urlToFilePath) {
-          if (fp === filePath) {
-            filePath = url;
-            break;
-          }
-        }
+        const msg = `${duration} handled${chalk.italic(modifier)}request for ${chalk.green(url)}`;
 
-        // Will trigger one of:
-        // 1. single css refresh if css and a link.href matches filePath
-        // 2. multiple css refreshes if css and no link.href matches filePath (ie. it's a dependency)
-        // 3. full page reload
-        this.reloader && this.reloader.send(filePath);
-      } catch (err) {
-        error(err);
+        res.mocked ? noisyInfo(msg) : info(msg);
+      } else {
+        // TODO: handle app response
+        const reroute = res.rerouted ? `(re-routed to ${chalk.green(req.url)})` : '';
+        const duration = res.metrics.getEvent('response', true);
+
+        info(
+          res.statusCode < 300
+            ? `${duration} handled request for ${chalk.green(url)} ${reroute}`
+            : `${duration} [${res.statusCode}] unhandled request for ${chalk.red(url)} ${reroute}`,
+        );
       }
     });
+
+    const type = getTypeFromRequest(req);
+    let filePath = this.urlToFilePath.get(req.url);
+
+    res.url = req.url;
+
+    if (handleFavicon(req, res) || handleMockResponse(req, res, this.mocks) || handlePushEvent(req, res, this.mocks)) {
+      return;
+    }
+
+    // Allow manual response handling via user hook
+    if (await this.hooks.handleRequest(req, res)) {
+      return;
+    }
+
+    // Ignore html or uncached or no longer available at previously known path
+    if (type !== 'html' && (!filePath || !fs.existsSync(filePath))) {
+      filePath = find(req, { type });
+
+      if (filePath) {
+        this.addWatchFiles(filePath);
+        this.urlToFilePath.set(req.url, filePath);
+      } else {
+        // File not found. Clear previously known path
+        this.urlToFilePath.delete(req.url);
+      }
+    }
+
+    // Ignore unknown types
+    if (type) {
+      patchResponse(filePath, req, res, this.patchResponseOptions);
+    }
+
+    if (filePath) {
+      if (isBundledFilePath(filePath)) {
+        // Will write new file to disk
+        await this.hooks.bundleDependency(filePath, res);
+      }
+      // Transform all files that aren't bundled or node_modules
+      // This ensures that all symlinked workspace files are transformed even though they are dependencies
+      if (!isNodeModuleFilePath(filePath)) {
+        // Will respond if transformer exists for this type
+        await this.hooks.transform(filePath, this.lastChanged, res, parseUserAgent(req.headers['user-agent']));
+      }
+    }
+
+    if (!res.finished) {
+      if (filePath) {
+        debug(`sending "${filePath}"`);
+        handleFile(filePath, req, res, true);
+        return;
+      }
+
+      res.unhandled = true;
+
+      if (!this.applicationHost) {
+        // Reroute to root index.html
+        if (isHtmlRequest(req)) {
+          res.rerouted = req.url !== '/';
+          // @ts-ignore
+          req.url = '/';
+          filePath = find(req);
+        }
+
+        if (filePath) {
+          debug(`sending "${filePath}"`);
+          handleFile(filePath, req, res, false);
+          return;
+        }
+
+        debug(`not found "${req.url}"`);
+        res.writeHead(404);
+        res.end();
+        return;
+      } else {
+        noisyInfo(`    allowing app to handle "${req.url}"`);
+        this.applicationHost.handle(req, res);
+      }
+    }
   }
 
   /**
    * Add "filePaths" to watcher
    *
    * @param { string | Array<string> } filePaths
+   * @private
    */
   addWatchFiles(filePaths) {
     if (!Array.isArray(filePaths)) {
@@ -146,263 +354,51 @@ export default class DvlpServer {
   }
 
   /**
-   * Start app server
-   * Proxies createServer to grab instance and register for events
+   * Register new reload client connection
    *
-   * @returns { Promise<void> }
+   * @param { IncomingMessage | Http2ServerRequest } req
+   * @param { ServerResponse | Http2ServerResponse } res
+   * @returns { void }
+   * @private
    */
-  start() {
-    return new Promise((resolve, reject) => {
-      // Force reject if never started
-      const timeoutID = setTimeout(() => {
-        debug('server not started after timeout');
-        reject(Error('unable to start server'));
-      }, config.serverStartTimeout);
-      const instance = this;
+  registerReloadClient(req, res) {
+    const client = new EventSource(req, res);
 
-      http.createServer = new Proxy(http.createServer, {
-        apply(target, ctx, args) {
-          // Handler always last arg ('options' as first arg added in 9.6)
-          let handler = args[args.length - 1];
+    this.clients.add(client);
+    debug('added reload connection', this.clients.size);
 
-          // Wrap request handler (if passed)
-          if (handler && typeof handler === 'function') {
-            args[args.length - 1] = instance.createRequestHandler(instance, handler);
-          } else {
-            handler = undefined;
-          }
-
-          /** @type { HttpServer } */
-          const server = (instance.server = Reflect.apply(target, ctx, args));
-
-          server.timeout = server.keepAliveTimeout = 0;
-
-          server.on('connection', (connection) => {
-            const key = `${connection.remoteAddress}:${connection.remotePort}`;
-
-            instance.connections.set(key, connection);
-            connection.on('close', () => {
-              instance.connections.delete(key);
-            });
-          });
-          server.on('error', (err) => {
-            instance.stop();
-            reject(err);
-          });
-          server.on('listening', () => {
-            debug('server started');
-            clearTimeout(timeoutID);
-            instance.appModules = getAppModules();
-            instance.addWatchFiles(instance.appModules);
-            const address = server.address();
-            if (address && typeof address !== 'string') {
-              instance.port = address.port;
-            }
-            instance.origin = `http://localhost:${instance.port}`;
-            resolve();
-          });
-          server.on('upgrade', (req, socket, body) => {
-            handleMockWebSocket(/** @type { Req } */ (req), socket, body, instance.mocks);
-          });
-
-          // No handler registered so proxy "request" listener
-          if (!handler) {
-            server.on = new Proxy(server.on, {
-              apply(target, ctx, args) {
-                const [eventName, listener] = args;
-
-                // Wrap request handler
-                if (eventName === 'request') {
-                  args[1] = instance.createRequestHandler(instance, listener);
-                }
-
-                Reflect.apply(target, ctx, args);
-              },
-            });
-          }
-
-          // Un-proxy in case more than one server created
-          // (assumes first server is application server)
-          http.createServer = originalCreateServer;
-
-          return server;
-        },
-      });
-
-      try {
-        // Trigger application bootstrap
-        this.startApplication();
-      } catch (err) {
-        reject(err);
-      }
+    client.on('close', () => {
+      this.clients.delete(client);
+      debug('removed reload connection', this.clients.size);
     });
   }
 
   /**
-   * Create request handler wrapper for 'originalRequestHandler'
-   *
-   * @param { DvlpServer } server
-   * @param { RequestHandler } originalRequestHandler
-   * @returns { RequestHandler }
-   */
-  createRequestHandler(server, originalRequestHandler) {
-    return async function requestHandler(req, res) {
-      res.metrics = new Metrics(res);
-
-      res.once('finish', () => {
-        if (!res.unhandled) {
-          const duration = res.metrics.getEvent('response', true);
-          const modifier = res.bundled
-            ? ' bundled '
-            : res.mocked
-            ? ' mocked '
-            : res.transformed
-            ? ' transformed '
-            : ' ';
-          let url = getProjectPath(req.url);
-
-          if (res.mocked) {
-            // Decode query param and strip "?dvlpmock=" prefix (sometimes double encoded if coming from client)
-            url = decodeURIComponent(decodeURIComponent(url.slice(url.indexOf('?dvlpmock=') + 10)));
-          }
-
-          const msg = `${duration} handled${chalk.italic(modifier)}request for ${chalk.green(url)}`;
-
-          res.mocked ? noisyInfo(msg) : info(msg);
-        }
-      });
-
-      const type = getTypeFromRequest(req);
-      let filePath = server.urlToFilePath.get(req.url);
-
-      res.url = req.url;
-
-      if (
-        handleFavicon(req, res) ||
-        handleMockResponse(req, res, server.mocks) ||
-        handlePushEvent(req, res, server.mocks)
-      ) {
-        return;
-      }
-
-      // Allow manual response handling via user hook
-      if (await server.hooks.handleRequest(req, res)) {
-        return;
-      }
-
-      // Ignore html or uncached or no longer available at previously known path
-      if (type !== 'html' && (!filePath || !fs.existsSync(filePath))) {
-        filePath = find(req, { type });
-
-        if (filePath) {
-          server.addWatchFiles(filePath);
-          server.urlToFilePath.set(req.url, filePath);
-        } else {
-          // File not found. Clear previously known path
-          server.urlToFilePath.delete(req.url);
-        }
-      }
-
-      // Ignore unknown types
-      if (type) {
-        patchResponse(filePath, req, res, server.patchResponseOptions);
-      }
-
-      if (filePath) {
-        if (isBundledFilePath(filePath)) {
-          // Will write new file to disk
-          await server.hooks.bundleDependency(filePath, res);
-        }
-        // Transform all files that aren't bundled or node_modules
-        // This ensures that all symlinked workspace files are transformed even though they are dependencies
-        if (!isNodeModuleFilePath(filePath)) {
-          // Will respond if transformer exists for this type
-          await server.hooks.transform(filePath, server.lastChanged, res, parseUserAgent(req.headers['user-agent']));
-        }
-
-        // Handle bundled, node_modules, and external files if not already handled by transformer
-        if (!res.finished) {
-          return send(req, filePath, {
-            cacheControl: true,
-            dotfiles: 'allow',
-            maxAge: config.maxAge,
-            etag: false,
-            lastModified: false,
-          }).pipe(res);
-        }
-      }
-
-      // Pass through request to app
-      if (!res.finished) {
-        res.unhandled = true;
-        if (!server.staticMode) {
-          noisyInfo(`  allowing app to handle "${req.url}"`);
-        }
-        originalRequestHandler(req, res);
-      }
-    };
-  }
-
-  /**
-   * Start application
+   * Destroy running server
    *
    * @returns { Promise<void> }
    */
-  async startApplication() {
-    debug('loading application');
-    process.on('uncaughtException', this.onUncaught);
-    // @ts-ignore
-    process.on('unhandledRejection', this.onUncaught);
-    // Listen for process event registration to capture any exit handlers
-    this.unlistenForProcessOn = interceptProcessOn((event, handler) => {
-      if (event === 'exit' || event === 'beforeExit') {
-        this.exitHandler = handler;
-        return false;
-      }
-    });
-    if (!this.main) {
-      createFileServer();
-    } else if (typeof this.main === 'function') {
-      this.main();
-    } else {
-      require(this.main);
-    }
-    debug('application loaded');
-  }
+  destroy() {
+    this.mocks && this.mocks.clear();
+    this.unlistenForFileRead();
+    this.watcher.close();
+    this.hooks.destroy();
 
-  /**
-   * Stop application
-   *
-   * @returns { Promise<void> }
-   */
-  async stopApplication() {
-    debug('stopping application');
-    if (this.unlistenForProcessOn) {
-      this.unlistenForProcessOn();
+    for (const connection of this.connections.values()) {
+      connection.destroy();
     }
-    if (this.exitHandler) {
-      await this.exitHandler();
-    }
-    process.removeListener('uncaughtException', this.onUncaught);
-    process.removeListener('unhandledRejection', this.onUncaught);
-    clearAppModules(this.appModules, this.main);
-    clearGlobals();
-  }
+    this.connections.clear();
 
-  /**
-   * Stop running server
-   *
-   * @returns { Promise<void> }
-   */
-  stop() {
+    for (const client of this.clients) {
+      client.close();
+    }
+    this.clients.clear();
+
+    if (this.applicationHost) {
+      this.applicationHost.destroy();
+    }
+
     return new Promise(async (resolve) => {
-      for (const connection of this.connections.values()) {
-        connection.destroy();
-      }
-      this.connections.clear();
-
-      await this.stopApplication();
-
       if (!this.server) {
         return resolve();
       }
@@ -418,233 +414,13 @@ export default class DvlpServer {
       }
     });
   }
-
-  /**
-   * Restart running server
-   *
-   * @returns { Promise<void> }
-   */
-  async restart() {
-    if (this.main) {
-      debug('server restarting');
-      await this.stop();
-      return this.start();
-    }
-  }
-
-  /**
-   * Handle uncaughtException & unhandledRejection
-   * Logs errors to console
-   *
-   * @param { Error } err
-   * @returns { void }
-   */
-  onUncaught(err) {
-    fatal(err);
-  }
-
-  /**
-   * Destroy instance
-   *
-   * @returns { Promise<void> }
-   */
-  destroy() {
-    debug('server destroying');
-    this.mocks && this.mocks.clear();
-    this.unlistenForFileRead();
-    this.watcher.close();
-    this.hooks.destroy();
-    this.revertRequireHook();
-    return this.stop();
-  }
 }
 
 /**
- * Handle request for favicon
- * Returns 'true' if handled
+ * Determine if "req" is reload client connection
  *
- * @param { Req } req
- * @param { Res } res
- * @returns { boolean }
+ * @param { IncomingMessage | Http2ServerRequest } req
  */
-function handleFavicon(req, res) {
-  if (req.url.includes('/favicon.ico')) {
-    const customFavIcon = find(req);
-
-    if (customFavIcon) {
-      send(req, customFavIcon, {
-        cacheControl: true,
-        maxAge: config.maxAge,
-        etag: false,
-        lastModified: false,
-      }).pipe(res);
-    } else {
-      res.writeHead(200, {
-        'Content-Length': favIcon.length,
-        'Cache-Control': `public, max-age=${config.maxAge}`,
-        'Content-Type': 'image/x-icon;charset=UTF-8',
-      });
-      res.end(favIcon);
-    }
-    return true;
-  }
-  return false;
-}
-
-/**
- * Handle mock responses, including EventSource connection
- * Returns 'true' if handled
- *
- * @param { Req } req
- * @param { Res } res
- * @param { Mock } [mocks]
- * @returns { boolean }
- */
-function handleMockResponse(req, res, mocks) {
-  const url = new URL(req.url, `http://localhost:${config.applicationPort}`);
-  let mock = url.searchParams.get('dvlpmock');
-
-  if (mocks && mock) {
-    mock = decodeURIComponent(mock);
-
-    if (EventSource.isEventSource(req)) {
-      connectClient(
-        {
-          url: mock,
-          type: 'es',
-        },
-        req,
-        res,
-      );
-      // Send 'connect' event if it exists
-      mocks.matchPushEvent(mock, 'connect', pushEvent);
-      noisyInfo(`${chalk.green('     0ms')} connected to EventSource client at ${chalk.green(mock)}`);
-    } else {
-      mocks.matchResponse(mock, req, res);
-    }
-
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Handle mock WebSocket connection
- *
- * @param { Req } req
- * @param { object } socket
- * @param { object } body
- * @param { Mock } [mocks]
- * @returns { void }
- */
-function handleMockWebSocket(req, socket, body, mocks) {
-  const url = new URL(req.url, `http://localhost:${config.applicationPort}`);
-  let mock = url.searchParams.get('dvlpmock');
-
-  if (mocks && mock && WebSocket.isWebSocket(req)) {
-    mock = decodeURIComponent(mock);
-    connectClient(
-      {
-        url: mock,
-        type: 'ws',
-      },
-      req,
-      socket,
-      body,
-    );
-    // Send 'connect' event if it exists
-    mocks.matchPushEvent(mock, 'connect', pushEvent);
-    noisyInfo(`${chalk.green('     0ms')} connected to WebSocket client at ${chalk.green(mock)}`);
-  }
-}
-
-/**
- * Handle push event request
- * Returns 'true' if handled
- *
- * @param { Req } req
- * @param { Res } res
- * @param { Mock } [mocks]
- * @returns { boolean }
- */
-function handlePushEvent(req, res, mocks) {
-  if (mocks && req.method === 'POST' && req.url === '/dvlp/push-event') {
-    let body = '';
-
-    req.on('data', (chunk) => {
-      body += chunk.toString();
-    });
-    req.on('end', () => {
-      const { stream, event } = JSON.parse(body);
-
-      if (typeof event === 'string') {
-        mocks.matchPushEvent(stream, event, pushEvent);
-      } else {
-        pushEvent(stream, event);
-      }
-
-      res.writeHead(200);
-      res.end('ok');
-    });
-
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Retrieve app modules (excluding node_modules)
- *
- * @returns { Array<string> }
- */
-function getAppModules() {
-  const modules = Object.keys(moduleCache).filter((m) => !dvlpModules.includes(m));
-
-  debug(`found ${modules.length} app modules`);
-
-  return modules;
-}
-
-/**
- * Clear app modules from module cache
- *
- * @param { Array<string> } appModules
- * @param { string | (() => void) | undefined } main
- */
-function clearAppModules(appModules, main) {
-  // @ts-ignore
-  const mainModule = moduleCache[main];
-
-  // Remove main from parent
-  // (No children when bundled)
-  if (mainModule != undefined && mainModule.parent != null && mainModule.parent.children != null) {
-    const parent = mainModule.parent;
-    let i = parent.children.length;
-
-    while (--i) {
-      if (parent.children[i].id === mainModule.id) {
-        parent.children.splice(i, 1);
-      }
-    }
-  }
-
-  for (const m of appModules) {
-    delete moduleCache[m];
-  }
-
-  debug(`cleared ${appModules.length} app modules from module cache`);
-}
-
-/**
- * Clear any added globals
- */
-function clearGlobals() {
-  for (const key of Object.keys(global)) {
-    if (!globalKeys.includes(key)) {
-      // @ts-ignore
-      global[key] = undefined;
-    }
-  }
+function isReloadRequest(req) {
+  return req.url && req.url.startsWith(config.reloadEndpoint);
 }

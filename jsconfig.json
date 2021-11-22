@@ -4,7 +4,7 @@
     "checkJs": true,
     "esModuleInterop": true,
     "isolatedModules": true,
-    "lib": ["esnext"],
+    "lib": ["esnext", "DOM"],
     "module": "esnext",
     "moduleResolution": "node",
     "noEmit": true,

@@ -1,3 +1,13 @@
+declare type ApplicationHostMessage = { type: 'start'; main: string };
+
+declare type ApplicationWorkerMessage = { type: 'started' } | { type: 'watch'; paths: Array<string> };
+
+declare interface ApplicationWorkerPendingHandle {
+  promise: Promise<{ body: string; href: string }>;
+  resolve: (value: { body: string; href: string }) => void;
+  reject: (value?: unknown) => void;
+}
+
 declare interface ServerOptions {
   /**
    * The path or glob pattern containing ".crt" and ".key" files.
@@ -32,11 +42,6 @@ declare interface ServerOptions {
 }
 
 declare interface Server {
-  port: number;
-  /**
-   * Restart running server
-   */
-  restart(): Promise<void>;
   /**
    * Destroy server instance
    */

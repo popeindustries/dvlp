@@ -1,5 +1,4 @@
 import config from '../config.js';
-import { URL } from 'url';
 
 const RE_WEB_SOCKET = /wss?:/;
 
@@ -21,10 +20,7 @@ export function isWebSocketUrl(url) {
  */
 export function getUrl(req) {
   if (!(req instanceof URL)) {
-    req = new URL(
-      typeof req === 'string' ? decodeURIComponent(req) : req.url,
-      `http://localhost:${config.applicationPort}`,
-    );
+    req = new URL(typeof req === 'string' ? decodeURIComponent(req) : req.url, `http://localhost:${config.activePort}`);
   }
   // Map loopback address to localhost
   if (req.hostname === '127.0.0.1') {
@@ -65,4 +61,39 @@ export function getUrlCacheKey(url) {
  */
 export function filePathToUrl(filePath) {
   return encodeURI(filePath.replace(/^[A-Z]:\\/, '/').replace(/\\/g, '/'));
+}
+
+/**
+ * Determine if search params are equal
+ *
+ * @param { URLSearchParams } params1
+ * @param { URLSearchParams } params2
+ * @returns { boolean }
+ */
+export function isEqualSearchParams(params1, params2) {
+  // @ts-ignore
+  const keys1 = Array.from(params1.keys());
+  // @ts-ignore
+  const keys2 = Array.from(params2.keys());
+
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+
+  for (const key of keys1) {
+    const values1 = params1.getAll(key);
+    const values2 = params2.getAll(key);
+
+    if (values1.length !== values2.length) {
+      return false;
+    }
+
+    for (const value of values1) {
+      if (!values2.includes(value)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }

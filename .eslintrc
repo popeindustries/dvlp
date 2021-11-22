@@ -9,12 +9,11 @@
   "extends": ["eslint:recommended", "prettier"],
   "globals": {
     "$MOCKS": "readonly",
-    "$RELOAD_PORT": "readonly",
-    "$RELOAD_PATHNAME": "readonly"
+    "$RELOAD_PATHNAME": "readonly",
+    "sourceFiles": "readonly"
   },
-  "parser": "@babel/eslint-parser",
   "parserOptions": {
-    "ecmaVersion": 2017,
+    "ecmaVersion": 2020,
     "sourceType": "module",
     "ecmaFeatures": {
       "experimentalObjectRestSpread": true

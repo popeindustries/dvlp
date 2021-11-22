@@ -1,8 +1,4 @@
-'use strict';
-
-const body = require('./body.js');
-const fastify = require('fastify');
-const fastifyStatic = require('fastify-static');
+import { fastify } from 'fastify';
 
 const server = fastify();
 
@@ -14,24 +10,11 @@ server.get('/', async (req, reply) => {
         <script type="module" src="www/module.js"></script>
       </head>
       <body>
-      ${body}
+      ${errrrrrrrrrrrr}
       </body>
     </html>`);
 });
 
-server.register(fastifyStatic, {
-  root: __dirname,
-});
-
 server.listen(process.env.PORT || 8100, (err, address) => {
   err && console.error(err);
-});
-
-process.on('beforeExit', () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      global.context.beforeExitCalled = true;
-      resolve();
-    }, 500);
-  });
 });

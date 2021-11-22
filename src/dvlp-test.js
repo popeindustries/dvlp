@@ -23,8 +23,7 @@ export async function testServer(options) {
 
   // @ts-ignore: private
   await server._start();
-  // Make sure 'mock' has access to current active port
-  config.applicationPort = server.port;
+
   // Force testing mode to suppress logging
   config.testing = true;
 
@@ -129,7 +128,7 @@ function enableRequestIntercept() {
       if (!isMocked && !isLocalhost(hostname)) {
         if (reroute) {
           // Reroute back to this server
-          url.host = url.hostname = `localhost:${config.applicationPort}`;
+          url.host = url.hostname = `localhost:${config.activePort}`;
         } else if (networkDisabled) {
           throw Error(`network connections disabled. Unable to request ${url}`);
         }

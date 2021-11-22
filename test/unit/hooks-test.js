@@ -5,8 +5,8 @@ import Hooks from '../../src/hooks/index.js';
 import hooksFixture from './fixtures/hooks-bundle.mjs';
 import { init } from 'cjs-module-lexer';
 import path from 'path';
-import transformBundleFixture from './fixtures/hooks-transform-bundle.js';
-import transformFixture from './fixtures/hooks-transform.js';
+import transformBundleFixture from './fixtures/hooks-transform-bundle.mjs';
+import transformFixture from './fixtures/hooks-transform.mjs';
 
 const DEBUG = 'debug-4.3.2.js';
 const REACT = 'react-17.0.1.js';

@@ -8,7 +8,6 @@ import path from 'path';
 import { ServerResponse } from 'http';
 
 const DEBUG_VERSION = '4.3.2';
-const NODE_PATH = process.env.NODE_PATH;
 
 const cwd = process
   .cwd()
@@ -43,10 +42,6 @@ function getResponse(req) {
     recordEvent() {},
   };
   return res;
-}
-function setNodePath(nodePath) {
-  process.env.NODE_PATH = nodePath;
-  require('module').Module._initPaths();
 }
 
 describe('patch', () => {
@@ -261,322 +256,377 @@ describe('patch', () => {
     });
 
     describe('rewrite imports', () => {
-      it('should resolve valid relative js import id', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+      describe('css', () => {
+        it('should resolve valid relative css @import id', () => {
+          const req = getRequest('/index.css', {
+            accept: 'text/css',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('@import "./dep.css";');
+          expect(getBody(res)).to.equal(`@import "${cwd}/test/unit/fixtures/www/dep.css";`);
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should resolve invalid relative css @import id', () => {
+          const req = getRequest('/index.css', {
+            accept: 'text/css',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('@import "dep.css";');
+          expect(getBody(res)).to.equal(`@import "${cwd}/test/unit/fixtures/www/dep.css";`);
         });
-        res.end('import "./module.js";');
-        expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/www/module.js";`);
+        it('should resolve valid url() relative css @import id', () => {
+          const req = getRequest('/index.css', {
+            accept: 'text/css',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('@import url("./dep.css");');
+          expect(getBody(res)).to.equal(`@import url("${cwd}/test/unit/fixtures/www/dep.css");`);
+        });
+        it('should resolve invalid url() relative css @import id', () => {
+          const req = getRequest('/index.css', {
+            accept: 'text/css',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('@import url("dep.css");');
+          expect(getBody(res)).to.equal(`@import url("${cwd}/test/unit/fixtures/www/dep.css");`);
+        });
+        it('should resolve node_modules css @import id', () => {
+          const req = getRequest('/index.css', {
+            accept: 'text/css',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('@import "css";');
+          expect(getBody(res)).to.equal(`@import "${cwd}/test/unit/fixtures/node_modules/css/styles.css";`);
+        });
+        it('should resolve url() node_modules css @import id', () => {
+          const req = getRequest('/index.css', {
+            accept: 'text/css',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('@import url("css");');
+          expect(getBody(res)).to.equal(`@import url("${cwd}/test/unit/fixtures/node_modules/css/styles.css");`);
+        });
+        it('should not resolve external @import id', () => {
+          const req = getRequest('/index.css', {
+            accept: 'text/css',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('@import "http://something.com/dep.css";');
+          expect(getBody(res)).to.equal(`@import "http://something.com/dep.css";`);
+        });
       });
-      it('should resolve bare js import id', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+      describe('js', () => {
+        it('should resolve valid relative js import id', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import "./module.js";');
+          expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/www/module.js";`);
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should resolve bare js import id', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import debug from "debug";');
+          expect(getBody(res)).to.equal(`import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`);
         });
-        res.end('import debug from "debug";');
-        expect(getBody(res)).to.equal(`import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`);
-      });
-      it('should escape "$" when resolving js import id', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should escape "$" when resolving js import id', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import $$observable from "./$$.js";');
+          expect(getBody(res)).to.equal(`import $$observable from "${cwd}/test/unit/fixtures/www/$$.js";`);
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should resolve import at the start of a line', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end(`const foo = 'bar'\nimport debug from "debug";`);
+          expect(getBody(res)).to.equal(
+            `const foo = 'bar'\nimport debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
+          );
         });
-        res.end('import $$observable from "./$$.js";');
-        expect(getBody(res)).to.equal(`import $$observable from "${cwd}/test/unit/fixtures/www/$$.js";`);
-      });
-      it('should resolve import at the start of a line', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should resolve import following a semi-colon', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end(`function foo(value) { return value; };import debug from "debug";`);
+          expect(getBody(res)).to.equal(
+            `function foo(value) { return value; };import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
+          );
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should resolve import following a closing curly bracket', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end(`function foo(value) { return value; } import debug from "debug";`);
+          expect(getBody(res)).to.equal(
+            `function foo(value) { return value; } import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
+          );
         });
-        res.end(`const foo = 'bar'\nimport debug from "debug";`);
-        expect(getBody(res)).to.equal(
-          `const foo = 'bar'\nimport debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
-        );
-      });
-      it('should resolve import following a semi-colon', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should resolve import following a closing parethesis', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end(`const foo = ('bar') import debug from "debug";`);
+          expect(getBody(res)).to.equal(
+            `const foo = ('bar') import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
+          );
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should not resolve import following an invalid character', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          const reactDomError = `error("It looks like you're using the wrong act() around your test interactions.\n" + 'Be sure to use the matching version of act() corresponding to your renderer:\n\n' + '// for react-dom:\n' + "import {act} from 'react-dom/test-utils';\n" + '// ...\n' + 'act(() => ...);\n\n' + '// for react-test-renderer:\n' + "import TestRenderer from 'react-test-renderer';\n" + 'const {act} = TestRenderer;\n' + '// ...\n' + 'act(() => ...);' + '%s', getStackByFiberInDevAndProd(fiber));`;
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end(reactDomError);
+          expect(getBody(res)).to.equal(reactDomError);
         });
-        res.end(`function foo(value) { return value; };import debug from "debug";`);
-        expect(getBody(res)).to.equal(
-          `function foo(value) { return value; };import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
-        );
-      });
-      it('should resolve import following a closing curly bracket', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should resolve multiple bare js import ids', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end(
+            'import debugBrowser from "debug/src/browser.js";\nimport { foo } from "./foo.js";\nimport debug from "debug";',
+          );
+          expect(getBody(res)).to.equal(
+            `import debugBrowser from "/${bundleDir}/debug__src__browser.js-${DEBUG_VERSION}.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
+          );
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should resolve bare js import id for es module', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import { html } from "lit-html";');
+          expect(getBody(res)).to.include('node_modules/lit-html/development/lit-html.js');
         });
-        res.end(`function foo(value) { return value; } import debug from "debug";`);
-        expect(getBody(res)).to.equal(
-          `function foo(value) { return value; } import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
-        );
-      });
-      it('should resolve import following a closing parethesis', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should resolve js import id missing extension', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import module from "./module";');
+          expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/www/module.js";`);
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should resolve jsx import id missing extension', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import component from "../component";');
+          expect(getBody(res)).to.equal(`import component from "${cwd}/test/unit/fixtures/component.jsx";`);
         });
-        res.end(`const foo = ('bar') import debug from "debug";`);
-        expect(getBody(res)).to.equal(
-          `const foo = ('bar') import debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
-        );
-      });
-      it('should not resolve import following an invalid character', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should resolve ts import id missing extension', () => {
+          const req = getRequest('/index.ts', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import route from "../route";');
+          expect(getBody(res)).to.equal(`import route from "${cwd}/test/unit/fixtures/route.ts";`);
         });
-        const res = getResponse(req);
-        const reactDomError = `error("It looks like you're using the wrong act() around your test interactions.\n" + 'Be sure to use the matching version of act() corresponding to your renderer:\n\n' + '// for react-dom:\n' + "import {act} from 'react-dom/test-utils';\n" + '// ...\n' + 'act(() => ...);\n\n' + '// for react-test-renderer:\n' + "import TestRenderer from 'react-test-renderer';\n" + 'const {act} = TestRenderer;\n' + '// ...\n' + 'act(() => ...);' + '%s', getStackByFiberInDevAndProd(fiber));`;
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should resolve js import id missing package index', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import module from "./nested";');
+          expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/www/nested/index.js";`);
         });
-        res.end(reactDomError);
-        expect(getBody(res)).to.equal(reactDomError);
-      });
-      it('should resolve multiple bare js import ids', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should resolve ts import id missing package index', () => {
+          const req = getRequest('/index.ts', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import module from "./nested-ts";');
+          expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/www/nested-ts/index.ts";`);
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should ignore erroneous "import" string', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('"this is use of a fake import text"');
+          expect(getBody(res)).to.equal(`"this is use of a fake import text"`);
         });
-        res.end(
-          'import debugBrowser from "debug/src/browser.js";\nimport { foo } from "./foo.js";\nimport debug from "debug";',
-        );
-        expect(getBody(res)).to.equal(
-          `import debugBrowser from "/${bundleDir}/debug__src__browser.js-${DEBUG_VERSION}.js";\nimport { foo } from "./foo.js";\nimport debug from "/${bundleDir}/debug-${DEBUG_VERSION}.js";`,
-        );
-      });
-      it('should resolve bare js import id for es module', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should resolve js import with browser field', () => {
+          const req = getRequest('/test/unit/fixtures/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import "bar";');
+          expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/node_modules/bar/browser.js";`);
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should resolve js import with browser field map', () => {
+          const req = getRequest('/test/unit/fixtures/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import "bat";');
+          expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/node_modules/bat/browser.js";`);
         });
-        res.end('import { html } from "lit-html";');
-        expect(getBody(res)).to.equal(`import { html } from "${cwd}/node_modules/lit-html/development/lit-html.js";`);
-      });
-      it.skip('should resolve NODE_PATH js import id', () => {
-        setNodePath('test/unit/fixtures');
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should resolve js dynamic import()', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import debugBrowser from "debug/src/browser.js";\nimport(foo);\nimport("debug");\n');
+          expect(getBody(res)).to.equal(
+            `import debugBrowser from "/${bundleDir}/debug__src__browser.js-${DEBUG_VERSION}.js";\nimport(foo);\nimport("/${bundleDir}/debug-${DEBUG_VERSION}.js");\n`,
+          );
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should resolve js import with resolve hook', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: (specifier, context, defaultResolve) => {
+              expect(context.isDynamic).to.equal(false);
+              return `test/unit/fixtures/www/${specifier}.js`;
+            },
+          });
+          res.end('import "module"');
+          expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/www/module.js"`);
         });
-        res.end('import module from "app.js";');
-        expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/app.js";`);
-        setNodePath(NODE_PATH);
-      });
-      it.skip('should resolve NODE_PATH js import id missing extension', () => {
-        setNodePath('test/unit/fixtures');
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should resolve js import with resolve hook using defaultResolve', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: (specifier, context, defaultResolve) => {
+              return defaultResolve(specifier, context.importer);
+            },
+          });
+          res.end('import "./module.js"');
+          expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/www/module.js"`);
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should resolve js dynamic import with resolve hook', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: (specifier, context, defaultResolve) => {
+              expect(context.isDynamic).to.equal(true);
+              return `./test/unit/fixtures/www/${specifier}.js`;
+            },
+          });
+          res.end('import("module");');
+          expect(getBody(res)).to.equal(`import("${cwd}/test/unit/fixtures/www/module.js");`);
         });
-        res.end('import module from "app";');
-        expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/app.js";`);
-        setNodePath(NODE_PATH);
-      });
-      it('should resolve js import id missing extension', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
+        it('should replace js dynamic import expression with resolve hook return value', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: (specifier, context, defaultResolve) => {
+              return `dynamicImport('${specifier}')`;
+            },
+          });
+          res.end('import("module");');
+          expect(getBody(res)).to.equal(`dynamicImport('module');`);
         });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
+        it('should replace js dynamic import expression with resolve hook return value, including optional arguments', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req.filePath, req, res, {
+            resolveImport: (specifier, context, defaultResolve) => {
+              return `dynamicImport('./test/unit/fixtures/www/${specifier}.js', '/index.js')`;
+            },
+          });
+          res.end('import("module");');
+          expect(getBody(res)).to.equal(`dynamicImport('./test/unit/fixtures/www/module.js', '/index.js');`);
         });
-        res.end('import module from "./module";');
-        expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/www/module.js";`);
-      });
-      it('should resolve jsx import id missing extension', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
-        });
-        res.end('import component from "../component";');
-        expect(getBody(res)).to.equal(`import component from "${cwd}/test/unit/fixtures/component.jsx";`);
-      });
-      it('should resolve ts import id missing extension', () => {
-        const req = getRequest('/index.ts', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
-        });
-        res.end('import route from "../route";');
-        expect(getBody(res)).to.equal(`import route from "${cwd}/test/unit/fixtures/route.ts";`);
-      });
-      it('should resolve js import id missing package index', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
-        });
-        res.end('import module from "./nested";');
-        expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/www/nested/index.js";`);
-      });
-      it('should resolve ts import id missing package index', () => {
-        const req = getRequest('/index.ts', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
-        });
-        res.end('import module from "./nested-ts";');
-        expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/www/nested-ts/index.ts";`);
-      });
-      it('should ignore erroneous "import" string', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
-        });
-        res.end('"this is use of a fake import text"');
-        expect(getBody(res)).to.equal(`"this is use of a fake import text"`);
-      });
-      it('should resolve js import with browser field', () => {
-        const req = getRequest('/test/unit/fixtures/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
-        });
-        res.end('import "bar";');
-        expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/node_modules/bar/browser.js";`);
-      });
-      it('should resolve js import with browser field map', () => {
-        const req = getRequest('/test/unit/fixtures/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
-        });
-        res.end('import "bat";');
-        expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/node_modules/bat/browser.js";`);
-      });
-      it('should resolve js dynamic import()', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: hooks.resolveImport,
-        });
-        res.end('import debugBrowser from "debug/src/browser.js";\nimport(foo);\nimport("debug");\n');
-        expect(getBody(res)).to.equal(
-          `import debugBrowser from "/${bundleDir}/debug__src__browser.js-${DEBUG_VERSION}.js";\nimport(foo);\nimport("/${bundleDir}/debug-${DEBUG_VERSION}.js");\n`,
-        );
-      });
-      it('should resolve js import with resolve hook', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: (specifier, context, defaultResolve) => {
-            expect(context.isDynamic).to.equal(false);
-            return `test/unit/fixtures/www/${specifier}.js`;
-          },
-        });
-        res.end('import "module"');
-        expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/www/module.js"`);
-      });
-      it('should resolve js import with resolve hook using defaultResolve', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: (specifier, context, defaultResolve) => {
-            return defaultResolve(specifier, context.importer);
-          },
-        });
-        res.end('import "./module.js"');
-        expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/www/module.js"`);
-      });
-      it('should resolve js dynamic import with resolve hook', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: (specifier, context, defaultResolve) => {
-            expect(context.isDynamic).to.equal(true);
-            return `./test/unit/fixtures/www/${specifier}.js`;
-          },
-        });
-        res.end('import("module");');
-        expect(getBody(res)).to.equal(`import("${cwd}/test/unit/fixtures/www/module.js");`);
-      });
-      it('should replace js dynamic import expression with resolve hook return value', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: (specifier, context, defaultResolve) => {
-            return `dynamicImport('${specifier}')`;
-          },
-        });
-        res.end('import("module");');
-        expect(getBody(res)).to.equal(`dynamicImport('module');`);
-      });
-      it('should replace js dynamic import expression with resolve hook return value, including optional arguments', () => {
-        const req = getRequest('/index.js', {
-          accept: 'application/javascript',
-        });
-        const res = getResponse(req);
-        patchResponse(req.filePath, req, res, {
-          resolveImport: (specifier, context, defaultResolve) => {
-            return `dynamicImport('./test/unit/fixtures/www/${specifier}.js', '/index.js')`;
-          },
-        });
-        res.end('import("module");');
-        expect(getBody(res)).to.equal(`dynamicImport('./test/unit/fixtures/www/module.js', '/index.js');`);
       });
     });
 

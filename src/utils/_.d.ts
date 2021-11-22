@@ -58,6 +58,6 @@ declare type InterceptFileReadCallback = (filePath: string) => void;
 declare type InterceptProcessOnCallback = (event: string, callback: () => void) => void;
 
 declare interface Watcher {
-  add: (filePath: string) => void;
+  add: (filePath: string | Array<string>) => void;
   close: () => void;
 }

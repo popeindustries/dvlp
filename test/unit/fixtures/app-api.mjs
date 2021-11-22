@@ -1,11 +1,12 @@
-import body from './body.js';
 import fastify from 'fastify';
+import fetch from 'node-fetch';
 
 const server = fastify();
 
-oops;
-
 server.get('/', async (req, reply) => {
+  const res = await fetch('https://www.someapi.com/v1/9012');
+  const { user } = await res.json();
+
   reply.type('text/html').send(`<!doctype html>
     <html lang="en-gb">
       <head>
@@ -13,7 +14,7 @@ server.get('/', async (req, reply) => {
         <script type="module" src="www/module.js"></script>
       </head>
       <body>
-      ${body}
+      ${user.name}
       </body>
     </html>`);
 });

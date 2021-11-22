@@ -12,11 +12,9 @@ import favicon from './favicon.js';
 import fs from 'fs';
 import glob from 'glob';
 import isFileEsm from 'is-file-esm';
-import Module from 'module';
 import { parse } from 'es-module-lexer';
 import path from 'path';
 import { pathToFileURL } from 'url';
-import { URL } from 'url';
 
 export const favIcon = Buffer.from(favicon, 'base64');
 
@@ -27,55 +25,10 @@ const RE_SEPARATOR = /[,;]\s?|\s/g;
 
 /** @type { Map<string, 'cjs' | 'esm'> } */
 const fileFormatCache = new Map();
-// @ts-ignore
-const originalJSLoader = Module._extensions['.js'];
-
-/**
- * Create transform hook for `require(filePath)`.
- *
- * @param { (filePath: string, fileContents: string) => string } onTransform
- * @returns { () => void }
- * @see https://github.com/ariporad/pirates
- */
-export function createRequireHook(onTransform) {
-  const extensions = config.extensionsByType.js.filter((ext) => ext !== '.json');
-  /** @type { { [extension: string]: (module: NodeModule, filePath: string) => void } } */ // @ts-ignore
-  const requireExtensions = Module._extensions;
-  let reverted = false;
-
-  for (const ext of extensions) {
-    // @ts-ignore
-    const oldLoader = Module._extensions[ext] || originalJSLoader;
-
-    // @ts-ignore
-    requireExtensions[ext] = function loader(module, filePath) {
-      if (fileFormatCache.get(filePath) === 'cjs') {
-        oldLoader(module, filePath);
-        return;
-      }
-
-      let code = fs.readFileSync(filePath, 'utf8');
-
-      if (!reverted) {
-        // Trigger fileFormatCache storage
-        isCjsFile(filePath, code);
-        const transformed = onTransform(filePath, code);
-
-        if (transformed !== undefined) {
-          code = transformed;
-        }
-      }
-
-      // Skip over native loader to avoid error when requiring .js file from an esm project (package.json#type === 'module')
-      // @ts-ignore
-      module._compile(code, filePath);
-    };
-  }
-
-  return function revert() {
-    reverted = true;
-  };
-}
+const realPath =
+  'native' in fs.realpathSync && typeof fs.realpathSync.native === 'function'
+    ? fs.realpathSync.native
+    : fs.realpathSync;
 
 /**
  * Validate that all file paths exist
@@ -294,34 +247,6 @@ export function getDirectoryContents(dirPath) {
 }
 
 /**
- * Determine if 'filePath' is referencing a commonjs file
- *
- * @param { string } filePath
- * @param { string } [fileContents]
- * @returns { boolean }
- */
-export function isCjsFile(filePath, fileContents) {
-  const cached = fileFormatCache.get(filePath);
-
-  if (cached !== undefined) {
-    return cached === 'cjs';
-  }
-
-  const extension = path.extname(filePath);
-  let isCjs = false;
-
-  if (extension === '.js') {
-    isCjs = !isEsmFile(filePath, fileContents);
-  } else if (extension === '.cjs' || extension === '.json') {
-    isCjs = true;
-  }
-
-  fileFormatCache.set(filePath, isCjs ? 'cjs' : 'esm');
-
-  return isCjs;
-}
-
-/**
  * Import module at 'filePath'
  *
  * @template ModuleType
@@ -476,7 +401,7 @@ export function resolveRealFilePath(filePath) {
   }
 
   try {
-    return fs.realpathSync(filePath);
+    return realPath(filePath);
   } catch (err) {
     return filePath;
   }

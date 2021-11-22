@@ -1,6 +1,9 @@
+import body from './body.mjs';
 import fastify from 'fastify';
 
 const server = fastify();
+
+oops;
 
 server.get('/', async (req, reply) => {
   reply.type('text/html').send(`<!doctype html>
@@ -10,7 +13,7 @@ server.get('/', async (req, reply) => {
         <script type="module" src="www/module.js"></script>
       </head>
       <body>
-      ${import.meta.url}
+      ${body}
       </body>
     </html>`);
 });

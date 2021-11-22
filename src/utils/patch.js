@@ -19,7 +19,9 @@ import path from 'path';
 import { resolve } from '../resolver/index.js';
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
+const RE_CSS_IMPORT = /(@import\b[^'"]+['"])([^'"\n]+)(['"])/gm;
 const RE_DYNAMIC_IMPORT = /(^[^(]+\(['"])([^'"]+)(['"][^)]*\))/;
+const RE_HTTP = /^https?:\/\//;
 const RE_NONCE_SHA = /nonce-|sha\d{3}-/;
 const RE_OPEN_HEAD_TAG = /<head>/i;
 
@@ -30,16 +32,19 @@ const debug = Debug('dvlp:patch');
  * Injects reload script into html response,
  * and resolves import ids for js/css response.
  *
- * @param { string } filePath
+ * @param { string | undefined } resolvedFilePath
  * @param { Req } req
  * @param { Res } res
  * @param { PatchResponseOptions } options
  */
-export function patchResponse(filePath, req, res, { footerScript, headerScript, resolveImport, send }) {
-  // req.filepath set after file.find(), filepath passed if cached
-  filePath = req.filePath || filePath || req.url;
+export function patchResponse(resolvedFilePath, req, res, { footerScript, headerScript, resolveImport, send }) {
+  // req.filepath set after file.find()
+  const filePath = req.filePath || resolvedFilePath || req.url;
+
   debug(`patching response for "${getProjectPath(filePath)}"`);
+
   proxySetHeader(res, disableContentEncodingHeader.bind(disableContentEncodingHeader, res));
+
   if (isHtmlRequest(req)) {
     const urls = [];
     const hashes = [];
@@ -86,6 +91,7 @@ export function patchResponse(filePath, req, res, { footerScript, headerScript, 
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
+      css = rewriteCSSImports(res, filePath, css, resolveImport);
 
       if (send) {
         const transformed = send(filePath, css);
@@ -98,21 +104,21 @@ export function patchResponse(filePath, req, res, { footerScript, headerScript, 
       return css;
     });
   } else if (isJsRequest(req)) {
-    proxyBodyWrite(res, (code) => {
+    proxyBodyWrite(res, (js) => {
       enableCrossOriginHeader(res);
       // @ts-ignore
       disableCacheControlHeader(res, req.url);
-      code = rewriteImports(res, filePath, code, resolveImport);
+      js = rewriteJSImports(res, filePath, js, resolveImport);
 
       if (send) {
-        const transformed = send(filePath, code);
+        const transformed = send(filePath, js);
 
         if (transformed !== undefined) {
-          code = transformed;
+          js = transformed;
         }
       }
 
-      return code;
+      return js;
     });
   }
 }
@@ -243,23 +249,78 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  *
  * @param { Res } res
  * @param { string } filePath
- * @param { string } code
+ * @param { string } css
  * @param { PatchResponseOptions["resolveImport"] } resolveImport
  * @returns { string }
  */
-function rewriteImports(res, filePath, code, resolveImport) {
+function rewriteCSSImports(res, filePath, css, resolveImport) {
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
+
+  const projectFilePath = getProjectPath(filePath);
+
+  if (!RE_CSS_IMPORT.test(css)) {
+    debug(`no imports to rewrite in "${projectFilePath}"`);
+    return css;
+  }
+
+  /** @type { {[key: string]: string} } */
+  const rewritten = {};
+  let match;
+
+  RE_CSS_IMPORT.lastIndex = 0;
+  while ((match = RE_CSS_IMPORT.exec(css))) {
+    const [context, pre, id, post] = match;
+
+    if (!RE_HTTP.test(id)) {
+      let importPath = resolve(id, getAbsoluteProjectPath(filePath));
+
+      // Force relative if not found
+      if (importPath === undefined && path.extname(id) !== '') {
+        importPath = resolve(`./${id}`, getAbsoluteProjectPath(filePath));
+      }
+
+      if (importPath) {
+        const newId = filePathToUrl(importPath);
+
+        debug(`rewrote import id from "${id}" to "${newId}"`);
+
+        rewritten[context] = `${pre}${newId}${post}`;
+      } else {
+        warn(`⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`);
+      }
+    }
+  }
+
+  for (const importString in rewritten) {
+    css = css.replace(importString, rewritten[importString]);
+  }
+
+  res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
+  return css;
+}
+
+/**
+ * Rewrite bare import references in 'code'
+ *
+ * @param { Res } res
+ * @param { string } filePath
+ * @param { string } js
+ * @param { PatchResponseOptions["resolveImport"] } resolveImport
+ * @returns { string }
+ */
+function rewriteJSImports(res, filePath, js, resolveImport) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
 
   // Retrieve original source path from bundled file
   // to allow reference back to correct node_modules file
   if (isBundledFilePath(filePath)) {
-    filePath = parseOriginalBundledSourcePath(code);
+    filePath = parseOriginalBundledSourcePath(js);
   }
 
   try {
     const projectFilePath = getProjectPath(filePath);
     const importer = getAbsoluteProjectPath(filePath);
-    const [imports] = parse(code);
+    const [imports] = parse(js);
 
     if (imports.length > 0) {
       // Track length delta between 'id' and 'newId' to adjust
@@ -270,7 +331,7 @@ function rewriteImports(res, filePath, code, resolveImport) {
         const isDynamic = d > -1;
         let start = offset + s;
         let end = offset + e;
-        let specifier = code.substring(start, end);
+        let specifier = js.substring(start, end);
         let after = '';
         let before = '';
         let importPath;
@@ -300,7 +361,7 @@ function rewriteImports(res, filePath, code, resolveImport) {
               resolve,
             );
           } catch (err) {
-            err.hooked = true;
+            /** @type { Error & { hooked: boolean } } */ (err).hooked = true;
             throw err;
           }
 
@@ -341,7 +402,7 @@ function rewriteImports(res, filePath, code, resolveImport) {
 
           if (newId !== specifier || before || after) {
             debug(`rewrote${isDynamic ? ' dynamic' : ''} import id from "${specifier}" to "${newId}"`);
-            code = code.substring(0, start) + before + newId + after + code.substring(end);
+            js = js.substring(0, start) + before + newId + after + js.substring(end);
             offset += before.length + newId.length + after.length - specifier.length;
           }
         } else {
@@ -352,13 +413,13 @@ function rewriteImports(res, filePath, code, resolveImport) {
       debug(`no imports to rewrite in "${projectFilePath}"`);
     }
   } catch (err) {
-    if (err.hooked) {
+    if (/** @type { Error & { hooked: boolean } } */ (err).hooked) {
       fatal(err);
     }
   }
 
   res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
-  return code;
+  return js;
 }
 
 /**
@@ -408,13 +469,18 @@ function proxySetHeader(res, action) {
  */
 function proxyBodyWrite(res, action) {
   const originalSetHeader = res.setHeader;
+  let ended = false;
   /** @type { Buffer } */
   let buffer;
 
   // Proxy write() to buffer streaming response
   res.write = new Proxy(res.write, {
-    // @ts-ignore
     apply(target, ctx, args) {
+      // When in HTTP2 compat mode, res.end triggers a final res.write
+      if (ended) {
+        return Reflect.apply(target, ctx, args);
+      }
+
       let [chunk] = args;
 
       if (typeof chunk === 'string') {
@@ -446,11 +512,12 @@ function proxyBodyWrite(res, action) {
 
       if (!res.headersSent) {
         if (size) {
-          debug(`setting Content-Length to ${size}`);
           // @ts-ignore
           originalSetHeader.call(res, 'Content-Length', size);
         }
       }
+
+      ended = true;
 
       return Reflect.apply(target, ctx, [data, ...extraArgs]);
     },
@@ -462,7 +529,6 @@ function proxyBodyWrite(res, action) {
       let [key, value] = args;
 
       if (key.toLowerCase() === 'content-length') {
-        // debug(`prevented setting Content-Length to ${value}`);
         return;
       }
 
@@ -477,11 +543,6 @@ function proxyBodyWrite(res, action) {
       if (args.length > 1) {
         for (const key in args[args.length - 1]) {
           if (key.toLowerCase() === 'content-length') {
-            // debug(
-            //   `prevented setting Content-Length to ${
-            //     args[args.length - 1][key]
-            //   }`,
-            // );
             delete args[args.length - 1][key];
           }
         }

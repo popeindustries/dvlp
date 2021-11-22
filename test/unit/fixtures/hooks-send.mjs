@@ -1,6 +1,6 @@
-const path = require('path');
+import path from 'path';
 
-module.exports = {
+export default {
   onSend(filePath, code) {
     return `this is sent content for: ${path.basename(filePath)}`;
   },

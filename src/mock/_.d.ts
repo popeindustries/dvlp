@@ -1,6 +1,7 @@
 declare class Mock {
   cache: Set<MockResponseData | MockStreamData>;
   client: string;
+  loaded: Promise<void>;
   constructor(filePaths?: string | Array<string>);
   addResponse(
     req: string | MockRequest,
@@ -10,7 +11,7 @@ declare class Mock {
   ): () => void;
   addPushEvents(stream: string | MockPushStream, events: MockPushEvent | Array<MockPushEvent>): () => void;
   load(filePaths: string | Array<string>): void;
-  matchResponse(href: string, req?: Req, res?: Res): boolean | MockResponseData | undefined | void;
+  matchResponse(href: string, req?: Req, res?: Res): boolean | MockResponseData;
   matchPushEvent(
     stream: string | MockPushStream,
     name: string,
@@ -110,4 +111,22 @@ declare interface MockPushEvent {
   message?: string | { [key: string]: any };
   sequence?: Array<MockPushEvent>;
   options?: MockPushEventOptions;
+}
+
+declare interface SerializedMock {
+  href: string;
+  originRegex: string;
+  pathRegex: string;
+  search: string;
+  ignoreSearch: boolean;
+  events?: Array<string>;
+}
+
+declare interface DeserializedMock {
+  href: string;
+  originRegex: RegExp;
+  pathRegex: RegExp;
+  search: URLSearchParams;
+  ignoreSearch: boolean;
+  events?: Array<string>;
 }

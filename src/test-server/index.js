@@ -2,14 +2,13 @@ import { connectClient, destroyClients, pushEvent } from '../push-events/index.j
 import config from '../config.js';
 import Debug from 'debug';
 import decorateWithServerDestroy from 'server-destroy';
-import { EventSource } from '../reloader/event-source.js';
+import { EventSource } from '../reload/event-source.js';
 import fs from 'fs';
 import http from 'http';
 import Metrics from '../utils/metrics.js';
 import mime from 'mime';
 import Mock from '../mock/index.js';
 import path from 'path';
-import { URL } from 'url';
 import WebSocket from 'faye-websocket';
 
 const debug = Debug('dvlp:test');
@@ -21,14 +20,15 @@ export class TestServer {
    * @param { TestServerOptions } options
    */
   constructor(options) {
-    const { autorespond = false, latency = config.latency, port = config.port, webroot = '' } = options;
+    const { autorespond = false, latency = config.latency, port = config.defaultPort, webroot = '' } = options;
 
-    this.latency = latency;
-    this.mocks = new Mock();
-    this.webroot = webroot;
     this._autorespond = autorespond;
-    this.port = port;
-    this._server = null;
+    this._server;
+    this.latency = latency;
+    this.webroot = webroot;
+    // Make sure mocks instance has access to active port
+    this.port = config.activePort = port;
+    this.mocks = new Mock();
   }
 
   /**
@@ -170,7 +170,7 @@ export class TestServer {
    * @param { string | Array<string> } filePath
    */
   loadMockFiles(filePath) {
-    this.mocks.load(filePath);
+    return this.mocks.load(filePath);
   }
 
   /**

@@ -140,7 +140,7 @@ describe('server', () => {
       server = await serverFactory('test/unit/fixtures/www', {
         port: 8100,
         reload: false,
-        hooksPath: 'test/unit/fixtures/hooks-transform.js',
+        hooksPath: 'test/unit/fixtures/hooks-transform.mjs',
       });
       const res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(200);
@@ -150,7 +150,7 @@ describe('server', () => {
       server = await serverFactory('test/unit/fixtures/www', {
         port: 8100,
         reload: false,
-        hooksPath: 'test/unit/fixtures/hooks-send.js',
+        hooksPath: 'test/unit/fixtures/hooks-send.mjs',
       });
       const res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(200);
@@ -172,7 +172,7 @@ describe('server', () => {
       server = await serverFactory('test/unit/fixtures/www', {
         port: 8100,
         reload: false,
-        hooksPath: 'test/unit/fixtures/hooks-transform.js',
+        hooksPath: 'test/unit/fixtures/hooks-transform.mjs',
       });
       let start = Date.now();
       let res = await fetch('http://localhost:8100/style.css');
@@ -187,7 +187,7 @@ describe('server', () => {
       server = await serverFactory('test/unit/fixtures/www', {
         port: 8100,
         reload: false,
-        hooksPath: 'test/unit/fixtures/hooks-transform.js',
+        hooksPath: 'test/unit/fixtures/hooks-transform.mjs',
       });
       let start = Date.now();
       let res = await fetch('http://localhost:8100/style.css', {
@@ -222,7 +222,7 @@ describe('server', () => {
       server = await serverFactory('test/unit/fixtures/www', {
         port: 8100,
         reload: false,
-        hooksPath: 'test/unit/fixtures/hooksError.js',
+        hooksPath: 'test/unit/fixtures/hooks-error.mjs',
       });
       const res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(500);
@@ -325,17 +325,6 @@ describe('server', () => {
   });
 
   describe('application', () => {
-    it('should start an app server', async () => {
-      server = await serverFactory('test/unit/fixtures/app.js', {
-        port: 8100,
-        reload: false,
-      });
-      const res = await fetch('http://localhost:8100/', {
-        headers: { accept: 'text/html' },
-      });
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('hi');
-    });
     it('should start a function server', async () => {
       server = await serverFactory(
         () => {
@@ -344,7 +333,7 @@ describe('server', () => {
               res.writeHead(200);
               res.end('hi');
             })
-            .listen(8100);
+            .listen(8102);
         },
         { port: 8100, reload: false },
       );
@@ -362,7 +351,7 @@ describe('server', () => {
               res.writeHead(200);
               res.end('hi');
             })
-            .listen(8100);
+            .listen(8102);
         },
         { directories: ['test/unit/fixtures/www'], port: 8100, reload: false },
       );
@@ -370,8 +359,30 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('main');
     });
+    it('should start an app server', async () => {
+      server = await serverFactory('test/unit/fixtures/app.mjs', {
+        port: 8100,
+        reload: false,
+      });
+      const res = await fetch('http://localhost:8100/', {
+        headers: { accept: 'text/html' },
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('hi');
+    });
+    it('should start an app server with listen "path"', async () => {
+      server = await serverFactory('test/unit/fixtures/app-create-server.mjs', {
+        port: 8100,
+        reload: false,
+      });
+      const res = await fetch('http://localhost:8100/', {
+        headers: { accept: 'text/html' },
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('ok');
+    });
     it('should start an app server with additional directories', async () => {
-      server = await serverFactory(['test/unit/fixtures/www', 'test/unit/fixtures/app.js'], {
+      server = await serverFactory(['test/unit/fixtures/www', 'test/unit/fixtures/app.mjs'], {
         port: 8100,
         reload: false,
       });
@@ -380,7 +391,7 @@ describe('server', () => {
       expect(await res.text()).to.contain('main');
     });
     it('should start an app server listening for "request" event', async () => {
-      server = await serverFactory('test/unit/fixtures/appListener.js', {
+      server = await serverFactory('test/unit/fixtures/app-listener.mjs', {
         port: 8100,
       });
       const res = await fetch('http://localhost:8100/', {
@@ -389,21 +400,28 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('ok');
     });
-    it('should start an esm app server', async () => {
-      server = await serverFactory('test/unit/fixtures/app.mjs', { port: 8100 });
+    it('should start an app server with default server transform', async () => {
+      server = await serverFactory('test/unit/fixtures/app.ts', {
+        port: 8100,
+        reload: false,
+      });
       const res = await fetch('http://localhost:8100/', {
-        headers: { Accept: 'text/html; charset=utf-8' },
+        headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
     });
-    it('should start an esm app server with "import.meta.url" substitution', async () => {
-      server = await serverFactory('test/unit/fixtures/appImportMeta.mjs', { port: 8100 });
+    it('should start an app server with custom server transform', async () => {
+      server = await serverFactory('test/unit/fixtures/app.ts', {
+        port: 8100,
+        reload: false,
+        hooksPath: 'test/unit/fixtures/hooks-transform-server.mjs',
+      });
       const res = await fetch('http://localhost:8100/', {
-        headers: { Accept: 'text/html; charset=utf-8' },
+        headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('test/unit/fixtures/appImportMeta.mjs');
+      expect(await res.text()).to.contain('hi from body hook');
     });
     it('should polyfill process.env', async () => {
       server = await serverFactory('test/unit/fixtures/app.mjs', { port: 8100 });
@@ -415,22 +433,8 @@ describe('server', () => {
         '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="dvlptest";\nwindow.DVLP=true;</script>',
       );
     });
-    it('should trigger exit handlers for clean up', async () => {
-      server = await serverFactory('test/unit/fixtures/appExit.js', { port: 8100 });
-      expect(global.context.beforeExitCalled).to.equal(undefined);
-      await server.restart();
-      expect(global.context.beforeExitCalled).to.equal(true);
-    });
-    it('should clear globals on exit', async () => {
-      server = await serverFactory('test/unit/fixtures/appGlobals.js', {
-        port: 8100,
-      });
-      expect(global.foo).to.equal('foo');
-      await server.destroy();
-      expect(global.foo).to.equal(undefined);
-    });
     it('should serve a bundled module js file', async () => {
-      server = await serverFactory('test/unit/fixtures/app.js', { port: 8100 });
+      server = await serverFactory('test/unit/fixtures/app.mjs', { port: 8100 });
       const res = await fetch(`http://localhost:8100/${config.bundleDirName}/debug-${DEBUG_VERSION}.js`);
       expect(res.status).to.eql(200);
       const body = await res.text();
@@ -438,7 +442,7 @@ describe('server', () => {
       expect(body).to.contain('export_default as default');
     });
     it('should serve a bundled module js file from server listening for "request" event', async () => {
-      server = await serverFactory('test/unit/fixtures/appListener.js', {
+      server = await serverFactory('test/unit/fixtures/app-listener.mjs', {
         port: 8100,
       });
       const res = await fetch(`http://localhost:8100/${config.bundleDirName}/debug-${DEBUG_VERSION}.js`);
@@ -448,14 +452,14 @@ describe('server', () => {
       expect(body).to.contain('export_default as default');
     });
     it('should serve a node_modules module js file', async () => {
-      server = await serverFactory('test/unit/fixtures/app.js', { port: 8100 });
+      server = await serverFactory('test/unit/fixtures/app.mjs', { port: 8100 });
       const res = await fetch(`http://localhost:8100/node_modules/foo/foo.js`);
       expect(res.status).to.eql(200);
       const body = await res.text();
       expect(body).to.contain("console.log('this is foo')");
     });
     it('should inject the reload script into an html response', async () => {
-      server = await serverFactory('test/unit/fixtures/app.js', {
+      server = await serverFactory('test/unit/fixtures/app.mjs', {
         port: 8100,
         reload: true,
       });
@@ -466,21 +470,21 @@ describe('server', () => {
       expect(await res.text()).to.contain('sse = new EventSource');
     });
     it('should start with initial error', async () => {
-      server = await serverFactory('test/unit/fixtures/appError.mjs', {
+      server = await serverFactory('test/unit/fixtures/app-error.mjs', {
         port: 8100,
         reload: false,
       });
-      try {
-        await fetch('http://localhost:8100/', {
-          headers: { accept: 'text/html' },
-        });
-        throw Error("sholdn't have come this far!");
-      } catch (err) {
-        expect(err.code).to.eql('ECONNREFUSED');
-      }
+      await fetch('http://localhost:8100/', {
+        headers: { accept: 'text/html' },
+      });
+      const res = await fetch('http://localhost:8100/', {
+        headers: { accept: 'text/html' },
+      });
+      expect(res.status).to.eql(500);
+      expect(await res.text()).to.eql('application server failed to start');
     });
     it('should handle request error', async () => {
-      server = await serverFactory('test/unit/fixtures/appRequestError.js', {
+      server = await serverFactory('test/unit/fixtures/app-request-error.mjs', {
         port: 8100,
         reload: false,
       });
@@ -488,19 +492,20 @@ describe('server', () => {
         headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(500);
+      expect(await res.text()).to.include('errrrrrrrrrrrr is not defined');
     });
     it('should transform file content when using an onTransform hook', async () => {
-      server = await serverFactory('test/unit/fixtures/app.js', {
+      server = await serverFactory('test/unit/fixtures/app.mjs', {
         port: 8100,
         reload: false,
-        hooksPath: 'test/unit/fixtures/hooks-transform.js',
+        hooksPath: 'test/unit/fixtures/hooks-transform.mjs',
       });
       const res = await fetch('http://localhost:8100/www/style.css');
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('this is transformed content for: style.css');
     });
     it('should respond to mocked requests', async () => {
-      server = await serverFactory('test/unit/fixtures/app.js', {
+      server = await serverFactory('test/unit/fixtures/app.mjs', {
         mockPath: 'test/unit/fixtures/mock/1234.json',
         port: 8100,
         reload: false,
@@ -509,8 +514,18 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(res.headers.get('content-type')).to.equal('image/jpeg');
     });
+    it('should respond to remote mocked requests', async () => {
+      server = await serverFactory('test/unit/fixtures/app-api.mjs', {
+        mockPath: 'test/unit/fixtures/mock/9012.json',
+        port: 8100,
+        reload: false,
+      });
+      const res = await fetch('http://localhost:8100');
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.include('Bob');
+    });
     it('should handle mock EventSource connection', (done) => {
-      serverFactory('test/unit/fixtures/app.js', {
+      serverFactory('test/unit/fixtures/app.mjs', {
         mockPath: 'test/unit/fixtures/mock-push',
         port: 8100,
         reload: false,
@@ -524,7 +539,7 @@ describe('server', () => {
       });
     });
     it('should handle push mock event via EventSource', (done) => {
-      serverFactory('test/unit/fixtures/app.js', {
+      serverFactory('test/unit/fixtures/app.mjs', {
         mockPath: 'test/unit/fixtures/mock-push',
         port: 8100,
         reload: false,
@@ -552,7 +567,7 @@ describe('server', () => {
       });
     });
     it('should handle mock WebSocket connection', (done) => {
-      serverFactory('test/unit/fixtures/app.js', {
+      serverFactory('test/unit/fixtures/app.mjs', {
         mockPath: 'test/unit/fixtures/mock-push',
         port: 8100,
         reload: false,
@@ -566,7 +581,7 @@ describe('server', () => {
       });
     });
     it('should handle push mock event via WebSocket', (done) => {
-      serverFactory('test/unit/fixtures/app.js', {
+      serverFactory('test/unit/fixtures/app.mjs', {
         mockPath: 'test/unit/fixtures/mock-push',
         port: 8100,
         reload: false,
@@ -650,7 +665,7 @@ describe('server', () => {
       });
       describe('application', () => {
         it('should start an app server over https', async () => {
-          server = await serverFactory('test/unit/fixtures/app.js', {
+          server = await serverFactory('test/unit/fixtures/app.mjs', {
             certsPath: 'test/unit/fixtures/certificates',
             port: 8100,
             reload: false,
@@ -662,7 +677,7 @@ describe('server', () => {
           expect(await res.text()).to.contain('hi');
         });
         it('should serve a node_modules module js file over https', async () => {
-          server = await serverFactory('test/unit/fixtures/app.js', {
+          server = await serverFactory('test/unit/fixtures/app.mjs', {
             certsPath: 'test/unit/fixtures/certificates',
             port: 8100,
             reload: false,

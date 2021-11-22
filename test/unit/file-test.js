@@ -1,4 +1,4 @@
-import { expandPath, find, isCjsFile, isEsmFile } from '../../src/utils/file.js';
+import { expandPath, find, isEsmFile } from '../../src/utils/file.js';
 import { expect } from 'chai';
 import path from 'path';
 
@@ -148,24 +148,9 @@ describe('file', () => {
     });
   });
 
-  describe('isCjsFile()', () => {
-    it('should return true for .js file with "require()"', () => {
-      const filePath = path.resolve('test/unit/fixtures/app.js');
-      expect(isCjsFile(filePath)).to.be.true;
-    });
-    it('should return true for .cjs file', () => {
-      const filePath = path.resolve('test/unit/fixtures/app.cjs');
-      expect(isCjsFile(filePath)).to.be.true;
-    });
-    it('should return true for .json file', () => {
-      const filePath = path.resolve('test/unit/fixtures/package.json');
-      expect(isCjsFile(filePath)).to.be.true;
-    });
-  });
-
   describe('isEsmFile()', () => {
     it('should return true for .js file with "import"', () => {
-      const filePath = path.resolve('test/unit/fixtures/config.esm.js');
+      const filePath = path.resolve('test/unit/fixtures/file.esm.js');
       expect(isEsmFile(filePath)).to.be.true;
     });
     it('should return false for script with no imports/exports', () => {

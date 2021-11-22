@@ -1,37 +1,43 @@
 {
   "name": "dvlp",
-  "version": "13.3.2",
+  "version": "14.0.0-beta.3",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
-  "main": "dvlp.js",
+  "main": "./src/dvlp.js",
   "type": "module",
   "types": "dvlp.d.ts",
   "repository": "https://github.com/popeindustries/dvlp.git",
   "author": "Alexander Pope <alex@pope-industries.com>",
   "license": "MIT",
-  "private": false,
   "bin": {
     "dvlp": "bin/dvlp.js"
   },
   "exports": {
-    ".": "./dvlp.js",
-    "./test-browser": "./dvlp-test-browser.js",
-    "./dvlp-test-browser.js": "./dvlp-test-browser.js",
-    "./test": "./dvlp-test.js",
-    "./dvlp-test.js": "./dvlp-test.js"
+    ".": "./src/dvlp.js",
+    "./test-browser": "./src/dvlp-test-browser.js",
+    "./dvlp-test-browser.js": "./src/dvlp-test-browser.js",
+    "./test": "./src/dvlp-test.js",
+    "./dvlp-test.js": "./src/dvlp-test.js"
+  },
+  "publishConfig": {
+    "main": "./dvlp.js",
+    "exports": {
+      ".": "./dvlp.js",
+      "./test-browser": "./dvlp-test-browser.js",
+      "./dvlp-test-browser.js": "./dvlp-test-browser.js",
+      "./test": "./dvlp-test.js",
+      "./dvlp-test.js": "./dvlp-test.js"
+    }
   },
   "dependencies": {
     "commander": "^8.1.0",
-    "esbuild": "~0.13.0",
-    "undici": "^4.0.0"
+    "esbuild": "~0.13.15"
   },
   "devDependencies": {
-    "@babel/core": "^7.14.0",
-    "@babel/eslint-parser": "^7.13.0",
     "@fidm/x509": "^1.2.1",
     "@types/debug": "^4.1.5",
     "@types/glob": "^7.1.3",
     "@types/mime": "^2.0.3",
-    "@types/node": "^16.4.6",
+    "@types/node": "^16.11.9",
     "@types/platform": "^1.3.3",
     "@types/rimraf": "^3.0.0",
     "@types/send": "^0.17.0",
@@ -42,17 +48,17 @@
     "cross-env": "^7.0.3",
     "debug": "^4.2.0",
     "es-module-lexer": "~0.9.0",
-    "eslint": "^8.0.1",
+    "eslint": "^8.3.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eventsource": "^1.0.7",
-    "fastify": "^3.15.0",
+    "fastify": "^3.24.0",
     "fastify-static": "^4.0.1",
     "faye-websocket": "~0.11.3",
     "glob": "^7.1.5",
     "husky": "^7.0.1",
     "is-file-esm": "^1.0.0",
-    "lint-staged": "^11.0.0",
+    "lint-staged": "^12.1.2",
     "lit-html": "^2.0.0",
     "mime": "^3.0.0",
     "mocha": "^9.0.0",
@@ -66,11 +72,13 @@
     "rimraf": "^3.0.0",
     "send": "~0.17.1",
     "server-destroy": "^1.0.1",
-    "terser": "^5.5.0",
-    "typescript": "^4.0.3"
+    "terser": "^5.10.0",
+    "typescript": "^4.5.2",
+    "undici": "^4.10.2"
   },
   "engines": {
-    "node": ">=12.2.0"
+    "node": ">=14",
+    "pnpm": ">=6"
   },
   "scripts": {
     "build": "node ./scripts/build.js",
@@ -80,7 +88,7 @@
     "lint:src": "eslint './{src,test}/**/*.js'",
     "lint:types": "tsc --noEmit --skipLibCheck --project jsconfig.json",
     "prepublishOnly": "npm run build",
-    "test": "cross-env NODE_ENV=dvlptest NODE_OPTIONS=\"--enable-source-maps --no-warnings\" NODE_TLS_REJECT_UNAUTHORIZED=\"0\" ESBUILD_WORKER_THREADS=1 mocha test/unit/*-test.js --reporter spec --exit --timeout 10000",
+    "test": "cross-env NODE_ENV=dvlptest NODE_OPTIONS=\"--enable-source-maps --no-warnings\" NODE_TLS_REJECT_UNAUTHORIZED=\"0\" mocha test/unit/*-test.js --reporter spec --exit --timeout 10000",
     "test:browser": "npm run build && ./bin/dvlp.js --mock test/browser/fixtures/mock test/browser",
     "test:integration": "npm run build && cross-env NODE_ENV=dvlptest mocha test/integration/*-test.js --reporter spec --exit --timeout 10000",
     "prepare": "husky install"

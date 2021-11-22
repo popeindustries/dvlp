@@ -1,13 +1,13 @@
 import { error, info, noisyInfo } from '../utils/log.js';
-import { fileURLToPath, URL, URLSearchParams } from 'url';
-import { isInvalidFilePath, isJsonFilePath } from '../utils/is.js';
+import { fileURLToPath, pathToFileURL, URLSearchParams } from 'url';
+import { getUrl, isEqualSearchParams } from '../utils/url.js';
+import { isInvalidFilePath, isJsFilePath, isJsonFilePath } from '../utils/is.js';
 import { match, pathToRegexp } from 'path-to-regexp';
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
 import fs from 'fs';
 import { getProjectPath } from '../utils/file.js';
-import { getUrl } from '../utils/url.js';
 import { interceptClientRequest } from '../utils/intercept.js';
 import Metrics from '../utils/metrics.js';
 import mime from 'mime';
@@ -35,9 +35,7 @@ export default class Mock {
     this.clear = this.clear.bind(this);
     this._uninterceptClientRequest;
 
-    if (filePaths) {
-      this.load(filePaths);
-    }
+    this.loaded = filePaths !== undefined ? this.load(filePaths) : Promise.resolve();
   }
 
   /**
@@ -173,50 +171,17 @@ export default class Mock {
    *
    * @param { string | Array<string> } filePaths
    */
-  load(filePaths) {
+  async load(filePaths) {
     if (!Array.isArray(filePaths)) {
       filePaths = [filePaths];
     }
 
-    for (let filePath of filePaths) {
-      filePath = path.resolve(filePath);
+    await Promise.all(filePaths.map((filePath) => this.loadFilePath(filePath)));
 
-      try {
-        const stat = fs.statSync(filePath);
-
-        if (stat.isDirectory()) {
-          this.loadDirectory(filePath);
-        } else {
-          this.loadFile(filePath);
-        }
-      } catch (err) {
-        error(`unable to find mock file ${filePath}`);
-      }
-    }
-
-    const stringifiedCache = JSON.stringify(
-      Array.from(this.cache).map((mockData) => {
-        const data = {
-          href: mockData.url.href,
-          originRegex: mockData.originRegex.source,
-          pathRegex: mockData.pathRegex.source,
-          search: mockData.searchParams.toString(),
-          ignoreSearch: mockData.ignoreSearch,
-        };
-
-        if (isMockStreamData(mockData)) {
-          // @ts-ignore
-          data.events = Object.keys(mockData.events);
-        }
-
-        return data;
-      }),
-      undefined,
-      2,
-    );
+    const stringifiedCache = JSON.stringify(this.toJSON(), undefined, 2);
 
     // Client mocking only relevant for loaded mocks
-    this.client = mockClient.replace(/cache\s?=\s?\[\]/g, `cache=${stringifiedCache}`);
+    this.client = mockClient.replace(/cache\s?=\s?\[\]/, `cache=${stringifiedCache}`);
   }
 
   /**
@@ -226,7 +191,7 @@ export default class Mock {
    * @param { string } href
    * @param { Req } [req]
    * @param { Res } [res]
-   * @returns { boolean | MockResponseData | undefined | void }
+   * @returns { boolean | MockResponseData }
    */
   matchResponse(href, req, res) {
     const mock = this.getMockData(href);
@@ -254,7 +219,8 @@ export default class Mock {
 
       req.params = matchObj ? matchObj.params : {};
 
-      return mock.response(req, res);
+      mock.response(req, res);
+      return true;
     }
 
     const {
@@ -263,17 +229,17 @@ export default class Mock {
 
     // Handle special status
     if (hang) {
-      return;
+      return true;
     } else if (error || missing) {
       const statusCode = error ? 500 : 404;
       const body = error ? 'error' : 'missing';
 
       res.writeHead(statusCode);
       res.end(body);
-      return;
+      return true;
     } else if (offline && req) {
       req.socket.destroy();
-      return;
+      return true;
     }
 
     debug(`sending mocked "${href}"`);
@@ -305,7 +271,7 @@ export default class Mock {
             maxAge: getMaxAgeFromHeaders(normaliseHeaderKeys(headers, ['Cache-Control'])) || config.maxAge,
           },
         ).pipe(res);
-        return;
+        return true;
       }
       case 'json': {
         content = JSON.stringify(body);
@@ -352,7 +318,7 @@ export default class Mock {
     }
 
     triggerEventSequence(stream, eventSequence, push).then(() => {
-      noisyInfo(`${chalk.green('     0ms')} triggered mocked push event ${chalk.green(name)}`);
+      noisyInfo(`${chalk.green('    0ms')} triggered mocked push event ${chalk.green(name)}`);
     });
 
     return true;
@@ -423,7 +389,7 @@ export default class Mock {
       if (this.hasMatch(url.href)) {
         url.searchParams.append('dvlpmock', encodeURIComponent(url.href));
         // Reroute to active server
-        url.host = `localhost:${config.applicationPort}`;
+        url.host = `localhost:${config.activePort}`;
       }
       return true;
     });
@@ -443,6 +409,7 @@ export default class Mock {
     for (const mock of Array.from(this.cache).reverse()) {
       if (
         !mock.originRegex.test(url.origin) ||
+        // @ts-ignore
         (!mock.ignoreSearch && !isEqualSearchParams(url.searchParams, mock.searchParams))
       ) {
         continue;
@@ -455,15 +422,33 @@ export default class Mock {
   }
 
   /**
+   * @param { string } filePath
+   * @private
+   */
+  async loadFilePath(filePath) {
+    filePath = path.resolve(filePath);
+
+    try {
+      const stat = fs.statSync(filePath);
+
+      if (stat.isDirectory()) {
+        await this.loadDirectory(filePath);
+      } else {
+        await this.loadFile(filePath);
+      }
+    } catch (err) {
+      error(`unable to find mock file ${filePath}`);
+    }
+  }
+
+  /**
    * Load directory at 'dirpath'
    *
    * @param { string } dirpath
    * @private
    */
-  loadDirectory(dirpath) {
-    fs.readdirSync(dirpath).forEach((filePath) => {
-      this.load(path.join(dirpath, filePath));
-    });
+  async loadDirectory(dirpath) {
+    await Promise.all(fs.readdirSync(dirpath).map((filePath) => this.loadFilePath(path.join(dirpath, filePath))));
   }
 
   /**
@@ -472,14 +457,19 @@ export default class Mock {
    * @param { string } filePath
    * @private
    */
-  loadFile(filePath) {
-    if (!isJsonFilePath(filePath)) {
-      return;
-    }
-
+  async loadFile(filePath) {
     try {
       /** @type { Array<MockResponseJSONSchema | MockPushEventJSONSchema> } */
-      let mocks = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      let mocks;
+
+      if (isJsonFilePath(filePath)) {
+        mocks = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      } else if (isJsFilePath(filePath)) {
+        mocks = (await import(pathToFileURL(filePath).href)).default;
+      } else {
+        return;
+      }
+
       let count = 0;
       let type = '';
 
@@ -488,9 +478,9 @@ export default class Mock {
       }
 
       for (const mock of mocks) {
-        if (!isMockJSONSchema(mock)) {
+        if (!isMock(mock)) {
           return;
-        } else if (!isValidJSONSchema(mock)) {
+        } else if (!isValidMockFormat(mock)) {
           return error(`invalid mock format for ${filePath}`);
         }
 
@@ -517,8 +507,33 @@ export default class Mock {
         )}`,
       );
     } catch (err) {
+      console.log(err);
       error(err);
     }
+  }
+
+  /**
+   * Serialize cache content for transport
+   *
+   * @returns { Array<SerializedMock> }
+   */
+  toJSON() {
+    return Array.from(this.cache).map((mockData) => {
+      const data = {
+        href: mockData.url.href,
+        originRegex: mockData.originRegex.source,
+        pathRegex: mockData.pathRegex.source,
+        search: mockData.searchParams.toString(),
+        ignoreSearch: mockData.ignoreSearch,
+      };
+
+      if (isMockStreamData(mockData)) {
+        // @ts-ignore
+        data.events = Object.keys(mockData.events);
+      }
+
+      return data;
+    });
   }
 }
 
@@ -536,7 +551,7 @@ function getUrlSegmentsForMatching(req, ignoreSearch) {
     href = href.replace('127.0.0.1', 'localhost');
   }
 
-  const url = new URL(href, `http://localhost:${config.applicationPort}`);
+  const url = new URL(href, `http://localhost:${config.activePort}`);
   // Allow matching of both secure/unsecure protocols
   const origin = new RegExp(
     url.origin
@@ -573,41 +588,6 @@ function getUrlSegmentsForMatching(req, ignoreSearch) {
 }
 
 /**
- * Determine if search params are equal
- *
- * @param { URLSearchParams } params1
- * @param { URLSearchParams } params2
- * @returns { boolean }
- */
-function isEqualSearchParams(params1, params2) {
-  // @ts-ignore
-  const keys1 = Array.from(params1.keys());
-  // @ts-ignore
-  const keys2 = Array.from(params2.keys());
-
-  if (keys1.length !== keys2.length) {
-    return false;
-  }
-
-  for (const key of keys1) {
-    const values1 = params1.getAll(key);
-    const values2 = params2.getAll(key);
-
-    if (values1.length !== values2.length) {
-      return false;
-    }
-
-    for (const value of values1) {
-      if (!values2.includes(value)) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-
-/**
  * Match and handle mock push event for 'stream'
  *
  * @param { string | MockPushStream } stream
@@ -640,24 +620,24 @@ function sleep(duration) {
 }
 
 /**
- *
  * @param { object } json
  * @returns { boolean }
  */
-function isMockJSONSchema(json) {
+function isMock(json) {
   return ('request' in json && 'response' in json) || ('stream' in json && 'events' in json);
 }
 
 /**
  * Validate that 'json' is correct format
  *
- * @param { { [key: string]: any } } json
+ * @param { { [key: string]: any } } mock
  * @returns { boolean }
  */
-function isValidJSONSchema(json) {
+function isValidMockFormat(mock) {
   return (
-    ('request' in json && 'url' in json.request && 'response' in json && 'body' in json.response) ||
-    ('stream' in json && 'url' in json.stream && 'events' in json)
+    ('request' in mock && 'url' in mock.request && 'response' in mock && 'body' in mock.response) ||
+    ('request' in mock && 'url' in mock.request && 'response' in mock && typeof mock.response === 'function') ||
+    ('stream' in mock && 'url' in mock.stream && 'events' in mock)
   );
 }
 

@@ -1,14 +1,17 @@
-import { exists, expandPath, getProjectPath, importModule, isCjsFile } from './utils/file.js';
+import { exists, expandPath, getProjectPath, importModule } from './utils/file.js';
 import logger, { error, info } from './utils/log.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
 import config from './config.js';
+import { createApplicationLoader } from './hooks/loader.js';
 import DvlpServer from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
 import fs from 'fs';
 import path from 'path';
-import { reloadServer } from './reloader/index.js';
-import secureProxyServer from './secure-proxy/index.js';
+
+// Export for easy import in loader hook
+// @see src/hooks/loader.js#L28
+export * as esbuild from 'esbuild';
 
 /**
  * Server instance factory
@@ -19,55 +22,41 @@ import secureProxyServer from './secure-proxy/index.js';
  */
 export async function server(
   filePath = process.cwd(),
-  { certsPath, directories, hooksPath, mockPath, port = config.applicationPort, reload = true, silent } = {},
+  { certsPath, directories, hooksPath, mockPath, port = config.defaultPort, reload = true, silent } = {},
 ) {
   const entry = resolveEntry(filePath, directories);
   /** @type { Hooks | undefined } */
   let hooks;
-  /** @type { Reloader | undefined } */
-  let reloader;
-  /** @type { SecureProxy | undefined } */
-  let secureProxy;
 
   await cjsLexerInit();
   await esLexerInit;
 
   config.directories = Array.from(new Set(entry.directories));
-  // Set format based on application entry
-  if (entry.isApp) {
-    // @ts-ignore
-    config.applicationFormat = isCjsFile(entry.main, fs.readFileSync(entry.main, 'utf8')) ? 'cjs' : 'esm';
-  }
   if (mockPath) {
     mockPath = expandPath(mockPath);
   }
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
-    hooks = await importModule(hooksPath);
+    hooks = /** @type { Hooks } */ (await importModule(hooksPath));
     info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
   }
   if (certsPath) {
     certsPath = expandPath(certsPath);
-    secureProxy = await secureProxyServer(certsPath, reload);
-  } else if (reload) {
-    reloader = await reloadServer();
+    entry.isSecure = true;
+    port = 443;
   }
   if (process.env.PORT === undefined) {
     process.env.PORT = String(port);
   }
 
-  const server = new DvlpServer(entry.main, reload ? secureProxy || reloader : undefined, hooks, mockPath);
+  createApplicationLoader(config.applicationLoaderPath, { hooks, hooksPath });
+
+  const server = new DvlpServer(entry, port, reload, hooks, mockPath, certsPath);
 
   try {
     await server.start();
   } catch (err) {
     error(err);
-  }
-
-  config.applicationPort = server.port;
-
-  if (secureProxy) {
-    secureProxy.setApplicationPort(server.port);
   }
 
   const parentDir = path.resolve(process.cwd(), '..');
@@ -80,25 +69,23 @@ export async function server(
     ? 'function'
     // @ts-ignore
     : getProjectPath(entry.main);
-  const origin = secureProxy && secureProxy.commonName ? `https://${secureProxy.commonName}` : server.origin;
+  const origin = server.origin;
+  const appOrigin = server.applicationHost?.appOrigin;
 
   info(`\n  💥 serving ${chalk.green(paths)}`);
   info(`    ...at ${chalk.green.underline(origin)}`);
-  info(' 👀 watching for changes...\n');
+  if (appOrigin) {
+    info(`    (proxied application server started at ${chalk.bold(appOrigin)})`);
+  }
+  info('\n  👀 watching for changes...\n');
 
   if (silent) {
     logger.silent = true;
   }
 
   return {
-    port: server.port,
-    restart: server.restart.bind(server),
     destroy() {
-      return Promise.all([
-        reloader && reloader.destroy(),
-        secureProxy && secureProxy.destroy(),
-        server.destroy(),
-      ]).then();
+      return server.destroy();
     },
   };
 }
@@ -115,8 +102,9 @@ function resolveEntry(filePath, directories = []) {
   const entry = {
     directories: [],
     isApp: false,
-    isStatic: false,
     isFunction: false,
+    isSecure: false,
+    isStatic: false,
     main: undefined,
   };
 
