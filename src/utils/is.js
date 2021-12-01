@@ -80,7 +80,7 @@ export function isCssFilePath(filePath) {
  * @returns { req is Req }
  */
 export function isCssRequest(req) {
-  return req.type === 'css' || (req.headers.accept && RE_TYPE_CSS.test(req.headers.accept)) || isCssFilePath(req.url);
+  return req.type === 'css' || isCssFilePath(req.url) || (req.headers.accept && RE_TYPE_CSS.test(req.headers.accept));
 }
 
 /**
@@ -101,7 +101,7 @@ export function isHtmlFilePath(filePath) {
  */
 export function isHtmlRequest(req) {
   return (
-    req.type === 'html' || (req.headers.accept && RE_TYPE_HTML.test(req.headers.accept)) || isHtmlFilePath(req.url)
+    req.type === 'html' || isHtmlFilePath(req.url) || (req.headers.accept && RE_TYPE_HTML.test(req.headers.accept))
   );
 }
 
@@ -134,9 +134,9 @@ export function isJsFilePath(filePath) {
 export function isJsRequest(req) {
   return (
     req.type === 'js' ||
+    isJsFilePath(req.url) ||
     // Almost always '*/*'
-    (req.headers.accept && RE_TYPE_JS.test(req.headers.accept)) ||
-    isJsFilePath(req.url)
+    (req.headers.accept && RE_TYPE_JS.test(req.headers.accept))
   );
 }
 

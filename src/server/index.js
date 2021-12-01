@@ -2,7 +2,7 @@ import { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } f
 import { find, getProjectPath, getTypeFromPath, getTypeFromRequest } from '../utils/file.js';
 import { handleFavicon, handleFile, handleMockResponse, handleMockWebSocket, handlePushEvent } from './handlers.js';
 import { info, noisyInfo } from '../utils/log.js';
-import { isBundledFilePath, isHtmlRequest, isNodeModuleFilePath } from '../utils/is.js';
+import { isBundledFilePath, isNodeModuleFilePath } from '../utils/is.js';
 import { resolveCerts, validateCert } from './certificate-validation.js';
 import ApplicationHost from './application-host.js';
 import chalk from 'chalk';
@@ -269,8 +269,8 @@ export default class DvlpServer {
       return;
     }
 
-    // Ignore html or uncached or no longer available at previously known path
-    if (type !== 'html' && (!filePath || !fs.existsSync(filePath))) {
+    // Uncached or no longer available at previously known path
+    if (!filePath || !fs.existsSync(filePath)) {
       filePath = find(req, { type });
 
       if (filePath) {
@@ -309,28 +309,27 @@ export default class DvlpServer {
 
       res.unhandled = true;
 
-      if (!this.applicationHost) {
+      if (this.applicationHost) {
+        noisyInfo(`    allowing app to handle "${req.url}"`);
+        this.applicationHost.handle(req, res);
+      } else {
         // Reroute to root index.html
-        if (isHtmlRequest(req)) {
+        if (type === 'html') {
           res.rerouted = req.url !== '/';
           // @ts-ignore
           req.url = '/';
           filePath = find(req);
-        }
 
-        if (filePath) {
-          debug(`sending "${filePath}"`);
-          handleFile(filePath, req, res, false);
-          return;
+          if (filePath) {
+            debug(`sending "${filePath}"`);
+            handleFile(filePath, req, res, false);
+            return;
+          }
         }
 
         debug(`not found "${req.url}"`);
         res.writeHead(404);
         res.end();
-        return;
-      } else {
-        noisyInfo(`    allowing app to handle "${req.url}"`);
-        this.applicationHost.handle(req, res);
       }
     }
   }

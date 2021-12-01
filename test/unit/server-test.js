@@ -44,6 +44,17 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('<!doctype html>');
     });
+    it('should implicitly serve index.html from sub-directory', async () => {
+      server = await serverFactory('test/unit/fixtures/www', {
+        port: 8100,
+        reload: false,
+      });
+      const res = await fetch('http://localhost:8100/nested', {
+        headers: { accept: 'text/html' },
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('Test Nested');
+    });
     it('should rewrite request for missing html files to index.html ', async () => {
       server = await serverFactory('test/unit/fixtures/www', { port: 8100 });
       const res = await fetch('http://localhost:8100/0', {

@@ -18,7 +18,7 @@ import { pathToFileURL } from 'url';
 
 export const favIcon = Buffer.from(favicon, 'base64');
 
-const FILE_TYPES = ['html', 'js', 'css'];
+const FILE_TYPES = ['js', 'css', 'html'];
 const MAX_FILE_SYSTEM_DEPTH = 10;
 const RE_GLOB = /[*[{]/;
 const RE_SEPARATOR = /[,;]\s?|\s/g;
