@@ -5,7 +5,15 @@ import { isNodeModuleFilePath } from '../utils/is.js';
 import { resolve } from '../resolver/index.js';
 import transform from './transform.js';
 
-const HOOK_NAMES = ['onDependencyBundle', 'onTransform', 'onResolveImport', 'onRequest', 'onSend', 'onServerTransform'];
+const HOOK_NAMES = [
+  'onDependencyBundle',
+  'onTransform',
+  'onResolveImport',
+  'onRequest',
+  'onSend',
+  'onServerResolve',
+  'onServerTransform',
+];
 
 export default class Hooker {
   /**
