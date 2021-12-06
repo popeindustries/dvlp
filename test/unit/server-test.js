@@ -86,9 +86,11 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include('application/javascript');
     });
-    it('should serve a bundled module js file with correct mime type', async () => {
+    it.only('should serve a bundled module js file with correct mime type', async () => {
       server = await serverFactory('test/unit/fixtures/www', { port: 8100 });
-      const res = await fetch(`http://localhost:8100/${getBundleFilePath('debug')}`);
+      const href = getBundleFilePath('debug');
+      console.log({ href });
+      const res = await fetch(`http://localhost:8100/${href}`);
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include('application/javascript');
     });

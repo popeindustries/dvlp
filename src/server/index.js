@@ -214,6 +214,7 @@ export default class DvlpServer {
     const req = /** @type { Req } */ (request);
     const res = /** @type { Res } */ (response);
     const { url } = req;
+    console.log({ url });
 
     if (isReloadRequest(req)) {
       if (!this.isListening) {
