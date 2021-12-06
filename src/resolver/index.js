@@ -2,11 +2,14 @@ import { getPackage, isSelfReferentialSpecifier, resolveAliasPath, resolvePackag
 import { getProjectPath, resolveRealFilePath } from '../utils/file.js';
 import { isAbsoluteFilePath, isRelativeFilePath } from '../utils/is.js';
 import path from 'path';
+import { warn } from '../utils/log.js';
 
 /** @type { Map<string, Package> } */
 const packageCacheByImportDir = new Map();
-/** @type { Map<string, Package> } */
+/** @type { Map<string, Array<Package>> } */
 const packageCacheByName = new Map();
+/** @type { Map<string, Package> } */
+const packageCacheByNameAndVersion = new Map();
 /** @type { Map<string, string> } */
 const resolveCache = new Map();
 
@@ -123,9 +126,17 @@ function resolveSpecifierAndPackage(specifier, dir) {
   let pkg = getPackageForDir(dir);
 
   if (pkg) {
-    // TODO: warn on multiple versions
+    if (!packageCacheByName.has(pkg.name)) {
+      packageCacheByName.set(pkg.name, [pkg]);
+    } else {
+      const packages = /** @type { Array<Package> } */ (packageCacheByName.get(pkg.name));
+      packages.push(pkg);
+
+      warn(`⚠️  multiple versions of the "${pkg.name}" package used: ${packages.map((pkg) => pkg.version).join(', ')}`);
+    }
+
     const versionedKey = `${pkg.name}@${pkg.version}`;
-    const versionedPackage = packageCacheByName.get(versionedKey);
+    const versionedPackage = packageCacheByNameAndVersion.get(versionedKey);
 
     // Use existing package at same version,
     // and modify specifier to resolve to existing package context
@@ -134,7 +145,7 @@ function resolveSpecifierAndPackage(specifier, dir) {
       pkg = versionedPackage;
     }
 
-    packageCacheByName.set(versionedKey, pkg);
+    packageCacheByNameAndVersion.set(versionedKey, pkg);
   }
 
   return [resolveRealFilePath(specifier), pkg];
@@ -146,5 +157,5 @@ function resolveSpecifierAndPackage(specifier, dir) {
 export function clearResolverCache() {
   resolveCache.clear();
   packageCacheByImportDir.clear();
-  packageCacheByName.clear();
+  packageCacheByNameAndVersion.clear();
 }
