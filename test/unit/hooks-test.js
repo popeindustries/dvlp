@@ -32,7 +32,7 @@ describe('hooks()', () => {
     await init();
   });
 
-  describe.only('bundle', () => {
+  describe('bundle', () => {
     afterEach(() => {
       hooks && hooks.destroy();
     });
