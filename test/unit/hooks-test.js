@@ -41,9 +41,9 @@ describe('hooks()', () => {
       const hooks = new Hooks();
       expect(await hooks.bundleDependency('./dvlp/bundle-xxx/foofoo-0.0.0.js')).to.equal(undefined);
     });
-    it('should bundle filePath', async () => {
+    it.only('should bundle filePath', async () => {
       const hooks = new Hooks();
-      const filePath = getBundleFilePath('debug');
+      const filePath = path.resolve(getBundleFilePath('debug'));
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.include('export_default as default');

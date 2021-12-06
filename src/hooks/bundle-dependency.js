@@ -27,6 +27,7 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
     res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
 
     const [moduleId, modulePath] = decodeBundleFilePath(filePath);
+    console.log({ moduleId, modulePath });
     let code;
 
     if (!modulePath) {
@@ -87,6 +88,7 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
         code = result.outputFiles[0].text;
       }
     } catch (err) {
+      console.log(err);
       debug(`error bundling "${moduleId}"`);
       res.writeHead(500);
       res.end(/** @type { Error } */ (err).message);
