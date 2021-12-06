@@ -10,8 +10,9 @@ import path from 'path';
  * @param { string } filePath
  */
 export function encodeBundleFilePath(id, filePath) {
-  filePath = path.relative(config.bundleDir, filePath);
-  return `${path.join(config.bundleDirName, encodeURIComponent(`${id}##${filePath}`))}`;
+  id = id.replace('/\\/g', '/');
+  filePath = path.relative(config.bundleDir, filePath).replace('/\\/g', '/');
+  return `${path.join(config.bundleDirName, encodeURIComponent(`${id}##${filePath}`))}`.replace('/\\/g', '/');
 }
 
 /**
