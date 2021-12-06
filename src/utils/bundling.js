@@ -1,49 +1,33 @@
 import { existsSync, readdirSync, unlinkSync } from 'fs';
-import { isJsFilePath, isNodeModuleFilePath } from './is.js';
+import { isAbsoluteFilePath, isJsFilePath } from './is.js';
 import config from '../config.js';
-import { getPackageForDir } from '../resolver/index.js';
 import path from 'path';
 
-const RE_SOURCE_PATH = /^\/\/ source: (.+)/;
-const SOURCE_PREFIX = '// source: ';
-
 /**
- * Encode bundled source path in banner comment
- *
- * @param { string } sourcePath
- * @returns { string }
- */
-export function encodeOriginalBundledSourcePath(sourcePath) {
-  return `${SOURCE_PREFIX}${sourcePath}`;
-}
-
-/**
- * Retrieve original source path from bundled source code
- *
- * @param { string } code
- * @returns { string }
- */
-export function parseOriginalBundledSourcePath(code) {
-  const match = RE_SOURCE_PATH.exec(code);
-
-  return match && match[1] ? match[1] : '';
-}
-
-/**
- * Resolve module id into bundle file name
+ * Encode bundle "filePath"
  *
  * @param { string } id
  * @param { string } filePath
- * @returns { string }
  */
-export function resolveBundleFileName(id, filePath) {
-  if (!isNodeModuleFilePath(filePath)) {
-    return '';
+export function encodeBundleFilePath(id, filePath) {
+  filePath = path.relative(config.bundleDir, filePath);
+  return `${path.join(config.bundleDirName, encodeURIComponent(`${id}##${filePath}`))}`;
+}
+
+/**
+ * Decode bundle "id" and "filePath"
+ *
+ * @param { string } encodedBundleFilePath
+ * @returns { [id: string, filePath: string] }
+ */
+export function decodeBundleFilePath(encodedBundleFilePath) {
+  if (!isAbsoluteFilePath(encodedBundleFilePath)) {
+    encodedBundleFilePath = path.resolve(encodedBundleFilePath);
   }
+  encodedBundleFilePath = decodeURIComponent(path.relative(config.bundleDir, encodedBundleFilePath));
+  const [id, filePath] = encodedBundleFilePath.split('##');
 
-  const pkg = getPackageForDir(path.dirname(filePath));
-
-  return `${encodeBundleId(id)}-${pkg ? pkg.version : ''}.js`;
+  return [id, path.resolve(config.bundleDir, filePath)];
 }
 
 /**
@@ -59,22 +43,4 @@ export function cleanBundledFiles() {
       }
     }
   }
-}
-
-/**
- * Encode "id"
- *
- * @param { string } id
- */
-export function encodeBundleId(id) {
-  return id.replace(/\//g, '__');
-}
-
-/**
- * Decode "id"
- *
- * @param { string } id
- */
-export function decodeBundleId(id) {
-  return id.replace(/__/g, '/');
 }

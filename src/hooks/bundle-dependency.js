@@ -1,13 +1,11 @@
-import { decodeBundleId, encodeOriginalBundledSourcePath } from '../utils/bundling.js';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { basename } from 'path';
 import config from '../config.js';
 import Debug from 'debug';
+import { decodeBundleFilePath } from '../utils/bundling.js';
 import { error } from '../utils/log.js';
 import { isBundledFilePath } from '../utils/is.js';
 import Metrics from '../utils/metrics.js';
 import { parse } from 'cjs-module-lexer';
-import { resolve } from '../resolver/index.js';
 
 const debug = Debug('dvlp:bundle');
 
@@ -28,9 +26,7 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
   if (isBundledFilePath(filePath)) {
     res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
 
-    const fileName = basename(filePath);
-    const moduleId = decodeBundleId(fileName.slice(0, fileName.lastIndexOf('-')));
-    const modulePath = resolve(moduleId);
+    const [moduleId, modulePath] = decodeBundleFilePath(filePath);
     let code;
 
     if (!modulePath) {
@@ -100,7 +96,7 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
 
     if (code !== undefined) {
       debug(`bundled content for ${moduleId}`);
-      writeFileSync(filePath, `${encodeOriginalBundledSourcePath(modulePath)}\n${code}`);
+      writeFileSync(filePath, code);
       res.bundled = true;
     }
 

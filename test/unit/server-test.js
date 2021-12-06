@@ -4,13 +4,12 @@ import EventSource from 'eventsource';
 import { expect } from 'chai';
 import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
+import { getBundleFilePath } from './utils.js';
 import http from 'http';
 import http2 from 'http2';
 import path from 'path';
 import { server as serverFactory } from '../../src/dvlp.js';
 import websocket from 'faye-websocket';
-
-const DEBUG_VERSION = '4.3.3';
 
 const { Client: WebSocket } = websocket;
 let es, server, ws;
@@ -89,7 +88,7 @@ describe('server', () => {
     });
     it('should serve a bundled module js file with correct mime type', async () => {
       server = await serverFactory('test/unit/fixtures/www', { port: 8100 });
-      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/debug-${DEBUG_VERSION}.js`);
+      const res = await fetch(`http://localhost:8100/${getBundleFilePath('debug')}`);
       expect(res.status).to.eql(200);
       expect(res.headers.get('Content-type')).to.include('application/javascript');
     });
@@ -446,7 +445,7 @@ describe('server', () => {
     });
     it('should serve a bundled module js file', async () => {
       server = await serverFactory('test/unit/fixtures/app.mjs', { port: 8100 });
-      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/debug-${DEBUG_VERSION}.js`);
+      const res = await fetch(`http://localhost:8100/${getBundleFilePath('debug')}`);
       expect(res.status).to.eql(200);
       const body = await res.text();
       expect(body).to.contain('function parse(str)');
@@ -456,7 +455,7 @@ describe('server', () => {
       server = await serverFactory('test/unit/fixtures/app-listener.mjs', {
         port: 8100,
       });
-      const res = await fetch(`http://localhost:8100/${config.bundleDirName}/debug-${DEBUG_VERSION}.js`);
+      const res = await fetch(`http://localhost:8100/${getBundleFilePath('debug')}`);
       expect(res.status).to.eql(200);
       const body = await res.text();
       expect(body).to.contain('function parse(str)');
