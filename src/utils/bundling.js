@@ -21,15 +21,13 @@ export function encodeBundleFilePath(id, filePath) {
  * @returns { [id: string, filePath: string] }
  */
 export function decodeBundleFilePath(encodedBundleFilePath) {
-  console.log('decodeBundleFilePath', encodedBundleFilePath);
   if (!isAbsoluteFilePath(encodedBundleFilePath)) {
     encodedBundleFilePath = path.resolve(encodedBundleFilePath);
   }
-  console.log(encodedBundleFilePath);
-  console.log(path.relative(config.bundleDir, encodedBundleFilePath));
   encodedBundleFilePath = decodeURIComponent(path.relative(config.bundleDir, encodedBundleFilePath));
+
   const [id, filePath] = encodedBundleFilePath.split('##');
-  console.log({ id, filePath });
+
   return [id, path.resolve(config.bundleDir, filePath)];
 }
 
