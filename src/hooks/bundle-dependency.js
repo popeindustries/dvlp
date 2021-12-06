@@ -27,7 +27,6 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
     res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
 
     const [moduleId, modulePath] = decodeBundleFilePath(filePath);
-    console.log({ moduleId, modulePath });
     let code;
 
     if (!modulePath) {

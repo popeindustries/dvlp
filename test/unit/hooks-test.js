@@ -32,7 +32,7 @@ describe('hooks()', () => {
     await init();
   });
 
-  describe('bundle', () => {
+  describe.only('bundle', () => {
     afterEach(() => {
       hooks && hooks.destroy();
     });
@@ -41,7 +41,7 @@ describe('hooks()', () => {
       const hooks = new Hooks();
       expect(await hooks.bundleDependency('./dvlp/bundle-xxx/foofoo-0.0.0.js')).to.equal(undefined);
     });
-    it.only('should bundle filePath', async () => {
+    it('should bundle filePath', async () => {
       const hooks = new Hooks();
       const filePath = path.resolve(getBundleFilePath('debug'));
       await hooks.bundleDependency(filePath, getResponse());
@@ -50,7 +50,7 @@ describe('hooks()', () => {
     });
     it('should bundle and add missing named exports', async () => {
       const hooks = new Hooks();
-      const filePath = getBundleFilePath('react');
+      const filePath = path.resolve(getBundleFilePath('react'));
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.include('export_default as default');
@@ -58,7 +58,7 @@ describe('hooks()', () => {
     });
     it('should return cached bundle', async () => {
       const hooks = new Hooks();
-      const filePath = getBundleFilePath('debug');
+      const filePath = path.resolve(getBundleFilePath('debug'));
       fs.writeFileSync(filePath, 'this is cached');
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
@@ -67,7 +67,7 @@ describe('hooks()', () => {
     });
     it('should bundle with custom hook', async () => {
       const hooks = new Hooks(hooksFixture);
-      const filePath = getBundleFilePath('debug');
+      const filePath = path.resolve(getBundleFilePath('debug'));
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.contain('this is bundled content for: browser.js');
