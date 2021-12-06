@@ -118,7 +118,7 @@ export function find(req, { directories = config.directories, type } = {}) {
 
   // Handle bundled js import
   if (isBundledUrl(href)) {
-    filePath = path.join(config.bundleDir, path.basename(href));
+    filePath = path.resolve(href.slice(1));
   } else if (isAbsoluteFilePath(href)) {
     filePath = resolveFilePath(href, type);
   } else {
