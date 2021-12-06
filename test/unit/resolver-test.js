@@ -136,6 +136,13 @@ describe('resolver', () => {
         path.resolve('node_modules/foo/lib/bat.js'),
       );
     });
+    it('should resolve same js package module path with same version', () => {
+      const v1 = path.resolve('node_modules/versioned/index.js');
+      const v2 = path.resolve('node_modules/foo/node_modules/versioned/index.js');
+      expect(resolve('versioned', path.resolve('foo.js'))).to.equal(v1);
+      expect(resolve('versioned', path.resolve('node_modules/foo/index.js'))).to.equal(v2);
+      expect(resolve('versioned', path.resolve('node_modules/@popeindustries/test/test.js'))).to.equal(v1);
+    });
     it('should resolve a scoped js package module path containing a package.json file and a "main" file field', () => {
       expect(resolve('@popeindustries/test', path.resolve('baz.js'))).to.equal(
         path.resolve('node_modules/@popeindustries/test/test.js'),

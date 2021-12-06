@@ -1,12 +1,14 @@
 import { getPackage, isSelfReferentialSpecifier, resolveAliasPath, resolvePackagePath } from './package.js';
 import { getProjectPath, resolveRealFilePath } from '../utils/file.js';
-import { isAbsoluteFilePath, isBareSpecifier, isNodeModuleFilePath, isRelativeFilePath } from '../utils/is.js';
+import { isAbsoluteFilePath, isRelativeFilePath } from '../utils/is.js';
 import path from 'path';
 
+/** @type { Map<string, Package> } */
+const packageCacheByImportDir = new Map();
+/** @type { Map<string, Package> } */
+const packageCacheByName = new Map();
 /** @type { Map<string, string> } */
 const resolveCache = new Map();
-/** @type { Map<string, Package | undefined> } */
-const packageCache = new Map();
 
 /**
  * Resolve absolute file path for "specifier" relative to "importer",
@@ -22,14 +24,14 @@ export function resolve(specifier, importer = 'index.js') {
   }
 
   importer = path.resolve(importer);
-  const key = getCacheKey(importer, specifier);
+  const key = `${getProjectPath(importer)}:${specifier}`;
   const cached = resolveCache.get(key);
 
   if (cached !== undefined) {
     return cached;
   }
 
-  const filePath = doResolve(specifier, path.dirname(importer), false);
+  const filePath = doResolve(key, specifier, path.dirname(importer), false);
 
   if (!filePath) {
     return;
@@ -42,16 +44,15 @@ export function resolve(specifier, importer = 'index.js') {
 /**
  * Retrieve file path for "specifier" relative to "importerDirPath"
  *
+ * @param { string } key
  * @param { string } specifier
  * @param { string } importerDirPath
  * @param { boolean } verifyExports
  * @returns { string | undefined }
  */
-function doResolve(specifier, importerDirPath, verifyExports) {
+function doResolve(key, specifier, importerDirPath, verifyExports) {
   const realImporterDirPath = resolveRealFilePath(importerDirPath);
-  const pkg = getCachedPackage(realImporterDirPath);
-
-  specifier = resolveRealFilePath(specifier);
+  let [resolvedSpecifier, pkg] = resolveSpecifierAndPackage(specifier, realImporterDirPath);
 
   if (!pkg) {
     return;
@@ -59,11 +60,11 @@ function doResolve(specifier, importerDirPath, verifyExports) {
 
   /** @type { string | undefined } */
   let filePath = resolveAliasPath(
-    isRelativeFilePath(specifier) ? path.join(realImporterDirPath, specifier) : specifier,
+    isRelativeFilePath(resolvedSpecifier) ? path.join(realImporterDirPath, resolvedSpecifier) : resolvedSpecifier,
     pkg,
     // Verify exports map if not entry call, unless using self-referential import,
     // in which case exports map restrictions also apply
-    verifyExports || isSelfReferentialSpecifier(specifier, pkg),
+    verifyExports || isSelfReferentialSpecifier(resolvedSpecifier, pkg),
   );
 
   if (!filePath) {
@@ -73,12 +74,12 @@ function doResolve(specifier, importerDirPath, verifyExports) {
   }
 
   // "filePath" must be a package reference, so restart search from each package dir working upwards
-  specifier = filePath;
+  resolvedSpecifier = filePath;
 
   for (const packageDirPath of pkg.paths) {
     if (realImporterDirPath !== packageDirPath) {
-      filePath = path.join(packageDirPath, specifier);
-      filePath = doResolve(filePath, filePath, true);
+      filePath = path.join(packageDirPath, resolvedSpecifier);
+      filePath = doResolve(key, filePath, filePath, true);
 
       if (filePath) {
         return resolveRealFilePath(filePath);
@@ -88,41 +89,55 @@ function doResolve(specifier, importerDirPath, verifyExports) {
 }
 
 /**
- * Retrieve cache key
- *
- * @param { string } importerFilePath
- * @param { string } specifier
- * @returns { string }
- */
-function getCacheKey(importerFilePath, specifier) {
-  // Ensure that all node_modules imported by project source files resolves to same key
-  if (isBareSpecifier(specifier) && !isNodeModuleFilePath(importerFilePath)) {
-    return `src:${specifier}`;
-  }
-  return `${getProjectPath(importerFilePath)}:${specifier}`;
-}
-
-/**
  * Retrieve Package instance for "dir"
  *
  * @param { string } dir
  * @returns { Package | undefined }
  */
-export function getCachedPackage(dir) {
+export function getPackageForDir(dir) {
   const pkgPath = resolvePackagePath(dir);
 
   if (!pkgPath) {
     return;
   }
 
-  let pkg = packageCache.get(pkgPath);
+  let pkg = packageCacheByImportDir.get(pkgPath);
 
   if (!pkg) {
     pkg = getPackage(dir, pkgPath);
-    packageCache.set(pkgPath, pkg);
+
+    if (pkg) {
+      packageCacheByImportDir.set(pkgPath, pkg);
+    }
   }
 
   return pkg;
+}
+
+/**
+ * @param { string } specifier
+ * @param { string } dir
+ * @returns { [specifier: string, pkg: Package | undefined]}
+ */
+function resolveSpecifierAndPackage(specifier, dir) {
+  let pkg = getPackageForDir(dir);
+
+  if (pkg) {
+    // TODO: warn on multiple versions
+    const versionedKey = `${pkg.name}@${pkg.version}`;
+    const versionedPackage = packageCacheByName.get(versionedKey);
+
+    // Use existing package at same version,
+    // and modify specifier to resolve to existing package context
+    if (versionedPackage) {
+      specifier = specifier.replace(pkg.path, versionedPackage.path);
+      pkg = versionedPackage;
+    }
+
+    packageCacheByName.set(versionedKey, pkg);
+  }
+
+  return [resolveRealFilePath(specifier), pkg];
 }
 
 /**
@@ -130,5 +145,6 @@ export function getCachedPackage(dir) {
  */
 export function clearResolverCache() {
   resolveCache.clear();
-  packageCache.clear();
+  packageCacheByImportDir.clear();
+  packageCacheByName.clear();
 }

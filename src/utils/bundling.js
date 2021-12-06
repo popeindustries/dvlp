@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, unlinkSync } from 'fs';
 import { isJsFilePath, isNodeModuleFilePath } from './is.js';
 import config from '../config.js';
-import { getCachedPackage } from '../resolver/index.js';
+import { getPackageForDir } from '../resolver/index.js';
 import path from 'path';
 
 const RE_SOURCE_PATH = /^\/\/ source: (.+)/;
@@ -41,7 +41,7 @@ export function resolveBundleFileName(id, filePath) {
     return '';
   }
 
-  const pkg = getCachedPackage(path.dirname(filePath));
+  const pkg = getPackageForDir(path.dirname(filePath));
 
   return `${encodeBundleId(id)}-${pkg ? pkg.version : ''}.js`;
 }
