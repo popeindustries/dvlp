@@ -551,7 +551,6 @@ describe('patch', () => {
           });
           res.end('import debugBrowser from "debug/src/browser.js";\nimport(foo);\nimport("debug");\n');
           const body = getBody(res);
-          console.log(body);
           expect(body).to.include(`import debugBrowser from "/${config.bundleDirName}/debug__src__browser.js-`);
           expect(body).to.include(`import("/${config.bundleDirName}/debug-`);
         });
