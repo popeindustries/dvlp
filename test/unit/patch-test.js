@@ -439,8 +439,8 @@ describe('patch', () => {
             'import debugBrowser from "debug/src/browser.js";\nimport { foo } from "./foo.js";\nimport debug from "debug";',
           );
           const body = getBody(res);
-          expect(body).to.include('import debugBrowser from "/.dvlp/bundle-dev/debug');
-          expect(body).to.include('import debug from "/.dvlp/bundle-dev/debug');
+          expect(body).to.include(`import debugBrowser from "/${config.bundleDirName}/debug__src__browser.js-`);
+          expect(body).to.include(`import debug from "/${config.bundleDirName}/debug-`);
         });
         it('should resolve bare js import id for es module', () => {
           const req = getRequest('/index.js', {
@@ -551,8 +551,9 @@ describe('patch', () => {
           });
           res.end('import debugBrowser from "debug/src/browser.js";\nimport(foo);\nimport("debug");\n');
           const body = getBody(res);
-          expect(body).to.include('import debugBrowser from "/.dvlp/bundle-dev/debug');
-          expect(body).to.include('import("/.dvlp/bundle-dev/debug');
+          console.log(body);
+          expect(body).to.include(`import debugBrowser from "/${config.bundleDirName}/debug__src__browser.js-`);
+          expect(body).to.include(`import("/${config.bundleDirName}/debug-`);
         });
         it('should resolve js import with resolve hook', () => {
           const req = getRequest('/index.js', {
