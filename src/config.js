@@ -7,20 +7,20 @@ import { pathToFileURL } from 'url';
 import rimraf from 'rimraf';
 import send from 'send';
 
-const DIR = '.dvlp';
+const DIR_NAME = '.dvlp';
 const JS_MIME_TYPES = {
   'application/javascript': ['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx'],
 };
 const TESTING = process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefined;
 // @ts-ignore - Replaced during build
-const VERSION = global.$VERSION || 'dev';
+const VERSION = global.$VERSION || '0.0.0';
 
-const dir = path.resolve(DIR);
-const applicationLoaderPath = pathToFileURL(path.join(dir, 'app-loader.mjs'));
-const sourceMapsDirName = `${path.join(DIR, `sourcemaps`)}`;
-const sourceMapsDir = path.resolve(sourceMapsDirName);
-const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
-const bundleDir = path.resolve(bundleDirName);
+const dirPath = path.resolve(DIR_NAME);
+const subdirPath = path.join(dirPath, VERSION);
+const applicationLoaderPath = pathToFileURL(path.join(subdirPath, 'app-loader.mjs'));
+const bundleDirName = path.join(DIR_NAME, VERSION, 'bundled');
+const bundleDirPath = path.resolve(bundleDirName);
+const bundleDirMetaPath = path.join(bundleDirPath, '__meta__.json');
 const defaultPort = process.env.PORT ? Number(process.env.PORT) : 8080;
 
 mime.define(JS_MIME_TYPES, true);
@@ -29,57 +29,30 @@ send.mime.define(JS_MIME_TYPES, true);
 
 /**
  * Create directory structure:
- *  .dvlp
- *    - bundle-xxx
- *    - sourcemaps
+ *  .dvlp/
+ *    - <version>/
+ *      - bundled/
+ *      - app-loader.mjs
+ *      - cache.json
  */
 if (isMainThread) {
-  const sourceMapsDirExists = fs.existsSync(sourceMapsDir);
-  const bundleDirExists = fs.existsSync(bundleDir);
-  const dirExists = fs.existsSync(dir);
+  const bundleDirExists = fs.existsSync(bundleDirPath);
+  const dirExists = fs.existsSync(dirPath);
+  const subdirExists = fs.existsSync(subdirPath);
 
-  if (dirExists && !bundleDirExists) {
-    const contents = fs.readdirSync(dir).map((item) => path.resolve(dir, item));
-
-    for (const item of contents) {
-      // Delete all subdirectories
-      if (fs.statSync(item).isDirectory()) {
-        rimraf.sync(item);
-      }
+  // New version of .dvlp, so delete existing
+  if (dirExists && !subdirExists) {
+    for (const item of fs.readdirSync(dirPath)) {
+      rimraf.sync(path.resolve(dirPath, item));
     }
   }
-  if (sourceMapsDirExists) {
-    rimraf.sync(sourceMapsDir);
-  }
-  if (!dirExists) {
-    fs.mkdirSync(dir);
-  }
-  fs.mkdirSync(sourceMapsDir);
   if (!bundleDirExists) {
-    fs.mkdirSync(bundleDir);
-  } else {
-    // Prune bundle dir of duplicates with different versions
-    const moduleIds = new Map();
-
-    for (const fileName of fs.readdirSync(bundleDir)) {
-      if (fileName.endsWith('.js')) {
-        // Remove version
-        const moduleId = fileName.slice(0, fileName.lastIndexOf('-'));
-
-        if (!moduleIds.has(moduleId)) {
-          moduleIds.set(moduleId, path.join(bundleDir, fileName));
-        } else {
-          // Clear both instances if duplicates with different versions
-          fs.unlinkSync(moduleIds.get(moduleId));
-          fs.unlinkSync(path.join(bundleDir, fileName));
-        }
-      }
-    }
+    fs.mkdirSync(bundleDirPath, { recursive: true });
   }
 
   if (TESTING) {
     process.on('exit', () => {
-      rimraf.sync(dir);
+      rimraf.sync(dirPath);
     });
   }
 }
@@ -91,11 +64,12 @@ const config = {
   activePort: defaultPort,
   applicationLoaderPath,
   brokenNamedExportsPackages,
-  bundleDir,
+  bundleDirPath,
+  bundleDirMetaPath,
   bundleDirName,
   defaultPort,
   directories: [],
-  dvlpDir: path.resolve(DIR),
+  dvlpDirPath: path.resolve(DIR_NAME),
   esbuildTargetByExtension: {
     '.js': 'js',
     '.mjs': 'js',
@@ -115,7 +89,6 @@ const config = {
   maxAge: '10m',
   reloadEndpoint: '/dvlpreload',
   serverStartTimeout: TESTING ? 4000 : 10000,
-  sourceMapsDir,
   testing: TESTING,
   typesByExtension: {
     '.css': 'css',

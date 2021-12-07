@@ -265,6 +265,7 @@ export default class DvlpServer {
     }
 
     // Allow manual response handling via user hook
+    // TODO: avoid task tick if no user hook registered
     if (await this.hooks.handleRequest(req, res)) {
       return;
     }

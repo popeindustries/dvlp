@@ -1,59 +1,61 @@
 import { existsSync, readdirSync, unlinkSync } from 'fs';
-import { isJsFilePath, isNodeModuleFilePath } from './is.js';
 import config from '../config.js';
-import { getCachedPackage } from '../resolver/index.js';
+import fs from 'fs';
+import { getPackageForDir } from '../resolver/index.js';
+import { isJsFilePath } from './is.js';
 import path from 'path';
 
-const RE_SOURCE_PATH = /^\/\/ source: (.+)/;
-const SOURCE_PREFIX = '// source: ';
+/** @type { Record<string, string> } */
+let meta = {};
 
-/**
- * Encode bundled source path in banner comment
- *
- * @param { string } sourcePath
- * @returns { string }
- */
-export function encodeOriginalBundledSourcePath(sourcePath) {
-  return `${SOURCE_PREFIX}${sourcePath}`;
+if (fs.existsSync(config.bundleDirMetaPath)) {
+  meta = JSON.parse(fs.readFileSync(config.bundleDirMetaPath, 'utf-8'));
 }
 
-/**
- * Retrieve original source path from bundled source code
- *
- * @param { string } code
- * @returns { string }
- */
-export function parseOriginalBundledSourcePath(code) {
-  const match = RE_SOURCE_PATH.exec(code);
-
-  return match && match[1] ? match[1] : '';
-}
-
-/**
- * Resolve module id into bundle file name
- *
- * @param { string } id
- * @param { string } filePath
- * @returns { string }
- */
-export function resolveBundleFileName(id, filePath) {
-  if (!isNodeModuleFilePath(filePath)) {
-    return '';
+process.on('exit', () => {
+  if (!config.testing) {
+    fs.writeFileSync(config.bundleDirMetaPath, JSON.stringify(meta));
   }
+});
 
-  const pkg = getCachedPackage(path.dirname(filePath));
+/**
+ * Get path to bundle from
+ *
+ * @param { string } specifier
+ * @param { string } sourcePath
+ */
+export function getBundlePath(specifier, sourcePath) {
+  const pkg = getPackageForDir(path.dirname(sourcePath));
+  const bundleName = `${encodeBundleSpecifier(specifier)}-${pkg ? pkg.version : ''}.js`;
+  const bundlePath = path.join(config.bundleDirName, bundleName);
 
-  return `${encodeBundleId(id)}-${pkg ? pkg.version : ''}.js`;
+  meta[bundleName] = sourcePath;
+
+  return bundlePath;
+}
+
+/**
+ * Get original source path from "bundlePath"
+ *
+ * @param { string } bundlePath
+ * @returns [specifier: string, sourcePath: string]
+ */
+export function getBundleSourcePath(bundlePath) {
+  const bundleName = path.basename(bundlePath);
+  const specifier = decodeBundleSpecifier(bundleName.split('-')[0]);
+  const sourcePath = meta[bundleName];
+
+  return [specifier, sourcePath];
 }
 
 /**
  * Clear disk cache
  */
 export function cleanBundledFiles() {
-  if (existsSync(config.bundleDir)) {
-    for (const filePath of readdirSync(config.bundleDir).filter(isJsFilePath)) {
+  if (existsSync(config.bundleDirPath)) {
+    for (const filePath of readdirSync(config.bundleDirPath).filter(isJsFilePath)) {
       try {
-        unlinkSync(path.join(config.bundleDir, filePath));
+        unlinkSync(path.join(config.bundleDirPath, filePath));
       } catch (err) {
         // ignore
       }
@@ -66,7 +68,7 @@ export function cleanBundledFiles() {
  *
  * @param { string } id
  */
-export function encodeBundleId(id) {
+function encodeBundleSpecifier(id) {
   return id.replace(/\//g, '__');
 }
 
@@ -75,6 +77,6 @@ export function encodeBundleId(id) {
  *
  * @param { string } id
  */
-export function decodeBundleId(id) {
+function decodeBundleSpecifier(id) {
   return id.replace(/__/g, '/');
 }

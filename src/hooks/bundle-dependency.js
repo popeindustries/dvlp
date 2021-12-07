@@ -1,13 +1,11 @@
-import { decodeBundleId, encodeOriginalBundledSourcePath } from '../utils/bundling.js';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { basename } from 'path';
 import config from '../config.js';
 import Debug from 'debug';
 import { error } from '../utils/log.js';
+import { getBundleSourcePath } from '../utils/bundling.js';
 import { isBundledFilePath } from '../utils/is.js';
 import Metrics from '../utils/metrics.js';
 import { parse } from 'cjs-module-lexer';
-import { resolve } from '../resolver/index.js';
 
 const debug = Debug('dvlp:bundle');
 
@@ -28,23 +26,21 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
   if (isBundledFilePath(filePath)) {
     res.metrics.recordEvent(Metrics.EVENT_NAMES.bundle);
 
-    const fileName = basename(filePath);
-    const moduleId = decodeBundleId(fileName.slice(0, fileName.lastIndexOf('-')));
-    const modulePath = resolve(moduleId);
+    const [specifier, sourcePath] = getBundleSourcePath(filePath);
     let code;
 
-    if (!modulePath) {
-      error(`unable to resolve path for module: ${moduleId}`);
+    if (!sourcePath) {
+      error(`unable to resolve path for module: ${specifier}`);
       return;
     }
 
     try {
-      const moduleContents = readFileSync(modulePath, 'utf8');
-      let entryFilePath = modulePath;
-      let entryFileContents = moduleContents;
+      const sourceContents = readFileSync(sourcePath, 'utf8');
+      let entryFilePath = sourcePath;
+      let entryFileContents = sourceContents;
 
       if (hookFn) {
-        code = await hookFn(moduleId, entryFilePath, entryFileContents, {
+        code = await hookFn(specifier, entryFilePath, entryFileContents, {
           esbuild,
         });
       }
@@ -54,16 +50,16 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
         let exports = [];
 
         try {
-          ({ exports } = parse(moduleContents));
+          ({ exports } = parse(sourceContents));
         } catch (err) {
           // ignore
         }
 
-        const brokenNamedExports = config.brokenNamedExportsPackages[moduleId] || [];
+        const brokenNamedExports = config.brokenNamedExportsPackages[specifier] || [];
 
         // Fix named exports for cjs
         if (exports.length > 0 || brokenNamedExports.length > 0) {
-          const inlineableModulePath = modulePath.replace(/\\/g, '\\\\');
+          const inlineableModulePath = sourcePath.replace(/\\/g, '\\\\');
           const namedExports = new Set(['default', ...exports, ...brokenNamedExports]);
           namedExports.delete('__esModule');
           const fileContents = `export {${Array.from(namedExports).join(', ')}} from '${inlineableModulePath}';`;
@@ -91,7 +87,7 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
         code = result.outputFiles[0].text;
       }
     } catch (err) {
-      debug(`error bundling "${moduleId}"`);
+      debug(`error bundling "${specifier}"`);
       res.writeHead(500);
       res.end(/** @type { Error } */ (err).message);
       error(err);
@@ -99,8 +95,8 @@ export default async function bundleDependency(filePath, res, esbuild, hookFn) {
     }
 
     if (code !== undefined) {
-      debug(`bundled content for ${moduleId}`);
-      writeFileSync(filePath, `${encodeOriginalBundledSourcePath(modulePath)}\n${code}`);
+      debug(`bundled content for ${specifier}`);
+      writeFileSync(filePath, code);
       res.bundled = true;
     }
 

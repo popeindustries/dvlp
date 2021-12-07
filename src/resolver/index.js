@@ -1,12 +1,17 @@
 import { getPackage, isSelfReferentialSpecifier, resolveAliasPath, resolvePackagePath } from './package.js';
 import { getProjectPath, resolveRealFilePath } from '../utils/file.js';
 import { isAbsoluteFilePath, isBareSpecifier, isNodeModuleFilePath, isRelativeFilePath } from '../utils/is.js';
+import { noisyWarn } from '../utils/log.js';
 import path from 'path';
 
+/** @type { Map<string, Package> } */
+const packageCacheByImportDir = new Map();
+/** @type { Map<string, Set<string>> } */
+const packageVersionCacheByName = new Map();
+/** @type { Map<string, Package> } */
+const packageCacheByNameAndVersion = new Map();
 /** @type { Map<string, string> } */
 const resolveCache = new Map();
-/** @type { Map<string, Package | undefined> } */
-const packageCache = new Map();
 
 /**
  * Resolve absolute file path for "specifier" relative to "importer",
@@ -29,7 +34,7 @@ export function resolve(specifier, importer = 'index.js') {
     return cached;
   }
 
-  const filePath = doResolve(specifier, path.dirname(importer), false);
+  const filePath = doResolve(key, specifier, path.dirname(importer), false);
 
   if (!filePath) {
     return;
@@ -42,16 +47,15 @@ export function resolve(specifier, importer = 'index.js') {
 /**
  * Retrieve file path for "specifier" relative to "importerDirPath"
  *
+ * @param { string } key
  * @param { string } specifier
  * @param { string } importerDirPath
  * @param { boolean } verifyExports
  * @returns { string | undefined }
  */
-function doResolve(specifier, importerDirPath, verifyExports) {
+function doResolve(key, specifier, importerDirPath, verifyExports) {
   const realImporterDirPath = resolveRealFilePath(importerDirPath);
-  const pkg = getCachedPackage(realImporterDirPath);
-
-  specifier = resolveRealFilePath(specifier);
+  let [resolvedSpecifier, pkg] = resolveSpecifierAndPackage(specifier, realImporterDirPath);
 
   if (!pkg) {
     return;
@@ -59,11 +63,11 @@ function doResolve(specifier, importerDirPath, verifyExports) {
 
   /** @type { string | undefined } */
   let filePath = resolveAliasPath(
-    isRelativeFilePath(specifier) ? path.join(realImporterDirPath, specifier) : specifier,
+    isRelativeFilePath(resolvedSpecifier) ? path.join(realImporterDirPath, resolvedSpecifier) : resolvedSpecifier,
     pkg,
     // Verify exports map if not entry call, unless using self-referential import,
     // in which case exports map restrictions also apply
-    verifyExports || isSelfReferentialSpecifier(specifier, pkg),
+    verifyExports || isSelfReferentialSpecifier(resolvedSpecifier, pkg),
   );
 
   if (!filePath) {
@@ -73,18 +77,44 @@ function doResolve(specifier, importerDirPath, verifyExports) {
   }
 
   // "filePath" must be a package reference, so restart search from each package dir working upwards
-  specifier = filePath;
+  resolvedSpecifier = filePath;
 
   for (const packageDirPath of pkg.paths) {
     if (realImporterDirPath !== packageDirPath) {
-      filePath = path.join(packageDirPath, specifier);
-      filePath = doResolve(filePath, filePath, true);
+      filePath = path.join(packageDirPath, resolvedSpecifier);
+      filePath = doResolve(key, filePath, filePath, true);
 
       if (filePath) {
         return resolveRealFilePath(filePath);
       }
     }
   }
+}
+
+/**
+ * Retrieve Package instance for "dir"
+ *
+ * @param { string } dir
+ * @returns { Package | undefined }
+ */
+export function getPackageForDir(dir) {
+  const pkgPath = resolvePackagePath(dir);
+
+  if (!pkgPath) {
+    return;
+  }
+
+  let pkg = packageCacheByImportDir.get(pkgPath);
+
+  if (!pkg) {
+    pkg = getPackage(dir, pkgPath);
+
+    if (pkg) {
+      packageCacheByImportDir.set(pkgPath, pkg);
+    }
+  }
+
+  return pkg;
 }
 
 /**
@@ -95,7 +125,7 @@ function doResolve(specifier, importerDirPath, verifyExports) {
  * @returns { string }
  */
 function getCacheKey(importerFilePath, specifier) {
-  // Ensure that all node_modules imported by project source files resolves to same key
+  // Ensure that all packages imported by source files resolves to same key
   if (isBareSpecifier(specifier) && !isNodeModuleFilePath(importerFilePath)) {
     return `src:${specifier}`;
   }
@@ -103,26 +133,39 @@ function getCacheKey(importerFilePath, specifier) {
 }
 
 /**
- * Retrieve Package instance for "dir"
- *
+ * @param { string } specifier
  * @param { string } dir
- * @returns { Package | undefined }
+ * @returns { [specifier: string, pkg: Package | undefined]}
  */
-export function getCachedPackage(dir) {
-  const pkgPath = resolvePackagePath(dir);
+function resolveSpecifierAndPackage(specifier, dir) {
+  let pkg = getPackageForDir(dir);
 
-  if (!pkgPath) {
-    return;
+  if (pkg) {
+    if (!packageVersionCacheByName.has(pkg.name)) {
+      packageVersionCacheByName.set(pkg.name, new Set([pkg.version]));
+    } else {
+      const versions = /** @type { Set<string> } */ (packageVersionCacheByName.get(pkg.name));
+      versions.add(pkg.version);
+
+      if (versions.size > 1) {
+        noisyWarn(`⚠️  multiple versions of the "${pkg.name}" package used: ${Array.from(versions).join(', ')}`);
+      }
+    }
+
+    const versionedKey = `${pkg.name}@${pkg.version}`;
+    const versionedPackage = packageCacheByNameAndVersion.get(versionedKey);
+
+    // Use existing package at same version,
+    // and modify specifier to resolve to existing package context
+    if (versionedPackage && versionedPackage !== pkg) {
+      specifier = specifier.replace(pkg.path, versionedPackage.path);
+      pkg = versionedPackage;
+    }
+
+    packageCacheByNameAndVersion.set(versionedKey, pkg);
   }
 
-  let pkg = packageCache.get(pkgPath);
-
-  if (!pkg) {
-    pkg = getPackage(dir, pkgPath);
-    packageCache.set(pkgPath, pkg);
-  }
-
-  return pkg;
+  return [resolveRealFilePath(specifier), pkg];
 }
 
 /**
@@ -130,5 +173,6 @@ export function getCachedPackage(dir) {
  */
 export function clearResolverCache() {
   resolveCache.clear();
-  packageCache.clear();
+  packageCacheByImportDir.clear();
+  packageCacheByNameAndVersion.clear();
 }

@@ -175,5 +175,5 @@ export function handleFile(filePath, req, res, cacheControl) {
     maxAge: cacheControl ? config.maxAge : 0,
   };
 
-  send(req, filePath, options).pipe(res);
+  send(req, encodeURI(filePath), options).pipe(res);
 }

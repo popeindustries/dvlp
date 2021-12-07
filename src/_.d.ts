@@ -2,11 +2,12 @@ declare interface Config {
   activePort: number;
   applicationLoaderPath: import('url').URL;
   brokenNamedExportsPackages: Record<string, Array<string>>;
-  bundleDir: string;
+  bundleDirMetaPath: string;
   bundleDirName: string;
+  bundleDirPath: string;
   defaultPort: number;
   directories: Array<string>;
-  dvlpDir: string;
+  dvlpDirPath: string;
   esbuildTargetByExtension: {
     [extension: string]: string;
   };
@@ -17,7 +18,6 @@ declare interface Config {
   maxAge: string;
   reloadEndpoint: string;
   serverStartTimeout: number;
-  sourceMapsDir: string;
   testing: boolean;
   typesByExtension: {
     [extension: string]: 'css' | 'html' | 'js';

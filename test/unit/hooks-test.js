@@ -1,15 +1,12 @@
-import config from '../../src/config.js';
 import { expect } from 'chai';
 import fs from 'fs';
+import { getBundleFilePath } from './utils.js';
 import Hooks from '../../src/hooks/index.js';
 import hooksFixture from './fixtures/hooks-bundle.mjs';
 import { init } from 'cjs-module-lexer';
 import path from 'path';
 import transformBundleFixture from './fixtures/hooks-transform-bundle.mjs';
 import transformFixture from './fixtures/hooks-transform.mjs';
-
-const DEBUG = 'debug-4.3.3.js';
-const REACT = 'react-17.0.1.js';
 
 function getResponse() {
   return {
@@ -46,14 +43,14 @@ describe('hooks()', () => {
     });
     it('should bundle filePath', async () => {
       const hooks = new Hooks();
-      const filePath = path.join(config.bundleDir, DEBUG);
+      const filePath = path.resolve(getBundleFilePath('debug'));
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.include('export_default as default');
     });
     it('should bundle and add missing named exports', async () => {
       const hooks = new Hooks();
-      const filePath = path.join(config.bundleDir, REACT);
+      const filePath = path.resolve(getBundleFilePath('react'));
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.include('export_default as default');
@@ -61,7 +58,7 @@ describe('hooks()', () => {
     });
     it('should return cached bundle', async () => {
       const hooks = new Hooks();
-      const filePath = path.join(config.bundleDir, DEBUG);
+      const filePath = path.resolve(getBundleFilePath('debug'));
       fs.writeFileSync(filePath, 'this is cached');
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
@@ -70,7 +67,7 @@ describe('hooks()', () => {
     });
     it('should bundle with custom hook', async () => {
       const hooks = new Hooks(hooksFixture);
-      const filePath = path.join(config.bundleDir, DEBUG);
+      const filePath = path.resolve(getBundleFilePath('debug'));
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.contain('this is bundled content for: browser.js');

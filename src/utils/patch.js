@@ -1,6 +1,7 @@
 import { brotliDecompressSync, unzipSync } from 'zlib';
 import { fatal, warn, WARN_BARE_IMPORT } from './log.js';
 import { getAbsoluteProjectPath, getProjectPath, isEsmFile } from './file.js';
+import { getBundlePath, getBundleSourcePath } from './bundling.js';
 import {
   isBundledFilePath,
   isBundledUrl,
@@ -9,8 +10,6 @@ import {
   isJsRequest,
   isNodeModuleFilePath,
 } from './is.js';
-import { parseOriginalBundledSourcePath, resolveBundleFileName } from './bundling.js';
-import config from '../config.js';
 import Debug from 'debug';
 import { filePathToUrl } from './url.js';
 import Metrics from './metrics.js';
@@ -311,10 +310,10 @@ function rewriteCSSImports(res, filePath, css, resolveImport) {
 function rewriteJSImports(res, filePath, js, resolveImport) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
 
-  // Retrieve original source path from bundled file
+  // Retrieve original source path from bundled filePath
   // to allow reference back to correct node_modules file
   if (isBundledFilePath(filePath)) {
-    filePath = parseOriginalBundledSourcePath(js);
+    [, filePath] = getBundleSourcePath(filePath);
   }
 
   try {
@@ -391,8 +390,7 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
 
           // Bundle if in node_modules and not an es module
           if (isNodeModuleFilePath(importPath) && !isEsmFile(importPath)) {
-            const resolvedId = resolveBundleFileName(specifier, importPath);
-            newId = `/${path.join(config.bundleDirName, resolvedId)}`;
+            newId = `/${getBundlePath(specifier, importPath)}`;
             warn(WARN_BARE_IMPORT, specifier);
           } else {
             newId = importPath;
