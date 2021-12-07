@@ -11,9 +11,7 @@ export const WARN_CERTIFICATE_EXPIRY = '⚠️  ssl certificate will expire soon
 
 const SEG_LENGTH = 80;
 
-let maxBareImport = 1;
-let maxMissingExtension = 1;
-let maxPackageIndex = 1;
+const seenWarnings = new Set();
 let silent = false;
 
 export default {
@@ -56,33 +54,28 @@ export function noisyInfo(msg) {
  */
 export function warn(...args) {
   if (!config.testing && !silent) {
-    const [warning] = args;
-    let msg = '';
+    const warning = args.join(' ');
 
-    switch (warning) {
-      case WARN_BARE_IMPORT:
-        if (maxBareImport-- > 0) {
-          msg = `${WARN_BARE_IMPORT}`;
-        }
-        break;
-      case WARN_MISSING_EXTENSION:
-        if (maxMissingExtension-- > 0) {
-          msg = `${WARN_MISSING_EXTENSION}`;
-        }
-        break;
-      case WARN_PACKAGE_INDEX:
-        if (maxPackageIndex-- > 0) {
-          msg = `${WARN_PACKAGE_INDEX}`;
-        }
-        break;
-      default:
-        msg = args.join(' ');
+    // Only warn one time
+    if (seenWarnings.has(warning)) {
+      return;
     }
+    seenWarnings.add(warning);
 
-    if (msg) {
-      console.warn(msg);
-    }
+    console.warn(warning);
   }
+}
+
+/**
+ * Warn if not testing, even if silent
+ *
+ * @param { ...unknown } args
+ */
+export function noisyWarn(...args) {
+  const initialValue = silent;
+  silent = false;
+  warn(...args);
+  silent = initialValue;
 }
 
 /**
