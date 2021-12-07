@@ -17,8 +17,6 @@ const VERSION = global.$VERSION || 'dev';
 
 const dir = path.resolve(DIR);
 const applicationLoaderPath = pathToFileURL(path.join(dir, 'app-loader.mjs'));
-const sourceMapsDirName = `${path.join(DIR, `sourcemaps`)}`;
-const sourceMapsDir = path.resolve(sourceMapsDirName);
 const bundleDirName = `${path.join(DIR, `bundle-${VERSION}`)}`;
 const bundleDir = path.resolve(bundleDirName);
 const defaultPort = process.env.PORT ? Number(process.env.PORT) : 8080;
@@ -31,10 +29,8 @@ send.mime.define(JS_MIME_TYPES, true);
  * Create directory structure:
  *  .dvlp
  *    - bundle-xxx
- *    - sourcemaps
  */
 if (isMainThread) {
-  const sourceMapsDirExists = fs.existsSync(sourceMapsDir);
   const bundleDirExists = fs.existsSync(bundleDir);
   const dirExists = fs.existsSync(dir);
 
@@ -48,13 +44,9 @@ if (isMainThread) {
       }
     }
   }
-  if (sourceMapsDirExists) {
-    rimraf.sync(sourceMapsDir);
-  }
   if (!dirExists) {
     fs.mkdirSync(dir);
   }
-  fs.mkdirSync(sourceMapsDir);
   if (!bundleDirExists) {
     fs.mkdirSync(bundleDir);
   } else {
@@ -115,7 +107,6 @@ const config = {
   maxAge: '10m',
   reloadEndpoint: '/dvlpreload',
   serverStartTimeout: TESTING ? 4000 : 10000,
-  sourceMapsDir,
   testing: TESTING,
   typesByExtension: {
     '.css': 'css',

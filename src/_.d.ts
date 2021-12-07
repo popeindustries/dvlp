@@ -17,7 +17,6 @@ declare interface Config {
   maxAge: string;
   reloadEndpoint: string;
   serverStartTimeout: number;
-  sourceMapsDir: string;
   testing: boolean;
   typesByExtension: {
     [extension: string]: 'css' | 'html' | 'js';
