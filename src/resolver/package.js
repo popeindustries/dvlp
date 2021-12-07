@@ -164,9 +164,20 @@ export function resolvePackagePath(filePath) {
   }
 
   while (true) {
-    // Stop at directory with package.json
-    if (fs.existsSync(path.join(dir, 'package.json'))) {
-      return dir;
+    const pkgPath = path.join(dir, 'package.json');
+
+    // Stop at directory with valid package.json.
+    // "date-fns" includes sub-module package.json files with only side-effect metadata
+    if (fs.existsSync(pkgPath)) {
+      try {
+        const json = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+
+        if (json.name) {
+          return dir;
+        }
+      } catch (err) {
+        // Ignore
+      }
     }
 
     parent = path.dirname(dir);
