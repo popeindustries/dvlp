@@ -72,6 +72,8 @@ function doResolve(specifier, importerDirPath, isEntry) {
     importerDirPath = pkg.path;
   }
 
+  console.log({ specifier, importerDirPath, pkg });
+
   /** @type { string | undefined } */
   let filePath = resolvePackageSourcePath(
     isRelativeFilePath(specifier) ? path.join(importerDirPath, specifier) : specifier,

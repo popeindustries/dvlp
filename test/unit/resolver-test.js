@@ -76,7 +76,7 @@ describe('resolver', () => {
     });
   });
 
-  describe('resolve()', () => {
+  describe.only('resolve()', () => {
     afterEach(() => {
       clearResolverCache();
     });
