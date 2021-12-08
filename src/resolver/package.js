@@ -231,13 +231,11 @@ export function resolveImportPath(specifier, pkg) {
 function resolveExportPath(filePathOrSpecifier, pkg) {
   console.log({ filePathOrSpecifier, pkg });
   console.log(filePathOrSpecifier.replace(pkg.path, '.'));
-  const entry = filePathOrSpecifier
-    .replace(isBareSpecifier(filePathOrSpecifier) ? pkg.name : pkg.path, '.')
-    .replace(/\\/g, '/');
+  const entry = filePathOrSpecifier.replace(isBareSpecifier(filePathOrSpecifier) ? pkg.name : pkg.path, '.');
 
   try {
     console.log({ entry });
-    const resolved = resolveExports(pkg, entry, RESOLVE_IMPORTS_EXPORTS_CONFIG);
+    const resolved = resolveExports(pkg, entry.replace(/\\/g, '/'), RESOLVE_IMPORTS_EXPORTS_CONFIG);
     console.log({ resolved });
     if (resolved) {
       return path.resolve(pkg.path, resolved);
