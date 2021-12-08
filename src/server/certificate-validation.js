@@ -1,4 +1,4 @@
-import { fatal, warn } from '../utils/log.js';
+import { fatal, noisyWarn } from '../utils/log.js';
 import { Certificate } from '@fidm/x509';
 import chalk from 'chalk';
 import fs from 'fs';
@@ -58,7 +58,7 @@ export function validateCert(certFileData) {
     if (diff < 10) {
       fatal('ssl certificate has expired!\n');
     } else if (diff / 86400000 < 10) {
-      warn(`\n  ⚠️  ${chalk.yellow('ssl certificate will expire soon!')}\n`);
+      noisyWarn(`\n  ⚠️  ${chalk.yellow('ssl certificate will expire soon!')}\n`);
     }
 
     return commonName;

@@ -1,4 +1,4 @@
-import { error, warn } from '../utils/log.js';
+import { error, noisyWarn } from '../utils/log.js';
 import bundleDependency from './bundle-dependency.js';
 import esbuild from 'esbuild';
 import { isNodeModuleFilePath } from '../utils/is.js';
@@ -26,7 +26,7 @@ export default class Hooker {
     if (hooks) {
       for (const name of Object.keys(hooks)) {
         if (!HOOK_NAMES.includes(name) && name !== 'filePath') {
-          warn(`⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(', ')}`);
+          noisyWarn(`⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(', ')}`);
         }
       }
     }

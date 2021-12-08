@@ -1,5 +1,5 @@
 import { brotliDecompressSync, unzipSync } from 'zlib';
-import { fatal, warn, WARN_BARE_IMPORT } from './log.js';
+import { fatal, noisyWarn, warn, WARN_BARE_IMPORT } from './log.js';
 import { getAbsoluteProjectPath, getProjectPath, isEsmFile } from './file.js';
 import { getBundlePath, getBundleSourcePath } from './bundling.js';
 import {
@@ -285,7 +285,7 @@ function rewriteCSSImports(res, filePath, css, resolveImport) {
 
         rewritten[context] = `${pre}${newId}${post}`;
       } else {
-        warn(`⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`);
+        noisyWarn(`⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`);
       }
     }
   }
@@ -404,7 +404,7 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
             offset += before.length + newId.length + after.length - specifier.length;
           }
         } else {
-          warn(`⚠️  unable to resolve path for "${specifier}" from "${projectFilePath}"`);
+          noisyWarn(`⚠️  unable to resolve path for "${specifier}" from "${projectFilePath}"`);
         }
       }
     } else {
