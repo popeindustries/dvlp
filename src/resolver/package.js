@@ -279,16 +279,18 @@ function resolveMainOrBrowserPath(filePath, pkg) {
  * @param { boolean } isProjectPackage
  */
 function resolvePackageName(packageName, packagePath, isProjectPackage) {
+  let dir;
+
   if (!isNodeModuleFilePath(packagePath)) {
     if (isProjectPackage) {
       return packageName || 'project';
     }
-    return path.relative(process.cwd(), packagePath);
+    dir = process.cwd();
+  } else {
+    dir = packagePath.slice(0, packagePath.lastIndexOf('node_modules') + 12);
   }
 
-  const closestNodeModules = packagePath.slice(0, packagePath.lastIndexOf('node_modules') + 12);
-
-  return path.relative(closestNodeModules, packagePath);
+  return path.relative(dir, packagePath).replace(/\\/g, '/');
 }
 
 /**
