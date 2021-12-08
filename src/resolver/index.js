@@ -72,7 +72,7 @@ function doResolve(specifier, importerDirPath, isEntry) {
     importerDirPath = pkg.path;
   }
 
-  console.log({ specifier, importerDirPath, pkg });
+  console.dir({ specifier, importerDirPath, pkg }, { depth: 5 });
 
   /** @type { string | undefined } */
   let filePath = resolvePackageSourcePath(

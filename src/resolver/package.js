@@ -235,11 +235,12 @@ function resolveExportPath(filePathOrSpecifier, pkg) {
 
   try {
     const resolved = resolveExports(pkg, entry, RESOLVE_IMPORTS_EXPORTS_CONFIG);
-
+    console.log({ resolved });
     if (resolved) {
       return path.resolve(pkg.path, resolved);
     }
   } catch (err) {
+    console.log(err);
     if (/** @type { Error } */ (err).message.includes('Missing')) {
       error(
         `unable to resolve package entry. The ${pkg.name} package does not specify ${entry} in it's "exports" map.`,
