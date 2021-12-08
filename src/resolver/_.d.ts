@@ -1,6 +1,7 @@
 declare interface Package {
-  aliases: { [key: string]: string };
-  exports?: string | { [key: string]: string | { [key: string]: string } };
+  browser?: Record<string, string>;
+  exports?: string | Record<string, string | Record<string, string>>;
+  imports?: string | Record<string, string | Record<string, string>>;
   isProjectPackage: boolean;
   manifestPath: string;
   main?: string;

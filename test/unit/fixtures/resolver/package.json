@@ -1,6 +1,12 @@
 {
-	"name": "project",
+	"name": "test-project",
 	"version": "1.0.0",
+  "imports": {
+    "#foo": "./foo.bar.js",
+    "#dep": {
+      "development": "bar"
+    }
+  },
   "exports": {
     ".": "./baz.js",
     "./foo.js": "./foo.js"
