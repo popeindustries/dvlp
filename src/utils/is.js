@@ -4,7 +4,7 @@ import path from 'path';
 import util from 'util';
 
 const HAS_UTIL_IS_PROXY = util.types && util.types.isProxy !== undefined;
-const RE_BARE_SPECIFIER = /^[^./]/;
+const RE_BARE_SPECIFIER = /^[^./](?!:)/; // Discard if A: (windows file path)
 const RE_INVALID = /[<>:"|?*]/;
 const RE_JSON = /.json$/i;
 const RE_LOCALHOST = /localhost|127\.0\.0\.1/;

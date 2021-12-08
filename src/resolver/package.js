@@ -230,7 +230,7 @@ export function resolveImportPath(specifier, pkg) {
  */
 function resolveExportPath(filePathOrSpecifier, pkg) {
   console.log({ filePathOrSpecifier, pkg });
-  console.log(filePathOrSpecifier.replace(pkg.path, '.'));
+  console.log(filePathOrSpecifier.replace(pkg.path, '.'), isBareSpecifier(filePathOrSpecifier));
   const entry = filePathOrSpecifier.replace(isBareSpecifier(filePathOrSpecifier) ? pkg.name : pkg.path, '.');
 
   try {
