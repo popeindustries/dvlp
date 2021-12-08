@@ -94,12 +94,6 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
       }
     }
 
-    // Store "main" as alias
-    // if (main) {
-    //   pkg.aliases[packagePath] = main;
-    //   pkg.aliases[json.name] = main;
-    // }
-
     pkg.name = name;
     pkg.main = main;
     pkg.version = json.version;
@@ -254,19 +248,21 @@ function resolveExportPath(filePathOrSpecifier, pkg) {
  * @returns { string }
  */
 function resolveMainOrBrowserPath(filePath, pkg) {
+  let resolved = filePath;
+
   if (filePath === pkg.path && pkg.main) {
-    return pkg.main;
+    resolved = pkg.main;
   }
 
   if (pkg.browser) {
     // Follow chain of aliases
     // a => b; b => c; c => d
-    while (filePath in pkg.browser) {
-      filePath = pkg.browser[filePath];
+    while (resolved in pkg.browser) {
+      resolved = pkg.browser[resolved];
     }
   }
 
-  return filePath;
+  return resolved;
 }
 
 /**
@@ -277,18 +273,13 @@ function resolveMainOrBrowserPath(filePath, pkg) {
  * @param { boolean } isProjectPackage
  */
 function resolvePackageName(packageName, packagePath, isProjectPackage) {
-  let dir;
-
   if (!isNodeModuleFilePath(packagePath)) {
-    if (isProjectPackage) {
-      return packageName || 'project';
-    }
-    dir = process.cwd();
-  } else {
-    dir = packagePath.slice(0, packagePath.lastIndexOf('node_modules') + 12);
+    return packageName || 'project';
   }
 
-  return path.relative(dir, packagePath).replace(/\\/g, '/');
+  return path
+    .relative(packagePath.slice(0, packagePath.lastIndexOf('node_modules') + 12), packagePath)
+    .replace(/\\/g, '/');
 }
 
 /**
