@@ -10,8 +10,8 @@ jobs:
   build_deploy:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        node: ['14', '16', '17']
+        os: [windows-latest]
+        node: ['17']
     runs-on: ${{ matrix.os }}
     name: Install, build, and test (OS ${{ matrix.os }} - Node ${{ matrix.node }})
     steps:
