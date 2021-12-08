@@ -234,6 +234,7 @@ function resolveExportPath(filePathOrSpecifier, pkg) {
     : filePathOrSpecifier.replace(pkg.path, '.').replace(/\\/g, '/');
 
   try {
+    console.log({ entry });
     const resolved = resolveExports(pkg, entry, RESOLVE_IMPORTS_EXPORTS_CONFIG);
     console.log({ resolved });
     if (resolved) {
