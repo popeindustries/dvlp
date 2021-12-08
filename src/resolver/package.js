@@ -229,19 +229,15 @@ export function resolveImportPath(specifier, pkg) {
  * @param { Package } pkg
  */
 function resolveExportPath(filePathOrSpecifier, pkg) {
-  console.log({ filePathOrSpecifier, pkg });
-  console.log(filePathOrSpecifier.replace(pkg.path, '.'), isBareSpecifier(filePathOrSpecifier));
   const entry = filePathOrSpecifier.replace(isBareSpecifier(filePathOrSpecifier) ? pkg.name : pkg.path, '.');
 
   try {
-    console.log({ entry });
     const resolved = resolveExports(pkg, entry.replace(/\\/g, '/'), RESOLVE_IMPORTS_EXPORTS_CONFIG);
-    console.log({ resolved });
+
     if (resolved) {
       return path.resolve(pkg.path, resolved);
     }
   } catch (err) {
-    console.log(err);
     if (/** @type { Error } */ (err).message.includes('Missing')) {
       error(
         `unable to resolve package entry. The ${pkg.name} package does not specify ${entry} in it's "exports" map.`,

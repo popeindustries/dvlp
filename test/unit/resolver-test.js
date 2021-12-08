@@ -76,7 +76,7 @@ describe('resolver', () => {
     });
   });
 
-  describe.only('resolve()', () => {
+  describe('resolve()', () => {
     afterEach(() => {
       clearResolverCache();
     });
@@ -235,7 +235,7 @@ describe('resolver', () => {
     });
 
     describe('"exports" field', () => {
-      it.only('should resolve package exports entry', () => {
+      it('should resolve package exports entry', () => {
         expect(resolve('exports', path.resolve('baz.js'))).to.equal(path.resolve('node_modules/exports/browser.js'));
       });
       it('should resolve relative path within package with exports entry', () => {
