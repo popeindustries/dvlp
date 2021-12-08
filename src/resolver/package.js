@@ -229,9 +229,12 @@ export function resolveImportPath(specifier, pkg) {
  * @param { Package } pkg
  */
 function resolveExportPath(filePathOrSpecifier, pkg) {
-  const entry = isBareSpecifier(filePathOrSpecifier)
-    ? filePathOrSpecifier.replace(pkg.name, '.')
-    : filePathOrSpecifier.replace(pkg.path, '.').replace(/\\/g, '/');
+  console.log({ filePathOrSpecifier, pkg });
+  const entry = (
+    isBareSpecifier(filePathOrSpecifier)
+      ? filePathOrSpecifier.replace(pkg.name, '.')
+      : filePathOrSpecifier.replace(pkg.path, '.')
+  ).replace(/\\/g, '/');
 
   try {
     console.log({ entry });
