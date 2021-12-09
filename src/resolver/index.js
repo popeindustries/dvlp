@@ -67,7 +67,7 @@ function doResolve(specifier, importerDirPath, isEntry) {
 
   // Re-write if resolving inside a package.
   // This relies upon correct pkg.name (see ./package.js#resolvePackageName)
-  if (specifier.startsWith(pkg.name)) {
+  if (specifier === pkg.name || specifier.startsWith(`${pkg.name}/`)) {
     specifier = specifier.replace(pkg.name, '.');
     importerDirPath = pkg.path;
   }
@@ -83,6 +83,9 @@ function doResolve(specifier, importerDirPath, isEntry) {
     return;
   } else if (isAbsoluteFilePath(filePath)) {
     return resolveRealFilePath(filePath);
+  } else if (!isBareSpecifier(filePath)) {
+    // Unresolvable/non-standard format
+    return;
   }
 
   // "filePath" must be a package reference (either the same or aliased),
