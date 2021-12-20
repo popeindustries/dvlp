@@ -93,6 +93,7 @@ function doResolve(specifier, importerDirPath, isEntry) {
   specifier = filePath;
 
   const packageName = /** @type { string } */ (getPackageNameFromSpecifier(specifier));
+  const localPath = specifier.slice(packageName.length);
 
   for (const packageDirPath of pkg.paths) {
     const packagePath = path.join(packageDirPath, packageName);
@@ -100,7 +101,7 @@ function doResolve(specifier, importerDirPath, isEntry) {
     if (importerDirPath !== packageDirPath && fs.existsSync(packagePath)) {
       // Using full package + specifier here to account for nested package directories
       // (non-root directories with a package.json file)
-      filePath = doResolve(specifier, resolveRealFilePath(path.join(packageDirPath, specifier)), false);
+      filePath = doResolve(specifier, path.join(resolveRealFilePath(packagePath), localPath), false);
 
       if (filePath) {
         return resolveRealFilePath(filePath);
