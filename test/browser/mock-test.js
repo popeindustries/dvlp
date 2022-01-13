@@ -123,6 +123,27 @@ describe('Mock', function () {
       xhr.open('GET', 'http://www.google.com/bar');
       xhr.send();
     });
+    it.skip('should respond to locally mocked function AJAX POST request, with request.body', function (done) {
+      testBrowser.mockResponse(
+        'http://www.google.com/bar',
+        function (req, res) {
+          expect(req.body).to.exist;
+          res.writeHead(200);
+          res.end({ name: 'bar' });
+        },
+        true,
+      );
+      expect(window.dvlp.cache).to.have.length(4);
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        const json = JSON.parse(xhr.response);
+        expect(json).to.eql({ name: 'bar' });
+        done();
+      };
+      xhr.open('POST', 'http://www.google.com/bar');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify({ name: 'bar' }));
+    });
     it('should respond to locally mocked AJAX request with ignoreSearch=true', function (done) {
       testBrowser.mockResponse(
         { url: 'http://www.google.com/bar', ignoreSearch: true },
@@ -266,6 +287,34 @@ describe('Mock', function () {
         );
         expect(window.dvlp.cache).to.have.length(4);
         fetch('http://www.google.com/bar', {
+          mode: 'cors',
+        }).then(function (res) {
+          res.json().then(function (json) {
+            expect(json).to.eql({ name: 'bar' });
+            remove();
+            expect(window.dvlp.cache).to.have.length(3);
+            done();
+          });
+        });
+      });
+      it('should respond to locally mocked function fetch POST request, with request.body', function (done) {
+        var remove = testBrowser.mockResponse(
+          'http://www.google.com/bar',
+          function (req, res) {
+            const json = JSON.parse(req.body);
+            expect(req).to.have.property('method', 'POST');
+            expect(json).to.eql({ name: 'bar' });
+            res.writeHead(200);
+            res.end(JSON.stringify(json));
+          },
+          false,
+        );
+        expect(window.dvlp.cache).to.have.length(4);
+        var headers = new Headers({ 'content-type': 'application/json' });
+        fetch('http://www.google.com/bar', {
+          headers,
+          method: 'POST',
+          body: JSON.stringify({ name: 'bar' }),
           mode: 'cors',
         }).then(function (res) {
           res.json().then(function (json) {

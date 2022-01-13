@@ -92,6 +92,7 @@
     if (typeof fetch !== 'undefined') {
       window.fetch = new Proxy(window.fetch, {
         apply: function (target, ctx, args) {
+          var options = args[1] || {};
           var hrefAndMock = matchHref(args[0]);
           var href = hrefAndMock[0];
           var mockData = hrefAndMock[1];
@@ -101,7 +102,7 @@
           if (mockData) {
             // Handle mock registered in browser
             if (mockData.response) {
-              var mockResponse = resolveMockResponse(mockData);
+              var mockResponse = resolveMockResponse(mockData, options);
 
               // Hang
               if (mockResponse.status === 0) {
@@ -311,9 +312,10 @@
    * Resolve response from "mockData"
    *
    * @param { MockResponseData } mockData
+   * @param { Object } [requestOptions]
    * @returns { { body: string, headers: {}, status: number } }
    */
-  function resolveMockResponse(mockData) {
+  function resolveMockResponse(mockData, requestOptions = {}) {
     var mockResponse = mockData.response;
     var resolved = {
       body: '',
@@ -322,26 +324,24 @@
     };
 
     if (typeof mockResponse === 'function') {
-      mockResponse(
-        { url: mockData.href },
-        {
-          end: function end(data) {
-            resolved.body = data;
-          },
-          setHeader: function setHeader(name, value) {
-            resolved.headers[name] = value;
-          },
-          write: function write(chunk) {
-            resolved.body += chunk;
-          },
-          writeHead: function writeHead(statusCode, headers) {
-            resolved.status = statusCode;
-            if (headers) {
-              resolved.headers = headers;
-            }
-          },
+      requestOptions.url = mockData.href;
+      mockResponse(requestOptions, {
+        end: function end(data) {
+          resolved.body = data;
         },
-      );
+        setHeader: function setHeader(name, value) {
+          resolved.headers[name] = value;
+        },
+        write: function write(chunk) {
+          resolved.body += chunk;
+        },
+        writeHead: function writeHead(statusCode, headers) {
+          resolved.status = statusCode;
+          if (headers) {
+            resolved.headers = headers;
+          }
+        },
+      });
     } else if (mockResponse.error) {
       resolved.body = 'error';
       resolved.status = 500;
