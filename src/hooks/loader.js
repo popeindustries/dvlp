@@ -7,22 +7,23 @@ const t = String.raw;
  * Create application loader based on passed hooks
  *
  * @param { import('url').URL } loaderPath
- * @param { { hooks?: Hooks, hooksPath?: string } } hooksConfig
+ * @param { { jsExtensions: Array<string>, hooks?: Hooks, hooksPath?: string } } hooksConfig
  */
 export function createApplicationLoader(loaderPath, hooksConfig) {
   const hooksPath =
     hooksConfig.hooks && (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
       ? pathToFileURL(/** @type { string } */ (hooksConfig.hooksPath)).href
       : undefined;
-  const contents = getLoaderContents(hooksPath);
+  const contents = getLoaderContents(hooksConfig.jsExtensions, hooksPath);
 
   writeFileSync(loaderPath, contents);
 }
 
 /**
+ * @param { Array<string> } jsExtensions
  * @param { string } [hooksPath]
  */
-function getLoaderContents(hooksPath) {
+function getLoaderContents(jsExtensions, hooksPath) {
   return t`
   import { fileURLToPath, pathToFileURL } from 'url';
   import { esbuild } from 'dvlp';
@@ -45,12 +46,14 @@ function getLoaderContents(hooksPath) {
     const { parentURL = BASE_URL } = context;
     const url = new URL(specifier, parentURL);
     const { pathname } = url;
+    const ext = extname(pathname);
 
     if (RE_EXTS.test(specifier)) {
       return { url: url.href, format: 'module' };
     }
-    // Resolve relative TS files missing extension
-    if (!RE_IGNORE.test(specifier) && extname(pathname) === '') {
+    // Resolve relative TS files missing extension.
+    // Test against supported extensions to handle pathnames with '.'
+    if (!RE_IGNORE.test(specifier) && (ext === '' | !${JSON.stringify(jsExtensions)}.includes(ext))) {
       for (const ext of ['.ts', '.tsx']) {
         url.pathname = pathname + ext;
         const path = fileURLToPath(url.href);
