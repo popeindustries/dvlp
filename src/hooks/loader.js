@@ -53,7 +53,7 @@ function getLoaderContents(jsExtensions, hooksPath) {
     }
     // Resolve relative TS files missing extension.
     // Test against supported extensions to handle pathnames with '.'
-    if (!RE_IGNORE.test(specifier) && (ext === '' | !${JSON.stringify(jsExtensions)}.includes(ext))) {
+    if (!RE_IGNORE.test(specifier) && (ext === '' || !${JSON.stringify(jsExtensions)}.includes(ext))) {
       for (const ext of ['.ts', '.tsx']) {
         url.pathname = pathname + ext;
         const path = fileURLToPath(url.href);
