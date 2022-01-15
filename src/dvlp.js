@@ -49,7 +49,7 @@ export async function server(
     process.env.PORT = String(port);
   }
 
-  createApplicationLoader(config.applicationLoaderPath, { hooks, hooksPath });
+  createApplicationLoader(config.applicationLoaderPath, { jsExtensions: config.extensionsByType.js, hooks, hooksPath });
 
   const server = new DvlpServer(entry, port, reload, hooks, mockPath, certsPath);
 
