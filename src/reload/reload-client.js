@@ -11,8 +11,10 @@
   var reconnectAttempts = 100;
   var reconnectTimeoutId = 0;
   var url = new URL(location.protocol + '//' + location.hostname);
-  url.port = location.port;
   url.pathname = '$RELOAD_PATHNAME';
+  if (location.port) {
+    url.port = location.port;
+  }
 
   connect();
 
