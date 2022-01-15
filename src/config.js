@@ -78,12 +78,14 @@ const config = {
     '.jsx': 'jsx',
     '.ts': 'ts',
     '.tsx': 'tsx',
+    '.mts': 'ts',
+    '.cts': 'ts',
   },
   // Ordered to trigger transpiling if necessary
   extensionsByType: {
     css: ['.pcss', '.sass', '.scss', '.less', '.styl', '.stylus', '.css'],
     html: ['.nunjs', '.nunjucks', '.hbs', '.handlebars', '.dust', '.html', '.htm'],
-    js: ['.ts', '.tsx', '.jsx', '.mjs', '.cjs', '.js', '.json'],
+    js: ['.ts', '.mts', '.cts', '.tsx', '.jsx', '.mjs', '.cjs', '.js', '.json'],
   },
   latency: 50,
   maxAge: '10m',
@@ -112,6 +114,8 @@ const config = {
     '.jsx': 'js',
     '.ts': 'js',
     '.tsx': 'js',
+    '.mts': 'js',
+    '.cts': 'js',
   },
   version: VERSION,
 };
