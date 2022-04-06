@@ -2,7 +2,7 @@
 
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import program from 'commander';
+import { program } from 'commander';
 import { readFileSync } from 'fs';
 
 const pkg = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../package.json'), 'utf8');
