@@ -103,6 +103,9 @@ describe('resolver', () => {
       it('should resolve a file name containing multiple "."', () => {
         expect(resolve('./foo.bar', path.resolve('foo.js'))).to.equal(path.resolve('foo.bar.js'));
       });
+      it('should resolve a .ts file over .js file with missing extension', () => {
+        expect(resolve('./index', path.resolve('dir/foo.js'))).to.equal(path.resolve('dir/index.ts'));
+      });
     });
 
     describe('packages', () => {
