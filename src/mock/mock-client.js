@@ -462,8 +462,8 @@
    * @param { string } href
    * @returns { string }
    */
-  function parseOriginalHref(href) {
-    let href = typeof req === 'string' ? req : req.url;
+  function parseOriginalHref(reqOrHref) {
+    let href = typeof reqOrHref === 'string' ? reqOrHref : reqOrHref.url;
     if (href.indexOf('?dvlpmock') === -1) {
       return href;
     }
