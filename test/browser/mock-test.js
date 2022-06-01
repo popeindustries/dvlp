@@ -198,6 +198,14 @@ describe('Mock', function () {
           });
         });
       });
+      it.only('should work with remote mocked fetch request with Request object', function (done) {
+        fetch(new Request('http://www.google.com/', { mode: 'no-cors' })).then(function (res) {
+          res.text().then(function (text) {
+            expect(text).to.eql('');
+            done();
+          });
+        });
+      });
       it('should respond to locally mocked fetch request with custom status', function (done) {
         var remove = testBrowser.mockResponse(
           'http://www.google.com/bar',

@@ -260,7 +260,6 @@
    */
   function matchHref(href) {
     var url = getUrl(href);
-
     if (url.pathname === '/dvlpreload') {
       return [href];
     }
@@ -459,11 +458,11 @@
   /**
    * Parse original href from href with `??dvlpmock=` encoded href
    *
-   * @param { string } href
+   * @param { string } hrefOrRequest
    * @returns { string }
    */
-  function parseOriginalHref(reqOrHref) {
-    let href = typeof reqOrHref === 'string' ? reqOrHref : reqOrHref.url;
+  function parseOriginalHref(hrefOrRequest) {
+    var href = typeof hrefOrRequest === 'string' ? hrefOrRequest : hrefOrRequest.url;
     if (href.indexOf('?dvlpmock') === -1) {
       return href;
     }
