@@ -12,6 +12,7 @@ import path from 'path';
 // Export for easy import in loader hook
 // @see src/hooks/loader.js#L28
 export * as esbuild from 'esbuild';
+export { resolve } from './resolver/index.js';
 
 /**
  * Server instance factory

@@ -26,7 +26,7 @@ export function createApplicationLoader(loaderPath, hooksConfig) {
 function getLoaderContents(jsExtensions, hooksPath) {
   return t`
   import { fileURLToPath, pathToFileURL } from 'url';
-  import { esbuild } from 'dvlp';
+  import { esbuild, resolve as dvlpResolve } from 'dvlp';
   import { extname } from 'path';
   import fs from 'fs';
   ${hooksPath ? `import customHooks from '${hooksPath}';` : 'const customHooks = {};'}
@@ -37,42 +37,47 @@ function getLoaderContents(jsExtensions, hooksPath) {
   const IS_WIN32 = process.platform === 'win32';
   const RE_EXTS = /\.(tsx?|json)$/;
   const RE_IGNORE = /^[^.]/
+  let originalDefaultResolve;
+  let originalDefaultLoad;
+  let originalDefaultTransformSource;
 
   export function resolve(specifier, context, defaultResolve) {
+    if (originalDefaultResolve === undefined) {
+      originalDefaultResolve = defaultResolve;
+    }
     if (customHooks.onServerResolve !== undefined) {
-      return customHooks.onServerResolve(specifier, context, defaultResolve);
+      return customHooks.onServerResolve(specifier, context, doResolve);
     }
 
-    const { parentURL = BASE_URL } = context;
-    const url = new URL(specifier, parentURL);
-    const { pathname } = url;
-    const ext = extname(pathname);
+    return doResolve(specifier, context);
+  }
 
-    if (RE_EXTS.test(specifier)) {
-      return { url: url.href, format: 'module' };
-    }
-    // Resolve relative TS files missing extension.
-    // Test against supported extensions to handle pathnames with '.'
-    if (!RE_IGNORE.test(specifier) && (ext === '' || !${JSON.stringify(jsExtensions)}.includes(ext))) {
-      for (const ext of ['.ts', '.tsx']) {
-        url.pathname = pathname + ext;
-        const path = fileURLToPath(url.href);
-        if (fs.existsSync(path)) {
-          return { url: url.href, format: 'module' };
-        }
+  function doResolve(specifier, context) {
+    if (!specifier.startsWith('node:')) {
+      const resolved = dvlpResolve(specifier, context.parentURL ? fileURLToPath(context.parentURL) : undefined, 'server');
+      if (resolved) {
+        return { url: pathToFileURL(resolved).href };
       }
     }
 
-    return defaultResolve(specifier, context, defaultResolve);
+    return originalDefaultResolve(specifier, context, originalDefaultResolve);
   }
 
   export function load(url, context, defaultLoad) {
+    if (originalDefaultLoad === undefined) {
+      originalDefaultLoad = defaultLoad;
+    }
+
     storeSourcePath(url);
 
     if (customHooks.onServerTransform !== undefined) {
-      return customHooks.onServerTransform(url, context, defaultLoad);
+      return customHooks.onServerTransform(url, context, doLoad);
     }
 
+    return doLoad(url, context);
+  }
+
+  function doLoad(url, context) {
     if (RE_EXTS.test(new URL(url).pathname)) {
       const { format } = context;
 
@@ -83,7 +88,7 @@ function getLoaderContents(jsExtensions, hooksPath) {
       return { format: 'module', source: code };
     }
 
-    return defaultLoad(url, context, defaultLoad);
+    return originalDefaultLoad(url, context, originalDefaultLoad);
   }
 
   export function getFormat(url, context, defaultGetFormat) {
@@ -95,15 +100,23 @@ function getLoaderContents(jsExtensions, hooksPath) {
   }
 
   export function transformSource(source, context, defaultTransformSource) {
+    if (originalDefaultTransformSource === undefined) {
+      originalDefaultTransformSource = defaultTransformSource;
+    }
+
     const { url, format } = context;
 
     storeSourcePath(url)
 
     if (customHooks.onServerTransform !== undefined) {
-      return customHooks.onServerTransform(url, context, () => {
-        return defaultTransformSource(source, context, defaultTransformSource)
-      });
+      return customHooks.onServerTransform(url, context, doTransformSource);
     }
+
+    return doTransformSource(source, context);
+  }
+
+  function doTransformSource(source, context) {
+    const { url, format } = context;
 
     if (RE_EXTS.test(new URL(url).pathname)) {
       const filename = IS_WIN32 ? url : fileURLToPath(url);
@@ -112,7 +125,7 @@ function getLoaderContents(jsExtensions, hooksPath) {
       return { source: code };
     }
 
-    return defaultTransformSource(source, context, defaultTransformSource);
+    return originalDefaultTransformSource(source, context, originalDefaultTransformSource);
   }
 
   function transform(source, filename, url, format) {

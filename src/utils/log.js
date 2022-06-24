@@ -1,12 +1,9 @@
 import chalk from 'chalk';
 import config from '../config.js';
 
-export const WARN_BARE_IMPORT =
-  '⚠️  re-writing bare imports because browsers do not support Node-style import identifiers';
-export const WARN_MISSING_EXTENSION =
-  '⚠️  adding missing extensions because browsers can only resolve valid URL identifiers';
-export const WARN_PACKAGE_INDEX =
-  '⚠️  adding missing package index.js because browsers do not support Node-style package identifiers';
+export const WARN_BARE_IMPORT = '⚠️  re-writing bare imports';
+export const WARN_MISSING_EXTENSION = '⚠️  adding missing file extension for';
+export const WARN_PACKAGE_INDEX = '⚠️  adding missing package "index.js"';
 export const WARN_CERTIFICATE_EXPIRY = '⚠️  ssl certificate will expire soon!';
 
 const SEG_LENGTH = 80;

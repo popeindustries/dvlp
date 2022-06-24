@@ -21,22 +21,23 @@ const resolveCache = new Map();
  *
  * @param { string } specifier
  * @param { string } [importer]
+ * @param { 'browser' | 'node' } [env]
  * @returns { string | undefined }
  */
-export function resolve(specifier, importer = 'index.js') {
+export function resolve(specifier, importer = 'index.js', env = 'browser') {
   if (!specifier) {
     return;
   }
 
   importer = path.resolve(importer);
-  const key = getCacheKey(importer, specifier);
+  const key = getCacheKey(importer, specifier, env);
   const cached = resolveCache.get(key);
 
   if (cached !== undefined) {
     return cached;
   }
 
-  const filePath = doResolve(specifier, resolveRealFilePath(path.dirname(importer)), true);
+  const filePath = doResolve(specifier, resolveRealFilePath(path.dirname(importer)), true, env);
 
   if (!filePath) {
     return;
@@ -47,15 +48,44 @@ export function resolve(specifier, importer = 'index.js') {
 }
 
 /**
+ * Retrieve Package instance for "dir"
+ *
+ * @param { string } dir
+ * @param { 'browser' | 'node' } [env]
+ * @returns { Package | undefined }
+ */
+export function getPackageForDir(dir, env = 'browser') {
+  const pkgPath = resolvePackagePath(dir);
+
+  if (!pkgPath) {
+    return;
+  }
+
+  const pkgKey = `${pkgPath}:${env}`;
+  let pkg = packageCacheByImportDir.get(pkgKey);
+
+  if (!pkg) {
+    pkg = getPackage(dir, pkgPath, env);
+
+    if (pkg) {
+      packageCacheByImportDir.set(pkgKey, pkg);
+    }
+  }
+
+  return pkg;
+}
+
+/**
  * Retrieve file path for "specifier" relative to "importerDirPath"
  *
  * @param { string } specifier
  * @param { string } importerDirPath
  * @param { boolean } isEntry
+ * @param { 'browser' | 'node' } env
  * @returns { string | undefined }
  */
-function doResolve(specifier, importerDirPath, isEntry) {
-  const pkg = resolvePackage(importerDirPath);
+function doResolve(specifier, importerDirPath, isEntry, env) {
+  const pkg = resolvePackage(importerDirPath, env);
 
   if (!pkg) {
     return;
@@ -101,7 +131,7 @@ function doResolve(specifier, importerDirPath, isEntry) {
     if (importerDirPath !== packageDirPath && fs.existsSync(packagePath)) {
       // Using full package + specifier here to account for nested package directories
       // (non-root directories with a package.json file)
-      filePath = doResolve(specifier, path.join(resolveRealFilePath(packagePath), localPath), false);
+      filePath = doResolve(specifier, path.join(resolveRealFilePath(packagePath), localPath), false, env);
 
       if (filePath) {
         return resolveRealFilePath(filePath);
@@ -111,54 +141,31 @@ function doResolve(specifier, importerDirPath, isEntry) {
 }
 
 /**
- * Retrieve Package instance for "dir"
- *
- * @param { string } dir
- * @returns { Package | undefined }
- */
-export function getPackageForDir(dir) {
-  const pkgPath = resolvePackagePath(dir);
-
-  if (!pkgPath) {
-    return;
-  }
-
-  let pkg = packageCacheByImportDir.get(pkgPath);
-
-  if (!pkg) {
-    pkg = getPackage(dir, pkgPath);
-
-    if (pkg) {
-      packageCacheByImportDir.set(pkgPath, pkg);
-    }
-  }
-
-  return pkg;
-}
-
-/**
  * Retrieve cache key
  *
  * @param { string } importerFilePath
  * @param { string } specifier
+ * @param { 'browser' | 'node' } env
  * @returns { string }
  */
-function getCacheKey(importerFilePath, specifier) {
+function getCacheKey(importerFilePath, specifier, env) {
   // Ensure that all packages imported by source files resolves to same key
   if (isBareSpecifier(specifier) && !isNodeModuleFilePath(importerFilePath)) {
-    return `src:${specifier}`;
+    return `src:${specifier}:${env}`;
   }
-  return `${getProjectPath(importerFilePath)}:${specifier}`;
+  return `${getProjectPath(importerFilePath)}:${specifier}:${env}`;
 }
 
 /**
  * @param { string } dir
+ * @param { 'browser' | 'node' } env
  * @returns { Package | undefined }
  */
-function resolvePackage(dir) {
-  let pkg = getPackageForDir(dir);
+function resolvePackage(dir, env) {
+  let pkg = getPackageForDir(dir, env);
 
-  if (pkg) {
+  // Version check (browser only)
+  if (pkg && env === 'browser') {
     if (!packageVersionCacheByName.has(pkg.name)) {
       packageVersionCacheByName.set(pkg.name, new Set([pkg.version]));
     } else {
@@ -191,4 +198,5 @@ export function clearResolverCache() {
   resolveCache.clear();
   packageCacheByImportDir.clear();
   packageCacheByNameAndVersion.clear();
+  packageVersionCacheByName.clear();
 }

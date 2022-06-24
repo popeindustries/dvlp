@@ -13,16 +13,16 @@ import { resolve as resolveExports } from 'resolve.exports';
 
 const MAX_FILE_SYSTEM_DEPTH = 10;
 const RE_TRAILING = /\/+$|\\+$/;
-const RESOLVE_IMPORTS_EXPORTS_CONFIG = { browser: true, conditions: ['development', 'dvlp'] };
 
 /**
  * Retrieve package details for "filePath"
  *
  * @param { string } filePath
  * @param { string } [packagePath]
+ * @param { 'browser' | 'node' } [env]
  * @returns { Package | undefined }
  */
-export function getPackage(filePath, packagePath = resolvePackagePath(filePath)) {
+export function getPackage(filePath, packagePath = resolvePackagePath(filePath), env = 'browser') {
   if (packagePath === undefined || !fs.existsSync(packagePath)) {
     return;
   }
@@ -32,6 +32,8 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
   const paths = resolveNodeModulesDirectories(packagePath);
   /** @type { Package } */
   const pkg = {
+    env,
+    exportsConditions: [env, 'development', 'dvlp'],
     isProjectPackage,
     manifestPath,
     main: '',
@@ -50,7 +52,7 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
     const hasModuleField = json.module !== undefined;
     // Name is dirpath from nearest node_modules (even if not specified),
     // unless project package
-    const name = resolvePackageName(json.name, packagePath, isProjectPackage);
+    const name = resolvePackageName(json.name, packagePath);
     let main = find(json.module || json.main || 'index.js', findOptions);
 
     if (json.imports) {
@@ -58,7 +60,7 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath))
     }
     if (json.exports) {
       pkg.exports = json.exports;
-    } else if (json.browser) {
+    } else if (env === 'browser' && json.browser) {
       pkg.browser = {};
       if (typeof json.browser === 'string') {
         // A "module" field takes precedence over aliases for "main" in "browser"
@@ -202,7 +204,9 @@ export function resolveImportPath(specifier, pkg) {
   const entry = specifier.replace('#', './');
 
   try {
-    const resolved = resolveExports({ name: pkg.name, exports: pkg.imports }, entry, RESOLVE_IMPORTS_EXPORTS_CONFIG);
+    const resolved = resolveExports({ name: pkg.name, exports: pkg.imports }, entry, {
+      conditions: pkg.exportsConditions,
+    });
 
     if (resolved) {
       return isBareSpecifier(resolved) ? resolved : path.resolve(pkg.path, resolved);
@@ -226,7 +230,7 @@ function resolveExportPath(filePathOrSpecifier, pkg) {
   const entry = filePathOrSpecifier.replace(isBareSpecifier(filePathOrSpecifier) ? pkg.name : pkg.path, '.');
 
   try {
-    const resolved = resolveExports(pkg, entry.replace(/\\/g, '/'), RESOLVE_IMPORTS_EXPORTS_CONFIG);
+    const resolved = resolveExports(pkg, entry.replace(/\\/g, '/'), { conditions: pkg.exportsConditions });
 
     if (resolved) {
       return path.resolve(pkg.path, resolved);
@@ -270,9 +274,8 @@ function resolveMainOrBrowserPath(filePath, pkg) {
  *
  * @param { string | undefined } packageName
  * @param { string } packagePath
- * @param { boolean } isProjectPackage
  */
-function resolvePackageName(packageName, packagePath, isProjectPackage) {
+function resolvePackageName(packageName, packagePath) {
   if (!isNodeModuleFilePath(packagePath)) {
     return packageName || 'project';
   }

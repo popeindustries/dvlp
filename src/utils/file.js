@@ -346,10 +346,13 @@ function resolveFilePath(filePath, type) {
     }
   }
 
+  const hasExtension = path.extname(filePath) !== '';
   let fp = resolveFilePathExtension(filePath, config.extensionsByType[type]);
+
   if (fp) {
-    if (!isNodeModuleFilePath(fp)) {
-      warn(WARN_MISSING_EXTENSION, getProjectPath(filePath));
+    // Skip warning if original extension provided, even though it's invalid (TypeScript .js -> .ts)
+    if (!hasExtension && !isNodeModuleFilePath(fp)) {
+      warn(WARN_MISSING_EXTENSION, `"${getProjectPath(filePath)}"`);
     }
     return resolveRealFilePath(fp);
   }
