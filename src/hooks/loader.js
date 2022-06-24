@@ -109,7 +109,7 @@ function getLoaderContents(jsExtensions, hooksPath) {
     storeSourcePath(url)
 
     if (customHooks.onServerTransform !== undefined) {
-      return customHooks.onServerTransform(url, context, doTransformSource);
+      return customHooks.onServerTransform(url, context, () => doTransformSource(source, context));
     }
 
     return doTransformSource(source, context);
