@@ -412,18 +412,18 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('ok');
     });
-    if (platform() !== 'win32') {
-      it('should start an app server with default server transform', async () => {
-        server = await serverFactory('test/unit/fixtures/app.ts', {
-          port: 8100,
-          reload: false,
-        });
-        const res = await fetch('http://localhost:8100/', {
-          headers: { accept: 'text/html' },
-        });
-        expect(res.status).to.eql(200);
-        expect(await res.text()).to.contain('hi');
+    it('should start an app server with default server transform', async () => {
+      server = await serverFactory('test/unit/fixtures/app.ts', {
+        port: 8100,
+        reload: false,
       });
+      const res = await fetch('http://localhost:8100/', {
+        headers: { accept: 'text/html' },
+      });
+      expect(res.status).to.eql(200);
+      expect(await res.text()).to.contain('hi');
+    });
+    if (platform() !== 'win32') {
       it('should start an app server with custom server transform', async () => {
         server = await serverFactory('test/unit/fixtures/app.ts', {
           port: 8100,
