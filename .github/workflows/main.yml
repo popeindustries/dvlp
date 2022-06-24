@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node: ['14', '16', '18']
+        node: ['16', '18']
     runs-on: ${{ matrix.os }}
     name: Install, build, and test (OS ${{ matrix.os }} - Node ${{ matrix.node }})
     steps:
