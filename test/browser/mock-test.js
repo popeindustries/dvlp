@@ -198,7 +198,7 @@ describe('Mock', function () {
           });
         });
       });
-      it.only('should work with remote mocked fetch request with Request object', function (done) {
+      it('should work with remote mocked fetch request with Request object', function (done) {
         fetch(new Request('http://www.google.com/', { mode: 'no-cors' })).then(function (res) {
           res.text().then(function (text) {
             expect(text).to.eql('');
