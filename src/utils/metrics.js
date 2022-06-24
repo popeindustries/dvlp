@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import Debug from 'debug';
 import { getProjectPath } from './file.js';
-import { performance } from 'perf_hooks';
+import { performance } from 'node:perf_hooks';
 
 const EVENT_NAMES = {
   bundle: 'bundle file',

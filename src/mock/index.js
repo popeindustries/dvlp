@@ -1,17 +1,17 @@
 import { error, info, noisyInfo } from '../utils/log.js';
-import { fileURLToPath, pathToFileURL, URLSearchParams } from 'url';
+import { fileURLToPath, pathToFileURL, URLSearchParams } from 'node:url';
 import { getUrl, isEqualSearchParams } from '../utils/url.js';
 import { isInvalidFilePath, isJsFilePath, isJsonFilePath } from '../utils/is.js';
 import { match, pathToRegexp } from 'path-to-regexp';
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
-import fs from 'fs';
+import fs from 'node:fs';
 import { getProjectPath } from '../utils/file.js';
 import { interceptClientRequest } from '../utils/intercept.js';
 import Metrics from '../utils/metrics.js';
 import mime from 'mime';
-import path from 'path';
+import path from 'node:path';
 import send from 'send';
 
 const RE_MAX_AGE = /max-age=(\d+)/;

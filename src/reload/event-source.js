@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 
 const DEFAULT_PING = 15 * 1000;
 const DEFAULT_RETRY = 5 * 1000;

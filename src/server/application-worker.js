@@ -1,8 +1,8 @@
-import http from 'http';
+import http from 'node:http';
 import { interceptClientRequest } from '../utils/intercept.js';
 import { isEqualSearchParams } from '../utils/url.js';
-import { syncBuiltinESMExports } from 'module';
-import { workerData } from 'worker_threads';
+import { syncBuiltinESMExports } from 'node:module';
+import { workerData } from 'node:worker_threads';
 
 const hostUrl = /** @type { URL } */ (new URL(workerData.hostOrigin));
 const serverPort = /** @type { number } */ (workerData.serverPort);

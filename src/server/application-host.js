@@ -1,18 +1,17 @@
-import { dirname, join, relative } from 'path';
+import { dirname, join, relative } from 'node:path';
 import { fatal, noisyInfo } from '../utils/log.js';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { format, msDiff } from '../utils/metrics.js';
 import { MessageChannel, SHARE_ENV, Worker } from 'worker_threads';
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
-import { fileURLToPath } from 'url';
 import { getProjectPath } from '../utils/file.js';
-import http from 'http';
+import http from 'node:http';
 import { isProxy } from '../utils/is.js';
-import { pathToFileURL } from 'url';
-import { performance } from 'perf_hooks';
-import { request } from 'http';
-import { syncBuiltinESMExports } from 'module';
+import { performance } from 'node:perf_hooks';
+import { request } from 'node:http';
+import { syncBuiltinESMExports } from 'node:module';
 import watch from '../utils/watch.js';
 
 const debug = Debug('dvlp:host');

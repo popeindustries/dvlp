@@ -3,12 +3,12 @@ import config from '../config.js';
 import Debug from 'debug';
 import decorateWithServerDestroy from 'server-destroy';
 import { EventSource } from '../reload/event-source.js';
-import fs from 'fs';
-import http from 'http';
+import fs from 'node:fs';
+import http from 'node:http';
 import Metrics from '../utils/metrics.js';
 import mime from 'mime';
 import Mock from '../mock/index.js';
-import path from 'path';
+import path from 'node:path';
 import WebSocket from 'faye-websocket';
 
 const debug = Debug('dvlp:test');

@@ -9,12 +9,12 @@ import {
 import { warn, WARN_MISSING_EXTENSION, WARN_PACKAGE_INDEX } from './log.js';
 import config from '../config.js';
 import favicon from './favicon.js';
-import fs from 'fs';
+import fs from 'node:fs';
 import glob from 'glob';
 import isFileEsm from 'is-file-esm';
 import { parse } from 'es-module-lexer';
-import path from 'path';
-import { pathToFileURL } from 'url';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 export const favIcon = Buffer.from(favicon, 'base64');
 

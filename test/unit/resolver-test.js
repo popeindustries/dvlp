@@ -2,9 +2,9 @@ import { clearResolverCache, resolve } from '../../src/resolver/index.js';
 import { getPackage, resolvePackagePath } from '../../src/resolver/package.js';
 import config from '../../src/config.js';
 import { expect } from 'chai';
-import { fileURLToPath } from 'url';
-import path from 'path';
-import { platform } from 'os';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import { platform } from 'node:os';
 
 describe('resolver', () => {
   before(() => {

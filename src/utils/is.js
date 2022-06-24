@@ -1,7 +1,7 @@
 import config from '../config.js';
-import fs from 'fs';
-import path from 'path';
-import util from 'util';
+import fs from 'node:fs';
+import path from 'node:path';
+import util from 'node:util';
 
 const HAS_UTIL_IS_PROXY = util.types && util.types.isProxy !== undefined;
 const RE_BARE_SPECIFIER = /^[^./](?!:)/; // Discard if A: (windows file path)

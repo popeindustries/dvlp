@@ -1,5 +1,5 @@
-import { pathToFileURL } from 'url';
-import { writeFileSync } from 'fs';
+import { pathToFileURL } from 'node:url';
+import { writeFileSync } from 'node:fs';
 
 const t = String.raw;
 
@@ -7,28 +7,27 @@ const t = String.raw;
  * Create application loader based on passed hooks
  *
  * @param { import('url').URL } loaderPath
- * @param { { jsExtensions: Array<string>, hooks?: Hooks, hooksPath?: string } } hooksConfig
+ * @param { { hooks?: Hooks, hooksPath?: string } } hooksConfig
  */
 export function createApplicationLoader(loaderPath, hooksConfig) {
   const hooksPath =
     hooksConfig.hooks && (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
       ? pathToFileURL(/** @type { string } */ (hooksConfig.hooksPath)).href
       : undefined;
-  const contents = getLoaderContents(hooksConfig.jsExtensions, hooksPath);
+  const contents = getLoaderContents(hooksPath);
 
   writeFileSync(loaderPath, contents);
 }
 
 /**
- * @param { Array<string> } jsExtensions
  * @param { string } [hooksPath]
  */
-function getLoaderContents(jsExtensions, hooksPath) {
+function getLoaderContents(hooksPath) {
   return t`
-  import { fileURLToPath, pathToFileURL } from 'url';
+  import { fileURLToPath, pathToFileURL } from 'node:url';
   import { esbuild, resolve as dvlpResolve } from 'dvlp';
-  import { extname } from 'path';
-  import fs from 'fs';
+  import { extname } from 'node:path';
+  import fs from 'node:fs';
   ${hooksPath ? `import customHooks from '${hooksPath}';` : 'const customHooks = {};'}
 
   global.sources = new Set();

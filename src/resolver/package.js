@@ -7,8 +7,8 @@ import {
   isValidFilePath,
 } from '../utils/is.js';
 import { error } from '../utils/log.js';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import { resolve as resolveExports } from 'resolve.exports';
 
 const MAX_FILE_SYSTEM_DEPTH = 10;

@@ -1,10 +1,10 @@
 import { expect } from 'chai';
-import fs from 'fs';
+import fs from 'node:fs';
 import { getBundleFilePath } from './utils.js';
 import Hooks from '../../src/hooks/index.js';
 import hooksFixture from './fixtures/hooks-bundle.mjs';
 import { init } from 'cjs-module-lexer';
-import path from 'path';
+import path from 'node:path';
 import transformBundleFixture from './fixtures/hooks-transform-bundle.mjs';
 import transformFixture from './fixtures/hooks-transform.mjs';
 

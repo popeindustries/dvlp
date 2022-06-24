@@ -6,8 +6,8 @@ import config from './config.js';
 import { createApplicationLoader } from './hooks/loader.js';
 import DvlpServer from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // Export for easy import in loader hook
 // @see src/hooks/loader.js#L28
@@ -50,7 +50,7 @@ export async function server(
     process.env.PORT = String(port);
   }
 
-  createApplicationLoader(config.applicationLoaderPath, { jsExtensions: config.extensionsByType.js, hooks, hooksPath });
+  createApplicationLoader(config.applicationLoaderPath, { hooks, hooksPath });
 
   const server = new DvlpServer(entry, port, reload, hooks, mockPath, certsPath);
 

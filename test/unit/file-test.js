@@ -1,6 +1,6 @@
 import { expandPath, find, isEsmFile } from '../../src/utils/file.js';
 import { expect } from 'chai';
-import path from 'path';
+import path from 'node:path';
 
 describe('file', () => {
   describe('expandPath()', () => {

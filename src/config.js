@@ -1,9 +1,9 @@
 import brokenNamedExportsPackages from './utils/broken-named-exports.js';
-import fs from 'fs';
-import { isMainThread } from 'worker_threads';
+import fs from 'node:fs';
+import { isMainThread } from 'node:worker_threads';
 import mime from 'mime';
-import path from 'path';
-import { pathToFileURL } from 'url';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import rimraf from 'rimraf';
 import send from 'send';
 

@@ -1,4 +1,4 @@
-import { brotliDecompressSync, unzipSync } from 'zlib';
+import { brotliDecompressSync, unzipSync } from 'node:zlib';
 import { fatal, noisyWarn, warn, WARN_BARE_IMPORT } from './log.js';
 import { getAbsoluteProjectPath, getProjectPath, isEsmFile } from './file.js';
 import { getBundlePath, getBundleSourcePath } from './bundling.js';
@@ -14,7 +14,7 @@ import Debug from 'debug';
 import { filePathToUrl } from './url.js';
 import Metrics from './metrics.js';
 import { parse } from 'es-module-lexer';
-import path from 'path';
+import path from 'node:path';
 import { resolve } from '../resolver/index.js';
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;

@@ -1,11 +1,11 @@
-import { brotliCompressSync, gzipSync } from 'zlib';
+import { brotliCompressSync, gzipSync } from 'node:zlib';
 import { clearResolverCache } from '../../src/resolver/index.js';
 import config from '../../src/config.js';
 import { expect } from 'chai';
 import Hooks from '../../src/hooks/index.js';
 import { patchResponse } from '../../src/utils/patch.js';
-import path from 'path';
-import { ServerResponse } from 'http';
+import path from 'node:path';
+import { ServerResponse } from 'node:http';
 
 const cwd = process
   .cwd()

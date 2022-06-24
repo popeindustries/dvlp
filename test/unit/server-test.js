@@ -3,12 +3,12 @@ import config from '../../src/config.js';
 import EventSource from 'eventsource';
 import { expect } from 'chai';
 import fetch from 'node-fetch';
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from 'node:url';
 import { getBundleFilePath } from './utils.js';
-import http from 'http';
-import http2 from 'http2';
-import path from 'path';
-import { platform } from 'os';
+import http from 'node:http';
+import http2 from 'node:http2';
+import path from 'node:path';
+import { platform } from 'node:os';
 import { server as serverFactory } from '../../src/dvlp.js';
 import websocket from 'faye-websocket';
 

@@ -2,8 +2,8 @@ import config from '../config.js';
 import Debug from 'debug';
 import { FSWatcher } from 'chokidar';
 import { getProjectPath } from './file.js';
-import os from 'os';
-import path from 'path';
+import os from 'node:os';
+import path from 'node:path';
 
 const TIMEOUT = 1000;
 

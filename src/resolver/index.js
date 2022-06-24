@@ -2,9 +2,9 @@ import { getPackage, resolvePackagePath, resolvePackageSourcePath } from './pack
 import { getPackageNameFromSpecifier, isSelfReferentialSpecifier } from './utils.js';
 import { getProjectPath, resolveRealFilePath } from '../utils/file.js';
 import { isAbsoluteFilePath, isBareSpecifier, isNodeModuleFilePath, isRelativeFilePath } from '../utils/is.js';
-import fs from 'fs';
+import fs from 'node:fs';
 import { noisyWarn } from '../utils/log.js';
-import path from 'path';
+import path from 'node:path';
 
 /** @type { Map<string, Package> } */
 const packageCacheByImportDir = new Map();

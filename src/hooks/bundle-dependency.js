@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import config from '../config.js';
 import Debug from 'debug';
 import { error } from '../utils/log.js';

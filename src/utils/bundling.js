@@ -1,20 +1,19 @@
-import { existsSync, readdirSync, unlinkSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import config from '../config.js';
-import fs from 'fs';
 import { getPackageForDir } from '../resolver/index.js';
 import { isJsFilePath } from './is.js';
-import path from 'path';
+import path from 'node:path';
 
 /** @type { Record<string, string> } */
 let meta = {};
 
-if (fs.existsSync(config.bundleDirMetaPath)) {
-  meta = JSON.parse(fs.readFileSync(config.bundleDirMetaPath, 'utf-8'));
+if (existsSync(config.bundleDirMetaPath)) {
+  meta = JSON.parse(readFileSync(config.bundleDirMetaPath, 'utf-8'));
 }
 
 process.on('exit', () => {
   if (!config.testing) {
-    fs.writeFileSync(config.bundleDirMetaPath, JSON.stringify(meta));
+    writeFileSync(config.bundleDirMetaPath, JSON.stringify(meta));
   }
 });
 

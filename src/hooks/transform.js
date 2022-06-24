@@ -1,12 +1,12 @@
 import { findClosest, getProjectPath, getTypeFromPath } from '../utils/file.js';
 import Debug from 'debug';
 import { error } from '../utils/log.js';
-import { extname } from 'path';
+import { extname } from 'node:path';
 import { isTransformableJsFile } from '../utils/is.js';
 import Metrics from '../utils/metrics.js';
 import mime from 'mime';
 import { parseEsbuildTarget } from '../utils/platform.js';
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 
 const debug = Debug('dvlp:transform');
 const tsconfigPath = findClosest('tsconfig.json');

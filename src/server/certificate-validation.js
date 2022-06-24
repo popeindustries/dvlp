@@ -1,9 +1,9 @@
 import { fatal, noisyWarn } from '../utils/log.js';
 import { Certificate } from '@fidm/x509';
 import chalk from 'chalk';
-import fs from 'fs';
+import fs from 'node:fs';
 import { getDirectoryContents } from '../utils/file.js';
-import path from 'path';
+import path from 'node:path';
 
 /**
  * Find cert/key

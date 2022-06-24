@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import fetch from 'node-fetch';
-import { fork } from 'child_process';
+import { fork } from 'node:child_process';
 
 /** @type { import('child_process').ChildProcess */
 let childProcess;
