@@ -8,6 +8,7 @@ import { getBundleFilePath } from './utils.js';
 import http from 'http';
 import http2 from 'http2';
 import path from 'path';
+import { platform } from 'os';
 import { server as serverFactory } from '../../src/dvlp.js';
 import websocket from 'faye-websocket';
 
@@ -411,29 +412,31 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('ok');
     });
-    it('should start an app server with default server transform', async () => {
-      server = await serverFactory('test/unit/fixtures/app.ts', {
-        port: 8100,
-        reload: false,
+    if (platform() !== 'win32') {
+      it('should start an app server with default server transform', async () => {
+        server = await serverFactory('test/unit/fixtures/app.ts', {
+          port: 8100,
+          reload: false,
+        });
+        const res = await fetch('http://localhost:8100/', {
+          headers: { accept: 'text/html' },
+        });
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain('hi');
       });
-      const res = await fetch('http://localhost:8100/', {
-        headers: { accept: 'text/html' },
+      it('should start an app server with custom server transform', async () => {
+        server = await serverFactory('test/unit/fixtures/app.ts', {
+          port: 8100,
+          reload: false,
+          hooksPath: 'test/unit/fixtures/hooks-transform-server.mjs',
+        });
+        const res = await fetch('http://localhost:8100/', {
+          headers: { accept: 'text/html' },
+        });
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain('hi from body hook');
       });
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('hi');
-    });
-    it('should start an app server with custom server transform', async () => {
-      server = await serverFactory('test/unit/fixtures/app.ts', {
-        port: 8100,
-        reload: false,
-        hooksPath: 'test/unit/fixtures/hooks-transform-server.mjs',
-      });
-      const res = await fetch('http://localhost:8100/', {
-        headers: { accept: 'text/html' },
-      });
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('hi from body hook');
-    });
+    }
     it('should polyfill process.env', async () => {
       server = await serverFactory('test/unit/fixtures/app.mjs', { port: 8100 });
       const res = await fetch('http://localhost:8100/', {
