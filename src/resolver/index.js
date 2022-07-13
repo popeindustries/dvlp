@@ -146,7 +146,8 @@ function doResolve(specifier, importerDirPath, isEntry, env) {
   if (!filePath) {
     return;
   } else if (isAbsoluteFilePath(filePath)) {
-    return { filePath: resolveRealFilePath(filePath), format: pkg.type };
+    filePath = resolveRealFilePath(filePath);
+    return { filePath, format: resolveFileFormat(filePath, pkg) };
   } else if (!isBareSpecifier(filePath)) {
     // Unresolvable/non-standard format
     return;
@@ -175,8 +176,6 @@ function doResolve(specifier, importerDirPath, isEntry, env) {
 }
 
 /**
- * Retrieve cache key
- *
  * @param { string } importerFilePath
  * @param { string } specifier
  * @param { 'browser' | 'node' } env
@@ -223,6 +222,23 @@ function resolvePackage(dir, env) {
   }
 
   return pkg;
+}
+
+/**
+ * @param { string } filePath
+ * @param { Package } pkg
+ * @returns { 'module' | 'commonjs' | undefined }
+ */
+function resolveFileFormat(filePath, pkg) {
+  const ext = path.extname(filePath);
+
+  if (ext === '.mjs') {
+    return 'module';
+  } else if (ext === '.cjs') {
+    return 'commonjs';
+  } else {
+    return pkg.type;
+  }
 }
 
 /**
