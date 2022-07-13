@@ -25,7 +25,7 @@ export function createApplicationLoader(loaderPath, hooksConfig) {
 function getLoaderContents(hooksPath) {
   return t`
   import { fileURLToPath, pathToFileURL } from 'node:url';
-  import { esbuild, resolve as dvlpResolve } from 'dvlp';
+  import { esbuild, nodeResolve } from 'dvlp';
   import { extname } from 'node:path';
   import fs from 'node:fs';
   ${hooksPath ? `import customHooks from '${hooksPath}';` : 'const customHooks = {};'}
@@ -53,9 +53,9 @@ function getLoaderContents(hooksPath) {
 
   function doResolve(specifier, context) {
     if (!specifier.startsWith('node:')) {
-      const resolved = dvlpResolve(specifier, context.parentURL ? fileURLToPath(context.parentURL) : undefined, 'server');
-      if (resolved) {
-        return { url: pathToFileURL(resolved).href };
+      const resolved = nodeResolve(specifier, context.parentURL ? fileURLToPath(context.parentURL) : undefined);
+      if (resolved !== undefined) {
+        return resolved;
       }
     }
 

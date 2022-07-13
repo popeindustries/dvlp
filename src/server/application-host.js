@@ -86,6 +86,7 @@ export default class ApplicationHost {
 
       noisyInfo(`${format(duration)} application server started`);
     } catch (err) {
+      console.log(err);
       // Skip. Unable to recover until file save and restart
     }
   }

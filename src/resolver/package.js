@@ -40,6 +40,7 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath),
     name: '',
     path: packagePath,
     paths,
+    type: undefined,
     version: '',
   };
   const findOptions = {
@@ -50,6 +51,7 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath),
   try {
     const json = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const hasModuleField = json.module !== undefined;
+    const type = hasModuleField ? 'module' : json.type;
     // Name is dirpath from nearest node_modules (even if not specified),
     // unless project package
     const name = resolvePackageName(json.name, packagePath);
@@ -98,6 +100,7 @@ export function getPackage(filePath, packagePath = resolvePackagePath(filePath),
 
     pkg.name = name;
     pkg.main = main;
+    pkg.type = type;
     pkg.version = json.version;
   } catch (err) {
     // No package.json found

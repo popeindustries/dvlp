@@ -203,7 +203,7 @@ describe('resolver', () => {
           path.resolve('node_modules/browser/browser/foo.js'),
         );
       });
-      it('should not resolve an aliased main module file via simple "browser" field if "node" env', () => {
+      it.skip('should not resolve an aliased main module file via simple "browser" field if "node" env', () => {
         expect(resolve('browser', path.resolve('baz.js'), 'node')).to.equal(
           path.resolve('node_modules/browser/index.js'),
         );

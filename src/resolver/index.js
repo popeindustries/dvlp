@@ -5,6 +5,7 @@ import { isAbsoluteFilePath, isBareSpecifier, isNodeModuleFilePath, isRelativeFi
 import fs from 'node:fs';
 import { noisyWarn } from '../utils/log.js';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 /** @type { Map<string, Package> } */
 const packageCacheByImportDir = new Map();
@@ -12,7 +13,7 @@ const packageCacheByImportDir = new Map();
 const packageVersionCacheByName = new Map();
 /** @type { Map<string, Package> } */
 const packageCacheByNameAndVersion = new Map();
-/** @type { Map<string, string> } */
+/** @type { Map<string, ResolveResult> } */
 const resolveCache = new Map();
 
 /**
@@ -21,30 +22,63 @@ const resolveCache = new Map();
  *
  * @param { string } specifier
  * @param { string } [importer]
- * @param { 'browser' | 'node' } [env]
  * @returns { string | undefined }
  */
-export function resolve(specifier, importer = 'index.js', env = 'browser') {
+export function resolve(specifier, importer = 'index.js') {
   if (!specifier) {
     return;
   }
 
   importer = path.resolve(importer);
-  const key = getCacheKey(importer, specifier, env);
+  const key = getCacheKey(importer, specifier, 'browser');
+  const cached = resolveCache.get(key);
+
+  if (cached !== undefined) {
+    return cached.filePath;
+  }
+
+  const result = doResolve(specifier, resolveRealFilePath(path.dirname(importer)), true, 'browser');
+
+  if (result === undefined) {
+    return;
+  }
+
+  resolveCache.set(key, result);
+  return result.filePath;
+}
+
+/**
+ * Resolve absolute file path for "specifier" relative to "importer",
+ * where "specifier" can be an absolute path, relative path, or npm package id.
+ * Return result includes file "format", if known.
+ *
+ * @param { string } specifier
+ * @param { string } [importer]
+ * @returns { ResolveResult | undefined }
+ */
+export function nodeResolve(specifier, importer = 'index.js') {
+  if (!specifier) {
+    return;
+  }
+
+  importer = path.resolve(importer);
+  const key = getCacheKey(importer, specifier, 'node');
   const cached = resolveCache.get(key);
 
   if (cached !== undefined) {
     return cached;
   }
 
-  const filePath = doResolve(specifier, resolveRealFilePath(path.dirname(importer)), true, env);
+  const result = doResolve(specifier, resolveRealFilePath(path.dirname(importer)), true, 'node');
 
-  if (!filePath) {
+  if (result === undefined) {
     return;
   }
 
-  resolveCache.set(key, filePath);
-  return filePath;
+  result.url = pathToFileURL(result.filePath).href;
+
+  resolveCache.set(key, result);
+  return result;
 }
 
 /**
@@ -82,7 +116,7 @@ export function getPackageForDir(dir, env = 'browser') {
  * @param { string } importerDirPath
  * @param { boolean } isEntry
  * @param { 'browser' | 'node' } env
- * @returns { string | undefined }
+ * @returns { ResolveResult | undefined }
  */
 function doResolve(specifier, importerDirPath, isEntry, env) {
   const pkg = resolvePackage(importerDirPath, env);
@@ -112,7 +146,7 @@ function doResolve(specifier, importerDirPath, isEntry, env) {
   if (!filePath) {
     return;
   } else if (isAbsoluteFilePath(filePath)) {
-    return resolveRealFilePath(filePath);
+    return { filePath: resolveRealFilePath(filePath), format: pkg.type };
   } else if (!isBareSpecifier(filePath)) {
     // Unresolvable/non-standard format
     return;
@@ -131,10 +165,10 @@ function doResolve(specifier, importerDirPath, isEntry, env) {
     if (importerDirPath !== packageDirPath && fs.existsSync(packagePath)) {
       // Using full package + specifier here to account for nested package directories
       // (non-root directories with a package.json file)
-      filePath = doResolve(specifier, path.join(resolveRealFilePath(packagePath), localPath), false, env);
+      const result = doResolve(specifier, path.join(resolveRealFilePath(packagePath), localPath), false, env);
 
-      if (filePath) {
-        return resolveRealFilePath(filePath);
+      if (result !== undefined) {
+        return { filePath: resolveRealFilePath(result.filePath), format: result.format };
       }
     }
   }

@@ -271,11 +271,11 @@ function rewriteCSSImports(res, filePath, css, resolveImport) {
     const [context, pre, id, post] = match;
 
     if (!RE_HTTP.test(id)) {
-      let importPath = resolve(id, getAbsoluteProjectPath(filePath), 'browser');
+      let importPath = resolve(id, getAbsoluteProjectPath(filePath));
 
       // Force relative if not found
       if (importPath === undefined && path.extname(id) !== '') {
-        importPath = resolve(`./${id}`, getAbsoluteProjectPath(filePath), 'browser');
+        importPath = resolve(`./${id}`, getAbsoluteProjectPath(filePath));
       }
 
       if (importPath) {

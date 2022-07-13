@@ -46,7 +46,7 @@ export default class Hooker {
         setup(build) {
           build.onResolve({ filter: /^[./]/ }, function (args) {
             const { importer, path } = args;
-            const filePath = importer ? resolve(path, importer, 'browser') : path;
+            const filePath = importer ? resolve(path, importer) : path;
 
             if (filePath && !isNodeModuleFilePath(filePath)) {
               watcher && watcher.add(filePath);

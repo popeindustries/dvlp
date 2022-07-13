@@ -28,6 +28,7 @@ messagePort.on(
         // @ts-ignore
         messagePort.postMessage({ type: 'watch', paths: Array.from(global.sources) });
       } catch (err) {
+        console.log(err);
         throw err;
       }
     }
