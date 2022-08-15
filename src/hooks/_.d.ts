@@ -45,21 +45,21 @@ declare interface Hooks {
   onSend?(filePath: string, responseBody: string): string | undefined;
   /**
    * Manually resolve import specifiers for application server.
-   * @see https://nodejs.org/api/esm.html#resolvespecifier-context-defaultresolve
+   * @see https://nodejs.org/api/esm.html#resolvespecifier-context-nextresolve
    */
   onServerResolve?(
     specifier: string,
     context: { conditions: Array<string>; parentURL?: string },
-    defaultResolve: NodeResolveLoaderHook,
+    nextResolve: NodeResolveLoaderHook,
   ): { format?: string; url: string };
   /**
    * Transform file contents for application server.
-   * @see https://nodejs.org/api/esm.html#loadurl-context-defaultload
+   * @see https://nodejs.org/api/esm.html#loadurl-context-nextload
    */
   onServerTransform?(
     filePath: string,
     context: { format?: string },
-    defaultTransform: NodeLoadLoaderHook,
+    nextLoad: NodeLoadLoaderHook,
   ): { format: string; source: string | SharedArrayBuffer | Uint8Array };
 }
 
@@ -87,7 +87,7 @@ declare type DefaultResolve = (specifier: string, importer: string) => string | 
 declare type NodeResolveLoaderHook = (
   specifier: string,
   context: { conditions: Array<string>; parentURL?: string },
-  defaultResolve: NodeResolveLoaderHook,
+  nextResolve: NodeResolveLoaderHook,
 ) => { format?: string; url: string };
 
 declare type NodeLoadLoaderHook = (
