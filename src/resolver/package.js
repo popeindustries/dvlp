@@ -233,7 +233,11 @@ function resolveExportPath(filePathOrSpecifier, pkg) {
   const entry = filePathOrSpecifier.replace(isBareSpecifier(filePathOrSpecifier) ? pkg.name : pkg.path, '.');
 
   try {
-    const resolved = resolveExports(pkg, entry.replace(/\\/g, '/'), { conditions: pkg.exportsConditions });
+    const resolved = resolveExports(pkg, entry.replace(/\\/g, '/'), {
+      // `node` automatically added if not set
+      browser: pkg.env === 'browser',
+      conditions: pkg.exportsConditions,
+    });
 
     if (resolved) {
       return path.resolve(pkg.path, resolved);
