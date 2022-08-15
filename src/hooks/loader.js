@@ -40,30 +40,24 @@ function getLoaderContents(hooksPath) {
   let originalDefaultLoad;
   let originalDefaultTransformSource;
 
-  export function resolve(specifier, context, defaultResolve) {
-    if (originalDefaultResolve === undefined) {
-      originalDefaultResolve = defaultResolve;
-    }
+  export function resolve(specifier, context, nextResolve) {
     if (customHooks.onServerResolve !== undefined) {
-      const result = customHooks.onServerResolve(specifier, context, doResolve);
-      result.shortCircuit = true;
-      return result;
+      const resolved = customHooks.onServerResolve(
+        specifier,
+        context,
+        (specifier, context) => doResolve(specifier, context, nextResolve)
+      );
+      if (resolved !== undefined) {
+        resolved.shortCircuit = true;
+        return resolved;
+      }
+      return;
     }
 
-    const r = doResolve(specifier, context)
-
-    if ('then' in r) {
-      return r.then((r) => {
-        console.log(r);
-        return r
-      });
-    } else {
-      console.log(r)
-      return r;
-    }
+    return doResolve(specifier, context, nextResolve);
   }
 
-  function doResolve(specifier, context) {
+  function doResolve(specifier, context, nextResolve) {
     if (!specifier.startsWith('node:')) {
       const resolved = nodeResolve(specifier, context.parentURL ? fileURLToPath(context.parentURL) : undefined);
       if (resolved !== undefined) {
@@ -72,26 +66,29 @@ function getLoaderContents(hooksPath) {
       }
     }
 
-    return originalDefaultResolve(specifier, context, originalDefaultResolve);
+    return nextResolve(specifier, context);
   }
 
-  export function load(url, context, defaultLoad) {
-    if (originalDefaultLoad === undefined) {
-      originalDefaultLoad = defaultLoad;
-    }
-
+  export function load(url, context, nextLoad) {
     storeSourcePath(url);
 
     if (customHooks.onServerTransform !== undefined) {
-      const result = customHooks.onServerTransform(url, context, doLoad);
-      result.shortCircuit = true;
-      return result;
+      const result = customHooks.onServerTransform(
+        url,
+        context,
+        () => doLoad(url, context, nextLoad)}
+      );
+      if (result !== undefined) {
+        result.shortCircuit = true;
+        return result;
+      }
+      return;
     }
 
-    return doLoad(url, context);
+    return doLoad(url, context, nextLoad);
   }
 
-  function doLoad(url, context) {
+  function doLoad(url, context, nextLoad) {
     if (RE_EXTS.test(new URL(url).pathname)) {
       const { format } = context;
 
@@ -102,7 +99,7 @@ function getLoaderContents(hooksPath) {
       return { format: 'module', source: code, shortCircuit: true };
     }
 
-    return originalDefaultLoad(url, context, originalDefaultLoad);
+    return nextLoad(url, context);
   }
 
   export function getFormat(url, context, defaultGetFormat) {
@@ -114,22 +111,22 @@ function getLoaderContents(hooksPath) {
   }
 
   export function transformSource(source, context, defaultTransformSource) {
-    if (originalDefaultTransformSource === undefined) {
-      originalDefaultTransformSource = defaultTransformSource;
-    }
-
     const { url, format } = context;
 
     storeSourcePath(url)
 
     if (customHooks.onServerTransform !== undefined) {
-      return customHooks.onServerTransform(url, context, () => doTransformSource(source, context));
+      return customHooks.onServerTransform(
+        url,
+        context,
+        () => doTransformSource(source, context, defaultTransformSource)
+      );
     }
 
-    return doTransformSource(source, context);
+    return doTransformSource(source, context, defaultTransformSource);
   }
 
-  function doTransformSource(source, context) {
+  function doTransformSource(source, context, defaultTransformSource) {
     const { url, format } = context;
 
     if (RE_EXTS.test(new URL(url).pathname)) {
@@ -139,7 +136,7 @@ function getLoaderContents(hooksPath) {
       return { source: code };
     }
 
-    return originalDefaultTransformSource(source, context, originalDefaultTransformSource);
+    return defaultTransformSource(source, context, defaultTransformSource);
   }
 
   function transform(source, filename, url, format) {
