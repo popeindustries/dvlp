@@ -47,11 +47,8 @@ function getLoaderContents(hooksPath) {
         context,
         (specifier, context) => doResolve(specifier, context, nextResolve)
       );
-      if (resolved !== undefined) {
-        resolved.shortCircuit = true;
-        return resolved;
-      }
-      return;
+      resolved.shortCircuit = true;
+      return resolved;
     }
 
     return doResolve(specifier, context, nextResolve);
@@ -76,13 +73,10 @@ function getLoaderContents(hooksPath) {
       const result = customHooks.onServerTransform(
         url,
         context,
-        () => doLoad(url, context, nextLoad)}
+        (url, context) => doLoad(url, context, nextLoad)
       );
-      if (result !== undefined) {
-        result.shortCircuit = true;
-        return result;
-      }
-      return;
+      result.shortCircuit = true;
+      return result;
     }
 
     return doLoad(url, context, nextLoad);
