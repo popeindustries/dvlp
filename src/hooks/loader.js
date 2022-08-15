@@ -45,16 +45,29 @@ function getLoaderContents(hooksPath) {
       originalDefaultResolve = defaultResolve;
     }
     if (customHooks.onServerResolve !== undefined) {
-      return customHooks.onServerResolve(specifier, context, doResolve);
+      const result = customHooks.onServerResolve(specifier, context, doResolve);
+      result.shortCircuit = true;
+      return result;
     }
 
-    return doResolve(specifier, context);
+    const r = doResolve(specifier, context)
+
+    if ('then' in r) {
+      return r.then((r) => {
+        console.log(r);
+        return r
+      });
+    } else {
+      console.log(r)
+      return r;
+    }
   }
 
   function doResolve(specifier, context) {
     if (!specifier.startsWith('node:')) {
       const resolved = nodeResolve(specifier, context.parentURL ? fileURLToPath(context.parentURL) : undefined);
       if (resolved !== undefined) {
+        resolved.shortCircuit = true;
         return resolved;
       }
     }
@@ -70,7 +83,9 @@ function getLoaderContents(hooksPath) {
     storeSourcePath(url);
 
     if (customHooks.onServerTransform !== undefined) {
-      return customHooks.onServerTransform(url, context, doLoad);
+      const result = customHooks.onServerTransform(url, context, doLoad);
+      result.shortCircuit = true;
+      return result;
     }
 
     return doLoad(url, context);
@@ -84,7 +99,7 @@ function getLoaderContents(hooksPath) {
       const source = fs.readFileSync(new URL(url), { encoding: 'utf8' });
       const { code } = transform(source, filename, url, format);
 
-      return { format: 'module', source: code };
+      return { format: 'module', source: code, shortCircuit: true };
     }
 
     return originalDefaultLoad(url, context, originalDefaultLoad);
