@@ -208,6 +208,8 @@ export function resolveImportPath(specifier, pkg) {
 
   try {
     const resolved = resolveExports({ name: pkg.name, exports: pkg.imports }, entry, {
+      // `node` automatically added if not set
+      browser: pkg.env === 'browser',
       conditions: pkg.exportsConditions,
     });
 
