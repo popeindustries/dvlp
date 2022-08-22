@@ -106,6 +106,9 @@ describe('resolver', () => {
       it('should resolve a .ts file over .js file with missing extension', () => {
         expect(resolve('./index', path.resolve('dir/foo.js'))).to.equal(path.resolve('dir/index.ts'));
       });
+      it('should resolve a .ts file over .js file if mising .js file', () => {
+        expect(resolve('./index.js', path.resolve('dir/foo.js'))).to.equal(path.resolve('dir/index.ts'));
+      });
     });
 
     describe('packages', () => {
@@ -272,6 +275,11 @@ describe('resolver', () => {
       });
       it('should not resolve self-referential package reference missing exports entry', () => {
         expect(resolve('test-project/foo.bar.js', path.resolve('foo.js'))).to.equal(undefined);
+      });
+      it('should resolve .ts file for export specifying .js extension and missing .js file', () => {
+        expect(resolve('exports/nested/only-ts.js', path.resolve('baz.js'))).to.equal(
+          path.resolve('node_modules/exports/nested/only-ts.ts'),
+        );
       });
     });
   });

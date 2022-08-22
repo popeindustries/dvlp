@@ -179,7 +179,13 @@ export function resolvePackageSourcePath(filePathOrSpecifier, pkg, verifyExport)
   if (pkg.imports !== undefined && filePathOrSpecifier.startsWith('#')) {
     return resolveImportPath(filePathOrSpecifier, pkg);
   } else if (pkg.exports && verifyExport) {
-    return resolveExportPath(filePathOrSpecifier, pkg);
+    let resolvedFilePath = resolveExportPath(filePathOrSpecifier, pkg);
+
+    if (resolvedFilePath !== undefined && !fs.existsSync(resolvedFilePath)) {
+      resolvedFilePath = find(resolvedFilePath, { type: 'js' });
+    }
+
+    return resolvedFilePath;
   }
 
   filePathOrSpecifier = resolveMainOrBrowserPath(filePathOrSpecifier, pkg);
