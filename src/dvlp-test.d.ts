@@ -1,4 +1,4 @@
-import { Req, Res, TestServer, TestServerOptions } from './dvlp';
+import { Req, Res, TestServer, TestServerOptions } from './dvlp.js';
 
 export { Req, Res, TestServer, TestServerOptions };
 
