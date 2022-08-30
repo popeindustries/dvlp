@@ -1,4 +1,4 @@
-import { MockRequest, MockResponse, MockResponseHandler, PushEvent } from './dvlp';
+import { MockRequest, MockResponse, MockResponseHandler, PushEvent } from './dvlp.js';
 
 export { MockRequest, MockResponse, MockResponseHandler, PushEvent };
 
