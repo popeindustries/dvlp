@@ -622,7 +622,7 @@ describe('server', () => {
         });
       });
     });
-    it.only('should enable electron mode', async () => {
+    it.skip('should enable electron mode', async () => {
       server = await serverFactory('test/unit/fixtures/electron/electron-entry.js', {
         electron: true,
         port: 8100,
