@@ -17,10 +17,10 @@ import { watch } from '../utils/watch.js';
 import { writeFileSync } from 'node:fs';
 
 const debug = Debug('dvlp:host');
-let workerPath = relative(
-  process.cwd(),
-  join(dirname(fileURLToPath(import.meta.url)), './application-worker.js'),
-).replace(/\\/g, '/');
+let workerPath = relative(process.cwd(), join(dirname(fileURLToPath(import.meta.url)), './worker.js')).replace(
+  /\\/g,
+  '/',
+);
 
 if (!workerPath.startsWith('.')) {
   workerPath = `./${workerPath}`;
@@ -29,17 +29,17 @@ if (!workerPath.startsWith('.')) {
 /**
  * Create application loader based on passed hooks
  *
- * @param { import('url').URL } loaderPath
+ * @param { import('url').URL } filePath
  * @param { { hooks?: Hooks, hooksPath?: string } } hooksConfig
  */
-export function createApplicationLoader(loaderPath, hooksConfig) {
+export function createApplicationLoaderFile(filePath, hooksConfig) {
   const hooksPath =
     hooksConfig.hooks && (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
       ? pathToFileURL(/** @type { string } */ (hooksConfig.hooksPath)).href
       : undefined;
   const contents = getLoaderContents(hooksPath);
 
-  writeFileSync(loaderPath, contents);
+  writeFileSync(filePath, contents);
 }
 
 export class ApplicationHost {
@@ -87,7 +87,6 @@ export class ApplicationHost {
    * @returns { Promise<void> }
    */
   async start() {
-    console.log('start');
     if (typeof this.main === 'function') {
       proxyCreateServer(this);
       this.main();
@@ -105,7 +104,7 @@ export class ApplicationHost {
 
       noisyInfo(`${format(duration)} application server started`);
     } catch (err) {
-      console.log(err);
+      console.error(err);
       // Skip. Unable to recover until file save and restart
     }
   }

@@ -19,6 +19,10 @@ declare interface ServerOptions {
    */
   directories?: Array<string>;
   /**
+   * Run file as electron.js entry file (default `false`).
+   */
+  electron?: boolean;
+  /**
    * The path to a custom hooks registration file (default `''`).
    */
   hooksPath?: string;

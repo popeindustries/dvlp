@@ -22,6 +22,7 @@ const bundleDirName = path.join(DIR_NAME, VERSION, 'bundled');
 const bundleDirPath = path.resolve(bundleDirName);
 const bundleDirMetaPath = path.join(bundleDirPath, '__meta__.json');
 const defaultPort = process.env.PORT ? Number(process.env.PORT) : 8080;
+const electronEntryPath = pathToFileURL(path.join(subdirPath, 'electron-entry.cjs'));
 
 mime.define(JS_MIME_TYPES, true);
 // @ts-ignore
@@ -52,7 +53,7 @@ if (isMainThread) {
 
   if (TESTING) {
     process.on('exit', () => {
-      rimraf.sync(dirPath);
+      // rimraf.sync(dirPath);
     });
   }
 }
@@ -70,6 +71,7 @@ const config = {
   defaultPort,
   directories: [],
   dvlpDirPath: path.resolve(DIR_NAME),
+  electronEntryPath,
   esbuildTargetByExtension: {
     '.js': 'js',
     '.mjs': 'js',

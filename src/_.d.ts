@@ -8,6 +8,7 @@ declare interface Config {
   defaultPort: number;
   directories: Array<string>;
   dvlpDirPath: string;
+  electronEntryPath: import('url').URL;
   esbuildTargetByExtension: {
     [extension: string]: string;
   };
@@ -28,6 +29,7 @@ declare interface Config {
 declare interface Entry {
   directories: Array<string>;
   isApp: boolean;
+  isElectron: boolean;
   isFunction: boolean;
   isSecure: boolean;
   isStatic: boolean;

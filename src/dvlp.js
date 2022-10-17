@@ -3,7 +3,8 @@ import logger, { error, info } from './utils/log.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
 import config from './config.js';
-import { createApplicationLoader } from './application-host/index.js';
+import { createApplicationLoaderFile } from './application-host/index.js';
+import { createElectronEntryFile, spawnElectron } from './electron-host/index.js';
 import { Dvlp } from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
 import fs from 'node:fs';
@@ -59,13 +60,25 @@ export async function server(
     process.env.PORT = String(port);
   }
 
-  createApplicationLoader(config.applicationLoaderPath, { hooks, hooksPath });
+  createApplicationLoaderFile(config.applicationLoaderPath, { hooks, hooksPath });
 
   const server = new Dvlp(entry, port, reload, hooks, mockPath, certsPath);
   try {
     await server.start();
   } catch (err) {
     error(err);
+  }
+
+  if (electron) {
+    if (typeof entry.main !== 'string') {
+      throw Error(`the "--electron" flag requires a valid entry file path`);
+    }
+    createElectronEntryFile(config.electronEntryPath, entry.main, server.origin);
+    try {
+      await spawnElectron(config.electronEntryPath);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   const parentDir = path.resolve(process.cwd(), '..');
@@ -94,6 +107,7 @@ export async function server(
 
   return {
     destroy() {
+      // TODO: kill electron
       return server.destroy();
     },
   };

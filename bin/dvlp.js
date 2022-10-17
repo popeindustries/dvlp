@@ -23,6 +23,7 @@ program
   )
   .option('-s, --silent', 'suppress default logging')
   .option('--no-reload', 'disable reloading connected browsers on file change')
+  .option('--electron', 'run file as electron.js entry file')
   .arguments('[path...]')
   .action(boot)
   .version(pkg.version, '-v, --version');
@@ -36,6 +37,7 @@ async function boot(path = [process.cwd()]) {
 
     await server(path, {
       certsPath: options.ssl,
+      electron: options.electron,
       hooksPath: options.hooks,
       mockPath: options.mock,
       port: options.port,

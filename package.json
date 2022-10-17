@@ -47,6 +47,7 @@
     "cjs-module-lexer": "^1.2.2",
     "cross-env": "^7.0.3",
     "debug": "^4.3.4",
+    "electron": "^21.1.1",
     "es-module-lexer": "~1.0.5",
     "eslint": "^8.25.0",
     "eslint-config-prettier": "^8.5.0",
