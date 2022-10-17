@@ -12,7 +12,7 @@ import {
 } from './is.js';
 import Debug from 'debug';
 import { filePathToUrl } from './url.js';
-import Metrics from './metrics.js';
+import { Metrics } from './metrics.js';
 import { parse } from 'es-module-lexer';
 import path from 'node:path';
 import { resolve } from '../resolver/index.js';

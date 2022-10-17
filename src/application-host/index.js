@@ -6,13 +6,15 @@ import { MessageChannel, SHARE_ENV, Worker } from 'worker_threads';
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
+import { getLoaderContents } from './esm-loader.js';
 import { getProjectPath } from '../utils/file.js';
 import http from 'node:http';
 import { isProxy } from '../utils/is.js';
 import { performance } from 'node:perf_hooks';
 import { request } from 'node:http';
 import { syncBuiltinESMExports } from 'node:module';
-import watch from '../utils/watch.js';
+import { watch } from '../utils/watch.js';
+import { writeFileSync } from 'node:fs';
 
 const debug = Debug('dvlp:host');
 let workerPath = relative(
@@ -24,7 +26,23 @@ if (!workerPath.startsWith('.')) {
   workerPath = `./${workerPath}`;
 }
 
-export default class ApplicationHost {
+/**
+ * Create application loader based on passed hooks
+ *
+ * @param { import('url').URL } loaderPath
+ * @param { { hooks?: Hooks, hooksPath?: string } } hooksConfig
+ */
+export function createApplicationLoader(loaderPath, hooksConfig) {
+  const hooksPath =
+    hooksConfig.hooks && (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
+      ? pathToFileURL(/** @type { string } */ (hooksConfig.hooksPath)).href
+      : undefined;
+  const contents = getLoaderContents(hooksPath);
+
+  writeFileSync(loaderPath, contents);
+}
+
+export class ApplicationHost {
   /**
    * @param { string | (() => void) } main
    * @param { number } appPort
@@ -69,6 +87,7 @@ export default class ApplicationHost {
    * @returns { Promise<void> }
    */
   async start() {
+    console.log('start');
     if (typeof this.main === 'function') {
       proxyCreateServer(this);
       this.main();

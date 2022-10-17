@@ -1,28 +1,11 @@
-import { pathToFileURL } from 'node:url';
-import { writeFileSync } from 'node:fs';
-
 const t = String.raw;
 
 /**
- * Create application loader based on passed hooks
+ * Generate esm-loader file contents
  *
- * @param { import('url').URL } loaderPath
- * @param { { hooks?: Hooks, hooksPath?: string } } hooksConfig
- */
-export function createApplicationLoader(loaderPath, hooksConfig) {
-  const hooksPath =
-    hooksConfig.hooks && (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
-      ? pathToFileURL(/** @type { string } */ (hooksConfig.hooksPath)).href
-      : undefined;
-  const contents = getLoaderContents(hooksPath);
-
-  writeFileSync(loaderPath, contents);
-}
-
-/**
  * @param { string } [hooksPath]
  */
-function getLoaderContents(hooksPath) {
+export function getLoaderContents(hooksPath) {
   return t`
   import { fileURLToPath, pathToFileURL } from 'node:url';
   import { esbuild, nodeResolve } from 'dvlp';

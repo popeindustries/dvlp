@@ -15,7 +15,7 @@ const EVENT_NAMES = {
 
 const debug = Debug('dvlp:metrics');
 
-export default class Metrics {
+export class Metrics {
   /**
    * Constructor
    *

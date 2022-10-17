@@ -4,7 +4,7 @@ import Debug from 'debug';
 import { error } from '../utils/log.js';
 import { getBundleSourcePath } from '../utils/bundling.js';
 import { isBundledFilePath } from '../utils/is.js';
-import Metrics from '../utils/metrics.js';
+import { Metrics } from '../utils/metrics.js';
 import { parse } from 'cjs-module-lexer';
 
 const debug = Debug('dvlp:bundle');
@@ -18,7 +18,7 @@ const debug = Debug('dvlp:bundle');
  * @param { Hooks["onDependencyBundle"] } hookFn
  * @returns { Promise<void> }
  */
-export default async function bundleDependency(filePath, res, esbuild, hookFn) {
+export async function bundleDependency(filePath, res, esbuild, hookFn) {
   if (existsSync(filePath)) {
     return;
   }

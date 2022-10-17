@@ -3,7 +3,7 @@ import Debug from 'debug';
 import { error } from '../utils/log.js';
 import { extname } from 'node:path';
 import { isTransformableJsFile } from '../utils/is.js';
-import Metrics from '../utils/metrics.js';
+import { Metrics } from '../utils/metrics.js';
 import mime from 'mime';
 import { parseEsbuildTarget } from '../utils/platform.js';
 import { readFileSync } from 'node:fs';
@@ -30,7 +30,7 @@ const tsconfig = tsconfigPath
  * @param { Hooks["onTransform"] } hookFn
  * @returns { Promise<void> }
  */
-export default async function transform(filePath, lastChangedFilePath, res, clientPlatform, cache, esbuild, hookFn) {
+export async function transform(filePath, lastChangedFilePath, res, clientPlatform, cache, esbuild, hookFn) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
 
   // Segment cache by user agent to support different transforms based on client

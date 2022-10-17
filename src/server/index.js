@@ -4,26 +4,26 @@ import { handleFavicon, handleFile, handleMockResponse, handleMockWebSocket, han
 import { info, noisyInfo } from '../utils/log.js';
 import { isBundledFilePath, isNodeModuleFilePath } from '../utils/is.js';
 import { resolveCerts, validateCert } from './certificate-validation.js';
-import ApplicationHost from './application-host.js';
+import { ApplicationHost } from '../application-host/index.js';
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
 import { EventSource } from '../reload/event-source.js';
 import fs from 'node:fs';
 import { getReloadClientEmbed } from '../reload/reload-client-embed.js';
-import Hooker from '../hooks/index.js';
+import { Hooker } from '../hooks/index.js';
 import http from 'node:http';
 import http2 from 'node:http2';
 import { interceptFileRead } from '../utils/intercept.js';
-import Metrics from '../utils/metrics.js';
-import Mock from '../mock/index.js';
+import { Metrics } from '../utils/metrics.js';
+import { Mock } from '../mock/index.js';
 import { parseUserAgent } from '../utils/platform.js';
 import { patchResponse } from '../utils/patch.js';
-import watch from '../utils/watch.js';
+import { watch } from '../utils/watch.js';
 
 const debug = Debug('dvlp:server');
 
-export default class DvlpServer {
+export class Dvlp {
   /**
    * Constructor
    *
@@ -104,7 +104,7 @@ export default class DvlpServer {
       });
     }
 
-    if (entry.main !== undefined) {
+    if (entry.isApp && entry.main !== undefined) {
       const appPort = this.port === 443 ? config.defaultPort : this.port + 9;
 
       this.applicationHost = new ApplicationHost(

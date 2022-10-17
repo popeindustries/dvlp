@@ -2,7 +2,7 @@ import { brotliCompressSync, gzipSync } from 'node:zlib';
 import { clearResolverCache } from '../../src/resolver/index.js';
 import config from '../../src/config.js';
 import { expect } from 'chai';
-import Hooks from '../../src/hooks/index.js';
+import { Hooker } from '../../src/hooks/index.js';
 import { patchResponse } from '../../src/utils/patch.js';
 import path from 'node:path';
 import { ServerResponse } from 'node:http';
@@ -12,7 +12,7 @@ const cwd = process
   .replace(/^[A-Z]:\\/, '/')
   .replace(/\\/g, '/');
 const bundleDir = config.bundleDirName.replace(/\\/g, '/');
-const hooks = new Hooks();
+const hooks = new Hooker();
 
 function getBody(res) {
   const output = (res.output || res.outputData)

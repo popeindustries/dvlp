@@ -1,9 +1,9 @@
 import { error, noisyWarn } from '../utils/log.js';
-import bundleDependency from './bundle-dependency.js';
+import { bundleDependency } from './bundle-dependency.js';
 import esbuild from 'esbuild';
 import { isNodeModuleFilePath } from '../utils/is.js';
 import { resolve } from '../resolver/index.js';
-import transform from './transform.js';
+import { transform } from './transform.js';
 
 const HOOK_NAMES = [
   'onDependencyBundle',
@@ -15,7 +15,7 @@ const HOOK_NAMES = [
   'onServerTransform',
 ];
 
-export default class Hooker {
+export class Hooker {
   /**
    * Constructor
    *

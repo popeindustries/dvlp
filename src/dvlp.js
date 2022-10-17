@@ -3,8 +3,8 @@ import logger, { error, info } from './utils/log.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
 import config from './config.js';
-import { createApplicationLoader } from './hooks/loader.js';
-import DvlpServer from './server/index.js';
+import { createApplicationLoader } from './application-host/index.js';
+import { Dvlp } from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,9 +23,18 @@ export { nodeResolve } from './resolver/index.js';
  */
 export async function server(
   filePath = process.cwd(),
-  { certsPath, directories, hooksPath, mockPath, port = config.defaultPort, reload = true, silent } = {},
+  {
+    certsPath,
+    directories,
+    electron = false,
+    hooksPath,
+    mockPath,
+    port = config.defaultPort,
+    reload = true,
+    silent,
+  } = {},
 ) {
-  const entry = resolveEntry(filePath, directories);
+  const entry = resolveEntry(filePath, directories, electron);
   /** @type { Hooks | undefined } */
   let hooks;
 
@@ -52,8 +61,7 @@ export async function server(
 
   createApplicationLoader(config.applicationLoaderPath, { hooks, hooksPath });
 
-  const server = new DvlpServer(entry, port, reload, hooks, mockPath, certsPath);
-
+  const server = new Dvlp(entry, port, reload, hooks, mockPath, certsPath);
   try {
     await server.start();
   } catch (err) {
@@ -96,13 +104,15 @@ export async function server(
  *
  * @param { string | Array<string> | (() => void) } filePath
  * @param { Array<string> } directories
+ * @param { boolean } electron
  * @returns { Entry }
  */
-function resolveEntry(filePath, directories = []) {
+function resolveEntry(filePath, directories = [], electron) {
   /** @type { Entry } */
   const entry = {
     directories: [],
     isApp: false,
+    isElectron: electron,
     isFunction: false,
     isSecure: false,
     isStatic: false,
@@ -117,7 +127,7 @@ function resolveEntry(filePath, directories = []) {
       directory = path.resolve(directory);
 
       if (fs.statSync(directory).isFile()) {
-        entry.isApp = true;
+        entry.isApp = !electron;
         entry.main = directory;
         directory = path.dirname(directory);
       }
@@ -132,6 +142,7 @@ function resolveEntry(filePath, directories = []) {
 
     entry.isStatic = !entry.isApp;
   } else {
+    entry.isApp = true;
     entry.isFunction = true;
     entry.main = filePath;
   }

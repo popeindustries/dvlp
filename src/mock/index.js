@@ -9,7 +9,7 @@ import Debug from 'debug';
 import fs from 'node:fs';
 import { getProjectPath } from '../utils/file.js';
 import { interceptClientRequest } from '../utils/intercept.js';
-import Metrics from '../utils/metrics.js';
+import { Metrics } from '../utils/metrics.js';
 import mime from 'mime';
 import path from 'node:path';
 import send from 'send';
@@ -22,7 +22,7 @@ const mockClient =
   global.$MOCK_CLIENT ||
   fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'mock-client.js'), 'utf8');
 
-export default class Mock {
+export class Mock {
   /**
    * Constructor
    *

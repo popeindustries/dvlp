@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import fs from 'node:fs';
 import { getBundleFilePath } from './utils.js';
-import Hooks from '../../src/hooks/index.js';
+import { Hooker } from '../../src/hooks/index.js';
 import hooksFixture from './fixtures/hooks-bundle.mjs';
 import { init } from 'cjs-module-lexer';
 import path from 'node:path';
@@ -38,18 +38,18 @@ describe('hooks()', () => {
     });
 
     it('should return "undefined" if no module bundle found', async () => {
-      const hooks = new Hooks();
+      const hooks = new Hooker();
       expect(await hooks.bundleDependency('./dvlp/bundle-xxx/foofoo-0.0.0.js')).to.equal(undefined);
     });
     it('should bundle filePath', async () => {
-      const hooks = new Hooks();
+      const hooks = new Hooker();
       const filePath = path.resolve(getBundleFilePath('debug'));
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
       expect(module).to.include('export_default as default');
     });
     it('should bundle and add missing named exports', async () => {
-      const hooks = new Hooks();
+      const hooks = new Hooker();
       const filePath = path.resolve(getBundleFilePath('react'));
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
@@ -57,7 +57,7 @@ describe('hooks()', () => {
       expect(module).to.include('export_Children as Children');
     });
     it('should return cached bundle', async () => {
-      const hooks = new Hooks();
+      const hooks = new Hooker();
       const filePath = path.resolve(getBundleFilePath('debug'));
       fs.writeFileSync(filePath, 'this is cached');
       await hooks.bundleDependency(filePath, getResponse());
@@ -66,7 +66,7 @@ describe('hooks()', () => {
       fs.unlinkSync(filePath);
     });
     it('should bundle with custom hook', async () => {
-      const hooks = new Hooks(hooksFixture);
+      const hooks = new Hooker(hooksFixture);
       const filePath = path.resolve(getBundleFilePath('debug'));
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
@@ -76,7 +76,7 @@ describe('hooks()', () => {
 
   describe('transform', () => {
     it('should transform filePath', async () => {
-      const hooks = new Hooks();
+      const hooks = new Hooker();
       const filePath = path.resolve('./test/unit/fixtures/www/dep.ts');
       const res = getResponse();
       await hooks.transform(filePath, '', res, {
@@ -85,7 +85,7 @@ describe('hooks()', () => {
       expect(res.body).to.contain('dep_default as default');
     });
     it('should transform with custom hook', async () => {
-      const hooks = new Hooks(transformFixture);
+      const hooks = new Hooker(transformFixture);
       const filePath = path.resolve('./test/unit/fixtures/www/script.js');
       const res = getResponse();
       await hooks.transform(filePath, '', res, {
@@ -95,7 +95,7 @@ describe('hooks()', () => {
     });
     it('should add project dependencies to optional watcher', async () => {
       const added = [];
-      const hooks = new Hooks(transformBundleFixture, {
+      const hooks = new Hooker(transformBundleFixture, {
         add(filePath) {
           added.push(filePath);
         },

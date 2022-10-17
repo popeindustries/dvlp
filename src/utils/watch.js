@@ -16,7 +16,7 @@ const tmpdir = os.tmpdir();
  * @param { (callback: string) => void } fn
  * @returns { Watcher }
  */
-export default function watch(fn) {
+export function watch(fn) {
   const watcher = new FSWatcher({
     ignoreInitial: true,
     persistent: true,
