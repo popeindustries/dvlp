@@ -29,9 +29,9 @@ messagePort.on(
       /* eslint no-useless-catch: 0 */
       try {
         await import(msg.main);
-        // @ts-ignore
         messagePort.postMessage({
           type: 'watch',
+          // @ts-ignore
           paths: Array.from(global.sources),
         });
       } catch (err) {
