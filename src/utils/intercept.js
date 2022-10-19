@@ -141,7 +141,9 @@ function clientRequestApplyTrap(protocol) {
 
       if (typeof urlOrOptions === 'string' || urlOrOptions instanceof URL) {
         url = new URL(urlOrOptions);
-        options = /** @type { import('http').RequestOptions } */ (optionsOrCallback);
+        options = /** @type { import('http').RequestOptions } */ (
+          optionsOrCallback
+        );
       } else {
         url = new URL(getHrefFromRequestOptions(urlOrOptions, protocol));
         callback = /** @type { Function } */ (optionsOrCallback);
@@ -156,7 +158,10 @@ function clientRequestApplyTrap(protocol) {
       if (isLocalhost(url.hostname)) {
         // Force to http
         url.protocol = 'http:';
-        target = target === originalHttpsGet || target === originalHttpGet ? originalHttpGet : originalHttpRequest;
+        target =
+          target === originalHttpsGet || target === originalHttpGet
+            ? originalHttpGet
+            : originalHttpRequest;
       }
 
       options.protocol = url.protocol;

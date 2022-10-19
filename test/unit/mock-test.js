@@ -75,8 +75,14 @@ describe('mock', () => {
       expect(mock.response.body).to.eql({ data: 'foo' });
     });
     it('should handle search', () => {
-      mocks.addResponse({ url: '/index.html?foo', ignoreSearch: true }, { body: '<body>hi</body>' });
-      mocks.addResponse({ url: '/foo.html?foo', ignoreSearch: false }, { body: '<body>hi</body>' });
+      mocks.addResponse(
+        { url: '/index.html?foo', ignoreSearch: true },
+        { body: '<body>hi</body>' },
+      );
+      mocks.addResponse(
+        { url: '/foo.html?foo', ignoreSearch: false },
+        { body: '<body>hi</body>' },
+      );
       const [mock1, mock2] = Array.from(mocks.cache);
       expect(mock1).to.have.property('ignoreSearch', true);
       expect(mock2).to.have.property('ignoreSearch', false);
@@ -191,7 +197,10 @@ describe('mock', () => {
       expect(mocks.cache.size).to.equal(1);
     });
     it('should load array of mock files', async () => {
-      await mocks.load(['test/unit/fixtures/mock/1234.json', 'test/unit/fixtures/mock/5678.json']);
+      await mocks.load([
+        'test/unit/fixtures/mock/1234.json',
+        'test/unit/fixtures/mock/5678.json',
+      ]);
       expect(mocks.cache.size).to.equal(2);
     });
     it('should load a single file referencing multiple mocks', async () => {
@@ -204,11 +213,15 @@ describe('mock', () => {
     });
     it('should load mock files from directory path and update client string', async () => {
       await mocks.load('test/unit/fixtures/mock-push');
-      expect(mocks.client).to.include('"pathRegex": "^\\\\/feed[\\\\/#\\\\?]?$"');
+      expect(mocks.client).to.include(
+        '"pathRegex": "^\\\\/feed[\\\\/#\\\\?]?$"',
+      );
     });
     it('should prepare inlineable client string', async () => {
       await mocks.load('test/unit/fixtures/mock');
-      expect(mocks.client).to.include('"pathRegex": "^\\\\/1234\\\\.jpg[\\\\/#\\\\?]?$"');
+      expect(mocks.client).to.include(
+        '"pathRegex": "^\\\\/1234\\\\.jpg[\\\\/#\\\\?]?$"',
+      );
     });
   });
 
@@ -292,7 +305,10 @@ describe('mock', () => {
       const href = '/index.json';
       const res = getResponse();
       mocks.addResponse(href, (req, res) => {
-        expect(new URL(req.url, 'http://localhost')).to.have.property('pathname', href);
+        expect(new URL(req.url, 'http://localhost')).to.have.property(
+          'pathname',
+          href,
+        );
         done();
       });
       mocks.matchResponse(href, getRequest(href), res);
@@ -300,10 +316,13 @@ describe('mock', () => {
     it('should invoke response handler with parameters', (done) => {
       const href = 'http://www.someapi.com/v3/handler/foo/bar';
       const res = getResponse();
-      mocks.addResponse('http://www.someapi.com/v3/handler/:param1/:param2', (req, res) => {
-        expect(req.params).to.deep.equal({ param1: 'foo', param2: 'bar' });
-        done();
-      });
+      mocks.addResponse(
+        'http://www.someapi.com/v3/handler/:param1/:param2',
+        (req, res) => {
+          expect(req.params).to.deep.equal({ param1: 'foo', param2: 'bar' });
+          done();
+        },
+      );
       mocks.matchResponse(href, getRequest(href), res);
     });
     it('should hang when "response.hang"', (done) => {
@@ -353,7 +372,10 @@ describe('mock', () => {
     it('should return with custom cache-control header', () => {
       const href = '/index.json';
       const res = getResponse();
-      mocks.addResponse(href, { body: {}, headers: { 'Cache-Control': 'public, max-age=10' } });
+      mocks.addResponse(href, {
+        body: {},
+        headers: { 'Cache-Control': 'public, max-age=10' },
+      });
       mocks.matchResponse(href, getRequest(href), res);
       expect(res.headers['Cache-Control']).to.equal('public, max-age=10');
     });
@@ -365,8 +387,16 @@ describe('mock', () => {
     });
 
     it('should return "false" if no match', () => {
-      expect(mocks.matchPushEvent('https://localhost:8111/foo', 'open', pushEvent)).to.equal(false);
-      expect(mocks.matchPushEvent('https://localhost:8111/feed', 'opeeeen', pushEvent)).to.equal(false);
+      expect(
+        mocks.matchPushEvent('https://localhost:8111/foo', 'open', pushEvent),
+      ).to.equal(false);
+      expect(
+        mocks.matchPushEvent(
+          'https://localhost:8111/feed',
+          'opeeeen',
+          pushEvent,
+        ),
+      ).to.equal(false);
     });
   });
 });

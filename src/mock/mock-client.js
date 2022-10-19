@@ -41,7 +41,10 @@
             return;
           }
 
-          var body = typeof mockResponse.body === 'string' ? mockResponse.body : JSON.stringify(mockResponse.body);
+          var body =
+            typeof mockResponse.body === 'string'
+              ? mockResponse.body
+              : JSON.stringify(mockResponse.body);
 
           Object.defineProperties(xhr, {
             readyState: {
@@ -70,8 +73,14 @@
             },
           });
 
-          console.log('mocking xhr response (with local data) for: ' + parseOriginalHref(href));
-          if (xhr.onreadystatechange && typeof xhr.onreadystatechange === 'function') {
+          console.log(
+            'mocking xhr response (with local data) for: ' +
+              parseOriginalHref(href),
+          );
+          if (
+            xhr.onreadystatechange &&
+            typeof xhr.onreadystatechange === 'function'
+          ) {
             xhr.onreadystatechange({ currentTarget: xhr });
           }
           xhr.onload({ currentTarget: xhr });
@@ -84,7 +93,9 @@
       }
     }
 
-    console.log('mocking xhr response (with remote data) for: ' + parseOriginalHref(href));
+    console.log(
+      'mocking xhr response (with remote data) for: ' + parseOriginalHref(href),
+    );
     return originalXMLHttpRequestOpen.call(this, method, href);
   };
 
@@ -112,7 +123,10 @@
                 );
               }
 
-              var body = typeof mockResponse.body === 'string' ? mockResponse.body : JSON.stringify(mockResponse.body);
+              var body =
+                typeof mockResponse.body === 'string'
+                  ? mockResponse.body
+                  : JSON.stringify(mockResponse.body);
               var res = new Response(body, {
                 headers: mockResponse.headers,
                 status: mockResponse.status,
@@ -122,7 +136,10 @@
                 setTimeout(mockData.callback, 0);
               }
 
-              console.log('mocking fetch response (with local data) for: ' + parseOriginalHref(href));
+              console.log(
+                'mocking fetch response (with local data) for: ' +
+                  parseOriginalHref(href),
+              );
               return Promise.resolve(res);
             } else if (mockData.callback) {
               return Reflect.apply(target, ctx, args)
@@ -137,7 +154,10 @@
             }
           }
 
-          console.log('mocking fetch response (with remote data) for: ' + parseOriginalHref(href));
+          console.log(
+            'mocking fetch response (with remote data) for: ' +
+              parseOriginalHref(href),
+          );
           return Reflect.apply(target, ctx, args);
         },
       });
@@ -148,7 +168,9 @@
         construct: function (target, args) {
           if (!args[0].includes('dvlpreload')) {
             args[0] = matchHref(args[0])[0];
-            console.log('mocking EventSource response (with remote data) for: ' + args[0]);
+            console.log(
+              'mocking EventSource response (with remote data) for: ' + args[0],
+            );
           }
           return Reflect.construct(target, args);
         },
@@ -159,7 +181,9 @@
       window.WebSocket = new Proxy(window.WebSocket, {
         construct: function (target, args) {
           args[0] = matchHref(args[0])[0];
-          console.log('mocking WebSocket response (with remote data) for: ' + args[0]);
+          console.log(
+            'mocking WebSocket response (with remote data) for: ' + args[0],
+          );
           return Reflect.construct(target, args);
         },
       });
@@ -200,7 +224,11 @@
      */
     mockResponse: function mockResponse(req, res, once, onMockCallback) {
       var ignoreSearch =
-        (req && typeof req === 'object' && req.url !== undefined && req.type === undefined && req.ignoreSearch) ||
+        (req &&
+          typeof req === 'object' &&
+          req.url !== undefined &&
+          req.type === undefined &&
+          req.ignoreSearch) ||
         false;
       var url = getUrl(req);
       var originRegex = new RegExp(
@@ -265,7 +293,8 @@
     }
 
     // Fix Edge URL.origin
-    var origin = url.origin.indexOf(url.host) === -1 ? url.origin + url.host : url.origin;
+    var origin =
+      url.origin.indexOf(url.host) === -1 ? url.origin + url.host : url.origin;
     var mockData;
 
     for (var i = 0; i < cache.length; i++) {
@@ -273,7 +302,9 @@
 
       if (
         !mock.originRegex.test(origin) ||
-        (!mock.ignoreSearch && mock.search && !isEqualSearch(url.search, mock.search))
+        (!mock.ignoreSearch &&
+          mock.search &&
+          !isEqualSearch(url.search, mock.search))
       ) {
         continue;
       }
@@ -289,7 +320,9 @@
         remove(mockData);
       }
       href =
-        (RE_WEB_SOCKET_PROTOCOL.test(url.protocol) ? 'ws:' : location.protocol) +
+        (RE_WEB_SOCKET_PROTOCOL.test(url.protocol)
+          ? 'ws:'
+          : location.protocol) +
         '//' +
         location.host +
         location.pathname +
@@ -300,7 +333,10 @@
         url.host = location.host;
         href = url.href;
       } else if (networkDisabled) {
-        throw Error('network connections disabled. Unable to request ' + parseOriginalHref(href));
+        throw Error(
+          'network connections disabled. Unable to request ' +
+            parseOriginalHref(href),
+        );
       }
     }
 
@@ -462,7 +498,8 @@
    * @returns { string }
    */
   function parseOriginalHref(hrefOrRequest) {
-    var href = typeof hrefOrRequest === 'string' ? hrefOrRequest : hrefOrRequest.url;
+    var href =
+      typeof hrefOrRequest === 'string' ? hrefOrRequest : hrefOrRequest.url;
     if (href.indexOf('?dvlpmock') === -1) {
       return href;
     }

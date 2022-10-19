@@ -1,4 +1,10 @@
-import { existsSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import config from '../config.js';
 import { getPackageForDir } from '../resolver/index.js';
 import { isJsFilePath } from './is.js';
@@ -25,7 +31,9 @@ process.on('exit', () => {
  */
 export function getBundlePath(specifier, sourcePath) {
   const pkg = getPackageForDir(path.dirname(sourcePath));
-  const bundleName = `${encodeBundleSpecifier(specifier)}-${pkg ? pkg.version : ''}.js`;
+  const bundleName = `${encodeBundleSpecifier(specifier)}-${
+    pkg ? pkg.version : ''
+  }.js`;
   const bundlePath = path.join(config.bundleDirName, bundleName);
 
   meta[bundleName] = sourcePath;
@@ -52,7 +60,9 @@ export function getBundleSourcePath(bundlePath) {
  */
 export function cleanBundledFiles() {
   if (existsSync(config.bundleDirPath)) {
-    for (const filePath of readdirSync(config.bundleDirPath).filter(isJsFilePath)) {
+    for (const filePath of readdirSync(config.bundleDirPath).filter(
+      isJsFilePath,
+    )) {
       try {
         unlinkSync(path.join(config.bundleDirPath, filePath));
       } catch (err) {

@@ -1,10 +1,18 @@
-import { exists, expandPath, getProjectPath, importModule } from './utils/file.js';
+import {
+  exists,
+  expandPath,
+  getProjectPath,
+  importModule,
+} from './utils/file.js';
 import logger, { error, info } from './utils/log.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
 import config from './config.js';
 import { createApplicationLoaderFile } from './application-host/index.js';
-import { createElectronEntryFile, spawnElectron } from './electron-host/index.js';
+import {
+  createElectronEntryFile,
+  spawnElectron,
+} from './electron-host/index.js';
 import { Dvlp } from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
 import fs from 'node:fs';
@@ -49,7 +57,11 @@ export async function server(
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
     hooks = /** @type { Hooks } */ (await importModule(hooksPath));
-    info(`${chalk.green('✔')} registered hooks at ${chalk.green(getProjectPath(hooksPath))}`);
+    info(
+      `${chalk.green('✔')} registered hooks at ${chalk.green(
+        getProjectPath(hooksPath),
+      )}`,
+    );
   }
   if (certsPath) {
     certsPath = expandPath(certsPath);
@@ -60,7 +72,10 @@ export async function server(
     process.env.PORT = String(port);
   }
 
-  createApplicationLoaderFile(config.applicationLoaderPath, { hooks, hooksPath });
+  createApplicationLoaderFile(config.applicationLoaderPath, {
+    hooks,
+    hooksPath,
+  });
 
   const server = new Dvlp(entry, port, reload, hooks, mockPath, certsPath);
   try {
@@ -73,7 +88,11 @@ export async function server(
     if (typeof entry.main !== 'string') {
       throw Error(`the "--electron" flag requires a valid entry file path`);
     }
-    createElectronEntryFile(config.electronEntryPath, entry.main, server.origin);
+    createElectronEntryFile(
+      config.electronEntryPath,
+      entry.main,
+      server.origin,
+    );
     try {
       await spawnElectron(config.electronEntryPath);
     } catch (err) {
@@ -97,7 +116,9 @@ export async function server(
   info(`\n  💥 serving ${chalk.green(paths)}`);
   info(`    ...at ${chalk.green.underline(origin)}`);
   if (appOrigin) {
-    info(`    (proxied application server started at ${chalk.bold(appOrigin)})`);
+    info(
+      `    (proxied application server started at ${chalk.bold(appOrigin)})`,
+    );
   }
   info('\n  👀 watching for changes...\n');
 

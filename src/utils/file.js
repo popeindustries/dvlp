@@ -100,11 +100,15 @@ export function expandPath(filePath) {
  * @returns { string | undefined }
  */
 export function find(req, { directories = config.directories, type } = {}) {
-  const href = decodeURI(isRequestObject(req) ? new URL(req.url, 'http://localhost').pathname : req);
+  const href = decodeURI(
+    isRequestObject(req) ? new URL(req.url, 'http://localhost').pathname : req,
+  );
   let filePath;
 
   if (!type) {
-    type = isRequestObject(req) ? getTypeFromRequest(req) : getTypeFromPath(req);
+    type = isRequestObject(req)
+      ? getTypeFromRequest(req)
+      : getTypeFromPath(req);
   }
 
   // Special handling for '/node_modules...' to allow breaking out of cwd.
@@ -112,7 +116,9 @@ export function find(req, { directories = config.directories, type } = {}) {
   if (href.startsWith('/node_modules')) {
     directories = [
       ...directories,
-      ...resolveNodeModulesDirectories(process.cwd()).map((nodeModulesDirPath) => path.dirname(nodeModulesDirPath)),
+      ...resolveNodeModulesDirectories(process.cwd()).map(
+        (nodeModulesDirPath) => path.dirname(nodeModulesDirPath),
+      ),
     ];
   }
 
@@ -184,9 +190,13 @@ export function getProjectPath(filePath) {
     filePath = filePath[0];
   }
 
-  const projectFilePath = isAbsoluteFilePath(filePath) ? path.relative(process.cwd(), filePath) : filePath;
+  const projectFilePath = isAbsoluteFilePath(filePath)
+    ? path.relative(process.cwd(), filePath)
+    : filePath;
 
-  return projectFilePath.startsWith('/') ? projectFilePath.slice(1) : projectFilePath;
+  return projectFilePath.startsWith('/')
+    ? projectFilePath.slice(1)
+    : projectFilePath;
 }
 
 /**
@@ -198,7 +208,10 @@ export function getProjectPath(filePath) {
 export function getAbsoluteProjectPath(filePath) {
   return isAbsoluteFilePath(filePath)
     ? filePath
-    : path.join(process.cwd(), filePath.charAt(0) === '/' ? filePath.slice(1) : filePath);
+    : path.join(
+        process.cwd(),
+        filePath.charAt(0) === '/' ? filePath.slice(1) : filePath,
+      );
 }
 
 /**
@@ -244,7 +257,9 @@ export function getDirectoryContents(dirPath) {
     return [dirPath];
   }
 
-  return fs.readdirSync(dirPath).map((filePath) => path.resolve(dirPath, filePath));
+  return fs
+    .readdirSync(dirPath)
+    .map((filePath) => path.resolve(dirPath, filePath));
 }
 
 /**
@@ -357,7 +372,10 @@ function resolveFilePath(filePath, type) {
     return resolveRealFilePath(fp);
   }
 
-  fp = resolveFilePathExtension(path.join(filePath, 'index'), config.extensionsByType[type]);
+  fp = resolveFilePathExtension(
+    path.join(filePath, 'index'),
+    config.extensionsByType[type],
+  );
 
   if (fp && type === 'js') {
     if (!isNodeModuleFilePath(fp)) {

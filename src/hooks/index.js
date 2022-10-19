@@ -26,7 +26,11 @@ export class Hooker {
     if (hooks) {
       for (const name of Object.keys(hooks)) {
         if (!HOOK_NAMES.includes(name) && name !== 'filePath') {
-          noisyWarn(`⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(', ')}`);
+          noisyWarn(
+            `⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(
+              ', ',
+            )}`,
+          );
         }
       }
     }

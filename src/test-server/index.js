@@ -1,4 +1,8 @@
-import { connectClient, destroyClients, pushEvent } from '../push-events/index.js';
+import {
+  connectClient,
+  destroyClients,
+  pushEvent,
+} from '../push-events/index.js';
 import config from '../config.js';
 import Debug from 'debug';
 import decorateWithServerDestroy from 'server-destroy';
@@ -20,7 +24,12 @@ export class TestServer {
    * @param { TestServerOptions } options
    */
   constructor(options) {
-    const { autorespond = false, latency = config.latency, port = config.defaultPort, webroot = '' } = options;
+    const {
+      autorespond = false,
+      latency = config.latency,
+      port = config.defaultPort,
+      webroot = '',
+    } = options;
 
     this._autorespond = autorespond;
     this._server;
@@ -156,7 +165,10 @@ export class TestServer {
             body,
           );
 
-          this.pushEvent(new URL(url, `ws://${req.headers.host}`).href, 'connect');
+          this.pushEvent(
+            new URL(url, `ws://${req.headers.host}`).href,
+            'connect',
+          );
         }
       });
 

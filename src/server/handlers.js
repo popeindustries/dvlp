@@ -72,7 +72,11 @@ export function handleMockResponse(req, res, mocks) {
         );
         // Send 'connect' event if it exists
         mocks.matchPushEvent(mockParam, 'connect', pushEvent);
-        noisyInfo(`${chalk.green('    0ms')} connected to EventSource client at ${chalk.green(mockParam)}`);
+        noisyInfo(
+          `${chalk.green(
+            '    0ms',
+          )} connected to EventSource client at ${chalk.green(mockParam)}`,
+        );
       } else {
         mocks.matchResponse(mockParam, req, res);
       }
@@ -115,7 +119,11 @@ export function handleMockWebSocket(req, socket, body, mocks) {
       );
       // Send 'connect' event if it exists
       mocks.matchPushEvent(mock, 'connect', pushEvent);
-      noisyInfo(`${chalk.green('    0ms')} connected to WebSocket client at ${chalk.green(mock)}`);
+      noisyInfo(
+        `${chalk.green(
+          '    0ms',
+        )} connected to WebSocket client at ${chalk.green(mock)}`,
+      );
     }
   }
 }

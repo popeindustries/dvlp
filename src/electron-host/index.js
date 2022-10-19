@@ -26,10 +26,14 @@ export function createElectronEntryFile(filePath, entryPath, origin) {
  */
 export async function spawnElectron(filePath) {
   const pathToElectron = require('electron');
-  const child = childProcess.spawn(/** @type { any } */ (pathToElectron), [fileURLToPath(filePath.href)], {
-    stdio: 'inherit',
-    windowsHide: false,
-  });
+  const child = childProcess.spawn(
+    /** @type { any } */ (pathToElectron),
+    [fileURLToPath(filePath.href)],
+    {
+      stdio: 'inherit',
+      windowsHide: false,
+    },
+  );
   child.on('close', function (code, signal) {
     process.exit(code ?? 1);
   });

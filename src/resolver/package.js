@@ -22,7 +22,11 @@ const RE_TRAILING = /\/+$|\\+$/;
  * @param { 'browser' | 'node' } [env]
  * @returns { Package | undefined }
  */
-export function getPackage(filePath, packagePath = resolvePackagePath(filePath), env = 'browser') {
+export function getPackage(
+  filePath,
+  packagePath = resolvePackagePath(filePath),
+  env = 'browser',
+) {
   if (packagePath === undefined || !fs.existsSync(packagePath)) {
     return;
   }
@@ -146,7 +150,14 @@ export function resolvePackagePath(filePath) {
       try {
         const json = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 
-        if (json.name || json.main || json.imports || json.exports || json.browser || json.module) {
+        if (
+          json.name ||
+          json.main ||
+          json.imports ||
+          json.exports ||
+          json.browser ||
+          json.module
+        ) {
           return dir;
         }
       } catch (err) {
@@ -158,7 +169,11 @@ export function resolvePackagePath(filePath) {
 
     // Stop if we hit root or max file system depth
     // Convert to lowercase to fix problems on Windows
-    if (dir === root || !--depth || parent.toLowerCase() === dir.toLowerCase()) {
+    if (
+      dir === root ||
+      !--depth ||
+      parent.toLowerCase() === dir.toLowerCase()
+    ) {
       break;
     }
 
@@ -175,7 +190,11 @@ export function resolvePackagePath(filePath) {
  * @param { boolean } verifyExport
  * @returns { string | undefined }
  */
-export function resolvePackageSourcePath(filePathOrSpecifier, pkg, verifyExport) {
+export function resolvePackageSourcePath(
+  filePathOrSpecifier,
+  pkg,
+  verifyExport,
+) {
   if (pkg.imports !== undefined && filePathOrSpecifier.startsWith('#')) {
     return resolveImportPath(filePathOrSpecifier, pkg);
   } else if (pkg.exports && verifyExport) {
@@ -191,7 +210,10 @@ export function resolvePackageSourcePath(filePathOrSpecifier, pkg, verifyExport)
   filePathOrSpecifier = resolveMainOrBrowserPath(filePathOrSpecifier, pkg);
 
   // Missing file extension
-  if (isAbsoluteFilePath(filePathOrSpecifier) && !isValidFilePath(filePathOrSpecifier)) {
+  if (
+    isAbsoluteFilePath(filePathOrSpecifier) &&
+    !isValidFilePath(filePathOrSpecifier)
+  ) {
     const foundFilePath = find(filePathOrSpecifier, { type: 'js' });
 
     if (!foundFilePath) {
@@ -213,14 +235,20 @@ export function resolveImportPath(specifier, pkg) {
   const entry = specifier.replace('#', './');
 
   try {
-    const resolved = resolveExports({ name: pkg.name, exports: pkg.imports }, entry, {
-      // `node` automatically added if not set
-      browser: pkg.env === 'browser',
-      conditions: pkg.exportsConditions,
-    });
+    const resolved = resolveExports(
+      { name: pkg.name, exports: pkg.imports },
+      entry,
+      {
+        // `node` automatically added if not set
+        browser: pkg.env === 'browser',
+        conditions: pkg.exportsConditions,
+      },
+    );
 
     if (resolved) {
-      return isBareSpecifier(resolved) ? resolved : path.resolve(pkg.path, resolved);
+      return isBareSpecifier(resolved)
+        ? resolved
+        : path.resolve(pkg.path, resolved);
     }
   } catch (err) {
     if (/** @type { Error } */ (err).message.includes('Missing')) {
@@ -238,7 +266,10 @@ export function resolveImportPath(specifier, pkg) {
  * @param { Package } pkg
  */
 function resolveExportPath(filePathOrSpecifier, pkg) {
-  const entry = filePathOrSpecifier.replace(isBareSpecifier(filePathOrSpecifier) ? pkg.name : pkg.path, '.');
+  const entry = filePathOrSpecifier.replace(
+    isBareSpecifier(filePathOrSpecifier) ? pkg.name : pkg.path,
+    '.',
+  );
 
   try {
     const resolved = resolveExports(pkg, entry.replace(/\\/g, '/'), {
@@ -296,7 +327,10 @@ function resolvePackageName(packageName, packagePath) {
   }
 
   return path
-    .relative(packagePath.slice(0, packagePath.lastIndexOf('node_modules') + 12), packagePath)
+    .relative(
+      packagePath.slice(0, packagePath.lastIndexOf('node_modules') + 12),
+      packagePath,
+    )
     .replace(/\\/g, '/');
 }
 
@@ -316,7 +350,8 @@ function parsePackageImports(imports) {
       key = `./${key.slice(1)}`;
     }
     // @ts-ignore
-    parsed[key] = typeof value === 'object' ? parsePackageImports(value) : value;
+    parsed[key] =
+      typeof value === 'object' ? parsePackageImports(value) : value;
   }
 
   return parsed;

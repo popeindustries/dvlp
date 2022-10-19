@@ -23,7 +23,11 @@ export function resolveCerts(certsPaths) {
     for (const filePath of getDirectoryContents(certsPath)) {
       const extname = path.extname(filePath);
 
-      if (!cert && (extname === '.crt' || extname === '.cert') && !filePath.endsWith('.issuer.crt')) {
+      if (
+        !cert &&
+        (extname === '.crt' || extname === '.cert') &&
+        !filePath.endsWith('.issuer.crt')
+      ) {
         cert = fs.readFileSync(filePath);
       } else if (!key && extname === '.key') {
         key = fs.readFileSync(filePath);
@@ -32,7 +36,11 @@ export function resolveCerts(certsPaths) {
   }
 
   if (!cert || !key) {
-    throw Error(`unable to find .crt or .key file after searching "${certsPaths.join(', ')}"`);
+    throw Error(
+      `unable to find .crt or .key file after searching "${certsPaths.join(
+        ', ',
+      )}"`,
+    );
   }
 
   return { cert, key };
@@ -58,7 +66,9 @@ export function validateCert(certFileData) {
     if (diff < 10) {
       fatal('ssl certificate has expired!\n');
     } else if (diff / 86400000 < 10) {
-      noisyWarn(`\n  ⚠️  ${chalk.yellow('ssl certificate will expire soon!')}\n`);
+      noisyWarn(
+        `\n  ⚠️  ${chalk.yellow('ssl certificate will expire soon!')}\n`,
+      );
     }
 
     return commonName;

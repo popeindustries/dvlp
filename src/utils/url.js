@@ -20,7 +20,10 @@ export function isWebSocketUrl(url) {
  */
 export function getUrl(req) {
   if (!(req instanceof URL)) {
-    req = new URL(typeof req === 'string' ? decodeURIComponent(req) : req.url, `http://localhost:${config.activePort}`);
+    req = new URL(
+      typeof req === 'string' ? decodeURIComponent(req) : req.url,
+      `http://localhost:${config.activePort}`,
+    );
   }
   // Map loopback address to localhost
   if (req.hostname === '127.0.0.1') {

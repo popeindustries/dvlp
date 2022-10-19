@@ -123,7 +123,9 @@ describe('testServer', () => {
       expect(res).to.not.exist;
     } catch (err) {
       expect(err).to.exist;
-      expect(err.message).to.equal('network connections disabled. Unable to request http://www.google.com/');
+      expect(err.message).to.equal(
+        'network connections disabled. Unable to request http://www.google.com/',
+      );
     }
   });
   it('should reroute external request when network disabled and rerouting enabled', async () => {

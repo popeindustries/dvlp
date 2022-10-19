@@ -55,14 +55,21 @@ export async function bundleDependency(filePath, res, esbuild, hookFn) {
           // ignore
         }
 
-        const brokenNamedExports = config.brokenNamedExportsPackages[specifier] || [];
+        const brokenNamedExports =
+          config.brokenNamedExportsPackages[specifier] || [];
 
         // Fix named exports for cjs
         if (exports.length > 0 || brokenNamedExports.length > 0) {
           const inlineableModulePath = sourcePath.replace(/\\/g, '\\\\');
-          const namedExports = new Set(['default', ...exports, ...brokenNamedExports]);
+          const namedExports = new Set([
+            'default',
+            ...exports,
+            ...brokenNamedExports,
+          ]);
           namedExports.delete('__esModule');
-          const fileContents = `export {${Array.from(namedExports).join(', ')}} from '${inlineableModulePath}';`;
+          const fileContents = `export {${Array.from(namedExports).join(
+            ', ',
+          )}} from '${inlineableModulePath}';`;
 
           entryFilePath = filePath;
           entryFileContents = fileContents;

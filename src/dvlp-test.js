@@ -46,7 +46,9 @@ export async function testServer(options) {
  * @param { boolean } [rerouteAllRequests]
  * @returns { void }
  */
-testServer.disableNetwork = function disableNetwork(rerouteAllRequests = false) {
+testServer.disableNetwork = function disableNetwork(
+  rerouteAllRequests = false,
+) {
   enableRequestIntercept();
   networkDisabled = true;
   reroute = rerouteAllRequests;
@@ -70,7 +72,10 @@ testServer.enableNetwork = function enableNetwork() {
  * @param { Res } res
  * @returns { undefined }
  */
-testServer.mockHangResponseHandler = function mockHangResponseHandler(req, res) {
+testServer.mockHangResponseHandler = function mockHangResponseHandler(
+  req,
+  res,
+) {
   return;
 };
 
@@ -81,7 +86,10 @@ testServer.mockHangResponseHandler = function mockHangResponseHandler(req, res) 
  * @param { Res } res
  * @returns { undefined }
  */
-testServer.mockErrorResponseHandler = function mockErrorResponseHandler(req, res) {
+testServer.mockErrorResponseHandler = function mockErrorResponseHandler(
+  req,
+  res,
+) {
   res.writeHead(500);
   res.error = Error('error');
   res.end('error');
@@ -95,7 +103,10 @@ testServer.mockErrorResponseHandler = function mockErrorResponseHandler(req, res
  * @param { Res } res
  * @returns { undefined }
  */
-testServer.mockMissingResponseHandler = function mockMissingResponseHandler(req, res) {
+testServer.mockMissingResponseHandler = function mockMissingResponseHandler(
+  req,
+  res,
+) {
   res.writeHead(404);
   res.end('missing');
   return;
@@ -108,7 +119,10 @@ testServer.mockMissingResponseHandler = function mockMissingResponseHandler(req,
  * @param { Res } res
  * @returns { undefined }
  */
-testServer.mockOfflineResponseHandler = function mockOfflineResponseHandler(req, res) {
+testServer.mockOfflineResponseHandler = function mockOfflineResponseHandler(
+  req,
+  res,
+) {
   req.socket.destroy();
   return;
 };

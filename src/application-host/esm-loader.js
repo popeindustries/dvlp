@@ -11,7 +11,11 @@ export function getLoaderContents(hooksPath) {
   import { esbuild, nodeResolve } from 'dvlp';
   import { extname } from 'node:path';
   import fs from 'node:fs';
-  ${hooksPath ? `import customHooks from '${hooksPath}';` : 'const customHooks = {};'}
+  ${
+    hooksPath
+      ? `import customHooks from '${hooksPath}';`
+      : 'const customHooks = {};'
+  }
 
   global.sources = new Set();
 

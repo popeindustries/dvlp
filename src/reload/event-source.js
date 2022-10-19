@@ -17,7 +17,11 @@ export class EventSource extends EventEmitter {
    * @param { IncomingMessage | Http2ServerRequest } req
    */
   static isEventSource(req) {
-    return req.method === 'GET' && req.headers.accept !== undefined && req.headers.accept.includes('text/event-stream');
+    return (
+      req.method === 'GET' &&
+      req.headers.accept !== undefined &&
+      req.headers.accept.includes('text/event-stream')
+    );
   }
 
   /**

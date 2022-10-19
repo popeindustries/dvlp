@@ -16,7 +16,10 @@ const hooks = new Hooker();
 
 function getBody(res) {
   const output = (res.output || res.outputData)
-    .filter((chunk) => typeof chunk === 'string' || (chunk.data && chunk.data.length > 0))
+    .filter(
+      (chunk) =>
+        typeof chunk === 'string' || (chunk.data && chunk.data.length > 0),
+    )
     .map((chunk) => chunk.data || chunk)
     .join('');
   return output.replace(res._header, '');
@@ -65,7 +68,9 @@ describe('patch', () => {
           headerScript: { string: 'test inject' },
         });
         res.end('<head></head>');
-        expect(getBody(res)).to.equal('<head>\n<script>test inject</script></head>');
+        expect(getBody(res)).to.equal(
+          '<head>\n<script>test inject</script></head>',
+        );
       });
       it('should inject footer script into streamed html response', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
@@ -75,7 +80,9 @@ describe('patch', () => {
         });
         res.write('</body>');
         res.end();
-        expect(getBody(res)).to.include('<script>test inject</script>\n</body>');
+        expect(getBody(res)).to.include(
+          '<script>test inject</script>\n</body>',
+        );
       });
       it('should inject header script into streamed html response', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
@@ -85,7 +92,9 @@ describe('patch', () => {
         });
         res.write('<head></head>');
         res.end();
-        expect(getBody(res)).to.include('<head>\n<script>test inject</script></head>');
+        expect(getBody(res)).to.include(
+          '<head>\n<script>test inject</script></head>',
+        );
       });
     });
 
@@ -102,7 +111,10 @@ describe('patch', () => {
             string: 'test inject',
           },
         });
-        res.setHeader('Content-Security-Policy', "default-src 'self'; connect-src 'self'");
+        res.setHeader(
+          'Content-Security-Policy',
+          "default-src 'self'; connect-src 'self'",
+        );
         expect(res.getHeader('Content-Security-Policy')).to.equal(
           "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; ",
         );
@@ -133,7 +145,9 @@ describe('patch', () => {
         res.writeHead(200, {
           'Content-Security-Policy': "default-src 'self'; connect-src 'self'",
         });
-        expect(res._header).to.contain("default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; ");
+        expect(res._header).to.contain(
+          "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; ",
+        );
       });
       it('should inject csp header with writeHead when no connect-src', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
@@ -145,7 +159,9 @@ describe('patch', () => {
           },
         });
         res.writeHead(200, { 'Content-Security-Policy': "default-src 'self'" });
-        expect(res._header).to.contain("default-src 'self'; connect-src http://localhost:3529/dvlpreload; ");
+        expect(res._header).to.contain(
+          "default-src 'self'; connect-src http://localhost:3529/dvlpreload; ",
+        );
       });
       it('should not inject script hash in csp header when no nonce/sha and unsafe-inline', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
@@ -156,7 +172,10 @@ describe('patch', () => {
             url: 'http://localhost:3529/dvlpreload',
           },
         });
-        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+        res.setHeader(
+          'Content-Security-Policy',
+          "default-src 'self'; script-src 'self' 'unsafe-inline'",
+        );
         expect(res.getHeader('Content-Security-Policy')).to.equal(
           "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src http://localhost:3529/dvlpreload; ",
         );
@@ -175,7 +194,10 @@ describe('patch', () => {
             string: 'test inject',
           },
         });
-        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'");
+        res.setHeader(
+          'Content-Security-Policy',
+          "default-src 'self'; script-src 'self'",
+        );
         expect(res.getHeader('Content-Security-Policy')).to.equal(
           "default-src 'self'; script-src 'self' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
         );
@@ -194,7 +216,10 @@ describe('patch', () => {
             string: 'test inject',
           },
         });
-        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo'");
+        res.setHeader(
+          'Content-Security-Policy',
+          "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo'",
+        );
         expect(res.getHeader('Content-Security-Policy')).to.equal(
           "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
         );
@@ -227,14 +252,18 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {});
         res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.equal('no-cache, dvlp-disabled');
+        expect(res.getHeader('Cache-Control')).to.equal(
+          'no-cache, dvlp-disabled',
+        );
       });
       it('should disable cache-control headers for local files when cache-control not set', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req.filePath, req, res, {});
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.equal('no-cache, dvlp-disabled');
+        expect(res.getHeader('Cache-Control')).to.equal(
+          'no-cache, dvlp-disabled',
+        );
       });
       it('should not disable cache-control headers for node_modules files', () => {
         const req = getRequest('/node_modules/foo');
@@ -264,7 +293,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import "./dep.css";');
-          expect(getBody(res)).to.equal(`@import "${cwd}/test/unit/fixtures/www/dep.css";`);
+          expect(getBody(res)).to.equal(
+            `@import "${cwd}/test/unit/fixtures/www/dep.css";`,
+          );
         });
         it('should resolve invalid relative css @import id', () => {
           const req = getRequest('/index.css', {
@@ -275,7 +306,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import "dep.css";');
-          expect(getBody(res)).to.equal(`@import "${cwd}/test/unit/fixtures/www/dep.css";`);
+          expect(getBody(res)).to.equal(
+            `@import "${cwd}/test/unit/fixtures/www/dep.css";`,
+          );
         });
         it('should resolve valid url() relative css @import id', () => {
           const req = getRequest('/index.css', {
@@ -286,7 +319,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import url("./dep.css");');
-          expect(getBody(res)).to.equal(`@import url("${cwd}/test/unit/fixtures/www/dep.css");`);
+          expect(getBody(res)).to.equal(
+            `@import url("${cwd}/test/unit/fixtures/www/dep.css");`,
+          );
         });
         it('should resolve invalid url() relative css @import id', () => {
           const req = getRequest('/index.css', {
@@ -297,7 +332,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import url("dep.css");');
-          expect(getBody(res)).to.equal(`@import url("${cwd}/test/unit/fixtures/www/dep.css");`);
+          expect(getBody(res)).to.equal(
+            `@import url("${cwd}/test/unit/fixtures/www/dep.css");`,
+          );
         });
         it('should resolve node_modules css @import id', () => {
           const req = getRequest('/index.css', {
@@ -308,7 +345,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import "css";');
-          expect(getBody(res)).to.equal(`@import "${cwd}/test/unit/fixtures/node_modules/css/styles.css";`);
+          expect(getBody(res)).to.equal(
+            `@import "${cwd}/test/unit/fixtures/node_modules/css/styles.css";`,
+          );
         });
         it('should resolve url() node_modules css @import id', () => {
           const req = getRequest('/index.css', {
@@ -319,7 +358,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import url("css");');
-          expect(getBody(res)).to.equal(`@import url("${cwd}/test/unit/fixtures/node_modules/css/styles.css");`);
+          expect(getBody(res)).to.equal(
+            `@import url("${cwd}/test/unit/fixtures/node_modules/css/styles.css");`,
+          );
         });
         it('should not resolve external @import id', () => {
           const req = getRequest('/index.css', {
@@ -330,7 +371,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import "http://something.com/dep.css";');
-          expect(getBody(res)).to.equal(`@import "http://something.com/dep.css";`);
+          expect(getBody(res)).to.equal(
+            `@import "http://something.com/dep.css";`,
+          );
         });
       });
       describe('js', () => {
@@ -343,7 +386,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import "./module.js";');
-          expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/www/module.js";`);
+          expect(getBody(res)).to.equal(
+            `import "${cwd}/test/unit/fixtures/www/module.js";`,
+          );
         });
         it('should resolve bare js import id', () => {
           const req = getRequest('/index.js', {
@@ -354,7 +399,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import debug from "debug";');
-          expect(getBody(res)).to.include(`import debug from "/${bundleDir}/debug`);
+          expect(getBody(res)).to.include(
+            `import debug from "/${bundleDir}/debug`,
+          );
         });
         it('should escape "$" when resolving js import id', () => {
           const req = getRequest('/index.js', {
@@ -365,7 +412,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import $$observable from "./$$.js";');
-          expect(getBody(res)).to.equal(`import $$observable from "${cwd}/test/unit/fixtures/www/$$.js";`);
+          expect(getBody(res)).to.equal(
+            `import $$observable from "${cwd}/test/unit/fixtures/www/$$.js";`,
+          );
         });
         it('should resolve import at the start of a line', () => {
           const req = getRequest('/index.js', {
@@ -376,7 +425,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end(`const foo = 'bar'\nimport debug from "debug";`);
-          expect(getBody(res)).to.include(`const foo = 'bar'\nimport debug from "/${bundleDir}/debug`);
+          expect(getBody(res)).to.include(
+            `const foo = 'bar'\nimport debug from "/${bundleDir}/debug`,
+          );
         });
         it('should resolve import following a semi-colon', () => {
           const req = getRequest('/index.js', {
@@ -386,7 +437,9 @@ describe('patch', () => {
           patchResponse(req.filePath, req, res, {
             resolveImport: hooks.resolveImport,
           });
-          res.end(`function foo(value) { return value; };import debug from "debug";`);
+          res.end(
+            `function foo(value) { return value; };import debug from "debug";`,
+          );
           expect(getBody(res)).to.include(
             `function foo(value) { return value; };import debug from "/${bundleDir}/debug`,
           );
@@ -399,7 +452,9 @@ describe('patch', () => {
           patchResponse(req.filePath, req, res, {
             resolveImport: hooks.resolveImport,
           });
-          res.end(`function foo(value) { return value; } import debug from "debug";`);
+          res.end(
+            `function foo(value) { return value; } import debug from "debug";`,
+          );
           expect(getBody(res)).to.include(
             `function foo(value) { return value; } import debug from "/${bundleDir}/debug`,
           );
@@ -413,7 +468,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end(`const foo = ('bar') import debug from "debug";`);
-          expect(getBody(res)).to.include(`const foo = ('bar') import debug from "/${bundleDir}/debug`);
+          expect(getBody(res)).to.include(
+            `const foo = ('bar') import debug from "/${bundleDir}/debug`,
+          );
         });
         it('should not resolve import following an invalid character', () => {
           const req = getRequest('/index.js', {
@@ -439,7 +496,9 @@ describe('patch', () => {
             'import debugBrowser from "debug/src/browser.js";\nimport { foo } from "./foo.js";\nimport debug from "debug";',
           );
           const body = getBody(res);
-          expect(body).to.include(`import debugBrowser from "/${bundleDir}/debug__src__browser.js-`);
+          expect(body).to.include(
+            `import debugBrowser from "/${bundleDir}/debug__src__browser.js-`,
+          );
           expect(body).to.include(`import debug from "/${bundleDir}/debug-`);
         });
         it('should resolve bare js import id for es module', () => {
@@ -451,7 +510,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import { html } from "lit-html";');
-          expect(getBody(res)).to.include('node_modules/lit-html/development/lit-html.js');
+          expect(getBody(res)).to.include(
+            'node_modules/lit-html/development/lit-html.js',
+          );
         });
         it('should resolve js import id missing extension', () => {
           const req = getRequest('/index.js', {
@@ -462,7 +523,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import module from "./module";');
-          expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/www/module.js";`);
+          expect(getBody(res)).to.equal(
+            `import module from "${cwd}/test/unit/fixtures/www/module.js";`,
+          );
         });
         it('should resolve jsx import id missing extension', () => {
           const req = getRequest('/index.js', {
@@ -473,7 +536,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import component from "../component";');
-          expect(getBody(res)).to.equal(`import component from "${cwd}/test/unit/fixtures/component.jsx";`);
+          expect(getBody(res)).to.equal(
+            `import component from "${cwd}/test/unit/fixtures/component.jsx";`,
+          );
         });
         it('should resolve ts import id missing extension', () => {
           const req = getRequest('/index.ts', {
@@ -484,7 +549,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import route from "../route";');
-          expect(getBody(res)).to.equal(`import route from "${cwd}/test/unit/fixtures/route.ts";`);
+          expect(getBody(res)).to.equal(
+            `import route from "${cwd}/test/unit/fixtures/route.ts";`,
+          );
         });
         it('should resolve js import id missing package index', () => {
           const req = getRequest('/index.js', {
@@ -495,7 +562,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import module from "./nested";');
-          expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/www/nested/index.js";`);
+          expect(getBody(res)).to.equal(
+            `import module from "${cwd}/test/unit/fixtures/www/nested/index.js";`,
+          );
         });
         it('should resolve ts import id missing package index', () => {
           const req = getRequest('/index.ts', {
@@ -506,7 +575,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import module from "./nested-ts";');
-          expect(getBody(res)).to.equal(`import module from "${cwd}/test/unit/fixtures/www/nested-ts/index.ts";`);
+          expect(getBody(res)).to.equal(
+            `import module from "${cwd}/test/unit/fixtures/www/nested-ts/index.ts";`,
+          );
         });
         it('should ignore erroneous "import" string', () => {
           const req = getRequest('/index.js', {
@@ -528,7 +599,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import "bar";');
-          expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/node_modules/bar/browser.js";`);
+          expect(getBody(res)).to.equal(
+            `import "${cwd}/test/unit/fixtures/node_modules/bar/browser.js";`,
+          );
         });
         it('should resolve js import with browser field map', () => {
           const req = getRequest('/test/unit/fixtures/index.js', {
@@ -539,7 +612,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import "bat";');
-          expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/node_modules/bat/browser.js";`);
+          expect(getBody(res)).to.equal(
+            `import "${cwd}/test/unit/fixtures/node_modules/bat/browser.js";`,
+          );
         });
         it('should resolve js dynamic import()', () => {
           const req = getRequest('/index.js', {
@@ -549,9 +624,13 @@ describe('patch', () => {
           patchResponse(req.filePath, req, res, {
             resolveImport: hooks.resolveImport,
           });
-          res.end('import debugBrowser from "debug/src/browser.js";\nimport(foo);\nimport("debug");\n');
+          res.end(
+            'import debugBrowser from "debug/src/browser.js";\nimport(foo);\nimport("debug");\n',
+          );
           const body = getBody(res);
-          expect(body).to.include(`import debugBrowser from "/${bundleDir}/debug__src__browser.js-`);
+          expect(body).to.include(
+            `import debugBrowser from "/${bundleDir}/debug__src__browser.js-`,
+          );
           expect(body).to.include(`import("/${bundleDir}/debug-`);
         });
         it('should resolve js import with resolve hook', () => {
@@ -566,7 +645,9 @@ describe('patch', () => {
             },
           });
           res.end('import "module"');
-          expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/www/module.js"`);
+          expect(getBody(res)).to.equal(
+            `import "${cwd}/test/unit/fixtures/www/module.js"`,
+          );
         });
         it('should resolve js import with resolve hook using defaultResolve', () => {
           const req = getRequest('/index.js', {
@@ -579,7 +660,9 @@ describe('patch', () => {
             },
           });
           res.end('import "./module.js"');
-          expect(getBody(res)).to.equal(`import "${cwd}/test/unit/fixtures/www/module.js"`);
+          expect(getBody(res)).to.equal(
+            `import "${cwd}/test/unit/fixtures/www/module.js"`,
+          );
         });
         it('should resolve js dynamic import with resolve hook', () => {
           const req = getRequest('/index.js', {
@@ -593,7 +676,9 @@ describe('patch', () => {
             },
           });
           res.end('import("module");');
-          expect(getBody(res)).to.equal(`import("${cwd}/test/unit/fixtures/www/module.js");`);
+          expect(getBody(res)).to.equal(
+            `import("${cwd}/test/unit/fixtures/www/module.js");`,
+          );
         });
         it('should replace js dynamic import expression with resolve hook return value', () => {
           const req = getRequest('/index.js', {
@@ -619,7 +704,9 @@ describe('patch', () => {
             },
           });
           res.end('import("module");');
-          expect(getBody(res)).to.equal(`dynamicImport('./test/unit/fixtures/www/module.js', '/index.js');`);
+          expect(getBody(res)).to.equal(
+            `dynamicImport('./test/unit/fixtures/www/module.js', '/index.js');`,
+          );
         });
       });
     });
@@ -632,7 +719,9 @@ describe('patch', () => {
       });
       res.setHeader('Content-Encoding', 'gzip');
       res.end(gzipSync(Buffer.from('<head></head>')));
-      expect(getBody(res)).to.equal('<head>\n<script>test inject</script></head>');
+      expect(getBody(res)).to.equal(
+        '<head>\n<script>test inject</script></head>',
+      );
     });
     it('should uncompress gzipped css response', () => {
       const req = getRequest('/index.css');
@@ -650,7 +739,9 @@ describe('patch', () => {
       });
       res.setHeader('Content-Encoding', 'br');
       res.end(brotliCompressSync(Buffer.from('<head></head>')));
-      expect(getBody(res)).to.equal('<head>\n<script>test inject</script></head>');
+      expect(getBody(res)).to.equal(
+        '<head>\n<script>test inject</script></head>',
+      );
     });
   });
 });

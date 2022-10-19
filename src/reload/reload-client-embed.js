@@ -6,7 +6,10 @@ import path from 'node:path';
 const reloadClient =
   // @ts-ignore
   global.$RELOAD_CLIENT ||
-  fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'reload-client.js'), 'utf8');
+  fs.readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), 'reload-client.js'),
+    'utf8',
+  );
 
 /**
  * Retrieve embeddable reload client script

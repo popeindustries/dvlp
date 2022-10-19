@@ -1,4 +1,7 @@
-import { parseEsbuildTarget, parseUserAgent } from '../../src/utils/platform.js';
+import {
+  parseEsbuildTarget,
+  parseUserAgent,
+} from '../../src/utils/platform.js';
 import { expect } from 'chai';
 
 describe('platform', () => {
@@ -7,7 +10,9 @@ describe('platform', () => {
       expect(parseEsbuildTarget(parseUserAgent())).to.equal('es2020');
     });
     it('should return default for unknown ua', () => {
-      expect(parseEsbuildTarget(parseUserAgent('xxxxxxxxx'))).to.equal('es2020');
+      expect(parseEsbuildTarget(parseUserAgent('xxxxxxxxx'))).to.equal(
+        'es2020',
+      );
     });
     it('should correctly parse mobile chrome ua', () => {
       expect(

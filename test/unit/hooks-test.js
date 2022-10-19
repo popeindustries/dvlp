@@ -39,7 +39,9 @@ describe('hooks()', () => {
 
     it('should return "undefined" if no module bundle found', async () => {
       const hooks = new Hooker();
-      expect(await hooks.bundleDependency('./dvlp/bundle-xxx/foofoo-0.0.0.js')).to.equal(undefined);
+      expect(
+        await hooks.bundleDependency('./dvlp/bundle-xxx/foofoo-0.0.0.js'),
+      ).to.equal(undefined);
     });
     it('should bundle filePath', async () => {
       const hooks = new Hooker();
@@ -100,12 +102,16 @@ describe('hooks()', () => {
           added.push(filePath);
         },
       });
-      const filePath = path.resolve('./test/unit/fixtures/www/module-with-deps.js');
+      const filePath = path.resolve(
+        './test/unit/fixtures/www/module-with-deps.js',
+      );
       const res = getResponse();
       await hooks.transform(filePath, '', res, {
         client: { ua: 'test' },
       });
-      expect(added.includes(path.resolve('./test/unit/fixtures/www/dep-esm.js'))).to.be.true;
+      expect(
+        added.includes(path.resolve('./test/unit/fixtures/www/dep-esm.js')),
+      ).to.be.true;
     });
   });
 });

@@ -17,10 +17,10 @@ import { watch } from '../utils/watch.js';
 import { writeFileSync } from 'node:fs';
 
 const debug = Debug('dvlp:host');
-let workerPath = relative(process.cwd(), join(dirname(fileURLToPath(import.meta.url)), './worker.js')).replace(
-  /\\/g,
-  '/',
-);
+let workerPath = relative(
+  process.cwd(),
+  join(dirname(fileURLToPath(import.meta.url)), './worker.js'),
+).replace(/\\/g, '/');
 
 if (!workerPath.startsWith('.')) {
   workerPath = `./${workerPath}`;
@@ -34,7 +34,8 @@ if (!workerPath.startsWith('.')) {
  */
 export function createApplicationLoaderFile(filePath, hooksConfig) {
   const hooksPath =
-    hooksConfig.hooks && (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
+    hooksConfig.hooks &&
+    (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
       ? pathToFileURL(/** @type { string } */ (hooksConfig.hooksPath)).href
       : undefined;
   const contents = getLoaderContents(hooksPath);
@@ -63,7 +64,11 @@ export class ApplicationHost {
 
     if (triggerClientReload !== undefined) {
       this.watcher = watch(async (filePath) => {
-        noisyInfo(`\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.cyan(getProjectPath(filePath))}`);
+        noisyInfo(
+          `\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.cyan(
+            getProjectPath(filePath),
+          )}`,
+        );
         await this.restart();
         triggerClientReload(filePath, true);
       });
@@ -186,7 +191,12 @@ export class ApplicationHost {
     return new ApplicationThread(workerPath, port1, this.watcher, {
       env: SHARE_ENV,
       // @ts-ignore
-      execArgv: ['--enable-source-maps', '--no-warnings', '--experimental-loader', config.applicationLoaderPath],
+      execArgv: [
+        '--enable-source-maps',
+        '--no-warnings',
+        '--experimental-loader',
+        config.applicationLoaderPath,
+      ],
       workerData: {
         hostOrigin: this.hostOrigin,
         messagePort: port2,
@@ -244,7 +254,9 @@ class ApplicationThread extends Worker {
       this.watcher = undefined;
     });
 
-    debug(`created application thread with id "${this.threadId}" at "${filePath}"`);
+    debug(
+      `created application thread with id "${this.threadId}" at "${filePath}"`,
+    );
   }
 
   /**
@@ -322,7 +334,9 @@ function proxyCreateServer(host) {
         });
         server.on('listening', () => {
           const address = server.address();
-          host.appPort = /** @type { import('net').AddressInfo } */ (address).port;
+          host.appPort = /** @type { import('net').AddressInfo } */ (
+            address
+          ).port;
         });
 
         server.destroy = () => {

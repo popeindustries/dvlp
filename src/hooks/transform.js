@@ -30,7 +30,15 @@ const tsconfig = tsconfigPath
  * @param { Hooks["onTransform"] } hookFn
  * @returns { Promise<void> }
  */
-export async function transform(filePath, lastChangedFilePath, res, clientPlatform, cache, esbuild, hookFn) {
+export async function transform(
+  filePath,
+  lastChangedFilePath,
+  res,
+  clientPlatform,
+  cache,
+  esbuild,
+  hookFn,
+) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
 
   // Segment cache by user agent to support different transforms based on client
@@ -43,7 +51,9 @@ export async function transform(filePath, lastChangedFilePath, res, clientPlatfo
   // but they are watched when read from file system during transformation,
   // so transform again if changed file is of same type
   const lastChangedIsDependency =
-    lastChangedFilePath && !cache.has(lastChangedCacheKey) && getTypeFromPath(lastChangedFilePath) === fileType;
+    lastChangedFilePath &&
+    !cache.has(lastChangedCacheKey) &&
+    getTypeFromPath(lastChangedFilePath) === fileType;
   let code = cache.get(cacheKey);
   let transformed = false;
 
@@ -94,13 +104,18 @@ export async function transform(filePath, lastChangedFilePath, res, clientPlatfo
   }
 
   if (code !== undefined) {
-    debug(`${transformed ? 'transformed content for' : 'skipping transform for'} "${relativeFilePath}"`);
+    debug(
+      `${
+        transformed ? 'transformed content for' : 'skipping transform for'
+      } "${relativeFilePath}"`,
+    );
     res.transformed = true;
     res.writeHead(200, {
       'Access-Control-Allow-Origin': '*',
       'Cache-Control': 'max-age=0',
       'Content-Length': Buffer.byteLength(code),
-      'Content-Type': mime.getType(getTypeFromPath(filePath) || filePath) || undefined,
+      'Content-Type':
+        mime.getType(getTypeFromPath(filePath) || filePath) || undefined,
     });
     res.end(code);
     res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);

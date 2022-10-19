@@ -6,13 +6,17 @@ import { workerData } from 'node:worker_threads';
 
 const hostUrl = /** @type { URL } */ (new URL(workerData.hostOrigin));
 const serverPort = /** @type { number } */ (workerData.serverPort);
-const mocks = /** @type { Array<DeserializedMock> } */ (workerData.serializedMocks)?.map((mockData) => {
+const mocks = /** @type { Array<DeserializedMock> } */ (
+  workerData.serializedMocks
+)?.map((mockData) => {
   mockData.originRegex = new RegExp(mockData.originRegex);
   mockData.pathRegex = new RegExp(mockData.pathRegex);
   mockData.search = new URLSearchParams(mockData.search);
   return mockData;
 });
-const messagePort = /** @type { import('worker_threads').MessagePort } */ (workerData.messagePort);
+const messagePort = /** @type { import('worker_threads').MessagePort } */ (
+  workerData.messagePort
+);
 const originalCreateServer = http.createServer;
 /** @type { import('http').Server } */
 let server;
@@ -26,7 +30,10 @@ messagePort.on(
       try {
         await import(msg.main);
         // @ts-ignore
-        messagePort.postMessage({ type: 'watch', paths: Array.from(global.sources) });
+        messagePort.postMessage({
+          type: 'watch',
+          paths: Array.from(global.sources),
+        });
       } catch (err) {
         console.log(err);
         throw err;
@@ -85,7 +92,9 @@ interceptClientRequest((url) => {
     for (const mock of mocks) {
       if (
         !mock.originRegex.test(url.origin) ||
-        (!mock.ignoreSearch && mock.search && !isEqualSearchParams(url.searchParams, mock.search))
+        (!mock.ignoreSearch &&
+          mock.search &&
+          !isEqualSearchParams(url.searchParams, mock.search))
       ) {
         continue;
       }

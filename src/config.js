@@ -11,18 +11,23 @@ const DIR_NAME = '.dvlp';
 const JS_MIME_TYPES = {
   'application/javascript': ['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx'],
 };
-const TESTING = process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefined;
+const TESTING =
+  process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefined;
 // @ts-ignore - Replaced during build
 const VERSION = global.$VERSION || '0.0.0';
 
 const dirPath = path.resolve(DIR_NAME);
 const subdirPath = path.join(dirPath, VERSION);
-const applicationLoaderPath = pathToFileURL(path.join(subdirPath, 'app-loader.mjs'));
+const applicationLoaderPath = pathToFileURL(
+  path.join(subdirPath, 'app-loader.mjs'),
+);
 const bundleDirName = path.join(DIR_NAME, VERSION, 'bundled');
 const bundleDirPath = path.resolve(bundleDirName);
 const bundleDirMetaPath = path.join(bundleDirPath, '__meta__.json');
 const defaultPort = process.env.PORT ? Number(process.env.PORT) : 8080;
-const electronEntryPath = pathToFileURL(path.join(subdirPath, 'electron-entry.cjs'));
+const electronEntryPath = pathToFileURL(
+  path.join(subdirPath, 'electron-entry.cjs'),
+);
 
 mime.define(JS_MIME_TYPES, true);
 // @ts-ignore
@@ -86,7 +91,15 @@ const config = {
   // Ordered to trigger transpiling if necessary
   extensionsByType: {
     css: ['.pcss', '.sass', '.scss', '.less', '.styl', '.stylus', '.css'],
-    html: ['.nunjs', '.nunjucks', '.hbs', '.handlebars', '.dust', '.html', '.htm'],
+    html: [
+      '.nunjs',
+      '.nunjucks',
+      '.hbs',
+      '.handlebars',
+      '.dust',
+      '.html',
+      '.htm',
+    ],
     js: ['.ts', '.mts', '.cts', '.tsx', '.jsx', '.mjs', '.cjs', '.js', '.json'],
   },
   latency: 50,

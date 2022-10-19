@@ -1,7 +1,11 @@
 import { error, info, noisyInfo } from '../utils/log.js';
 import { fileURLToPath, pathToFileURL, URLSearchParams } from 'node:url';
 import { getUrl, isEqualSearchParams } from '../utils/url.js';
-import { isInvalidFilePath, isJsFilePath, isJsonFilePath } from '../utils/is.js';
+import {
+  isInvalidFilePath,
+  isJsFilePath,
+  isJsonFilePath,
+} from '../utils/is.js';
 import { match, pathToRegexp } from 'path-to-regexp';
 import chalk from 'chalk';
 import config from '../config.js';
@@ -20,7 +24,10 @@ const debug = Debug('dvlp:mock');
 const mockClient =
   // @ts-ignore
   global.$MOCK_CLIENT ||
-  fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'mock-client.js'), 'utf8');
+  fs.readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), 'mock-client.js'),
+    'utf8',
+  );
 
 export class Mock {
   /**
@@ -35,7 +42,8 @@ export class Mock {
     this.clear = this.clear.bind(this);
     this._uninterceptClientRequest;
 
-    this.loaded = filePaths !== undefined ? this.load(filePaths) : Promise.resolve();
+    this.loaded =
+      filePaths !== undefined ? this.load(filePaths) : Promise.resolve();
   }
 
   /**
@@ -49,8 +57,10 @@ export class Mock {
    */
   addResponse(req, res, once = false, onMockCallback) {
     const ignoreSearch = (isMockRequest(req) && req.ignoreSearch) || false;
-    const filePath = (isMockRequest(req) && req.filePath) || path.join(process.cwd(), 'mock');
-    const [url, originRegex, pathRegex, paramsMatch, searchParams] = getUrlSegmentsForMatching(req, ignoreSearch);
+    const filePath =
+      (isMockRequest(req) && req.filePath) || path.join(process.cwd(), 'mock');
+    const [url, originRegex, pathRegex, paramsMatch, searchParams] =
+      getUrlSegmentsForMatching(req, ignoreSearch);
     /** @type { MockResponseDataType } */
     let type = 'json';
 
@@ -99,9 +109,13 @@ export class Mock {
     if (!Array.isArray(events)) {
       events = [events];
     }
-    const ignoreSearch = (isMockPushStream(stream) && stream.ignoreSearch) || false;
-    const filePath = (isMockPushStream(stream) && stream.filePath) || path.join(process.cwd(), 'mock');
-    const [url, originRegex, pathRegex, paramsMatch, searchParams] = getUrlSegmentsForMatching(stream, ignoreSearch);
+    const ignoreSearch =
+      (isMockPushStream(stream) && stream.ignoreSearch) || false;
+    const filePath =
+      (isMockPushStream(stream) && stream.filePath) ||
+      path.join(process.cwd(), 'mock');
+    const [url, originRegex, pathRegex, paramsMatch, searchParams] =
+      getUrlSegmentsForMatching(stream, ignoreSearch);
     /** @type { MockStreamDataType } */
     const type = originRegex.source.includes('ws') ? 'ws' : 'es';
     // Default to socket.io protocol for ws
@@ -159,7 +173,11 @@ export class Mock {
     };
 
     this.cache.add(mock);
-    debug(`adding mocked stream "${typeof stream === 'string' ? stream : stream.url}"`);
+    debug(
+      `adding mocked stream "${
+        typeof stream === 'string' ? stream : stream.url
+      }"`,
+    );
 
     return () => {
       this.remove(mock);
@@ -181,7 +199,10 @@ export class Mock {
     const stringifiedCache = JSON.stringify(this.toJSON(), undefined, 2);
 
     // Client mocking only relevant for loaded mocks
-    this.client = mockClient.replace(/cache\s?=\s?\[\]/, `cache=${stringifiedCache}`);
+    this.client = mockClient.replace(
+      /cache\s?=\s?\[\]/,
+      `cache=${stringifiedCache}`,
+    );
   }
 
   /**
@@ -268,7 +289,10 @@ export class Mock {
           path.resolve(path.dirname(filePath), body),
           {
             dotfiles: 'allow',
-            maxAge: getMaxAgeFromHeaders(normaliseHeaderKeys(headers, ['Cache-Control'])) || config.maxAge,
+            maxAge:
+              getMaxAgeFromHeaders(
+                normaliseHeaderKeys(headers, ['Cache-Control']),
+              ) || config.maxAge,
           },
         ).pipe(res);
         return true;
@@ -318,7 +342,11 @@ export class Mock {
     }
 
     triggerEventSequence(stream, eventSequence, push).then(() => {
-      noisyInfo(`${chalk.green('    0ms')} triggered mocked push event ${chalk.green(name)}`);
+      noisyInfo(
+        `${chalk.green('    0ms')} triggered mocked push event ${chalk.green(
+          name,
+        )}`,
+      );
     });
 
     return true;
@@ -410,7 +438,8 @@ export class Mock {
       if (
         !mock.originRegex.test(url.origin) ||
         // @ts-ignore
-        (!mock.ignoreSearch && !isEqualSearchParams(url.searchParams, mock.searchParams))
+        (!mock.ignoreSearch &&
+          !isEqualSearchParams(url.searchParams, mock.searchParams))
       ) {
         continue;
       }
@@ -448,7 +477,11 @@ export class Mock {
    * @private
    */
   async loadDirectory(dirpath) {
-    await Promise.all(fs.readdirSync(dirpath).map((filePath) => this.loadFilePath(path.join(dirpath, filePath))));
+    await Promise.all(
+      fs
+        .readdirSync(dirpath)
+        .map((filePath) => this.loadFilePath(path.join(dirpath, filePath))),
+    );
   }
 
   /**
@@ -502,9 +535,9 @@ export class Mock {
       }
 
       info(
-        `${chalk.green('✔')} loaded ${count} mock ${type}${count > 1 ? 's' : ''} from ${chalk.green(
-          getProjectPath(filePath),
-        )}`,
+        `${chalk.green('✔')} loaded ${count} mock ${type}${
+          count > 1 ? 's' : ''
+        } from ${chalk.green(getProjectPath(filePath))}`,
       );
     } catch (err) {
       console.log(err);
@@ -624,7 +657,10 @@ function sleep(duration) {
  * @returns { boolean }
  */
 function isMock(json) {
-  return ('request' in json && 'response' in json) || ('stream' in json && 'events' in json);
+  return (
+    ('request' in json && 'response' in json) ||
+    ('stream' in json && 'events' in json)
+  );
 }
 
 /**
@@ -635,8 +671,14 @@ function isMock(json) {
  */
 function isValidMockFormat(mock) {
   return (
-    ('request' in mock && 'url' in mock.request && 'response' in mock && 'body' in mock.response) ||
-    ('request' in mock && 'url' in mock.request && 'response' in mock && typeof mock.response === 'function') ||
+    ('request' in mock &&
+      'url' in mock.request &&
+      'response' in mock &&
+      'body' in mock.response) ||
+    ('request' in mock &&
+      'url' in mock.request &&
+      'response' in mock &&
+      typeof mock.response === 'function') ||
     ('stream' in mock && 'url' in mock.stream && 'events' in mock)
   );
 }
@@ -648,7 +690,12 @@ function isValidMockFormat(mock) {
  * @returns { req is MockRequest }
  */
 function isMockRequest(req) {
-  return req && typeof req === 'object' && req.url !== undefined && req.type === undefined;
+  return (
+    req &&
+    typeof req === 'object' &&
+    req.url !== undefined &&
+    req.type === undefined
+  );
 }
 
 /**
@@ -658,7 +705,12 @@ function isMockRequest(req) {
  * @returns { req is MockPushStream }
  */
 function isMockPushStream(req) {
-  return req && typeof req === 'object' && req.url !== undefined && req.type !== undefined;
+  return (
+    req &&
+    typeof req === 'object' &&
+    req.url !== undefined &&
+    req.type !== undefined
+  );
 }
 
 /**

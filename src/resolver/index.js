@@ -1,7 +1,19 @@
-import { getPackage, resolvePackagePath, resolvePackageSourcePath } from './package.js';
-import { getPackageNameFromSpecifier, isSelfReferentialSpecifier } from './utils.js';
+import {
+  getPackage,
+  resolvePackagePath,
+  resolvePackageSourcePath,
+} from './package.js';
+import {
+  getPackageNameFromSpecifier,
+  isSelfReferentialSpecifier,
+} from './utils.js';
 import { getProjectPath, resolveRealFilePath } from '../utils/file.js';
-import { isAbsoluteFilePath, isBareSpecifier, isNodeModuleFilePath, isRelativeFilePath } from '../utils/is.js';
+import {
+  isAbsoluteFilePath,
+  isBareSpecifier,
+  isNodeModuleFilePath,
+  isRelativeFilePath,
+} from '../utils/is.js';
 import fs from 'node:fs';
 import { noisyWarn } from '../utils/log.js';
 import path from 'node:path';
@@ -37,7 +49,12 @@ export function resolve(specifier, importer = 'index.js') {
     return cached.filePath;
   }
 
-  const result = doResolve(specifier, resolveRealFilePath(path.dirname(importer)), true, 'browser');
+  const result = doResolve(
+    specifier,
+    resolveRealFilePath(path.dirname(importer)),
+    true,
+    'browser',
+  );
 
   if (result === undefined) {
     return;
@@ -69,7 +86,12 @@ export function nodeResolve(specifier, importer = 'index.js') {
     return cached;
   }
 
-  const result = doResolve(specifier, resolveRealFilePath(path.dirname(importer)), true, 'node');
+  const result = doResolve(
+    specifier,
+    resolveRealFilePath(path.dirname(importer)),
+    true,
+    'node',
+  );
 
   if (result === undefined) {
     return;
@@ -138,7 +160,9 @@ function doResolve(specifier, importerDirPath, isEntry, env) {
 
   /** @type { string | undefined } */
   let filePath = resolvePackageSourcePath(
-    isRelativeFilePath(specifier) ? path.join(importerDirPath, specifier) : specifier,
+    isRelativeFilePath(specifier)
+      ? path.join(importerDirPath, specifier)
+      : specifier,
     pkg,
     verifyExports,
   );
@@ -157,7 +181,9 @@ function doResolve(specifier, importerDirPath, isEntry, env) {
   // so restart search from each package dir working upwards
   specifier = filePath;
 
-  const packageName = /** @type { string } */ (getPackageNameFromSpecifier(specifier));
+  const packageName = /** @type { string } */ (
+    getPackageNameFromSpecifier(specifier)
+  );
   const localPath = specifier.slice(packageName.length);
 
   for (const packageDirPath of pkg.paths) {
@@ -166,10 +192,18 @@ function doResolve(specifier, importerDirPath, isEntry, env) {
     if (importerDirPath !== packageDirPath && fs.existsSync(packagePath)) {
       // Using full package + specifier here to account for nested package directories
       // (non-root directories with a package.json file)
-      const result = doResolve(specifier, path.join(resolveRealFilePath(packagePath), localPath), false, env);
+      const result = doResolve(
+        specifier,
+        path.join(resolveRealFilePath(packagePath), localPath),
+        false,
+        env,
+      );
 
       if (result !== undefined) {
-        return { filePath: resolveRealFilePath(result.filePath), format: result.format };
+        return {
+          filePath: resolveRealFilePath(result.filePath),
+          format: result.format,
+        };
       }
     }
   }
@@ -202,11 +236,17 @@ function resolvePackage(dir, env) {
     if (!packageVersionCacheByName.has(pkg.name)) {
       packageVersionCacheByName.set(pkg.name, new Set([pkg.version]));
     } else {
-      const versions = /** @type { Set<string> } */ (packageVersionCacheByName.get(pkg.name));
+      const versions = /** @type { Set<string> } */ (
+        packageVersionCacheByName.get(pkg.name)
+      );
       versions.add(pkg.version);
 
       if (versions.size > 1) {
-        noisyWarn(`⚠️  multiple versions of the "${pkg.name}" package used: ${Array.from(versions).join(', ')}`);
+        noisyWarn(
+          `⚠️  multiple versions of the "${
+            pkg.name
+          }" package used: ${Array.from(versions).join(', ')}`,
+        );
       }
     }
 

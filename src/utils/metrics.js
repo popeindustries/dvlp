@@ -89,7 +89,10 @@ export function msDiff(times) {
  */
 export function format(duration) {
   const colour = duration > 10 ? (duration > 100 ? 'red' : 'yellow') : 'green';
-  let formatted = duration < 1000 ? `${duration}ms` : `${Math.floor((duration / 1000) * 100) / 100}s`;
+  let formatted =
+    duration < 1000
+      ? `${duration}ms`
+      : `${Math.floor((duration / 1000) * 100) / 100}s`;
 
   formatted = formatted.padStart(7, ' ');
 

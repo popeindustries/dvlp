@@ -36,13 +36,21 @@ const debug = Debug('dvlp:patch');
  * @param { Res } res
  * @param { PatchResponseOptions } options
  */
-export function patchResponse(resolvedFilePath, req, res, { footerScript, headerScript, resolveImport, send }) {
+export function patchResponse(
+  resolvedFilePath,
+  req,
+  res,
+  { footerScript, headerScript, resolveImport, send },
+) {
   // req.filepath set after file.find()
   const filePath = req.filePath || resolvedFilePath || req.url;
 
   debug(`patching response for "${getProjectPath(filePath)}"`);
 
-  proxySetHeader(res, disableContentEncodingHeader.bind(disableContentEncodingHeader, res));
+  proxySetHeader(
+    res,
+    disableContentEncodingHeader.bind(disableContentEncodingHeader, res),
+  );
 
   if (isHtmlRequest(req)) {
     const urls = [];
@@ -70,7 +78,10 @@ export function patchResponse(resolvedFilePath, req, res, { footerScript, header
       }
       scripts.header = headerScript.string;
     }
-    proxySetHeader(res, injectCSPHeader.bind(injectCSPHeader, res, urls, hashes));
+    proxySetHeader(
+      res,
+      injectCSPHeader.bind(injectCSPHeader, res, urls, hashes),
+    );
     proxyBodyWrite(res, (html) => {
       enableCrossOriginHeader(res);
       disableCacheControlHeader(res, req.url);
@@ -186,7 +197,10 @@ function injectScripts(res, scripts, html) {
   }
   if (footer && RE_CLOSE_BODY_TAG.test(html)) {
     debug('injecting footer script');
-    html = html.replace(RE_CLOSE_BODY_TAG, `<script>${footer}</script>\n</body>`);
+    html = html.replace(
+      RE_CLOSE_BODY_TAG,
+      `<script>${footer}</script>\n</body>`,
+    );
   }
 
   res.metrics.recordEvent(Metrics.EVENT_NAMES.scripts);
@@ -207,7 +221,10 @@ function injectCSPHeader(res, urls, hashes, key, value) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
   const lcKey = key.toLowerCase();
 
-  if (lcKey === 'content-security-policy-report-only' || lcKey === 'content-security-policy') {
+  if (
+    lcKey === 'content-security-policy-report-only' ||
+    lcKey === 'content-security-policy'
+  ) {
     const urlsString = urls.join(' ');
     const hashesString = hashes.map((hash) => `'sha256-${hash}'`).join(' ');
     const rules = value
@@ -216,7 +233,9 @@ function injectCSPHeader(res, urls, hashes, key, value) {
       .reduce((/** @type { {[key: string]: string} } */ rules, ruleString) => {
         const firstSpace = ruleString.indexOf(' ');
 
-        rules[ruleString.slice(0, firstSpace)] = ruleString.slice(firstSpace + 1);
+        rules[ruleString.slice(0, firstSpace)] = ruleString.slice(
+          firstSpace + 1,
+        );
         return rules;
       }, {});
 
@@ -225,7 +244,10 @@ function injectCSPHeader(res, urls, hashes, key, value) {
     } else {
       rules['connect-src'] = urlsString;
     }
-    if (rules['script-src'] && (RE_NONCE_SHA.test(value) || !value.includes('unsafe-inline'))) {
+    if (
+      rules['script-src'] &&
+      (RE_NONCE_SHA.test(value) || !value.includes('unsafe-inline'))
+    ) {
       rules['script-src'] = `${rules['script-src']} ${hashesString}`;
     }
     if (rules['default-src'] === "'none'") {
@@ -285,7 +307,9 @@ function rewriteCSSImports(res, filePath, css, resolveImport) {
 
         rewritten[context] = `${pre}${newId}${post}`;
       } else {
-        noisyWarn(`⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`);
+        noisyWarn(
+          `⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`,
+        );
       }
     }
   }
@@ -399,12 +423,24 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
           newId = filePathToUrl(newId);
 
           if (newId !== specifier || before || after) {
-            debug(`rewrote${isDynamic ? ' dynamic' : ''} import id from "${specifier}" to "${newId}"`);
-            js = js.substring(0, start) + before + newId + after + js.substring(end);
-            offset += before.length + newId.length + after.length - specifier.length;
+            debug(
+              `rewrote${
+                isDynamic ? ' dynamic' : ''
+              } import id from "${specifier}" to "${newId}"`,
+            );
+            js =
+              js.substring(0, start) +
+              before +
+              newId +
+              after +
+              js.substring(end);
+            offset +=
+              before.length + newId.length + after.length - specifier.length;
           }
         } else {
-          noisyWarn(`⚠️  unable to resolve path for "${specifier}" from "${projectFilePath}"`);
+          noisyWarn(
+            `⚠️  unable to resolve path for "${specifier}" from "${projectFilePath}"`,
+          );
         }
       }
     } else {

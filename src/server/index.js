@@ -1,6 +1,22 @@
-import { concatScripts, getDvlpGlobalString, getProcessEnvString, hashScript } from '../utils/scripts.js';
-import { find, getProjectPath, getTypeFromPath, getTypeFromRequest } from '../utils/file.js';
-import { handleFavicon, handleFile, handleMockResponse, handleMockWebSocket, handlePushEvent } from './handlers.js';
+import {
+  concatScripts,
+  getDvlpGlobalString,
+  getProcessEnvString,
+  hashScript,
+} from '../utils/scripts.js';
+import {
+  find,
+  getProjectPath,
+  getTypeFromPath,
+  getTypeFromRequest,
+} from '../utils/file.js';
+import {
+  handleFavicon,
+  handleFile,
+  handleMockResponse,
+  handleMockWebSocket,
+  handlePushEvent,
+} from './handlers.js';
 import { info, noisyInfo } from '../utils/log.js';
 import { isBundledFilePath, isNodeModuleFilePath } from '../utils/is.js';
 import { resolveCerts, validateCert } from './certificate-validation.js';
@@ -77,7 +93,10 @@ export class Dvlp {
     this.server;
 
     const reloadEmbed = reload ? getReloadClientEmbed(port) : '';
-    let headerScript = concatScripts([getProcessEnvString(), getDvlpGlobalString()]);
+    let headerScript = concatScripts([
+      getProcessEnvString(),
+      getDvlpGlobalString(),
+    ]);
 
     /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
@@ -126,7 +145,10 @@ export class Dvlp {
   start() {
     return new Promise((resolve, reject) => {
       if (this.entry.isSecure) {
-        this.server = http2.createSecureServer(this.secureServerOptions, this.requestHandler);
+        this.server = http2.createSecureServer(
+          this.secureServerOptions,
+          this.requestHandler,
+        );
         this.server.setTimeout(0);
       } else {
         this.server = http.createServer(this.requestHandler);
@@ -151,7 +173,12 @@ export class Dvlp {
         });
       });
       this.server.on('upgrade', (req, socket, body) => {
-        handleMockWebSocket(/** @type { Req } */ (req), socket, body, this.mocks);
+        handleMockWebSocket(
+          /** @type { Req } */ (req),
+          socket,
+          body,
+          this.mocks,
+        );
       });
 
       this.server.listen(this.port);
@@ -177,7 +204,11 @@ export class Dvlp {
     }
 
     if (!silent) {
-      noisyInfo(`\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.cyan(getProjectPath(filePath))}`);
+      noisyInfo(
+        `\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.cyan(
+          getProjectPath(filePath),
+        )}`,
+      );
     }
 
     // Find corresponding url
@@ -194,7 +225,9 @@ export class Dvlp {
 
     if (this.clients.size) {
       noisyInfo(
-        `\n  ${chalk.yellow(`💫 ${event}ing`)} ${this.clients.size} client${this.clients.size > 1 ? 's' : ''}\n`,
+        `\n  ${chalk.yellow(`💫 ${event}ing`)} ${this.clients.size} client${
+          this.clients.size > 1 ? 's' : ''
+        }\n`,
       );
 
       for (const client of this.clients) {
@@ -231,26 +264,40 @@ export class Dvlp {
     res.once('finish', () => {
       if (!res.unhandled) {
         const duration = res.metrics.getEvent('response', true);
-        const modifier = res.bundled ? ' bundled ' : res.mocked ? ' mocked ' : res.transformed ? ' transformed ' : ' ';
+        const modifier = res.bundled
+          ? ' bundled '
+          : res.mocked
+          ? ' mocked '
+          : res.transformed
+          ? ' transformed '
+          : ' ';
         let url = getProjectPath(req.url);
 
         if (res.mocked) {
           // Decode query param and strip "?dvlpmock=" prefix (sometimes double encoded if coming from client)
-          url = decodeURIComponent(decodeURIComponent(url.slice(url.indexOf('?dvlpmock=') + 10)));
+          url = decodeURIComponent(
+            decodeURIComponent(url.slice(url.indexOf('?dvlpmock=') + 10)),
+          );
         }
 
-        const msg = `${duration} handled${chalk.italic(modifier)}request for ${chalk.green(url)}`;
+        const msg = `${duration} handled${chalk.italic(
+          modifier,
+        )}request for ${chalk.green(url)}`;
 
         res.mocked ? noisyInfo(msg) : info(msg);
       } else {
         // TODO: handle app response
-        const reroute = res.rerouted ? `(re-routed to ${chalk.green(req.url)})` : '';
+        const reroute = res.rerouted
+          ? `(re-routed to ${chalk.green(req.url)})`
+          : '';
         const duration = res.metrics.getEvent('response', true);
 
         info(
           res.statusCode < 300
             ? `${duration} handled request for ${chalk.green(url)} ${reroute}`
-            : `${duration} [${res.statusCode}] unhandled request for ${chalk.red(url)} ${reroute}`,
+            : `${duration} [${
+                res.statusCode
+              }] unhandled request for ${chalk.red(url)} ${reroute}`,
         );
       }
     });
@@ -260,7 +307,11 @@ export class Dvlp {
 
     res.url = req.url;
 
-    if (handleFavicon(req, res) || handleMockResponse(req, res, this.mocks) || handlePushEvent(req, res, this.mocks)) {
+    if (
+      handleFavicon(req, res) ||
+      handleMockResponse(req, res, this.mocks) ||
+      handlePushEvent(req, res, this.mocks)
+    ) {
       return;
     }
 
@@ -297,7 +348,12 @@ export class Dvlp {
       // This ensures that all symlinked workspace files are transformed even though they are dependencies
       if (!isNodeModuleFilePath(filePath)) {
         // Will respond if transformer exists for this type
-        await this.hooks.transform(filePath, this.lastChanged, res, parseUserAgent(req.headers['user-agent']));
+        await this.hooks.transform(
+          filePath,
+          this.lastChanged,
+          res,
+          parseUserAgent(req.headers['user-agent']),
+        );
       }
     }
 
