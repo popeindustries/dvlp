@@ -1,6 +1,10 @@
 import childProcess from 'child_process';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'url';
 import { getEntryContents } from './electron-entry.js';
 import { writeFileSync } from 'node:fs';
+
+const require = createRequire(import.meta.url);
 
 /**
  * Create electron entry file
@@ -21,9 +25,8 @@ export function createElectronEntryFile(filePath, entryPath, origin) {
  * @param { import('url').URL } filePath
  */
 export async function spawnElectron(filePath) {
-  const { default: pathToElectron } = await import('electron');
-
-  const child = childProcess.spawn(/** @type { any } */ (pathToElectron), [filePath.href], {
+  const pathToElectron = require('electron');
+  const child = childProcess.spawn(/** @type { any } */ (pathToElectron), [fileURLToPath(filePath.href)], {
     stdio: 'inherit',
     windowsHide: false,
   });
