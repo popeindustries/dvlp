@@ -195,7 +195,7 @@ export class ApplicationHost {
         '--enable-source-maps',
         '--no-warnings',
         '--experimental-loader',
-        config.applicationLoaderPath,
+        config.applicationLoaderPath.href,
       ],
       workerData: {
         hostOrigin: this.hostOrigin,

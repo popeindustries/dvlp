@@ -3,6 +3,6 @@ declare namespace NodeJS {
     $MOCK_CLIENT?: string;
     $RELOAD_CLIENT?: string;
     $VERSION: string;
-    sourceFiles: Set<string>;
+    sources: Set<string>;
   }
 }

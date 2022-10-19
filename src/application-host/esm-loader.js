@@ -7,9 +7,8 @@ const t = String.raw;
  */
 export function getLoaderContents(hooksPath) {
   return t`
-  import { fileURLToPath, pathToFileURL } from 'node:url';
   import { esbuild, nodeResolve } from 'dvlp';
-  import { extname } from 'node:path';
+  import { fileURLToPath } from 'node:url';
   import fs from 'node:fs';
   ${
     hooksPath
@@ -19,10 +18,8 @@ export function getLoaderContents(hooksPath) {
 
   global.sources = new Set();
 
-  const BASE_URL = pathToFileURL(process.cwd() + '/').href;
   const IS_WIN32 = process.platform === 'win32';
   const RE_EXTS = /\.(tsx?|json)$/;
-  const RE_IGNORE = /^[^.]/
   let originalDefaultResolve;
   let originalDefaultLoad;
   let originalDefaultTransformSource;

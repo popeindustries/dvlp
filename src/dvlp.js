@@ -1,4 +1,8 @@
 import {
+  createElectronEntryFile,
+  spawnElectron,
+} from './electron-host/index.js';
+import {
   exists,
   expandPath,
   getProjectPath,
@@ -9,10 +13,6 @@ import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
 import config from './config.js';
 import { createApplicationLoaderFile } from './application-host/index.js';
-import {
-  createElectronEntryFile,
-  spawnElectron,
-} from './electron-host/index.js';
 import { Dvlp } from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
 import fs from 'node:fs';
