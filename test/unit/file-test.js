@@ -1,4 +1,5 @@
-import { expandPath, find, isEsmFile } from '../../src/utils/file.js';
+import { find, isEsmFile } from '../../src/utils/file.js';
+import { expandPath } from '../../src/utils/expand-path.js';
 import { expect } from 'chai';
 import path from 'node:path';
 

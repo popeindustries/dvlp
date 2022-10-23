@@ -7,6 +7,7 @@ declare interface Config {
   bundleDirPath: string;
   defaultPort: number;
   directories: Array<string>;
+  dirPath: string;
   dvlpDirPath: string;
   electronEntryPath: import('url').URL;
   esbuildTargetByExtension: {
@@ -15,6 +16,7 @@ declare interface Config {
   extensionsByType: {
     [type: string]: Array<string>;
   };
+  jsMimeTypes: Record<string, Array<string>>;
   latency: number;
   maxAge: string;
   reloadEndpoint: string;
@@ -24,6 +26,7 @@ declare interface Config {
     [extension: string]: 'css' | 'html' | 'js';
   };
   version: string;
+  versionDirPath: string;
 }
 
 declare interface Entry {
@@ -45,10 +48,15 @@ type HttpServerOptions = import('http').ServerOptions;
 type Http2SecureServer = import('http2').Http2SecureServer;
 type Http2SecureServerOptions = import('http2').SecureServerOptions;
 type esbuild = {
-  build(
-    options: import('esbuild').BuildOptions & { write: false },
-  ): Promise<import('esbuild').BuildResult & { outputFiles: import('esbuild').OutputFile[] }>;
-  transform(input: string, options?: import('esbuild').TransformOptions): Promise<import('esbuild').TransformResult>;
+  build(options: import('esbuild').BuildOptions & { write: false }): Promise<
+    import('esbuild').BuildResult & {
+      outputFiles: import('esbuild').OutputFile[];
+    }
+  >;
+  transform(
+    input: string,
+    options?: import('esbuild').TransformOptions,
+  ): Promise<import('esbuild').TransformResult>;
 };
 
 type Req = (IncomingMessage | Http2ServerRequest) & {

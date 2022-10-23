@@ -19,6 +19,8 @@ import { noisyWarn } from '../utils/log.js';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+export { getPackage };
+
 /** @type { Map<string, Package> } */
 const packageCacheByImportDir = new Map();
 /** @type { Map<string, Set<string>> } */

@@ -2,11 +2,11 @@ import { dirname, join, relative } from 'node:path';
 import { fatal, noisyInfo } from '../utils/log.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { format, msDiff } from '../utils/metrics.js';
-import { MessageChannel, SHARE_ENV, Worker } from 'worker_threads';
+import { MessageChannel, SHARE_ENV, Worker } from 'node:worker_threads';
+import { readFileSync, writeFileSync } from 'node:fs';
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
-import { getLoaderContents } from './esm-loader.js';
 import { getProjectPath } from '../utils/file.js';
 import http from 'node:http';
 import { isProxy } from '../utils/is.js';
@@ -14,12 +14,12 @@ import { performance } from 'node:perf_hooks';
 import { request } from 'node:http';
 import { syncBuiltinESMExports } from 'node:module';
 import { watch } from '../utils/watch.js';
-import { writeFileSync } from 'node:fs';
 
 const debug = Debug('dvlp:host');
+const __dirname = dirname(fileURLToPath(import.meta.url));
 let workerPath = relative(
   process.cwd(),
-  join(dirname(fileURLToPath(import.meta.url)), './worker.js'),
+  join(__dirname, './application-worker.js'),
 ).replace(/\\/g, '/');
 
 if (!workerPath.startsWith('.')) {
@@ -36,10 +36,14 @@ export function createApplicationLoaderFile(filePath, hooksConfig) {
   const hooksPath =
     hooksConfig.hooks &&
     (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
-      ? pathToFileURL(/** @type { string } */ (hooksConfig.hooksPath)).href
+      ? hooksConfig.hooksPath
       : undefined;
-  const contents = getLoaderContents(hooksPath);
 
+  const contents =
+    (hooksPath
+      ? `import customHooks from '${hooksPath}';\n`
+      : 'const customHooks = {};\n') +
+    readFileSync(join(__dirname, 'application-loader.js'));
   writeFileSync(filePath, contents);
 }
 

@@ -10,16 +10,16 @@ import { getPackageForDir } from '../resolver/index.js';
 import { isJsFilePath } from './is.js';
 import path from 'node:path';
 
+const { bundleDirMetaPath, testing } = config;
 /** @type { Record<string, string> } */
 let meta = {};
 
-if (existsSync(config.bundleDirMetaPath)) {
-  meta = JSON.parse(readFileSync(config.bundleDirMetaPath, 'utf-8'));
+if (existsSync(bundleDirMetaPath)) {
+  meta = JSON.parse(readFileSync(bundleDirMetaPath, 'utf-8'));
 }
-
 process.on('exit', () => {
-  if (!config.testing) {
-    writeFileSync(config.bundleDirMetaPath, JSON.stringify(meta));
+  if (!testing) {
+    writeFileSync(bundleDirMetaPath, JSON.stringify(meta));
   }
 });
 

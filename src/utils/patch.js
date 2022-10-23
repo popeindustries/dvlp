@@ -2,6 +2,7 @@ import { brotliDecompressSync, unzipSync } from 'node:zlib';
 import { fatal, noisyWarn, warn, WARN_BARE_IMPORT } from './log.js';
 import { getAbsoluteProjectPath, getProjectPath, isEsmFile } from './file.js';
 import { getBundlePath, getBundleSourcePath } from './bundling.js';
+import { getPackage, resolve } from '../resolver/index.js';
 import {
   isBundledFilePath,
   isBundledUrl,
@@ -15,7 +16,6 @@ import { filePathToUrl } from './url.js';
 import { Metrics } from './metrics.js';
 import { parse } from 'es-module-lexer';
 import path from 'node:path';
-import { resolve } from '../resolver/index.js';
 
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
 const RE_CSS_IMPORT = /(@import\b[^'"]+['"])([^'"\n]+)(['"])/gm;
@@ -413,7 +413,10 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
           let newId = '';
 
           // Bundle if in node_modules and not an es module
-          if (isNodeModuleFilePath(importPath) && !isEsmFile(importPath)) {
+          if (
+            isNodeModuleFilePath(importPath) &&
+            !isEsmFile(importPath, getPackage(importPath, undefined, 'browser'))
+          ) {
             newId = `/${getBundlePath(specifier, importPath)}`;
             warn(WARN_BARE_IMPORT, specifier);
           } else {

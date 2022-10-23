@@ -8,20 +8,13 @@ import {
 } from './is.js';
 import { warn, WARN_MISSING_EXTENSION, WARN_PACKAGE_INDEX } from './log.js';
 import config from '../config.js';
-import favicon from './favicon.js';
 import fs from 'node:fs';
-import glob from 'glob';
-import isFileEsm from 'is-file-esm';
 import { parse } from 'es-module-lexer';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-export const favIcon = Buffer.from(favicon, 'base64');
-
 const FILE_TYPES = ['js', 'css', 'html'];
 const MAX_FILE_SYSTEM_DEPTH = 10;
-const RE_GLOB = /[*[{]/;
-const RE_SEPARATOR = /[,;]\s?|\s/g;
 
 /** @type { Map<string, 'cjs' | 'esm'> } */
 const fileFormatCache = new Map();
@@ -46,50 +39,6 @@ export function exists(filePaths) {
       throw Error(`path '${filePath}' does not exist`);
     }
   }
-}
-
-/**
- * Expand "filePath" into multiple filePaths
- * Handles globs and/or separators
- *
- * @param { string | Array<string> } filePath
- * @returns { Array<string> }
- */
-export function expandPath(filePath) {
-  if (!filePath) {
-    return [];
-  }
-
-  if (typeof filePath === 'string' && fs.existsSync(path.resolve(filePath))) {
-    return [filePath];
-  }
-
-  if (Array.isArray(filePath)) {
-    return filePath.reduce((/** @type { Array<string> } */ filePaths, fp) => {
-      if (fp) {
-        // @ts-ignore
-        filePaths.push(...expandPath(fp));
-      }
-      return filePaths;
-    }, []);
-  }
-
-  RE_SEPARATOR.lastIndex = 0;
-  if (RE_SEPARATOR.test(filePath)) {
-    filePath = filePath.split(RE_SEPARATOR);
-  }
-  if (!Array.isArray(filePath)) {
-    filePath = [filePath];
-  }
-
-  return filePath.reduce((/** @type { Array<string> } */ filePaths, fp) => {
-    if (RE_GLOB.test(fp)) {
-      filePaths.push(...glob.sync(fp));
-    } else {
-      filePaths.push(fp);
-    }
-    return filePaths;
-  }, []);
 }
 
 /**
@@ -285,10 +234,10 @@ export async function importModule(filePath) {
  * Determine if 'filePath' is referencing an esm file
  *
  * @param { string } filePath
- * @param { string } [fileContents]
+ * @param { Package } [pkg]
  * @returns { boolean }
  */
-export function isEsmFile(filePath, fileContents) {
+export function isEsmFile(filePath, pkg) {
   const cached = fileFormatCache.get(filePath);
 
   if (cached !== undefined) {
@@ -299,18 +248,13 @@ export function isEsmFile(filePath, fileContents) {
   let isEsm = false;
 
   if (extension === '.js') {
-    try {
-      // Check package.json for metadata to avoid parsing file contents
-      if (isFileEsm.sync(filePath).esm) {
-        isEsm = true;
-      }
-    } catch (err) {
-      // Ignore err
+    if (pkg?.type === 'module') {
+      isEsm = true;
     }
 
     if (!isEsm) {
       try {
-        fileContents = fileContents || fs.readFileSync(filePath, 'utf8');
+        const fileContents = fs.readFileSync(filePath, 'utf8');
         const [imports, exports] = parse(fileContents);
         isEsm = imports.length > 0 || exports.length > 0;
       } catch (err) {

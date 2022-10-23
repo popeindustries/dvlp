@@ -11,10 +11,12 @@ export function getEntryContents(entryPath, origin) {
   const electron = require('electron');
   const origin = '${origin}';
 
-  electron.BrowserWindow.prototype.loadFile = function loadFile(filePath, options) {
-    const url = new URL(filePath, origin);
-    return this.loadURL(url.href);
-  };
+  console.log(electron)
 
-  import('${entryPath}');`;
+  // electron.BrowserWindow.prototype.loadFile = function loadFile(filePath, options) {
+  //   const url = new URL(filePath, origin);
+  //   return this.loadURL(url.href);
+  // };
+
+  // import('${entryPath}');`;
 }
