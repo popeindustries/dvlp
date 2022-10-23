@@ -38,12 +38,12 @@ export function createApplicationLoaderFile(filePath, hooksConfig) {
     (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
       ? hooksConfig.hooksPath
       : undefined;
-
   const contents =
     (hooksPath
       ? `import customHooks from '${hooksPath}';\n`
       : 'const customHooks = {};\n') +
     readFileSync(join(__dirname, 'application-loader.js'));
+
   writeFileSync(filePath, contents);
 }
 

@@ -1,5 +1,6 @@
 import childProcess from 'child_process';
 import { createRequire } from 'node:module';
+import { fatal } from '../utils/log.js';
 import { getEntryContents } from './electron-entry.js';
 import { writeFileSync } from 'node:fs';
 
@@ -21,20 +22,37 @@ export function createElectronEntryFile(filePath, entryPath, origin) {
 /**
  * Spawn electron process
  *
- * @param { string } filePath
+ * @param { string } entryPath
  * @param { string } loaderPath
  */
-export async function spawnElectron(filePath, loaderPath) {
-  const pathToElectron = require('electron');
-  const child = childProcess.spawn(
-    /** @type { any } */ (pathToElectron),
-    ['--experimental-loader', loaderPath, filePath],
+export async function spawnElectron(entryPath, loaderPath) {
+  /** @type { string } */
+  let pathToElectron;
+
+  try {
+    // @ts-expect-error - returns string from here
+    pathToElectron = require('electron');
+  } catch (err) {
+    fatal(
+      'unable to resolve "electron" package. Make sure it has been added as a project dependency',
+    );
+    throw err;
+  }
+
+  const child = childProcess.fork(
+    pathToElectron,
+    [
+      '--enable-source-maps',
+      '--no-warnings',
+      '--experimental-loader',
+      loaderPath,
+      entryPath,
+    ],
     {
       env: {
         ELECTRON_RUN_AS_NODE: '1',
       },
       stdio: 'inherit',
-      windowsHide: false,
     },
   );
   child.on('close', function (code, signal) {

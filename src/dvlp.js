@@ -1,13 +1,9 @@
+import './utils/bootstrap.js';
 import {
   createElectronEntryFile,
   spawnElectron,
 } from './electron-host/index.js';
-import {
-  exists,
-  expandPath,
-  getProjectPath,
-  importModule,
-} from './utils/file.js';
+import { exists, getProjectPath, importModule } from './utils/file.js';
 import logger, { error, info } from './utils/log.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
@@ -15,13 +11,10 @@ import config from './config.js';
 import { createApplicationLoaderFile } from './application-host/index.js';
 import { Dvlp } from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
+import { expandPath } from './utils/expand-path.js';
+import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import path from 'node:path';
-
-// Export for easy import in loader hook
-// @see src/hooks/loader.js#L28
-export * as esbuild from 'esbuild';
-export { nodeResolve } from './resolver/index.js';
 
 /**
  * Server instance factory
@@ -94,7 +87,10 @@ export async function server(
       server.origin,
     );
     try {
-      await spawnElectron(config.electronEntryPath);
+      await spawnElectron(
+        fileURLToPath(config.electronEntryPath.href),
+        config.applicationLoaderPath.href,
+      );
     } catch (err) {
       console.error(err);
     }
