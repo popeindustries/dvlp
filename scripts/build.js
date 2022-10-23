@@ -62,7 +62,6 @@ await esbuild.build({
   // Force keep dynamic import that has been back-ported to 12.2
   target: 'node13.2',
   platform: 'node',
-  sourcemap: true,
   outfile: 'dvlp-test.js',
 });
 
@@ -77,7 +76,6 @@ await esbuild.build({
   ],
   external: ['electron', 'esbuild', 'fsevents'],
   format: 'esm',
-  sourcemap: true,
   splitting: false,
   // Force keep dynamic import that has been back-ported to 12.2
   target: 'node13.2',
@@ -92,17 +90,16 @@ await esbuild.build({
   entryPoints: ['./src/application-host/application-loader.js'],
   external: ['esbuild'],
   format: 'esm',
-  sourcemap: true,
   splitting: false,
   // Force keep dynamic import that has been back-ported to 12.2
   target: 'node13.2',
   outdir: '.',
   platform: 'node',
   plugins: [
+    // Replace `log.js` with dummy
     {
-      name: 'log',
+      name: 'dummylog',
       setup(build) {
-        // Replace `log.js` with dummy
         build.onLoad({ filter: /utils\/log.js$/ }, (args) => {
           return {
             contents: `
