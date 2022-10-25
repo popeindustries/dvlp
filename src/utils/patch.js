@@ -17,6 +17,7 @@ import { parse } from 'es-module-lexer';
 import path from 'node:path';
 import { resolve } from '../resolver/index.js';
 
+const RE_IMPORT_ASSERT = /type\s?:\s?['"]([^'"]+)/;
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
 const RE_CSS_IMPORT = /(@import\b[^'"]+['"])([^'"\n]+)(['"])/gm;
 const RE_DYNAMIC_IMPORT = /(^[^(]+\(['"])([^'"]+)(['"][^)]*\))/;
@@ -151,7 +152,7 @@ function disableContentEncodingHeader(res, headerKey, headerValue) {
 function disableCacheControlHeader(res, url) {
   if (!res.headersSent) {
     if (!isNodeModuleFilePath(url) && !isBundledUrl(url)) {
-      res.setHeader('cache-control', 'no-cache, dvlp-disabled');
+      res.setHeader('cache-control', 'no-cache, no-store, dvlp-disabled');
     }
   }
 }
@@ -323,17 +324,27 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
 
     if (imports.length > 0) {
       // Track length delta between 'id' and 'newId' to adjust
-      // parsed indexes as we substitue during iteration
+      // parsed indexes as we substitute during iteration
       let offset = 0;
 
-      for (const { d, e, s } of imports) {
-        const isDynamic = d > -1;
+      for (const { a: assert, d: dynamic, e, s, se } of imports) {
+        const isAssert = assert > -1;
+        const isDynamic = dynamic > -1;
         let start = offset + s;
         let end = offset + e;
         let specifier = js.substring(start, end);
         let after = '';
         let before = '';
+        let queryString = '';
         let importPath;
+
+        // Flag as import via assert to correctly trigger client reload instead of refresh
+        if (isAssert) {
+          const match = RE_IMPORT_ASSERT.exec(js.substring(offset + assert, offset + se));
+          if (match) {
+            queryString = `?assert=${match[1]}`;
+          }
+        }
 
         if (isDynamic) {
           // Dynamic import indexes include quotes if strings, so strip from id before resolving
@@ -396,7 +407,7 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
             newId = importPath;
           }
 
-          newId = filePathToUrl(newId);
+          newId = filePathToUrl(newId) + queryString;
 
           if (newId !== specifier || before || after) {
             debug(`rewrote${isDynamic ? ' dynamic' : ''} import id from "${specifier}" to "${newId}"`);
