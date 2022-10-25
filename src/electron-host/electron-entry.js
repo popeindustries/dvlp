@@ -11,12 +11,22 @@ export function getEntryContents(entryPath, origin) {
   const electron = require('electron');
   const origin = '${origin}';
 
-  console.log(electron)
+  electron.BrowserWindow.prototype.loadFile = function loadFile(filePath, options) {
+    const url = new URL(filePath, origin);
+    return this.loadURL(url.href);
+  };
 
-  // electron.BrowserWindow.prototype.loadFile = function loadFile(filePath, options) {
-  //   const url = new URL(filePath, origin);
-  //   return this.loadURL(url.href);
-  // };
+  process.on('message', async (msg) => {
+    if (msg.type === 'start') {
+      try {
+        await import('${entryPath}');
+        process.send({ type: 'watch', paths: Array.from(global.sources) });
+      } catch (err) {
+        console.log(err);
+        throw err;
+      }
+    }
+  })
 
-  // import('${entryPath}');`;
+  `;
 }

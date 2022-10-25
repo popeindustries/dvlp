@@ -1,5 +1,5 @@
 import { dirname, join, relative } from 'node:path';
-import { fatal, noisyInfo } from '../utils/log.js';
+import { error, fatal, noisyInfo } from '../utils/log.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { format, msDiff } from '../utils/metrics.js';
 import { MessageChannel, SHARE_ENV, Worker } from 'node:worker_threads';
@@ -15,7 +15,7 @@ import { request } from 'node:http';
 import { syncBuiltinESMExports } from 'node:module';
 import { watch } from '../utils/watch.js';
 
-const debug = Debug('dvlp:host');
+const debug = Debug('dvlp:apphost');
 const __dirname = dirname(fileURLToPath(import.meta.url));
 let workerPath = relative(
   process.cwd(),
@@ -74,6 +74,7 @@ export class ApplicationHost {
           )}`,
         );
         await this.restart();
+        // TODO: is this necessary?
         triggerClientReload(filePath, true);
       });
     }
@@ -113,8 +114,7 @@ export class ApplicationHost {
 
       noisyInfo(`${format(duration)} application server started`);
     } catch (err) {
-      console.error(err);
-      // Skip. Unable to recover until file save and restart
+      error(err);
     }
   }
 
@@ -133,7 +133,8 @@ export class ApplicationHost {
   }
 
   /**
-   * Handle application request
+   * Handle application request.
+   * Pipe incoming request to application running in active thread.
    *
    * @param { Req } req
    * @param { Res } res

@@ -24,6 +24,7 @@ import { ApplicationHost } from '../application-host/index.js';
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
+import { ElectronHost } from '../electron-host/index.js';
 import { EventSource } from '../reload/event-source.js';
 import fs from 'node:fs';
 import { getReloadClientEmbed } from '../reload/reload-client-embed.js';
@@ -133,6 +134,8 @@ export class Dvlp {
         reload ? this.triggerClientReload : undefined,
         this.mocks?.toJSON(),
       );
+    } else if (entry.isElectron) {
+      this.electronHost = new ElectronHost();
     }
   }
 
@@ -160,6 +163,8 @@ export class Dvlp {
         debug('server started');
         if (this.applicationHost) {
           await this.applicationHost.start();
+        } else if (this.electronHost) {
+          await this.electronHost.start();
         }
         this.isListening = true;
         resolve();
@@ -450,9 +455,8 @@ export class Dvlp {
     }
     this.clients.clear();
 
-    if (this.applicationHost) {
-      this.applicationHost.destroy();
-    }
+    this.applicationHost?.destroy();
+    this.electronHost?.destroy();
 
     return new Promise(async (resolve) => {
       if (!this.server) {

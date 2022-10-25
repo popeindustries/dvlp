@@ -1,18 +1,14 @@
 import './utils/bootstrap.js';
-import {
-  createElectronEntryFile,
-  spawnElectron,
-} from './electron-host/index.js';
 import { exists, getProjectPath, importModule } from './utils/file.js';
 import logger, { error, info } from './utils/log.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
 import config from './config.js';
 import { createApplicationLoaderFile } from './application-host/index.js';
+import { createElectronEntryFile } from './electron-host/index.js';
 import { Dvlp } from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
 import { expandPath } from './utils/expand-path.js';
-import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -70,13 +66,6 @@ export async function server(
     hooksPath,
   });
 
-  const server = new Dvlp(entry, port, reload, hooks, mockPath, certsPath);
-  try {
-    await server.start();
-  } catch (err) {
-    error(err);
-  }
-
   if (electron) {
     if (typeof entry.main !== 'string') {
       throw Error(`the "--electron" flag requires a valid entry file path`);
@@ -84,16 +73,16 @@ export async function server(
     createElectronEntryFile(
       config.electronEntryPath,
       entry.main,
-      server.origin,
+      `http://localhost:${port}`,
     );
-    try {
-      await spawnElectron(
-        fileURLToPath(config.electronEntryPath.href),
-        config.applicationLoaderPath.href,
-      );
-    } catch (err) {
-      console.error(err);
-    }
+  }
+
+  const server = new Dvlp(entry, port, reload, hooks, mockPath, certsPath);
+
+  try {
+    await server.start();
+  } catch (err) {
+    error(err);
   }
 
   const parentDir = path.resolve(process.cwd(), '..');
