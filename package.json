@@ -30,14 +30,14 @@
   },
   "dependencies": {
     "commander": "^9.4.1",
-    "esbuild": "~0.15.11"
+    "esbuild": "~0.15.12"
   },
   "devDependencies": {
     "@fidm/x509": "^1.2.1",
     "@types/debug": "^4.1.7",
     "@types/glob": "^8.0.0",
     "@types/mime": "^3.0.1",
-    "@types/node": "^18.11.0",
+    "@types/node": "^18.11.5",
     "@types/platform": "^1.3.4",
     "@types/rimraf": "^3.0.2",
     "@types/send": "^0.17.1",
@@ -47,12 +47,12 @@
     "cjs-module-lexer": "^1.2.2",
     "cross-env": "^7.0.3",
     "debug": "^4.3.4",
-    "es-module-lexer": "~1.0.5",
-    "eslint": "^8.25.0",
+    "es-module-lexer": "~1.1.0",
+    "eslint": "^8.26.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eventsource": "^2.0.2",
-    "fastify": "^4.9.0",
+    "fastify": "^4.9.2",
     "fastify-static": "^4.7.0",
     "faye-websocket": "~0.11.4",
     "glob": "^8.0.3",
