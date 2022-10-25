@@ -192,6 +192,11 @@ export function getTypeFromRequest(req) {
  * @returns { 'css' | 'html' | 'js' }
  */
 export function getTypeFromPath(filePath) {
+  // Handle other types imported via js as JS
+  // The assert query param is added at import parse time in `utils/patch.js`
+  if (filePath.includes('?assert=')) {
+    return 'js';
+  }
   return config.typesByExtension[path.extname(filePath)];
 }
 

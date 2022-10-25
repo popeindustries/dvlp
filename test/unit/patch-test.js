@@ -253,7 +253,7 @@ describe('patch', () => {
         res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
         expect(res.getHeader('Cache-Control')).to.equal(
-          'no-cache, dvlp-disabled',
+          'no-cache, no-store, dvlp-disabled',
         );
       });
       it('should disable cache-control headers for local files when cache-control not set', () => {
@@ -262,7 +262,7 @@ describe('patch', () => {
         patchResponse(req.filePath, req, res, {});
         res.end('done');
         expect(res.getHeader('Cache-Control')).to.equal(
-          'no-cache, dvlp-disabled',
+          'no-cache, no-store, dvlp-disabled',
         );
       });
       it('should not disable cache-control headers for node_modules files', () => {
