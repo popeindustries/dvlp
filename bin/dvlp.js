@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 
 import { dirname, join } from 'path';
+import { Command } from 'commander';
 import { fileURLToPath } from 'url';
-import { program } from 'commander';
 import { readFileSync } from 'fs';
 
-const pkg = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), '../package.json'),
-  'utf8',
+const pkg = JSON.parse(
+  readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '../package.json'),
+    'utf8',
+  ),
 );
+const program = new Command();
 
 program
   .usage('[options] [path...]')
@@ -30,9 +33,9 @@ program
   )
   .option('-s, --silent', 'suppress default logging')
   .option('--no-reload', 'disable reloading connected browsers on file change')
+  .version(pkg.version, '-v, --version', 'output the current version')
   .arguments('[path...]')
-  .action(boot)
-  .version(pkg.version, '-v, --version');
+  .action(boot);
 
 program.parse(process.argv);
 
