@@ -1,5 +1,5 @@
 import config from './config.js';
-import { interceptClientRequest } from './utils/intercept.js';
+import { interceptClientRequest } from './utils/intercept-client-request.js';
 import { isLocalhost } from './utils/is.js';
 import { TestServer } from './test-server/index.js';
 

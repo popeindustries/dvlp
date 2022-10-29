@@ -5,7 +5,10 @@ import { fileURLToPath } from 'url';
 import { program } from 'commander';
 import { readFileSync } from 'fs';
 
-const pkg = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../package.json'), 'utf8');
+const pkg = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../package.json'),
+  'utf8',
+);
 
 program
   .usage('[options] [path...]')
@@ -15,15 +18,18 @@ program
     server if "path" is a single application server file.`,
   )
   .option('-p, --port <port>', 'port number', parseInt)
-  .option('-m, --mock <path>', 'path to mock files (directory, file, glob pattern)')
+  .option(
+    '-m, --mock <path>',
+    'path to mock files (directory, file, glob pattern)',
+  )
   .option('-k, --hooks <path>', 'path to optional hooks registration file')
+  .option('-e, --electron', 'run "path" file as electron.js entry file')
   .option(
     '--ssl <path>',
     `enable https mode by specifying path to directory containing ".crt" and ".key" files (directory, glob pattern)`,
   )
   .option('-s, --silent', 'suppress default logging')
   .option('--no-reload', 'disable reloading connected browsers on file change')
-  .option('--electron', 'run file as electron.js entry file')
   .arguments('[path...]')
   .action(boot)
   .version(pkg.version, '-v, --version');

@@ -1,36 +1,35 @@
+import { dirname, join } from 'path';
 import { error, fatal, noisyInfo } from '../utils/log.js';
 import chalk from 'chalk';
 import childProcess from 'node:child_process';
 import config from '../config.js';
+import { copyFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-// import Debug from 'debug';
 import { fileURLToPath } from 'node:url';
 import { getDependencies } from '../utils/module.js';
-import { getEntryContents } from './electron-entry.js';
 import { getProjectPath } from '../utils/file.js';
 import { watch } from '../utils/watch.js';
-import { writeFileSync } from 'node:fs';
 
-// const debug = Debug('dvlp:electronhost');
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
 /**
- * Create electron entry file
+ * Copy electron entry file
  *
  * @param { import('url').URL } filePath
- * @param { string } entryPath
- * @param { string } origin
  */
-export function createElectronEntryFile(filePath, entryPath, origin) {
-  writeFileSync(filePath, getEntryContents(entryPath, origin));
+export function createElectronEntryFile(filePath) {
+  copyFileSync(join(__dirname, 'electron-entry.cjs'), filePath);
 }
 
 export class ElectronHost {
   /**
+   * @param { string } main
+   * @param { string } origin
    * @param { (filePath: string, silent?: boolean) => void } [triggerClientReload]
    * @param { Array<SerializedMock> } [serializedMocks]
    */
-  constructor(triggerClientReload, serializedMocks) {
+  constructor(main, origin, triggerClientReload, serializedMocks) {
     try {
       /** @type { string } */
       // @ts-ignore
@@ -43,6 +42,8 @@ export class ElectronHost {
     }
     /** @type { childProcess.ChildProcess } */
     this.activeProcess;
+    this.origin = origin;
+    this.main = main;
     this.serializedMocks = serializedMocks;
     /** @type { Watcher | undefined } */
     this.watcher;
@@ -60,7 +61,7 @@ export class ElectronHost {
   }
 
   /**
-   * Start electron application
+   * Start/restart electron application
    */
   start() {
     return new Promise(async (resolve, reject) => {
@@ -73,16 +74,15 @@ export class ElectronHost {
       }
 
       this.activeProcess = this.createProcess();
-
-      this.watcher?.add(
-        await getDependencies(
-          fileURLToPath(config.electronEntryPath.href),
-          'node',
-        ),
-      );
+      this.watcher?.add(await getDependencies(this.main, 'node'));
 
       this.activeProcess.send(
-        { type: 'start', mocks: this.serializedMocks },
+        {
+          type: 'start',
+          main: this.main,
+          mocks: this.serializedMocks,
+          origin: this.origin,
+        },
         /** @param { Error | null } err */
         (err) => {
           if (err) {
@@ -111,31 +111,19 @@ export class ElectronHost {
       this.pathToElectron,
       [fileURLToPath(config.electronEntryPath.href)],
       {
-        stdio: [0, 1, 2, 'ipc'],
+        stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
       },
     );
 
     child.on('close', (code) => {
       process.exit(code ?? 1);
     });
-    child.on(
-      'message',
-      /** @param { ElectronProcessMessage } msg */
-      (msg) => {
-        // switch (msg.type) {
-        //   case 'started': {
-        //     this.listening();
-        //     break;
-        //   }
-        //   case 'watch': {
-        //     if (this.watcher !== undefined) {
-        //       this.watcher.add(msg.paths);
-        //     }
-        //     break;
-        //   }
-        // }
-      },
-    );
+    child.stdout?.on('data', (chunk) => {
+      noisyInfo(chalk.bgGray.white(` [electron] ${chunk.toString().trim()} `));
+    });
+    child.stderr?.on('data', (chunk) => {
+      error(`[electron] ${chunk.toString().trim()}`);
+    });
 
     return child;
   }

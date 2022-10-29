@@ -88,13 +88,13 @@
     "build": "node ./scripts/build.js",
     "clean": "git clean -x -f",
     "format": "prettier --write './{src,test}/**/*.{js,json}'",
-    "lint": "npm run lint:src && npm run lint:types",
+    "lint": "pnpm run lint:src && pnpm run lint:types",
     "lint:src": "eslint './{src,test}/**/*.js'",
     "lint:types": "tsc --noEmit --skipLibCheck --project jsconfig.json",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "pnpm run build",
     "test": "cross-env NODE_ENV=dvlptest NODE_OPTIONS=\"--enable-source-maps --no-warnings\" NODE_TLS_REJECT_UNAUTHORIZED=\"0\" mocha test/unit/*-test.js --reporter spec --bail --exit --timeout 10000 --require ./test/unit/init.js",
-    "test:browser": "npm run build && ./bin/dvlp.js --mock test/browser/fixtures/mock test/browser",
-    "test:integration": "npm run build && cross-env NODE_ENV=dvlptest mocha test/integration/*-test.js --reporter spec --exit --timeout 10000",
+    "test:browser": "pnpm run build && ./bin/dvlp.js --mock test/browser/fixtures/mock test/browser",
+    "test:integration": "pnpm run build && cross-env NODE_ENV=dvlptest mocha test/integration/*-test.js --reporter spec --exit --timeout 10000",
     "prepare": "husky install"
   },
   "prettier": {

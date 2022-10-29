@@ -6,7 +6,7 @@ import send from 'send';
 
 if (config.testing) {
   process.on('exit', () => {
-    // fs.rmSync(config.dirPath, { force: true, recursive: true });
+    fs.rmSync(config.dirPath, { force: true, recursive: true });
   });
 }
 

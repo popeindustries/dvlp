@@ -70,11 +70,7 @@ export async function server(
     if (typeof entry.main !== 'string') {
       throw Error(`the "--electron" flag requires a valid entry file path`);
     }
-    createElectronEntryFile(
-      config.electronEntryPath,
-      entry.main,
-      `http://localhost:${port}`,
-    );
+    createElectronEntryFile(config.electronEntryPath);
   }
 
   const server = new Dvlp(entry, port, reload, hooks, mockPath, certsPath);

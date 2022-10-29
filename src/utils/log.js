@@ -82,7 +82,7 @@ export function noisyWarn(...args) {
  */
 export function error(...args) {
   if (!config.testing) {
-    console.error('\n', chalk.red.inverse(' error '), ...args);
+    console.error('\n', chalk.red.inverse(' error '), ...args, '\n');
   }
 }
 
@@ -93,7 +93,7 @@ export function error(...args) {
  */
 export function fatal(...args) {
   if (!config.testing) {
-    console.error('\n', chalk.red.inverse(' fatal error '), ...args);
+    console.error('\n', chalk.red.inverse(' fatal error '), ...args, '\n');
   }
 }
 

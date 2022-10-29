@@ -49,8 +49,8 @@ await esbuild.build({
   bundle: true,
   entryPoints: ['./src/dvlp-test-browser.js'],
   format: 'esm',
-  target: 'es2020',
   outfile: 'dvlp-test-browser.js',
+  target: 'es2020',
 });
 
 await esbuild.build({
@@ -59,10 +59,9 @@ await esbuild.build({
   define,
   entryPoints: ['./src/dvlp-test.js'],
   format: 'esm',
-  // Force keep dynamic import that has been back-ported to 12.2
-  target: 'node13.2',
-  platform: 'node',
   outfile: 'dvlp-test.js',
+  platform: 'node',
+  target: 'node14',
 });
 
 await esbuild.build({
@@ -76,23 +75,20 @@ await esbuild.build({
   ],
   external: ['electron', 'esbuild', 'fsevents'],
   format: 'esm',
-  splitting: false,
-  // Force keep dynamic import that has been back-ported to 12.2
-  target: 'node13.2',
   outdir: '.',
   platform: 'node',
+  splitting: false,
+  target: 'node14',
 });
 
 await esbuild.build({
   bundle: true,
-  define,
   entryNames: '[name]',
   entryPoints: ['./src/application-host/application-loader.js'],
   external: ['esbuild'],
   format: 'esm',
   splitting: false,
-  // Force keep dynamic import that has been back-ported to 12.2
-  target: 'node13.2',
+  target: 'node14',
   outdir: '.',
   platform: 'node',
   plugins: [
@@ -115,4 +111,15 @@ await esbuild.build({
       },
     },
   ],
+});
+
+await esbuild.build({
+  bundle: true,
+  entryPoints: ['./src/electron-host/electron-entry.js'],
+  external: ['electron'],
+  format: 'cjs',
+  splitting: false,
+  target: 'node14',
+  outfile: './electron-entry.cjs',
+  platform: 'node',
 });

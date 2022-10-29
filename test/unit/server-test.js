@@ -679,21 +679,6 @@ describe('server', () => {
         });
       });
     });
-    it.skip('should enable electron mode', async () => {
-      server = await serverFactory(
-        'test/unit/fixtures/electron/electron-entry.js',
-        {
-          electron: true,
-          port: 8100,
-          reload: false,
-        },
-      );
-      // const res = await fetch('http://localhost:8100/', {
-      //   headers: { accept: 'text/html' },
-      // });
-      // expect(res.status).to.eql(200);
-      // expect(await res.text()).to.contain('hi');
-    });
   });
 
   if (!process.env.CI) {

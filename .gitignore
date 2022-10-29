@@ -3,5 +3,6 @@
 .DS_Store
 .dvlp
 /*.js
+/*.cjs
 /*.d.ts
 /*.map

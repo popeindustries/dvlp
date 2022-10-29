@@ -31,7 +31,7 @@ import { getReloadClientEmbed } from '../reload/reload-client-embed.js';
 import { Hooker } from '../hooks/index.js';
 import http from 'node:http';
 import http2 from 'node:http2';
-import { interceptFileRead } from '../utils/intercept.js';
+import { interceptFileRead } from '../utils/intercept-file-read.js';
 import { Metrics } from '../utils/metrics.js';
 import { Mock } from '../mock/index.js';
 import { parseUserAgent } from '../utils/platform.js';
@@ -136,6 +136,8 @@ export class Dvlp {
       );
     } else if (entry.isElectron) {
       this.electronHost = new ElectronHost(
+        /** @type { string } */ (entry.main),
+        this.origin,
         reload ? this.triggerClientReload : undefined,
         this.mocks?.toJSON(),
       );

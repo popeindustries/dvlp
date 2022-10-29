@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { interceptClientRequest } from '../utils/intercept.js';
+import { interceptClientRequest } from '../utils/intercept-client-request.js';
 import { isEqualSearchParams } from '../utils/url.js';
 import { syncBuiltinESMExports } from 'node:module';
 import { workerData } from 'node:worker_threads';

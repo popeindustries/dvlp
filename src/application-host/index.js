@@ -58,8 +58,8 @@ export class ApplicationHost {
   constructor(main, appPort, hostOrigin, triggerClientReload, serializedMocks) {
     this.appOrigin = `http://localhost:${appPort}`;
     this.appPort = appPort;
-    this.main = main;
     this.hostOrigin = hostOrigin;
+    this.main = main;
     this.serializedMocks = serializedMocks;
     /** @type { DestroyableHttpServer | undefined } */
     this.server;
@@ -190,8 +190,7 @@ export class ApplicationHost {
    */
   createThread() {
     const { port1, port2 } = new MessageChannel();
-
-    return new ApplicationThread(workerPath, port1, this.watcher, {
+    const thread = new ApplicationThread(workerPath, port1, this.watcher, {
       env: SHARE_ENV,
       // @ts-ignore
       execArgv: [
@@ -200,6 +199,8 @@ export class ApplicationHost {
         '--experimental-loader',
         config.applicationLoaderPath.href,
       ],
+      stderr: true,
+      stdout: true,
       workerData: {
         hostOrigin: this.hostOrigin,
         messagePort: port2,
@@ -208,6 +209,8 @@ export class ApplicationHost {
       },
       transferList: [port2],
     });
+
+    return thread;
   }
 
   /**
@@ -255,6 +258,12 @@ class ApplicationThread extends Worker {
       // @ts-ignore
       this.messagePort = undefined;
       this.watcher = undefined;
+    });
+    this.stdout.on('data', (chunk) => {
+      noisyInfo(chalk.bgGray.white(` [app] ${chunk.toString().trim()} `));
+    });
+    this.stderr.on('data', (chunk) => {
+      error(`[app] ${chunk.toString().trim()}`);
     });
 
     debug(

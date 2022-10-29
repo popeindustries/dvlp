@@ -12,7 +12,7 @@ import config from '../config.js';
 import Debug from 'debug';
 import fs from 'node:fs';
 import { getProjectPath } from '../utils/file.js';
-import { interceptClientRequest } from '../utils/intercept.js';
+import { interceptClientRequest } from '../utils/intercept-client-request.js';
 import { Metrics } from '../utils/metrics.js';
 import mime from 'mime';
 import path from 'node:path';
