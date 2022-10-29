@@ -111,9 +111,12 @@ export async function server(
     logger.silent = true;
   }
 
+  process.on('exit', () => {
+    server.destroy();
+  });
+
   return {
     destroy() {
-      // TODO: kill electron
       return server.destroy();
     },
   };

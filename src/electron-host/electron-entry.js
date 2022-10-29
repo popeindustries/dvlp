@@ -9,6 +9,7 @@ const t = String.raw;
 export function getEntryContents(entryPath, origin) {
   return t`
   const electron = require('electron');
+
   const origin = '${origin}';
 
   electron.BrowserWindow.prototype.loadFile = function loadFile(filePath, options) {
@@ -18,15 +19,15 @@ export function getEntryContents(entryPath, origin) {
 
   process.on('message', async (msg) => {
     if (msg.type === 'start') {
+      console.log(msg)
       try {
         await import('${entryPath}');
-        process.send({ type: 'watch', paths: Array.from(global.sources) });
+        process.send({ type: 'started' });
       } catch (err) {
         console.log(err);
         throw err;
       }
     }
   })
-
   `;
 }

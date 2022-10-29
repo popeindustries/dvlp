@@ -1,0 +1,13 @@
+{
+  "request": {
+    "url": "https://www.someapi.com/v1/9012"
+  },
+  "response": {
+    "body": {
+      "user": {
+        "name": "Bob",
+        "id": 9012
+      }
+    }
+  }
+}

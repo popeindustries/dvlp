@@ -1,3 +1,6 @@
-declare type ElectronHostMessage = { type: 'start' };
+declare type ElectronHostMessage = {
+  type: 'start';
+  mocks: JSON<Array<DeserializedMock>>;
+};
 
-declare type ElectronProcessMessage = { type: 'watch'; paths: Array<string> };
+declare type ElectronProcessMessage = { type: 'started' };

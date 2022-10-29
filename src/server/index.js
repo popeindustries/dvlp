@@ -135,7 +135,10 @@ export class Dvlp {
         this.mocks?.toJSON(),
       );
     } else if (entry.isElectron) {
-      this.electronHost = new ElectronHost();
+      this.electronHost = new ElectronHost(
+        reload ? this.triggerClientReload : undefined,
+        this.mocks?.toJSON(),
+      );
     }
   }
 

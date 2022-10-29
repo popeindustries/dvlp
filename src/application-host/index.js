@@ -74,8 +74,6 @@ export class ApplicationHost {
           )}`,
         );
         await this.restart();
-        // TODO: is this necessary?
-        triggerClientReload(filePath, true);
       });
     }
 

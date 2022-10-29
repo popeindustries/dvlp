@@ -43,9 +43,13 @@ export function watch(fn) {
 
   return {
     add(filePath) {
+      if (filePath instanceof Set) {
+        Array.from(filePath).forEach(this.add);
+        return;
+      }
       if (Array.isArray(filePath)) {
-        // @ts-ignore
-        return filePath.forEach(this.add);
+        filePath.forEach(this.add);
+        return;
       }
 
       filePath = path.resolve(filePath);

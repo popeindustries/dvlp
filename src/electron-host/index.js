@@ -5,6 +5,7 @@ import config from '../config.js';
 import { createRequire } from 'node:module';
 // import Debug from 'debug';
 import { fileURLToPath } from 'node:url';
+import { getDependencies } from '../utils/module.js';
 import { getEntryContents } from './electron-entry.js';
 import { getProjectPath } from '../utils/file.js';
 import { watch } from '../utils/watch.js';
@@ -41,9 +42,7 @@ export class ElectronHost {
       throw err;
     }
     /** @type { childProcess.ChildProcess } */
-    this.activeProcess = this.createProcess();
-    /** @type { childProcess.ChildProcess } */
-    this.pendingProcess = this.createProcess();
+    this.activeProcess;
     this.serializedMocks = serializedMocks;
     /** @type { Watcher | undefined } */
     this.watcher;
@@ -55,48 +54,64 @@ export class ElectronHost {
             getProjectPath(filePath),
           )}`,
         );
-        await this.restart();
-        // triggerClientReload(filePath, true);
+        await this.start();
       });
     }
   }
 
-  async start() {
-    this.activeProcess.send({ type: 'start' }, (err) => {
-      if (err) {
-        return error(err);
+  /**
+   * Start electron application
+   */
+  start() {
+    return new Promise(async (resolve, reject) => {
+      let isRestart = false;
+
+      if (this.activeProcess !== undefined) {
+        this.activeProcess.removeAllListeners();
+        this.activeProcess.kill();
+        isRestart = true;
       }
 
-      noisyInfo(`electron application started`);
-    });
-  }
+      this.activeProcess = this.createProcess();
 
-  async restart() {
-    this.activeProcess.kill();
-    this.activeProcess = this.pendingProcess;
-    this.pendingProcess = this.createProcess();
-    noisyInfo('\n  restarting electron application...');
-    await this.start();
+      this.watcher?.add(
+        await getDependencies(
+          fileURLToPath(config.electronEntryPath.href),
+          'node',
+        ),
+      );
+
+      this.activeProcess.send(
+        { type: 'start', mocks: this.serializedMocks },
+        /** @param { Error | null } err */
+        (err) => {
+          if (err) {
+            error(err);
+            reject(err);
+            return;
+          }
+
+          noisyInfo(
+            isRestart
+              ? '\n  restarting electron application...'
+              : `\n  electron application started`,
+          );
+
+          resolve(undefined);
+        },
+      );
+    });
   }
 
   /**
    * @private
    */
   createProcess() {
-    const child = childProcess.fork(
+    const child = childProcess.spawn(
       this.pathToElectron,
-      [
-        '--enable-source-maps',
-        '--no-warnings',
-        '--experimental-loader',
-        config.applicationLoaderPath.href,
-        fileURLToPath(config.electronEntryPath.href),
-      ],
+      [fileURLToPath(config.electronEntryPath.href)],
       {
-        env: {
-          ELECTRON_RUN_AS_NODE: '1',
-        },
-        stdio: 'inherit',
+        stdio: [0, 1, 2, 'ipc'],
       },
     );
 
@@ -107,8 +122,6 @@ export class ElectronHost {
       'message',
       /** @param { ElectronProcessMessage } msg */
       (msg) => {
-        console.log(msg);
-        // msg = JSON.parse(msg);
         // switch (msg.type) {
         //   case 'started': {
         //     this.listening();
@@ -127,9 +140,12 @@ export class ElectronHost {
     return child;
   }
 
+  /**
+   * Destroy instance
+   */
   destroy() {
+    this.activeProcess?.removeAllListeners();
     this.activeProcess?.kill();
-    this.pendingProcess?.kill();
     this.watcher?.close();
   }
 }

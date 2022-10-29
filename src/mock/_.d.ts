@@ -9,7 +9,10 @@ declare class Mock {
     once?: boolean,
     onMock?: () => void,
   ): () => void;
-  addPushEvents(stream: string | MockPushStream, events: MockPushEvent | Array<MockPushEvent>): () => void;
+  addPushEvents(
+    stream: string | MockPushStream,
+    events: MockPushEvent | Array<MockPushEvent>,
+  ): () => void;
   load(filePaths: string | Array<string>): void;
   matchResponse(href: string, req?: Req, res?: Res): boolean | MockResponseData;
   matchPushEvent(
@@ -17,8 +20,22 @@ declare class Mock {
     name: string,
     push: (stream: string | PushStream, event: PushEvent) => void,
   ): boolean;
-  hasMatch(reqOrMockData: string | URL | { url: string } | MockResponseData | MockStreamData): boolean;
-  remove(reqOrMockData: string | URL | { url: string } | MockResponseData | MockStreamData): void;
+  hasMatch(
+    reqOrMockData:
+      | string
+      | URL
+      | { url: string }
+      | MockResponseData
+      | MockStreamData,
+  ): boolean;
+  remove(
+    reqOrMockData:
+      | string
+      | URL
+      | { url: string }
+      | MockResponseData
+      | MockStreamData,
+  ): void;
   clear(): void;
   /** @deprecated */
   clean(): void;
