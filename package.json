@@ -115,6 +115,7 @@
     "bin",
     "*.d.ts",
     "*.js",
+    "*.cjs",
     "README.MD"
   ]
 }
