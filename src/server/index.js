@@ -290,6 +290,9 @@ export class Dvlp {
           );
         }
 
+        // Convert Windows paths
+        url = url.replace(/\\/g, '/');
+
         const msg = `${duration} handled${chalk.italic(
           modifier,
         )}request for ${chalk.green(url)}`;
