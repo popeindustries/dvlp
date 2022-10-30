@@ -207,7 +207,7 @@ export class ApplicationHost {
         '--enable-source-maps',
         '--no-warnings',
         '--experimental-loader',
-        config.applicationLoaderPath.href,
+        config.applicationLoaderURL.href,
       ],
       stderr: true,
       workerData: {

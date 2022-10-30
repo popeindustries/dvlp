@@ -10,15 +10,16 @@ const VERSION = global.$VERSION || '0.0.0';
 
 const dirPath = path.resolve(DIR_NAME);
 const versionDirPath = path.join(dirPath, VERSION);
-const applicationLoaderPath = pathToFileURL(
+const applicationLoaderURL = pathToFileURL(
   path.join(versionDirPath, 'app-loader.mjs'),
 );
 const bundleDirName = path.join(DIR_NAME, VERSION, 'bundled');
 const bundleDirPath = path.resolve(bundleDirName);
 const bundleDirMetaPath = path.join(bundleDirPath, '__meta__.json');
 const defaultPort = process.env.PORT ? Number(process.env.PORT) : 8080;
-const electronEntryPath = pathToFileURL(
-  path.join(versionDirPath, 'electron-entry.cjs'),
+const electronDirPath = path.join(versionDirPath, 'electron');
+const electronEntryURL = pathToFileURL(
+  path.join(electronDirPath, 'electron-entry.cjs'),
 );
 
 /**
@@ -26,7 +27,7 @@ const electronEntryPath = pathToFileURL(
  */
 const config = {
   activePort: defaultPort,
-  applicationLoaderPath,
+  applicationLoaderURL,
   brokenNamedExportsPackages,
   bundleDirPath,
   bundleDirMetaPath,
@@ -35,7 +36,8 @@ const config = {
   directories: [],
   dirPath,
   dvlpDirPath: path.resolve(DIR_NAME),
-  electronEntryPath,
+  electronDirPath,
+  electronEntryURL,
   esbuildTargetByExtension: {
     '.js': 'js',
     '.mjs': 'js',

@@ -62,7 +62,7 @@ export async function server(
     process.env.PORT = String(port);
   }
 
-  createApplicationLoaderFile(config.applicationLoaderPath, {
+  createApplicationLoaderFile(config.applicationLoaderURL, {
     hooks,
     hooksPath,
   });
@@ -71,7 +71,7 @@ export async function server(
     if (typeof entry.main !== 'string') {
       throw Error(`the "--electron" flag requires a valid entry file path`);
     }
-    createElectronEntryFile(config.electronEntryPath);
+    createElectronEntryFile(config.electronEntryURL);
   }
 
   const server = new Dvlp(

@@ -1,6 +1,6 @@
 declare interface Config {
   activePort: number;
-  applicationLoaderPath: import('url').URL;
+  applicationLoaderURL: import('url').URL;
   brokenNamedExportsPackages: Record<string, Array<string>>;
   bundleDirMetaPath: string;
   bundleDirName: string;
@@ -9,7 +9,8 @@ declare interface Config {
   directories: Array<string>;
   dirPath: string;
   dvlpDirPath: string;
-  electronEntryPath: import('url').URL;
+  electronDirPath: string;
+  electronEntryURL: import('url').URL;
   esbuildTargetByExtension: {
     [extension: string]: string;
   };

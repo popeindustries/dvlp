@@ -1,9 +1,9 @@
-import { dirname, join } from 'path';
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { error, fatal, noisyInfo } from '../utils/log.js';
 import chalk from 'chalk';
 import childProcess from 'node:child_process';
 import config from '../config.js';
-import { copyFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { getDependencies } from '../utils/module.js';
@@ -19,6 +19,9 @@ const require = createRequire(import.meta.url);
  * @param { import('url').URL } filePath
  */
 export function createElectronEntryFile(filePath) {
+  if (!existsSync(config.electronDirPath)) {
+    mkdirSync(config.electronDirPath);
+  }
   copyFileSync(join(__dirname, 'electron-entry.cjs'), filePath);
 }
 
@@ -137,7 +140,7 @@ export class ElectronHost {
   createProcess() {
     const child = childProcess.spawn(
       this.pathToElectron,
-      [fileURLToPath(config.electronEntryPath.href), ...this.argv],
+      [fileURLToPath(config.electronEntryURL.href), ...this.argv],
       {
         stdio: ['pipe', 'inherit', 'pipe', 'ipc'],
       },
