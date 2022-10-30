@@ -29,10 +29,7 @@ const mockClient =
     'utf8',
   );
 
-/**
- * @implements {Mocks}
- */
-export class Mocker {
+export class Mocks {
   /**
    * Constructor
    *

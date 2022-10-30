@@ -9,7 +9,7 @@ import { isNodeModuleFilePath } from './is.js';
  */
 export async function getDependencies(filePath, platform) {
   /** @type { Set<string> } */
-  const dependencies = new Set();
+  const dependencies = new Set([filePath]);
 
   try {
     await esbuild.build({

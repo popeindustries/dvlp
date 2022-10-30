@@ -33,7 +33,7 @@ import http from 'node:http';
 import http2 from 'node:http2';
 import { interceptFileRead } from '../utils/intercept-file-read.js';
 import { Metrics } from '../utils/metrics.js';
-import { Mocker } from '../mock/index.js';
+import { Mocks } from '../mock/index.js';
 import { parseUserAgent } from '../utils/platform.js';
 import { patchResponse } from '../utils/patch.js';
 import { watch } from '../utils/watch.js';
@@ -50,8 +50,9 @@ export class Dvlp {
    * @param { Hooks } [hooks]
    * @param { string | Array<string> } [mockPath]
    * @param { string | Array<string> } [certsPath]
+   * @param { Array<string> } [argv]
    */
-  constructor(entry, port, reload = false, hooks, mockPath, certsPath) {
+  constructor(entry, port, reload = false, hooks, mockPath, certsPath, argv) {
     this.requestHandler = this.requestHandler.bind(this);
     this.triggerClientReload = this.triggerClientReload.bind(this);
 
@@ -86,7 +87,7 @@ export class Dvlp {
 
     // Make sure mocks instance has access to active port
     this.port = config.activePort = port;
-    this.mocks = mockPath ? new Mocker(mockPath) : undefined;
+    this.mocks = mockPath ? new Mocks(mockPath) : undefined;
     this.reload = reload;
     /** @type { Map<string, string> } */
     this.urlToFilePath = new Map();
@@ -133,6 +134,7 @@ export class Dvlp {
         this.origin,
         reload ? this.triggerClientReload : undefined,
         this.mocks?.toJSON(),
+        argv,
       );
     } else if (entry.isElectron) {
       this.electronHost = new ElectronHost(
@@ -140,6 +142,7 @@ export class Dvlp {
         this.origin,
         reload ? this.triggerClientReload : undefined,
         this.mocks?.toJSON(),
+        argv,
       );
     }
   }
@@ -412,18 +415,9 @@ export class Dvlp {
    * Add "filePaths" to watcher
    *
    * @param { string | Array<string> } filePaths
-   * @private
    */
   addWatchFiles(filePaths) {
-    if (!Array.isArray(filePaths)) {
-      filePaths = [filePaths];
-    }
-
-    for (const filePath of filePaths) {
-      if (!isNodeModuleFilePath(filePath)) {
-        this.watcher.add(filePath);
-      }
-    }
+    this.watcher.add(filePaths);
   }
 
   /**

@@ -1,5 +1,9 @@
 declare interface ServerOptions {
   /**
+   * The command-line arguments to pass to the application thread or electron process (default `[]`).
+   */
+  argv?: Array<string>;
+  /**
    * The path or glob pattern containing ".crt" and ".key" files.
    * This enables secure https mode by proxying all requests through a secure server (default `''`).
    */
@@ -64,6 +68,10 @@ declare interface Server {
    * The active electron process, if initialised
    */
   readonly electronProcess?: ElectronProcess;
+  /**
+   * Add `filePaths` to file watcher
+   */
+  addWatchFiles(filePaths: string | Array<string>): void;
   /**
    * Destroy server instance
    */

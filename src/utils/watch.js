@@ -2,6 +2,7 @@ import config from '../config.js';
 import Debug from 'debug';
 import { FSWatcher } from 'chokidar';
 import { getProjectPath } from './file.js';
+import { isNodeModuleFilePath } from './is.js';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -58,7 +59,8 @@ export function watch(fn) {
         !files.has(filePath) &&
         !filePath.startsWith(tmpdir) &&
         !filePath.startsWith(config.dvlpDirPath) &&
-        !path.basename(filePath).startsWith('.')
+        !path.basename(filePath).startsWith('.') &&
+        !isNodeModuleFilePath(filePath)
       ) {
         debug(`watching file "${getProjectPath(filePath)}"`);
         files.add(filePath);

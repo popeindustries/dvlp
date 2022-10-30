@@ -28,8 +28,9 @@ export class ElectronHost {
    * @param { string } origin
    * @param { (filePath: string, silent?: boolean) => void } [triggerClientReload]
    * @param { Array<SerializedMock> } [serializedMocks]
+   * @param { Array<string> } [argv]
    */
-  constructor(main, origin, triggerClientReload, serializedMocks) {
+  constructor(main, origin, triggerClientReload, serializedMocks, argv = []) {
     try {
       /** @type { string } */
       // @ts-ignore
@@ -40,6 +41,7 @@ export class ElectronHost {
       );
       throw err;
     }
+    this.argv = argv;
     /** @type { childProcess.ChildProcess } */
     this.activeProcess;
     this.isListening = false;
@@ -62,6 +64,25 @@ export class ElectronHost {
         );
         await this.start();
       });
+      this.addWatchFiles(this.main);
+    }
+  }
+
+  /**
+   * Add `filePaths` to file watcher.
+   * Includes dependencies since electron doesn't support esm loaders
+   *
+   * @param { string | Array<string> } filePaths
+   */
+  async addWatchFiles(filePaths) {
+    if (this.watcher !== undefined) {
+      if (!Array.isArray(filePaths)) {
+        filePaths = [filePaths];
+      }
+
+      for (const filePath of filePaths) {
+        this.watcher.add(await getDependencies(filePath, 'node'));
+      }
     }
   }
 
@@ -84,7 +105,6 @@ export class ElectronHost {
       }
 
       this.activeProcess = this.createProcess();
-      this.watcher?.add(await getDependencies(this.main, 'node'));
 
       this.activeProcess.send(
         {
@@ -117,9 +137,9 @@ export class ElectronHost {
   createProcess() {
     const child = childProcess.spawn(
       this.pathToElectron,
-      [fileURLToPath(config.electronEntryPath.href)],
+      [fileURLToPath(config.electronEntryPath.href), ...this.argv],
       {
-        stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
+        stdio: ['pipe', 'inherit', 'pipe', 'ipc'],
       },
     );
 
@@ -146,15 +166,8 @@ export class ElectronHost {
         process.exit(code ?? 1);
       }
     });
-    child.stdout?.on('data', (chunk) => {
-      if (!config.testing) {
-        console.log(
-          chalk.bgGray.white(` [electron] ${chunk.toString().trim()} `),
-        );
-      }
-    });
     child.stderr?.on('data', (chunk) => {
-      error(`[electron] ${chunk.toString().trim()}`);
+      error(chunk.toString().trimEnd());
     });
 
     return child;

@@ -54,8 +54,17 @@ export class ApplicationHost {
    * @param { string } hostOrigin
    * @param { (filePath: string, silent?: boolean) => void } [triggerClientReload]
    * @param { Array<SerializedMock> } [serializedMocks]
+   * @param { Array<string> } [argv]
    */
-  constructor(main, appPort, hostOrigin, triggerClientReload, serializedMocks) {
+  constructor(
+    main,
+    appPort,
+    hostOrigin,
+    triggerClientReload,
+    serializedMocks,
+    argv,
+  ) {
+    this.argv = argv;
     this.appOrigin = `http://localhost:${appPort}`;
     this.appPort = appPort;
     this.hostOrigin = hostOrigin;
@@ -191,6 +200,7 @@ export class ApplicationHost {
   createThread() {
     const { port1, port2 } = new MessageChannel();
     const thread = new ApplicationThread(workerPath, port1, this.watcher, {
+      argv: this.argv,
       env: SHARE_ENV,
       // @ts-ignore
       execArgv: [
@@ -200,7 +210,6 @@ export class ApplicationHost {
         config.applicationLoaderPath.href,
       ],
       stderr: true,
-      stdout: true,
       workerData: {
         hostOrigin: this.hostOrigin,
         messagePort: port2,
@@ -259,11 +268,8 @@ class ApplicationThread extends Worker {
       this.messagePort = undefined;
       this.watcher = undefined;
     });
-    this.stdout.on('data', (chunk) => {
-      noisyInfo(chalk.bgGray.white(` [app] ${chunk.toString().trim()} `));
-    });
     this.stderr.on('data', (chunk) => {
-      error(`[app] ${chunk.toString().trim()}`);
+      error(chunk.toString().trimEnd());
     });
 
     debug(

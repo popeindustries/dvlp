@@ -1,8 +1,8 @@
 import { expect } from 'chai';
-import { Mock } from '../../src/mock/index.js';
+import { Mocks } from '../../src/mock/index.js';
 import { pushEvent } from '../../src/push-events/index.js';
 
-const mocks = new Mock();
+const mocks = new Mocks();
 
 function getRequest(url, headers = { accept: '*/*' }) {
   return {

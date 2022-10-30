@@ -22,6 +22,7 @@ import path from 'node:path';
 export async function server(
   filePath = process.cwd(),
   {
+    argv = [],
     certsPath,
     directories,
     electron = false,
@@ -73,7 +74,15 @@ export async function server(
     createElectronEntryFile(config.electronEntryPath);
   }
 
-  const server = new Dvlp(entry, port, reload, hooks, mockPath, certsPath);
+  const server = new Dvlp(
+    entry,
+    port,
+    reload,
+    hooks,
+    mockPath,
+    certsPath,
+    argv,
+  );
 
   try {
     await server.start();
@@ -135,11 +144,17 @@ export async function server(
           get isListening() {
             return server.electronHost?.isListening ?? false;
           },
+          addWatchFiles(filePaths) {
+            server.electronHost?.addWatchFiles(filePaths);
+          },
           sendMessage(msg) {
             server.electronHost?.activeProcess.send(msg);
           },
         }
       : undefined,
+    addWatchFiles(filePaths) {
+      server.addWatchFiles(filePaths);
+    },
     destroy() {
       return server.destroy();
     },

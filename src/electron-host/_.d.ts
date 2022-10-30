@@ -1,5 +1,6 @@
 declare interface ElectronProcess {
   readonly isListening: boolean;
+  addWatchFiles(filePaths: string | Array<string>): void;
   sendMessage(message: string | object | number | boolean | bigint): void;
 }
 
