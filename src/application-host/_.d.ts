@@ -1,3 +1,9 @@
+declare interface ApplicationWorker {
+  readonly origin: string;
+  readonly isListening: boolean;
+  sendMessage(message: string | object | number | boolean | bigint): void;
+}
+
 declare type ApplicationHostMessage = { type: 'start'; main: string };
 
 declare type ApplicationWorkerMessage =

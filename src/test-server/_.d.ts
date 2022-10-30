@@ -22,7 +22,7 @@ declare interface TestServerOptions {
 declare class TestServer {
   latency: number;
   port: number;
-  mocks: Mock;
+  mocks: Mocks;
   webroot: string;
   constructor(options?: TestServerOptions);
   /**
@@ -43,7 +43,10 @@ declare class TestServer {
   /**
    * Register mock push `events` for `stream`
    */
-  mockPushEvents(stream: string | MockPushStream, events: MockPushEvent | Array<MockPushEvent>): void;
+  mockPushEvents(
+    stream: string | MockPushStream,
+    events: MockPushEvent | Array<MockPushEvent>,
+  ): void;
   /**
    * Push data to WebSocket/EventSource clients
    * A string passed as `event` will be handled as a named mock push event

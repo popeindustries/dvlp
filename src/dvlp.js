@@ -112,6 +112,34 @@ export async function server(
   });
 
   return {
+    entry,
+    get isListening() {
+      return server.isListening;
+    },
+    origin: server.origin,
+    mocks: server.mocks,
+    port: server.port,
+    applicationWorker: server.applicationHost
+      ? {
+          origin: server.applicationHost.appOrigin,
+          get isListening() {
+            return server.applicationHost?.activeThread?.isListening ?? false;
+          },
+          sendMessage(msg) {
+            server.applicationHost?.activeThread?.messagePort.postMessage(msg);
+          },
+        }
+      : undefined,
+    electronProcess: server.electronHost
+      ? {
+          get isListening() {
+            return server.electronHost?.isListening ?? false;
+          },
+          sendMessage(msg) {
+            server.electronHost?.activeProcess.send(msg);
+          },
+        }
+      : undefined,
     destroy() {
       return server.destroy();
     },

@@ -50,7 +50,7 @@ export function handleFavicon(req, res) {
  *
  * @param { Req } req
  * @param { Res } res
- * @param { Mock } [mocks]
+ * @param { Mocks } [mocks]
  * @returns { boolean }
  */
 export function handleMockResponse(req, res, mocks) {
@@ -98,19 +98,19 @@ export function handleMockResponse(req, res, mocks) {
  * @param { Req } req
  * @param { object } socket
  * @param { object } body
- * @param { Mock } [mocks]
+ * @param { Mocks } [mocks]
  * @returns { void }
  */
 export function handleMockWebSocket(req, socket, body, mocks) {
   if (mocks !== undefined) {
     const url = new URL(req.url, `http://localhost:${config.activePort}`);
-    let mock = url.searchParams.get('dvlpmock');
+    let mockPath = url.searchParams.get('dvlpmock');
 
-    if (mock && WebSocket.isWebSocket(req)) {
-      mock = decodeURIComponent(mock);
+    if (mockPath && WebSocket.isWebSocket(req)) {
+      mockPath = decodeURIComponent(mockPath);
       connectClient(
         {
-          url: mock,
+          url: mockPath,
           type: 'ws',
         },
         req,
@@ -118,11 +118,11 @@ export function handleMockWebSocket(req, socket, body, mocks) {
         body,
       );
       // Send 'connect' event if it exists
-      mocks.matchPushEvent(mock, 'connect', pushEvent);
+      mocks.matchPushEvent(mockPath, 'connect', pushEvent);
       noisyInfo(
         `${chalk.green(
           '    0ms',
-        )} connected to WebSocket client at ${chalk.green(mock)}`,
+        )} connected to WebSocket client at ${chalk.green(mockPath)}`,
       );
     }
   }
@@ -134,7 +134,7 @@ export function handleMockWebSocket(req, socket, body, mocks) {
  *
  * @param { Req } req
  * @param { Res } res
- * @param { Mock } [mocks]
+ * @param { Mocks } [mocks]
  * @returns { boolean }
  */
 export function handlePushEvent(req, res, mocks) {

@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import { Metrics } from '../utils/metrics.js';
 import mime from 'mime';
-import { Mock } from '../mock/index.js';
+import { Mocker } from '../mock/index.js';
 import path from 'node:path';
 import WebSocket from 'faye-websocket';
 
@@ -37,7 +37,7 @@ export class TestServer {
     this.webroot = webroot;
     // Make sure mocks instance has access to active port
     this.port = config.activePort = port;
-    this.mocks = new Mock();
+    this.mocks = new Mocker();
   }
 
   /**

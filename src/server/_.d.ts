@@ -37,6 +37,34 @@ declare interface ServerOptions {
 
 declare interface Server {
   /**
+   * The entry config
+   */
+  readonly entry: Entry;
+  /**
+   * The listening state
+   */
+  readonly isListening: boolean;
+  /**
+   * The localhost origin
+   */
+  readonly origin: string;
+  /**
+   * The `Mocks` instance, if initialised
+   */
+  readonly mocks?: Mocks;
+  /**
+   * The localhost port number
+   */
+  readonly port: number;
+  /**
+   * The active application worker thread, if initialised
+   */
+  readonly applicationWorker?: ApplicationWorker;
+  /**
+   * The active electron process, if initialised
+   */
+  readonly electronProcess?: ElectronProcess;
+  /**
    * Destroy server instance
    */
   destroy(): Promise<void>;

@@ -19,9 +19,6 @@ electron.BrowserWindow.prototype.loadFile = function loadFile(
   return this.loadURL(url.href);
 };
 
-console.log('some log');
-console.error('some error');
-
 process.on(
   'message',
   /** @param { ElectronHostMessage } msg */
@@ -38,9 +35,10 @@ process.on(
 
       try {
         await import(msg.main);
+        process.send?.({ type: 'started' });
       } catch (err) {
         console.error(err);
-        throw err;
+        process.exit(1);
       }
     }
   },

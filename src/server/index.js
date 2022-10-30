@@ -33,7 +33,7 @@ import http from 'node:http';
 import http2 from 'node:http2';
 import { interceptFileRead } from '../utils/intercept-file-read.js';
 import { Metrics } from '../utils/metrics.js';
-import { Mock } from '../mock/index.js';
+import { Mocker } from '../mock/index.js';
 import { parseUserAgent } from '../utils/platform.js';
 import { patchResponse } from '../utils/patch.js';
 import { watch } from '../utils/watch.js';
@@ -86,7 +86,7 @@ export class Dvlp {
 
     // Make sure mocks instance has access to active port
     this.port = config.activePort = port;
-    this.mocks = mockPath ? new Mock(mockPath) : undefined;
+    this.mocks = mockPath ? new Mocker(mockPath) : undefined;
     this.reload = reload;
     /** @type { Map<string, string> } */
     this.urlToFilePath = new Map();
@@ -166,12 +166,16 @@ export class Dvlp {
       this.server.on('error', reject);
       this.server.on('listening', async () => {
         debug('server started');
-        if (this.applicationHost) {
-          await this.applicationHost.start();
-        } else if (this.electronHost) {
-          await this.electronHost.start();
+        try {
+          if (this.applicationHost) {
+            await this.applicationHost.start();
+          } else if (this.electronHost) {
+            await this.electronHost.start();
+          }
+          this.isListening = true;
+        } catch (err) {
+          // Ignore
         }
-        this.isListening = true;
         resolve();
       });
       this.server.on('connection', (connection) => {

@@ -42,11 +42,16 @@ export class ElectronHost {
     }
     /** @type { childProcess.ChildProcess } */
     this.activeProcess;
+    this.isListening = false;
     this.origin = origin;
     this.main = main;
     this.serializedMocks = serializedMocks;
     /** @type { Watcher | undefined } */
     this.watcher;
+    /** @type { ((value?: void | PromiseLike<void>) => void) | undefined } */
+    this.resolveStarted;
+    /** @type { ((value?: unknown) => void) | undefined } */
+    this.rejectStarted;
 
     if (triggerClientReload !== undefined) {
       this.watcher = watch(async (filePath) => {
@@ -64,7 +69,12 @@ export class ElectronHost {
    * Start/restart electron application
    */
   start() {
+    this.isListening = false;
+
     return new Promise(async (resolve, reject) => {
+      this.resolveStarted = resolve;
+      this.rejectStarted = reject;
+
       let isRestart = false;
 
       if (this.activeProcess !== undefined) {
@@ -87,7 +97,7 @@ export class ElectronHost {
         (err) => {
           if (err) {
             error(err);
-            reject(err);
+            this.rejectStarted?.(err);
             return;
           }
 
@@ -96,8 +106,6 @@ export class ElectronHost {
               ? '\n  restarting electron application...'
               : `\n  electron application started`,
           );
-
-          resolve(undefined);
         },
       );
     });
@@ -115,11 +123,35 @@ export class ElectronHost {
       },
     );
 
+    child.on(
+      'message',
+      /** @param { ElectronProcessMessage } msg */
+      (msg) => {
+        if (msg.type === 'started') {
+          this.resolveStarted?.();
+          this.isListening = true;
+          this.resolveStarted = this.rejectStarted = undefined;
+        }
+      },
+    );
+    child.on('error', (err) => {
+      if (!this.isListening) {
+        this.rejectStarted?.(err);
+      } else {
+        error(err);
+      }
+    });
     child.on('close', (code) => {
-      process.exit(code ?? 1);
+      if (this.isListening) {
+        process.exit(code ?? 1);
+      }
     });
     child.stdout?.on('data', (chunk) => {
-      noisyInfo(chalk.bgGray.white(` [electron] ${chunk.toString().trim()} `));
+      if (!config.testing) {
+        console.log(
+          chalk.bgGray.white(` [electron] ${chunk.toString().trim()} `),
+        );
+      }
     });
     child.stderr?.on('data', (chunk) => {
       error(`[electron] ${chunk.toString().trim()}`);

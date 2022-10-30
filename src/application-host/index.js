@@ -309,13 +309,9 @@ class ApplicationThread extends Worker {
    */
   listening(err) {
     if (err) {
-      if (this.rejectStarted !== undefined) {
-        this.rejectStarted(err);
-      }
+      this.rejectStarted?.(err);
     } else {
-      if (this.resolveStarted !== undefined) {
-        this.resolveStarted();
-      }
+      this.resolveStarted?.();
     }
 
     this.isListening = err === undefined;

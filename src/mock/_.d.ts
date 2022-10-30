@@ -1,8 +1,4 @@
-declare class Mock {
-  cache: Set<MockResponseData | MockStreamData>;
-  client: string;
-  loaded: Promise<void>;
-  constructor(filePaths?: string | Array<string>);
+declare interface Mocks {
   addResponse(
     req: string | MockRequest,
     res: MockResponse | MockResponseHandler,
