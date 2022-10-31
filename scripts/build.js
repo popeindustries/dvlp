@@ -115,6 +115,7 @@ await esbuild.build({
 
 await esbuild.build({
   bundle: true,
+  define,
   entryPoints: ['./src/electron-host/electron-entry.js'],
   external: ['electron'],
   format: 'cjs',

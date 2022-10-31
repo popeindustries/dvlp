@@ -18,7 +18,7 @@ if (config.testing) {
  *      - app-loader.mjs
  *      - cache.json
  */
-const { bundleDirPath, dirPath, versionDirPath } = config;
+const { bundleDirPath, dirPath, electronDirPath, versionDirPath } = config;
 const bundleDirExists = fs.existsSync(bundleDirPath);
 const dirExists = fs.existsSync(dirPath);
 const subdirExists = fs.existsSync(versionDirPath);
@@ -31,6 +31,9 @@ if (dirExists && !subdirExists) {
 }
 if (!bundleDirExists) {
   fs.mkdirSync(bundleDirPath, { recursive: true });
+}
+if (!fs.existsSync(electronDirPath)) {
+  fs.mkdirSync(electronDirPath, { recursive: true });
 }
 
 mime.define(config.jsMimeTypes, true);

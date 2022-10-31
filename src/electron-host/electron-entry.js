@@ -5,7 +5,6 @@ import fs from 'node:fs';
 import { interceptClientRequest } from '../utils/intercept-client-request.js';
 import { isEqualSearchParams } from '../utils/url.js';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 const RE_DATA_URL = /^data:text\/html;([^,]+,)?/;
 
@@ -24,7 +23,7 @@ electron.BrowserWindow.prototype.loadFile = function loadFile(
   filePath,
   options,
 ) {
-  return originalLoadURL(new URL(filePath, origin).href);
+  return originalLoadURL.call(this, new URL(filePath, origin).href);
 };
 
 /**
@@ -38,18 +37,17 @@ electron.BrowserWindow.prototype.loadURL = function loadURL(url, options) {
     );
     const encodedMarkup = url.replace(match, '');
     const markup =
-      encoding === 'base64'
+      encoding === 'base64,'
         ? Buffer.from(encodedMarkup, 'base64').toString('utf-8')
         : decodeURI(encodedMarkup);
     const hash = crypto.createHash('md5').update(markup).digest('hex');
     const filePath = path.join(config.electronDirPath, `${hash}.html`);
 
     fs.writeFileSync(filePath, markup, 'utf-8');
-    url = pathToFileURL(filePath).href;
+    url = path.relative(process.cwd(), filePath);
   }
-  console.log(url);
 
-  return originalLoadURL(new URL(url, origin).href);
+  return originalLoadURL.call(this, new URL(url, origin).href);
 };
 
 process.on(

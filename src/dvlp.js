@@ -91,15 +91,17 @@ export async function server(
   }
 
   const parentDir = path.resolve(process.cwd(), '..');
-  // prettier-ignore
   const paths = entry.isStatic
     ? config.directories
-      .map((dir) => path.relative(parentDir, dir) || path.basename(parentDir))
-      .join(', ')
+        .filter(
+          (dir) =>
+            dir !== config.electronDirPath && !dir.includes('node_modules'),
+        )
+        .map((dir) => path.relative(parentDir, dir) || path.basename(parentDir))
+        .join(', ')
     : entry.isFunction
     ? 'function'
-    // @ts-ignore
-    : getProjectPath(entry.main);
+    : getProjectPath(/** @type { string } */ (entry.main));
   const origin = server.origin;
   const appOrigin = server.applicationHost?.appOrigin;
 
@@ -120,6 +122,34 @@ export async function server(
     server.destroy();
   });
 
+  const applicationWorker = server.applicationHost
+    ? {
+        origin: server.applicationHost.appOrigin,
+        get isListening() {
+          return server.applicationHost?.activeThread?.isListening ?? false;
+        },
+        /** @param { string | object | number | boolean | bigint } msg */
+        sendMessage(msg) {
+          server.applicationHost?.activeThread?.messagePort.postMessage(msg);
+        },
+      }
+    : undefined;
+  const electronProcess = server.electronHost
+    ? {
+        get isListening() {
+          return server.electronHost?.isListening ?? false;
+        },
+        /** @param { string | Array<string> } filePaths */
+        addWatchFiles(filePaths) {
+          server.electronHost?.addWatchFiles(filePaths);
+        },
+        /** @param { string | object | number | boolean | bigint } msg */
+        sendMessage(msg) {
+          server.electronHost?.activeProcess.send(msg);
+        },
+      }
+    : undefined;
+
   return {
     entry,
     get isListening() {
@@ -128,30 +158,8 @@ export async function server(
     origin: server.origin,
     mocks: server.mocks,
     port: server.port,
-    applicationWorker: server.applicationHost
-      ? {
-          origin: server.applicationHost.appOrigin,
-          get isListening() {
-            return server.applicationHost?.activeThread?.isListening ?? false;
-          },
-          sendMessage(msg) {
-            server.applicationHost?.activeThread?.messagePort.postMessage(msg);
-          },
-        }
-      : undefined,
-    electronProcess: server.electronHost
-      ? {
-          get isListening() {
-            return server.electronHost?.isListening ?? false;
-          },
-          addWatchFiles(filePaths) {
-            server.electronHost?.addWatchFiles(filePaths);
-          },
-          sendMessage(msg) {
-            server.electronHost?.activeProcess.send(msg);
-          },
-        }
-      : undefined,
+    applicationWorker,
+    electronProcess,
     addWatchFiles(filePaths) {
       server.addWatchFiles(filePaths);
     },
@@ -199,6 +207,9 @@ function resolveEntry(filePath, directories = [], electron) {
       entry.directories.push(directory);
       if (fs.existsSync(nodeModules)) {
         entry.directories.push(nodeModules);
+      }
+      if (electron) {
+        entry.directories.push(config.electronDirPath);
       }
     }
 
