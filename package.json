@@ -6,7 +6,7 @@
   "type": "module",
   "types": "dvlp.d.ts",
   "repository": "https://github.com/popeindustries/dvlp.git",
-  "author": "Alexander Pope <alex@pope-industries.com>",
+  "author": "Alexander Pope <alex@pope.industries>",
   "license": "MIT",
   "bin": {
     "dvlp": "bin/dvlp.js"
