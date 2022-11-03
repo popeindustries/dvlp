@@ -47,6 +47,7 @@
     "cjs-module-lexer": "^1.2.2",
     "cross-env": "^7.0.3",
     "debug": "^4.3.4",
+    "electron": "^21.2.0",
     "es-module-lexer": "~1.1.0",
     "eslint": "^8.26.0",
     "eslint-config-prettier": "^8.5.0",
@@ -73,9 +74,6 @@
     "terser": "^5.15.1",
     "typescript": "^4.8.4",
     "undici": "^5.11.0"
-  },
-  "optionalDependencies": {
-    "electron": "^21.2.0"
   },
   "engines": {
     "node": ">=14",
