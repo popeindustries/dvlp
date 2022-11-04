@@ -4,36 +4,36 @@
     return;
   }
 
-  var RE_WEB_SOCKET_PROTOCOL = /wss?:/;
+  const RE_WEB_SOCKET_PROTOCOL = /wss?:/;
 
-  var originalXMLHttpRequestOpen = window.XMLHttpRequest.prototype.open;
-  var originalFetch = window.fetch;
+  const originalXMLHttpRequestOpen = window.XMLHttpRequest.prototype.open;
+  const originalFetch = window.fetch;
   /** @type {Array<MockResponseData | MockStreamData>} */
-  var cache = [].map(function (mockData) {
+  const cache = [].map(function (mockData) {
     mockData.originRegex = new RegExp(mockData.originRegex);
     mockData.pathRegex = new RegExp(mockData.pathRegex);
     return mockData;
   });
-  var events = cache.reduce(function (events, mockData) {
+  const events = cache.reduce(function (events, mockData) {
     if (mockData.events) {
       events[mockData.href] = mockData.events;
     }
     return events;
   }, {});
-  var networkDisabled = false;
-  var reroute = false;
+  let networkDisabled = false;
+  let reroute = false;
 
   // IE11 friendly Proxy-less patch
   window.XMLHttpRequest.prototype.open = function open(method, href) {
-    var hrefAndMock = matchHref(href);
+    const hrefAndMock = matchHref(href);
     href = hrefAndMock[0];
-    var mockData = hrefAndMock[1];
+    const mockData = hrefAndMock[1];
 
     if (mockData) {
       // Handle mock registered in browser
       if (mockData.response) {
-        var xhr = this;
-        var mockResponse = resolveMockResponse(mockData);
+        const xhr = this;
+        const mockResponse = resolveMockResponse(mockData);
 
         this.send = function send() {
           // Hang
@@ -41,7 +41,7 @@
             return;
           }
 
-          var body =
+          const body =
             typeof mockResponse.body === 'string'
               ? mockResponse.body
               : JSON.stringify(mockResponse.body);
@@ -103,17 +103,17 @@
     if (typeof fetch !== 'undefined') {
       window.fetch = new Proxy(window.fetch, {
         apply: function (target, ctx, args) {
-          var options = args[1] || {};
-          var hrefAndMock = matchHref(args[0]);
-          var href = hrefAndMock[0];
-          var mockData = hrefAndMock[1];
+          const options = args[1] || {};
+          const hrefAndMock = matchHref(args[0]);
+          const href = hrefAndMock[0];
+          const mockData = hrefAndMock[1];
 
           args[0] = href;
 
           if (mockData) {
             // Handle mock registered in browser
             if (mockData.response) {
-              var mockResponse = resolveMockResponse(mockData, options);
+              const mockResponse = resolveMockResponse(mockData, options);
 
               // Hang
               if (mockResponse.status === 0) {
@@ -123,11 +123,11 @@
                 );
               }
 
-              var body =
+              const body =
                 typeof mockResponse.body === 'string'
                   ? mockResponse.body
                   : JSON.stringify(mockResponse.body);
-              var res = new Response(body, {
+              const res = new Response(body, {
                 headers: mockResponse.headers,
                 status: mockResponse.status,
               });
@@ -191,7 +191,7 @@
   }
 
   window.dvlp = {
-    events: events,
+    events,
     cache: cache,
     /**
      * Disable all external network connections
@@ -223,21 +223,21 @@
      * @returns { () => void } remove mock instance
      */
     mockResponse: function mockResponse(req, res, once, onMockCallback) {
-      var ignoreSearch =
+      const ignoreSearch =
         (req &&
           typeof req === 'object' &&
           req.url !== undefined &&
           req.type === undefined &&
           req.ignoreSearch) ||
         false;
-      var url = getUrl(req);
-      var originRegex = new RegExp(
+      const url = getUrl(req);
+      const originRegex = new RegExp(
         url.origin
           .replace(/http:|https:/, 'https?:')
           .replace('ws:', 'wss?:')
           .replace('//', '\\/\\/'),
       );
-      var pathRegex = new RegExp(url.pathname.replace(/\//g, '\\/'));
+      const pathRegex = new RegExp(url.pathname.replace(/\//g, '\\/'));
 
       if (typeof res !== 'function') {
         if (res && !res.body) {
@@ -245,7 +245,7 @@
         }
       }
 
-      var mock = {
+      const mock = {
         callback: onMockCallback,
         href: url.href,
         ignoreSearch: ignoreSearch,
@@ -287,18 +287,18 @@
    * @returns { [string, MockResponseData | MockStreamData] }
    */
   function matchHref(href) {
-    var url = getUrl(href);
+    const url = getUrl(href);
     if (url.pathname === '/dvlpreload') {
       return [href];
     }
 
     // Fix Edge URL.origin
-    var origin =
+    const origin =
       url.origin.indexOf(url.host) === -1 ? url.origin + url.host : url.origin;
-    var mockData;
+    let mockData;
 
-    for (var i = 0; i < cache.length; i++) {
-      var mock = cache[i];
+    for (let i = 0; i < cache.length; i++) {
+      const mock = cache[i];
 
       if (
         !mock.originRegex.test(origin) ||
@@ -351,8 +351,8 @@
    * @returns { { body: string, headers: {}, status: number } }
    */
   function resolveMockResponse(mockData, requestOptions = {}) {
-    var mockResponse = mockData.response;
-    var resolved = {
+    const mockResponse = mockData.response;
+    const resolved = {
       body: '',
       headers: mockData.response.headers || {},
       status: 0,
@@ -393,30 +393,13 @@
 
   /**
    * Parse "href" into URL-like object
-   * IE11 friendly
    *
    * @param { string | Request } href
    * @returns { URL | { href: string, protocol: string, origin: string, pathname: string, search: string } }
    */
   function getUrl(href) {
     href = typeof href === 'string' ? href : href.url;
-
-    try {
-      return new URL(href, location.href);
-    } catch (err) {
-      var a = document.createElement('a');
-      a.href = href;
-      return {
-        protocol: a.protocol,
-        host: a.host,
-        origin: a.protocol + '//' + a.host,
-        pathname: (a.pathname.charAt(0) !== '/' ? '/' : '') + a.pathname,
-        search: a.search,
-        get href() {
-          return this.origin + this.pathaname + this.search;
-        },
-      };
-    }
+    return new URL(href, location.href);
   }
 
   /**
@@ -425,7 +408,7 @@
    * @param { MockResponseData | MockStreamData } mockData
    */
   function remove(mockData) {
-    for (var i = 0; i < cache.length; i++) {
+    for (let i = 0; i < cache.length; i++) {
       if (mockData === cache[i]) {
         cache.splice(i, 1);
       }
@@ -441,23 +424,23 @@
    * @returns { boolean }
    */
   function isEqualSearch(search1, search2) {
-    var searchMap1 = parseSearch(search1);
-    var searchMap2 = parseSearch(search2);
+    const searchMap1 = parseSearch(search1);
+    const searchMap2 = parseSearch(search2);
 
     if (Object.keys(searchMap1).length !== Object.keys(searchMap2).length) {
       return false;
     }
 
-    for (var key in searchMap1) {
-      var values1 = searchMap1[key];
-      var values2 = searchMap2[key];
+    for (let key in searchMap1) {
+      const values1 = searchMap1[key];
+      const values2 = searchMap2[key];
 
       if (!values2 || values1.length !== values2.length) {
         return false;
       }
 
-      for (var i = 0; i < values1.length; i++) {
-        var value = values1[i];
+      for (let i = 0; i < values1.length; i++) {
+        const value = values1[i];
 
         if (values2.indexOf(value) === -1) {
           return false;
@@ -476,12 +459,12 @@
    */
   function parseSearch(search) {
     search = search.slice(1).split('&');
-    var searchMap = {};
+    const searchMap = {};
 
-    for (var i = 0; i < search.length; i++) {
-      var keyVal = search[i].split('=');
-      var key = keyVal[0];
-      var val = keyVal[1];
+    for (let i = 0; i < search.length; i++) {
+      const keyVal = search[i].split('=');
+      const key = keyVal[0];
+      const val = keyVal[1];
       if (!(key in searchMap)) {
         searchMap[key] = [];
       }
@@ -498,7 +481,7 @@
    * @returns { string }
    */
   function parseOriginalHref(hrefOrRequest) {
-    var href =
+    const href =
       typeof hrefOrRequest === 'string' ? hrefOrRequest : hrefOrRequest.url;
     if (href.indexOf('?dvlpmock') === -1) {
       return href;
