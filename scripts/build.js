@@ -8,7 +8,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 const reloadClient = (
   await minify(fs.readFileSync('src/reload/reload-client.js', 'utf8'))
-).code;
+).code.replace(/(["\\])/g, '\\$1');
 const mockClient = (
   await minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
     // Preserve 'cache' var for regex replacement

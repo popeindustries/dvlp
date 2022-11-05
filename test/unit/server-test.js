@@ -1,4 +1,5 @@
 import { cleanBundledFiles } from '../../src/utils/bundling.js';
+import { clearContexts } from '../../src/utils/request-contexts.js';
 import config from '../../src/config.js';
 import EventSource from 'eventsource';
 import { expect } from 'chai';
@@ -371,6 +372,10 @@ describe('server', () => {
   });
 
   describe('application', () => {
+    beforeEach(() => {
+      clearContexts();
+    });
+
     it('should start a function server', async () => {
       server = await serverFactory(
         () => {
@@ -483,7 +488,7 @@ describe('server', () => {
       });
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain(
-        '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="dvlptest";\nwindow.DVLP=true;</script>',
+        '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="dvlptest";',
       );
     });
     it('should serve a bundled module js file', async () => {
@@ -737,6 +742,10 @@ describe('server', () => {
         });
       });
       describe('application', () => {
+        beforeEach(() => {
+          clearContexts();
+        });
+
         it('should start an app server over https', async () => {
           server = await serverFactory('test/unit/fixtures/app.mjs', {
             certsPath: 'test/unit/fixtures/certificates',

@@ -1,15 +1,15 @@
 import {
   concatScripts,
   getDvlpGlobalString,
+  getPatchedAdoptedStyleSheets,
   getProcessEnvString,
   hashScript,
 } from '../utils/scripts.js';
+import { find, getProjectPath } from '../utils/file.js';
 import {
-  find,
-  getProjectPath,
-  getTypeFromPath,
-  getTypeFromRequest,
-} from '../utils/file.js';
+  getContextForFilePath,
+  getContextForReq,
+} from '../utils/request-contexts.js';
 import {
   handleFavicon,
   handleFile,
@@ -26,7 +26,6 @@ import config from '../config.js';
 import Debug from 'debug';
 import { ElectronHost } from '../electron-host/index.js';
 import { EventSource } from '../reload/event-source.js';
-import fs from 'node:fs';
 import { getReloadClientEmbed } from '../reload/reload-client-embed.js';
 import { Hooker } from '../hooks/index.js';
 import http from 'node:http';
@@ -89,8 +88,6 @@ export class Dvlp {
     this.port = config.activePort = port;
     this.mocks = mockPath ? new Mocks(mockPath) : undefined;
     this.reload = reload;
-    /** @type { Map<string, string> } */
-    this.urlToFilePath = new Map();
     /** @type { HttpServer | Http2SecureServer } */
     this.server;
 
@@ -98,6 +95,7 @@ export class Dvlp {
     let headerScript = concatScripts([
       getProcessEnvString(),
       getDvlpGlobalString(),
+      getPatchedAdoptedStyleSheets(),
     ]);
 
     /** @type { PatchResponseOptions } */
@@ -228,17 +226,17 @@ export class Dvlp {
       );
     }
 
-    // Find corresponding url
-    for (const [url, fp] of this.urlToFilePath) {
-      if (fp === filePath) {
-        filePath = url;
-        break;
-      }
+    // TODO: handle mock/hook update
+
+    const context = getContextForFilePath(filePath);
+
+    if (context === undefined) {
+      debug(`unable to resolve context for "${filePath}"`);
+      return;
     }
 
-    const type = getTypeFromPath(filePath);
-    const event = type === 'css' ? 'refresh' : 'reload';
-    const data = JSON.stringify({ type, filePath });
+    const event = context.type === 'css' ? 'refresh' : 'reload';
+    const data = JSON.stringify(context);
 
     if (this.clients.size) {
       noisyInfo(
@@ -267,6 +265,7 @@ export class Dvlp {
 
     if (isReloadRequest(req)) {
       if (!this.isListening) {
+        // TODO: wait and continue?
         res.writeHead(500);
         res.end('waiting for application server start');
       } else {
@@ -288,21 +287,23 @@ export class Dvlp {
           : res.transformed
           ? ' transformed '
           : ' ';
-        let url = getProjectPath(req.url);
+        let localFilePath = getProjectPath(req.filePath || req.url);
 
         if (res.mocked) {
           // Decode query param and strip "?dvlpmock=" prefix (sometimes double encoded if coming from client)
-          url = decodeURIComponent(
-            decodeURIComponent(url.slice(url.indexOf('?dvlpmock=') + 10)),
+          localFilePath = decodeURIComponent(
+            decodeURIComponent(
+              localFilePath.slice(localFilePath.indexOf('?dvlpmock=') + 10),
+            ),
           );
         }
 
         // Convert Windows paths
-        url = url.replace(/\\/g, '/');
+        localFilePath = localFilePath.replace(/\\/g, '/');
 
         const msg = `${duration} handled${chalk.italic(
           modifier,
-        )}request for ${chalk.green(url)}`;
+        )}request for ${chalk.green(localFilePath)}`;
 
         res.mocked ? noisyInfo(msg) : info(msg);
       } else {
@@ -322,8 +323,7 @@ export class Dvlp {
       }
     });
 
-    const type = getTypeFromRequest(req);
-    let filePath = this.urlToFilePath.get(req.url);
+    const context = getContextForReq(req);
 
     res.url = req.url;
 
@@ -341,35 +341,26 @@ export class Dvlp {
       return;
     }
 
-    // Uncached or no longer available at previously known path
-    if (!filePath || !fs.existsSync(filePath)) {
-      filePath = find(req, { type });
-
-      if (filePath) {
-        this.addWatchFiles(filePath);
-        this.urlToFilePath.set(req.url, filePath);
-      } else {
-        // File not found. Clear previously known path
-        this.urlToFilePath.delete(req.url);
-      }
+    if (context.filePath !== undefined) {
+      this.addWatchFiles(context.filePath);
     }
 
     // Ignore unknown types
-    if (type) {
-      patchResponse(filePath, req, res, this.patchResponseOptions);
+    if (context.type !== undefined) {
+      patchResponse(req, res, this.patchResponseOptions);
     }
 
-    if (filePath) {
-      if (isBundledFilePath(filePath)) {
+    if (context.filePath !== undefined) {
+      if (isBundledFilePath(context.filePath)) {
         // Will write new file to disk
-        await this.hooks.bundleDependency(filePath, res);
+        await this.hooks.bundleDependency(context.filePath, res);
       }
       // Transform all files that aren't bundled or node_modules
       // This ensures that all symlinked workspace files are transformed even though they are dependencies
-      if (!isNodeModuleFilePath(filePath)) {
+      if (!isNodeModuleFilePath(context.filePath)) {
         // Will respond if transformer exists for this type
         await this.hooks.transform(
-          filePath,
+          context.filePath,
           this.lastChanged,
           res,
           parseUserAgent(req.headers['user-agent']),
@@ -378,9 +369,9 @@ export class Dvlp {
     }
 
     if (!res.finished) {
-      if (filePath) {
-        debug(`sending "${filePath}"`);
-        handleFile(filePath, req, res, true);
+      if (context.filePath !== undefined) {
+        debug(`sending "${context.filePath}"`);
+        handleFile(context.filePath, req, res, true);
         return;
       }
 
@@ -391,15 +382,15 @@ export class Dvlp {
         this.applicationHost.handle(req, res);
       } else {
         // Reroute to root index.html
-        if (type === 'html') {
+        if (context.type === 'html') {
           res.rerouted = req.url !== '/';
           // @ts-ignore
           req.url = '/';
-          filePath = find(req);
+          context.filePath = find(req);
 
-          if (filePath) {
-            debug(`sending "${filePath}"`);
-            handleFile(filePath, req, res, false);
+          if (context.filePath !== undefined) {
+            debug(`sending "${context.filePath}"`);
+            handleFile(context.filePath, req, res, false);
             return;
           }
         }

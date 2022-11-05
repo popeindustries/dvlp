@@ -21,6 +21,23 @@ export function getDvlpGlobalString() {
 }
 
 /**
+ * Retrieve patched "adoptedStyleSheets".
+ * This is used to capture all adoptedStyleSheet asignments to enable css hot-reload
+ *
+ * @returns { string }
+ */
+export function getPatchedAdoptedStyleSheets() {
+  return `customElements.adoptedStyleSheets = { sheets: [], add(sheets) { this.sheets.push(...sheets); } };
+const old = Object.getOwnPropertyDescriptor(ShadowRoot.prototype, 'adoptedStyleSheets');
+Object.defineProperty(ShadowRoot.prototype, 'adoptedStyleSheets', {
+  set: function (sheets) {
+    customElements.adoptedStyleSheets.add(sheets);
+    return old.set.call(this, sheets);
+  },
+});`;
+}
+
+/**
  * Concatenate multiple "scripts" into a single string
  *
  * @param { Array<string> } scripts

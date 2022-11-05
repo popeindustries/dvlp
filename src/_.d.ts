@@ -24,11 +24,13 @@ declare interface Config {
   serverStartTimeout: number;
   testing: boolean;
   typesByExtension: {
-    [extension: string]: 'css' | 'html' | 'js';
+    [extension: string]: ContentType;
   };
   version: string;
   versionDirPath: string;
 }
+
+declare type ContentType = 'css' | 'html' | 'js';
 
 declare interface Entry {
   directories: Array<string>;
@@ -62,7 +64,7 @@ type esbuild = {
 
 type Req = (IncomingMessage | Http2ServerRequest) & {
   filePath: string;
-  type: string;
+  type?: ContentType;
   url: string;
   params?: { [key: string]: string } | {};
 };

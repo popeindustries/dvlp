@@ -38,7 +38,7 @@ declare interface PatchResponseOptions {
 
 declare interface FindOptions {
   directories?: Array<string>;
-  type?: string;
+  type?: ContentType;
 }
 
 declare interface Platform {
@@ -60,3 +60,15 @@ declare interface Watcher {
   add: (filePath: string | Array<string> | Set<string>) => void;
   close: () => void;
 }
+
+declare interface RequestContext {
+  assert: ImportAssertionType;
+  dynamic: boolean;
+  filePath?: string;
+  fingerprint?: string;
+  href: string;
+  imported: boolean;
+  type?: ContentType;
+}
+
+declare type ImportAssertionType = 'css' | 'json' | undefined;

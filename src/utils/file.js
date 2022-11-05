@@ -13,6 +13,7 @@ import { parse } from 'es-module-lexer';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+/** @type { Array<ContentType> } */
 const FILE_TYPES = ['js', 'css', 'html'];
 const MAX_FILE_SYSTEM_DEPTH = 10;
 
@@ -54,7 +55,7 @@ export function find(req, { directories = config.directories, type } = {}) {
   );
   let filePath;
 
-  if (!type) {
+  if (type === undefined) {
     type = isRequestObject(req)
       ? getTypeFromRequest(req)
       : getTypeFromPath(req);
@@ -129,6 +130,37 @@ export function findClosest(fileName) {
 }
 
 /**
+ * Retrieve the absolute path for the project relative path "filePath"
+ *
+ * @param { string } filePath
+ * @returns { string }
+ */
+export function getAbsoluteProjectPath(filePath) {
+  return isAbsoluteFilePath(filePath)
+    ? filePath
+    : path.join(
+        process.cwd(),
+        filePath.charAt(0) === '/' ? filePath.slice(1) : filePath,
+      );
+}
+
+/**
+ * Get directory contents of path
+ *
+ * @param { string } dirPath
+ * @returns { Array<string> }
+ */
+export function getDirectoryContents(dirPath) {
+  if (fs.statSync(dirPath).isFile()) {
+    return [dirPath];
+  }
+
+  return fs
+    .readdirSync(dirPath)
+    .map((filePath) => path.resolve(dirPath, filePath));
+}
+
+/**
  * Retrieve the project relative path for "filePath"
  *
  * @param { string | Array<string> } filePath
@@ -149,25 +181,23 @@ export function getProjectPath(filePath) {
 }
 
 /**
- * Retrieve the absolute path for the project relative path "filePath"
+ * Retrieve generic file type from "filePath" extension
  *
- * @param { string } filePath
- * @returns { string }
+ * @param { string } [filePath]
+ * @returns { ContentType | undefined }
  */
-export function getAbsoluteProjectPath(filePath) {
-  return isAbsoluteFilePath(filePath)
-    ? filePath
-    : path.join(
-        process.cwd(),
-        filePath.charAt(0) === '/' ? filePath.slice(1) : filePath,
-      );
+export function getTypeFromPath(filePath) {
+  if (filePath !== undefined) {
+    const pathname = new URL(filePath, 'http://localhost').pathname;
+    return config.typesByExtension[path.extname(pathname)];
+  }
 }
 
 /**
  * Retrieve resource type
  *
  * @param { Req } req
- * @returns { string }
+ * @returns { ContentType | undefined }
  */
 export function getTypeFromRequest(req) {
   // Unknown file types are sent with 'Accept: text/html',
@@ -180,40 +210,7 @@ export function getTypeFromRequest(req) {
     return 'css';
   } else if (isHtmlRequest(req)) {
     return 'html';
-  } else {
-    return '';
   }
-}
-
-/**
- * Retrieve generic file type from "filePath" extension
- *
- * @param { string } filePath
- * @returns { 'css' | 'html' | 'js' }
- */
-export function getTypeFromPath(filePath) {
-  // Handle other types imported via js as JS
-  // The assert query param is added at import parse time in `utils/patch.js`
-  if (filePath.includes('?assert=')) {
-    return 'js';
-  }
-  return config.typesByExtension[path.extname(filePath)];
-}
-
-/**
- * Get directory contents of path
- *
- * @param { string } dirPath
- * @returns { Array<string> }
- */
-export function getDirectoryContents(dirPath) {
-  if (fs.statSync(dirPath).isFile()) {
-    return [dirPath];
-  }
-
-  return fs
-    .readdirSync(dirPath)
-    .map((filePath) => path.resolve(dirPath, filePath));
 }
 
 /**
@@ -280,7 +277,7 @@ export function isEsmFile(filePath, pkg) {
  * Handles missing extensions and package indexes
  *
  * @param { string } filePath
- * @param { string } type
+ * @param { ContentType } [type]
  * @returns { string }
  */
 function resolveFilePath(filePath, type) {
@@ -301,13 +298,17 @@ function resolveFilePath(filePath, type) {
     // this will allow us to resolve to a ".ts" file when looking for a (missing) ".js" one.
   }
 
-  if (!type) {
-    for (type of FILE_TYPES) {
-      const fp = resolveFilePath(filePath, type);
+  if (type === undefined) {
+    for (const ft of FILE_TYPES) {
+      const fp = resolveFilePath(filePath, ft);
+
       if (fp) {
         return resolveRealFilePath(fp);
       }
     }
+
+    // Default to js
+    type = 'js';
   }
 
   const hasExtension = path.extname(filePath) !== '';

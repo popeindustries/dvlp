@@ -1,4 +1,5 @@
 import { brotliDecompressSync, unzipSync } from 'node:zlib';
+import { createContext, getContextForReq } from './request-contexts.js';
 import { fatal, noisyWarn, warn, WARN_BARE_IMPORT } from './log.js';
 import { getAbsoluteProjectPath, getProjectPath, isEsmFile } from './file.js';
 import { getBundlePath, getBundleSourcePath } from './bundling.js';
@@ -13,6 +14,7 @@ import {
 } from './is.js';
 import Debug from 'debug';
 import { filePathToUrl } from './url.js';
+import { getFingerprint } from './string.js';
 import { Metrics } from './metrics.js';
 import { parse } from 'es-module-lexer';
 import path from 'node:path';
@@ -32,19 +34,17 @@ const debug = Debug('dvlp:patch');
  * Injects reload script into html response,
  * and resolves import ids for js/css response.
  *
- * @param { string | undefined } resolvedFilePath
  * @param { Req } req
  * @param { Res } res
  * @param { PatchResponseOptions } options
  */
 export function patchResponse(
-  resolvedFilePath,
   req,
   res,
   { footerScript, headerScript, resolveImport, send },
 ) {
-  // req.filepath set after file.find()
-  const filePath = req.filePath || resolvedFilePath || req.url;
+  const context = getContextForReq(req);
+  const filePath = req.filePath || context.filePath || req.url;
 
   debug(`patching response for "${getProjectPath(filePath)}"`);
 
@@ -84,15 +84,14 @@ export function patchResponse(
       injectCSPHeader.bind(injectCSPHeader, res, urls, hashes),
     );
     proxyBodyWrite(res, (html) => {
+      // TODO: parse css.js imports?
       enableCrossOriginHeader(res);
       disableCacheControlHeader(res, req.url);
 
-      if (send) {
-        const transformed = send(filePath, html);
+      const transformed = send?.(filePath, html);
 
-        if (transformed !== undefined) {
-          html = transformed;
-        }
+      if (transformed !== undefined) {
+        html = transformed;
       }
 
       return injectScripts(res, scripts, html);
@@ -104,13 +103,14 @@ export function patchResponse(
       disableCacheControlHeader(res, req.url);
       css = rewriteCSSImports(res, filePath, css, resolveImport);
 
-      if (send) {
-        const transformed = send(filePath, css);
+      const transformed = send?.(filePath, css);
 
-        if (transformed !== undefined) {
-          css = transformed;
-        }
+      if (transformed !== undefined) {
+        css = transformed;
       }
+
+      // Fingerprint for reloading
+      context.fingerprint = getFingerprint(css);
 
       return css;
     });
@@ -121,12 +121,10 @@ export function patchResponse(
       disableCacheControlHeader(res, req.url);
       js = rewriteJSImports(res, filePath, js, resolveImport);
 
-      if (send) {
-        const transformed = send(filePath, js);
+      const transformed = send?.(filePath, js);
 
-        if (transformed !== undefined) {
-          js = transformed;
-        }
+      if (transformed !== undefined) {
+        js = transformed;
       }
 
       return js;
@@ -267,12 +265,12 @@ function injectCSPHeader(res, urls, hashes, key, value) {
 }
 
 /**
- * Rewrite bare import references in 'code'
+ * Rewrite import references in "css"
  *
  * @param { Res } res
  * @param { string } filePath
  * @param { string } css
- * @param { PatchResponseOptions["resolveImport"] } resolveImport
+ * @param { PatchResponseOptions["resolveImport"] } [resolveImport]
  * @returns { string }
  */
 function rewriteCSSImports(res, filePath, css, resolveImport) {
@@ -291,7 +289,7 @@ function rewriteCSSImports(res, filePath, css, resolveImport) {
 
   RE_CSS_IMPORT.lastIndex = 0;
   while ((match = RE_CSS_IMPORT.exec(css))) {
-    const [context, pre, id, post] = match;
+    const [matchingString, pre, id, post] = match;
 
     if (!RE_HTTP.test(id)) {
       let importPath = resolve(id, getAbsoluteProjectPath(filePath));
@@ -306,7 +304,8 @@ function rewriteCSSImports(res, filePath, css, resolveImport) {
 
         debug(`rewrote import id from "${id}" to "${newId}"`);
 
-        rewritten[context] = `${pre}${newId}${post}`;
+        rewritten[matchingString] = `${pre}${newId}${post}`;
+        createContext(newId, undefined, false, importPath, true, 'css');
       } else {
         noisyWarn(
           `⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`,
@@ -351,24 +350,26 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
       // parsed indexes as we substitute during iteration
       let offset = 0;
 
-      for (const { a: assert, d: dynamic, e, s, se } of imports) {
-        const isAssert = assert > -1;
+      for (const { a: assertion, d: dynamic, e, s, se } of imports) {
+        const isAssert = assertion > -1;
         const isDynamic = dynamic > -1;
         let start = offset + s;
         let end = offset + e;
         let specifier = js.substring(start, end);
         let after = '';
         let before = '';
-        let queryString = '';
-        let importPath;
+        /** @type { ImportAssertionType } */
+        let assert = undefined;
+        /** @type { string | undefined } */
+        let importPath = undefined;
 
         // Flag as import via assert to correctly trigger client reload instead of refresh
         if (isAssert) {
           const match = RE_IMPORT_ASSERT.exec(
-            js.substring(offset + assert, offset + se),
+            js.substring(offset + assertion, offset + se),
           );
           if (match) {
-            queryString = `?assert=${match[1]}`;
+            assert = /** @type { ImportAssertionType } */ (match[1]);
           }
         }
 
@@ -422,7 +423,7 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
           }
         }
 
-        if (importPath) {
+        if (importPath !== undefined) {
           let newId = '';
 
           // Bundle if in node_modules and not an es module
@@ -436,7 +437,7 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
             newId = importPath;
           }
 
-          newId = filePathToUrl(newId) + queryString;
+          newId = filePathToUrl(newId);
 
           if (newId !== specifier || before || after) {
             debug(
@@ -453,6 +454,15 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
             offset +=
               before.length + newId.length + after.length - specifier.length;
           }
+
+          createContext(
+            newId,
+            assert,
+            isDynamic,
+            importPath,
+            true,
+            assert === 'css' ? 'css' : 'js',
+          );
         } else {
           noisyWarn(
             `⚠️  unable to resolve path for "${specifier}" from "${projectFilePath}"`,
