@@ -18,7 +18,7 @@
 
   /** @type { { sheets: Array<CSSStyleSheet>, add(sheets: Array<CSSStyleSheet>): void } } */
   // @ts-expect-error - patched
-  const adoptedStyleSheetsCollector = customElements.adoptedStyleSheets;
+  const adoptedStyleSheetsCollector = window.__adoptedStyleSheets__;
   /** @type { Map<string, CSSStyleSheet> } */
   const adoptedStyleSheets = new Map();
 
@@ -115,7 +115,7 @@
    * @param { string } href
    */
   function reloadGlobalStyles(href) {
-    /** @type { Array<{ link: Node } | { rule: CSSRule, index: number }> } */
+    /** @type { Array<{ link: Node } | { rule: CSSImportRule, index: number }> } */
     const linksAndImportRules = [];
 
     for (let i = 0; i < document.styleSheets.length; i++) {
@@ -131,10 +131,7 @@
       if ('link' in linkOrImportRule) {
         replaceLink(linkOrImportRule.link);
       } else {
-        reloadImportRule(
-          /** @type { CSSImportRule } */ (linkOrImportRule.rule),
-          linkOrImportRule.index,
-        );
+        reloadImportRule(linkOrImportRule.rule, linkOrImportRule.index);
       }
     }
   }

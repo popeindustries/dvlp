@@ -1,8 +1,7 @@
 :host {
   display: block;
-  height: 50px;
 }
 
 div {
-  color: hotpink;
+  color: red;
 }

@@ -27,14 +27,16 @@ export function getDvlpGlobalString() {
  * @returns { string }
  */
 export function getPatchedAdoptedStyleSheets() {
-  return `customElements.adoptedStyleSheets = { sheets: [], add(sheets) { this.sheets.push(...sheets); } };
-const old = Object.getOwnPropertyDescriptor(ShadowRoot.prototype, 'adoptedStyleSheets');
-Object.defineProperty(ShadowRoot.prototype, 'adoptedStyleSheets', {
-  set: function (sheets) {
-    customElements.adoptedStyleSheets.add(sheets);
-    return old.set.call(this, sheets);
-  },
-});`;
+  return `window.__adoptedStyleSheets__ = { sheets: [], add(sheets) { this.sheets.push(...sheets); } };
+for (const proto of [Document.prototype, ShadowRoot.prototype]) {
+  const old = Object.getOwnPropertyDescriptor(proto, 'adoptedStyleSheets');
+  Object.defineProperty(proto, 'adoptedStyleSheets', {
+    set: function (sheets) {
+      window.__adoptedStyleSheets__.add(sheets);
+      return old.set.call(this, sheets);
+    },
+  });
+}`;
 }
 
 /**

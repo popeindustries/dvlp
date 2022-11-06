@@ -362,8 +362,6 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
         let assert = undefined;
         /** @type { string | undefined } */
         let importPath = undefined;
-
-        // Flag as import via assert to correctly trigger client reload instead of refresh
         if (isAssert) {
           const match = RE_IMPORT_ASSERT.exec(
             js.substring(offset + assertion, offset + se),
