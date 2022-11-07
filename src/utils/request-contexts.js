@@ -11,7 +11,9 @@ const contextByHref = new Map();
  * @param { Req } req
  */
 export function getContextForReq(req) {
-  const cached = contextByHref.get(req.url);
+  // Ignore search params
+  const url = new URL(req.url, 'http://localhost');
+  const cached = contextByHref.get(url.pathname);
   const type = getTypeFromRequest(req);
 
   if (
@@ -34,7 +36,7 @@ export function getContextForReq(req) {
     type: type ?? getTypeFromPath(filePath),
   };
 
-  contextByHref.set(req.url, context);
+  contextByHref.set(url.href, context);
 
   return context;
 }

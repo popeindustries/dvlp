@@ -1,7 +1,7 @@
 :host {
-  display: block;
+  display: inline-block;
 }
 
 div {
-  color: red;
+  color: violet;
 }

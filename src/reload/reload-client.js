@@ -94,7 +94,7 @@
    */
   function reloadAdoptedStyles(href, fingerprint) {
     const url = new URL(href, location.origin);
-    url.searchParams.append('t', String(Date.now()));
+    url.searchParams.set('t', String(Date.now()));
 
     import(url.href, { assert: { type: 'css' } })
       .then((module) => {
@@ -102,7 +102,11 @@
 
         for (const [print, sheet] of adoptedStyleSheets) {
           if (print === fingerprint) {
-            sheet.replaceSync(getSheetRulesAsString(styles));
+            const string = getSheetRulesAsString(styles);
+            sheet.replaceSync(string);
+            adoptedStyleSheets.delete(print);
+            adoptedStyleSheets.set(getFingerprint(string), sheet);
+            break;
           }
         }
       })
@@ -115,55 +119,43 @@
    * @param { string } href
    */
   function reloadGlobalStyles(href) {
-    /** @type { Array<{ link: Node } | { rule: CSSImportRule, index: number }> } */
-    const linksAndImportRules = [];
-
     for (let i = 0; i < document.styleSheets.length; i++) {
-      if (parseStylesheet(document.styleSheets[i], href, linksAndImportRules)) {
+      const sheet = document.styleSheets[i];
+
+      if (parseStylesheet(sheet, href, sheet)) {
         return;
       }
     }
 
     // No match, possibly a concatenated dependency, so refresh everything
-    for (let j = 0; j < linksAndImportRules.length; j++) {
-      const linkOrImportRule = linksAndImportRules[j];
-
-      if ('link' in linkOrImportRule) {
-        replaceLink(linkOrImportRule.link);
-      } else {
-        reloadImportRule(linkOrImportRule.rule, linkOrImportRule.index);
-      }
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      reloadLink(document.styleSheets[i].ownerNode);
     }
   }
 
   /**
    * @param { CSSStyleSheet } stylesheet
-   * @param { string } filePath
-   * @param { Array<{ link: Node } | { rule: CSSRule, index: number }> } linksAndImportRules
-   * @see https://gist.github.com/gabemartin/1183957
+   * @param { string } href
+   * @param { CSSStyleSheet } rootStylesheet
    * @returns { boolean }
    */
-  function parseStylesheet(stylesheet, filePath, linksAndImportRules) {
-    if (stylesheet.href) {
-      if (stylesheet.ownerNode) {
-        if (filePathMatchesHref(filePath, stylesheet.href, null)) {
-          return replaceLink(stylesheet.ownerNode);
-        } else {
-          linksAndImportRules.push({ link: stylesheet.ownerNode });
-        }
-      }
+  function parseStylesheet(stylesheet, href, rootStylesheet) {
+    if (
+      stylesheet.href &&
+      stylesheet.ownerNode &&
+      hrefMatches(href, stylesheet.href, null)
+    ) {
+      return reloadLink(stylesheet.ownerNode);
     }
 
     for (let i = 0; i < stylesheet.cssRules.length; i++) {
       const rule = stylesheet.cssRules[i];
 
       if (ruleIsImportRule(rule)) {
-        if (filePathMatchesHref(filePath, rule.href, stylesheet.href)) {
-          return reloadImportRule(rule, i);
-        } else {
-          linksAndImportRules.push({ rule, index: i });
+        if (hrefMatches(href, rule.href, stylesheet.href)) {
+          return reloadLink(rootStylesheet.ownerNode);
         }
-        return parseStylesheet(rule.styleSheet, filePath, linksAndImportRules);
+        return parseStylesheet(rule.styleSheet, href, rootStylesheet);
       }
     }
 
@@ -179,49 +171,35 @@
   }
 
   /**
-   * @param { string } filePath
-   * @param { string } href
+   * @param { string } newHref
+   * @param { string } oldHref
    * @param { string | null } referrer
    */
-  function filePathMatchesHref(filePath, href, referrer) {
-    referrer = referrer || location.href;
-    const url = new URL(href, referrer);
-    return url.origin.includes('localhost') && url.pathname === filePath;
+  function hrefMatches(newHref, oldHref, referrer) {
+    referrer = referrer || location.origin;
+    const url = new URL(oldHref, referrer);
+    // Ignore searchParams
+    return url.origin.includes('localhost') && url.pathname === newHref;
   }
 
   /**
-   * @param { Node } link
+   * @param { unknown } link
    */
-  function replaceLink(link) {
-    const clone = link.cloneNode(false);
-    const parent = link.parentNode;
+  function reloadLink(link) {
+    if (link instanceof Element && link.hasAttribute('href')) {
+      const url = new URL(
+        /** @type { string } */ (link.getAttribute('href')),
+        location.origin,
+      );
+      url.searchParams.set('t', String(Date.now()));
 
-    if (parent) {
-      parent.removeChild(link);
-      if (parent.lastChild === link) {
-        parent.appendChild(clone);
-      } else {
-        parent.insertBefore(clone, link.nextSibling);
+      if (link.parentNode) {
+        link.setAttribute('href', url.href);
+        return true;
       }
     }
-    return true;
-  }
 
-  /**
-   * @param { CSSImportRule } rule
-   * @param { number } index
-   */
-  function reloadImportRule(rule, index) {
-    const parent = rule.parentStyleSheet;
-
-    if (parent === null) {
-      return false;
-    }
-
-    parent.insertRule(rule.cssText, index);
-    parent.deleteRule(index + 1);
-
-    return true;
+    return false;
   }
 
   /**
