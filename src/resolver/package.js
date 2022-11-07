@@ -47,6 +47,7 @@ export function getPackage(
     type: undefined,
     version: '',
   };
+  /** @type { FindOptions } */
   const findOptions = {
     directories: [packagePath, ...pkg.paths],
     type: 'js',
