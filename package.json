@@ -1,6 +1,6 @@
 {
   "name": "dvlp",
-  "version": "15.0.0-beta.3",
+  "version": "15.0.0-beta.4",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
   "main": "./src/dvlp.js",
   "type": "module",
@@ -59,7 +59,7 @@
     "fastify": "^4.9.2",
     "fastify-static": "^4.7.0",
     "faye-websocket": "~0.11.4",
-    "husky": "^8.0.1",
+    "husky": "^8.0.2",
     "lint-staged": "^13.0.3",
     "lit-html": "^2.4.0",
     "mime": "^3.0.0",
