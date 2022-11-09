@@ -1,10 +1,16 @@
 import chalk from 'chalk';
 import config from '../config.js';
 
-export const WARN_BARE_IMPORT = '⚠️  re-writing bare imports';
-export const WARN_MISSING_EXTENSION = '⚠️  adding missing file extension for';
-export const WARN_PACKAGE_INDEX = '⚠️  adding missing package "index.js"';
-export const WARN_CERTIFICATE_EXPIRY = '⚠️  ssl certificate will expire soon!';
+export const WARN_BARE_IMPORT = `${chalk.yellow('⚠️')} re-writing bare import`;
+export const WARN_MISSING_EXTENSION = `${chalk.yellow(
+  '⚠️',
+)} adding missing file extension for`;
+export const WARN_PACKAGE_INDEX = `${chalk.yellow(
+  '⚠️',
+)} adding missing package "index.js"`;
+export const WARN_CERTIFICATE_EXPIRY = `${chalk.yellow(
+  '⚠️',
+)} ssl certificate will expire soon!`;
 
 const SEG_LENGTH = 80;
 
@@ -29,7 +35,7 @@ export default {
  */
 export function info(msg) {
   if (!config.testing && !silent) {
-    console.log(truncate(' ' + msg));
+    console.log(truncate(' ' + msg.replace(/\\/g, '/')));
   }
 }
 
@@ -40,7 +46,7 @@ export function info(msg) {
  */
 export function noisyInfo(msg) {
   if (!config.testing) {
-    console.log(truncate(' ' + msg));
+    console.log(truncate(' ' + msg.replace(/\\/g, '/')));
   }
 }
 

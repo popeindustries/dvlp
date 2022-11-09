@@ -35,7 +35,7 @@ messagePort.on(
           paths: Array.from(global.sources),
         });
       } catch (err) {
-        console.log(err);
+        console.error(err);
         throw err;
       }
     }

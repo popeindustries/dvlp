@@ -434,7 +434,7 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
             newId = `/${bundlePath}`;
             // ...so safe to re-write to output path
             importPath = path.resolve(bundlePath);
-            warn(WARN_BARE_IMPORT, specifier);
+            warn(WARN_BARE_IMPORT, `"${specifier}"`);
           } else {
             newId = importPath;
           }

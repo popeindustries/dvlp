@@ -540,7 +540,6 @@ export class Mocks {
         } from ${chalk.green(getProjectPath(filePath))}`,
       );
     } catch (err) {
-      console.log(err);
       error(err);
     }
   }
