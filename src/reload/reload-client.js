@@ -214,18 +214,16 @@
   }
 
   /**
-   * @param { string } contents
+   * @param { string } string
    */
-  function getFingerprint(contents) {
-    contents = contents.replace(/\W/g, '');
-    const digestSize = 2;
-    const hashes = new Uint32Array(digestSize).fill(5381);
+  function getFingerprint(string) {
+    const letters = new Set([...string.replace(/\W/g, '')]);
+    let fingerprint = '';
 
-    for (let i = 0; i < contents.length; i++) {
-      hashes[i % digestSize] =
-        (hashes[i % digestSize] * 33) ^ contents.charCodeAt(i);
+    for (const letter of letters) {
+      fingerprint += letter;
     }
 
-    return btoa(String.fromCharCode(...new Uint8Array(hashes.buffer)));
+    return btoa(fingerprint);
   }
 })();
