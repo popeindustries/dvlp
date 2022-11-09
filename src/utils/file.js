@@ -329,7 +329,7 @@ function resolveFilePath(filePath, type) {
 
   if (fp && type === 'js') {
     if (!isNodeModuleFilePath(fp)) {
-      warn(WARN_PACKAGE_INDEX, getProjectPath(filePath));
+      warn(WARN_PACKAGE_INDEX, `"${getProjectPath(filePath)}"`);
     }
   }
 

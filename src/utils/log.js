@@ -7,7 +7,7 @@ export const WARN_MISSING_EXTENSION = `${chalk.yellow(
 )} adding missing file extension for`;
 export const WARN_PACKAGE_INDEX = `${chalk.yellow(
   '⚠️',
-)} adding missing package "index.js"`;
+)} adding missing package "index.js" for`;
 export const WARN_CERTIFICATE_EXPIRY = `${chalk.yellow(
   '⚠️',
 )} ssl certificate will expire soon!`;
