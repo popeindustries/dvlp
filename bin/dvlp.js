@@ -41,7 +41,7 @@ program.parse(process.argv);
 
 async function boot(path = [process.cwd()]) {
   try {
-    const { server } = await import('../dvlp.js');
+    const { server } = await import('dvlp');
     const options = program.opts();
 
     await server(path, {

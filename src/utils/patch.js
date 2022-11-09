@@ -429,7 +429,11 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
             isNodeModuleFilePath(importPath) &&
             !isEsmFile(importPath, getPackage(importPath, undefined, 'browser'))
           ) {
-            newId = `/${getBundlePath(specifier, importPath)}`;
+            // Source path reference stored here...
+            const bundlePath = getBundlePath(specifier, importPath);
+            newId = `/${bundlePath}`;
+            // ...so safe to re-write to output path
+            importPath = path.resolve(bundlePath);
             warn(WARN_BARE_IMPORT, specifier);
           } else {
             newId = importPath;

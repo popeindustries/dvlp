@@ -10,18 +10,13 @@ import { getPackageForDir } from '../resolver/index.js';
 import { isJsFilePath } from './is.js';
 import path from 'node:path';
 
-const { bundleDirMetaPath, testing } = config;
+const { bundleDirMetaPath } = config;
 /** @type { Record<string, string> } */
 let meta = {};
 
 if (existsSync(bundleDirMetaPath)) {
   meta = JSON.parse(readFileSync(bundleDirMetaPath, 'utf-8'));
 }
-process.on('exit', () => {
-  if (!testing) {
-    writeFileSync(bundleDirMetaPath, JSON.stringify(meta));
-  }
-});
 
 /**
  * Get path to bundle from
@@ -37,6 +32,8 @@ export function getBundlePath(specifier, sourcePath) {
   const bundlePath = path.join(config.bundleDirName, bundleName);
 
   meta[bundleName] = sourcePath;
+
+  writeFileSync(bundleDirMetaPath, JSON.stringify(meta));
 
   return bundlePath;
 }

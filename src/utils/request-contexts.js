@@ -36,7 +36,7 @@ export function getContextForReq(req) {
     type: type ?? getTypeFromPath(filePath),
   };
 
-  contextByHref.set(url.href, context);
+  contextByHref.set(url.pathname, context);
 
   return context;
 }
