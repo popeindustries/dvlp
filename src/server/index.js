@@ -293,13 +293,15 @@ export class Dvlp {
           // Decode query param and strip "?dvlpmock=" prefix (sometimes double encoded if coming from client)
           localFilePath = decodeURIComponent(
             decodeURIComponent(
-              localFilePath.slice(localFilePath.indexOf('?dvlpmock=') + 10),
+              req.url.slice(req.url.indexOf('?dvlpmock=') + 10),
             ),
           );
         }
 
-        // Convert Windows paths
-        localFilePath = localFilePath.replace(/\\/g, '/');
+        // Convert Windows paths and strip query params
+        // Requests for "/" will be empty, so default to "index.html"
+        localFilePath =
+          localFilePath.replace(/\\/g, '/').split('?')[0] || 'index.html';
 
         const msg = `${duration} handled${chalk.italic(
           modifier,
