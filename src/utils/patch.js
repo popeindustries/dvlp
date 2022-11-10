@@ -14,7 +14,6 @@ import {
 } from './is.js';
 import Debug from 'debug';
 import { filePathToUrl } from './url.js';
-import { getFingerprint } from './string.js';
 import { Metrics } from './metrics.js';
 import { parse } from 'es-module-lexer';
 import path from 'node:path';
@@ -108,9 +107,6 @@ export function patchResponse(
       if (transformed !== undefined) {
         css = transformed;
       }
-
-      // Fingerprint for reloading
-      context.fingerprint = getFingerprint(css);
 
       return css;
     });
@@ -277,6 +273,8 @@ function rewriteCSSImports(res, filePath, css, resolveImport) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.imports);
 
   const projectFilePath = getProjectPath(filePath);
+
+  css = `${css}\n:scope { --__dvlp-file-path__: '${filePath}'; }`;
 
   if (!RE_CSS_IMPORT.test(css)) {
     debug(`no imports to rewrite in "${projectFilePath}"`);

@@ -4,6 +4,7 @@
   }
   const INIT_RECONNECT_TIMEOUT = 1000;
   const MAX_RECONNECT_TIMEOUT = 16000;
+  const RE_CSS_FILE_PATH = /--__dvlp-file-path__:\s['"]([^'"]+)['"]/;
   /** @type { EventSource } */
   let sse;
   let connected = false;
@@ -24,10 +25,11 @@
 
   adoptedStyleSheetsCollector.add = function add(sheets) {
     for (const sheet of sheets) {
-      adoptedStyleSheets.set(
-        getFingerprint(getSheetRulesAsString(sheet)),
-        sheet,
-      );
+      const filePath = getFilePathFromSheetString(getSheetRulesAsString(sheet));
+
+      if (filePath !== undefined) {
+        adoptedStyleSheets.set(filePath, sheet);
+      }
     }
   };
 
@@ -66,15 +68,15 @@
     });
     sse.addEventListener('refresh', function (event) {
       try {
-        const { assert, fingerprint, href, type } =
+        const { assert, filePath, href, type } =
           /** @type { RequestContext } */ (JSON.parse(event.data));
 
         if (type === 'css') {
           if (assert === 'css') {
-            if (fingerprint !== undefined) {
-              reloadAdoptedStyles(href, fingerprint);
+            if (filePath !== undefined) {
+              reloadAdoptedStyles(href, filePath);
             } else {
-              throw Error('missing fingerprint');
+              throw Error('missing filePath');
             }
           } else {
             reloadGlobalStyles(href);
@@ -90,9 +92,9 @@
 
   /**
    * @param { string } href
-   * @param { string } fingerprint
+   * @param { string } filePath
    */
-  function reloadAdoptedStyles(href, fingerprint) {
+  function reloadAdoptedStyles(href, filePath) {
     const url = new URL(href, location.origin);
     url.searchParams.set('t', String(Date.now()));
 
@@ -100,12 +102,11 @@
       .then((module) => {
         const styles = module.default;
 
-        for (const [print, sheet] of adoptedStyleSheets) {
-          if (print === fingerprint) {
+        for (const [fp, sheet] of adoptedStyleSheets) {
+          if (fp === filePath) {
             const string = getSheetRulesAsString(styles);
             sheet.replaceSync(string);
-            adoptedStyleSheets.delete(print);
-            adoptedStyleSheets.set(getFingerprint(string), sheet);
+            adoptedStyleSheets.set(fp, sheet);
             break;
           }
         }
@@ -216,14 +217,7 @@
   /**
    * @param { string } string
    */
-  function getFingerprint(string) {
-    const letters = new Set([...string.replace(/\W/g, '')]);
-    let fingerprint = '';
-
-    for (const letter of letters) {
-      fingerprint += letter;
-    }
-
-    return btoa(fingerprint);
+  function getFilePathFromSheetString(string) {
+    return RE_CSS_FILE_PATH.exec(string)?.[1];
   }
 })();

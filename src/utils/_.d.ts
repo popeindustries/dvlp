@@ -65,7 +65,6 @@ declare interface RequestContext {
   assert: ImportAssertionType;
   dynamic: boolean;
   filePath?: string;
-  fingerprint?: string;
   href: string;
   imported: boolean;
   type?: ContentType;
