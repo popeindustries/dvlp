@@ -377,6 +377,19 @@ describe('patch', () => {
             `@import "http://something.com/dep.css";`,
           );
         });
+        it('should embed file path', () => {
+          const req = getRequest('/index.css', {
+            accept: 'text/css',
+          });
+          const res = getResponse(req);
+          patchResponse(req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('body { background-color: black; }');
+          expect(getBody(res)).to.include(
+            `:scope { --__dvlp-file-path__: '${cwd}/test/unit/fixtures/www/index.css'; }`,
+          );
+        });
       });
       describe('js', () => {
         it('should resolve valid relative js import id', () => {
@@ -485,6 +498,32 @@ describe('patch', () => {
           });
           res.end(reactDomError);
           expect(getBody(res)).to.include(reactDomError);
+        });
+        it('should resolve asserted local css import', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import "./style.css" assert { type: "css" };');
+          expect(getBody(res)).to.include(
+            `import "${cwd}/test/unit/fixtures/www/style.css" assert { type: "css" };`,
+          );
+        });
+        it('should resolve asserted package css import', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('import "css" assert { type: "css" };');
+          expect(getBody(res)).to.include(
+            `import "${cwd}/test/unit/fixtures/node_modules/css/styles.css" assert { type: "css" };`,
+          );
         });
         it('should resolve multiple bare js import ids', () => {
           const req = getRequest('/index.js', {

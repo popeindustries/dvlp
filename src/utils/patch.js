@@ -424,6 +424,7 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
 
           // Bundle if in node_modules and not an es module
           if (
+            assert === undefined &&
             isNodeModuleFilePath(importPath) &&
             !isEsmFile(importPath, getPackage(importPath, undefined, 'browser'))
           ) {
