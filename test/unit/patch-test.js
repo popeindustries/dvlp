@@ -387,10 +387,9 @@ describe('patch', () => {
           });
           res.end('body { background-color: black; }');
           expect(getBody(res)).to.include(
-            `:scope { --__dvlp-file-path__: "${path.join(
-              process.cwd(),
-              '/test/unit/fixtures/www/index.css',
-            )}"; }`,
+            `:scope { --__dvlp-file-path__: "${path
+              .join(process.cwd(), '/test/unit/fixtures/www/index.css')
+              .replace(/\\/g, '\\\\')}"; }`,
           );
         });
       });

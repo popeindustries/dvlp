@@ -218,6 +218,6 @@
    * @param { string } string
    */
   function getFilePathFromSheetString(string) {
-    return RE_CSS_FILE_PATH.exec(string)?.[1];
+    return RE_CSS_FILE_PATH.exec(string)?.[1].replace(/\\\\/g, '\\');
   }
 })();
