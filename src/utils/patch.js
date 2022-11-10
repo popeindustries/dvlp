@@ -274,7 +274,7 @@ function rewriteCSSImports(res, filePath, css, resolveImport) {
 
   const projectFilePath = getProjectPath(filePath);
 
-  css = `${css}\n:scope { --__dvlp-file-path__: '${filePath}'; }`;
+  css = `${css}\n:scope { --__dvlp-file-path__: "${filePath}"; }`;
 
   if (!RE_CSS_IMPORT.test(css)) {
     debug(`no imports to rewrite in "${projectFilePath}"`);

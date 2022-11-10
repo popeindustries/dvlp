@@ -4,7 +4,7 @@
   }
   const INIT_RECONNECT_TIMEOUT = 1000;
   const MAX_RECONNECT_TIMEOUT = 16000;
-  const RE_CSS_FILE_PATH = /--__dvlp-file-path__:\s['"]([^'"]+)['"]/;
+  const RE_CSS_FILE_PATH = /--__dvlp-file-path__:\s"([^"]+)"/;
   /** @type { EventSource } */
   let sse;
   let connected = false;
