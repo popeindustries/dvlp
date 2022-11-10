@@ -233,7 +233,7 @@ describe('server', () => {
       });
       expect(res.status).to.eql(200);
       expect(Date.now() - start).to.be.above(200);
-      expect(await res.text()).to.equal(
+      expect(await res.text()).to.include(
         'this is transformed content for: style.css on Chrome:69',
       );
       start = Date.now();
@@ -245,7 +245,7 @@ describe('server', () => {
       });
       expect(res.status).to.eql(200);
       expect(Date.now() - start).to.be.above(200);
-      expect(await res.text()).to.equal(
+      expect(await res.text()).to.include(
         'this is transformed content for: style.css on Chrome Mobile:87',
       );
       start = Date.now();
@@ -265,7 +265,7 @@ describe('server', () => {
       });
       const res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(500);
-      expect(await res.text()).to.equal('transform error style.css');
+      expect(await res.text()).to.include('transform error style.css');
     });
     it('should respond to mocked requests', async () => {
       server = await serverFactory('test/unit/fixtures/www', {

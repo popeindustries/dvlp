@@ -59,7 +59,9 @@ describe('patch', () => {
           footerScript: { string: 'test inject' },
         });
         res.end('</body>');
-        expect(getBody(res)).to.equal('<script>test inject</script>\n</body>');
+        expect(getBody(res)).to.include(
+          '<script>test inject</script>\n</body>',
+        );
       });
       it('should inject header script into buffered html response', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
@@ -68,7 +70,7 @@ describe('patch', () => {
           headerScript: { string: 'test inject' },
         });
         res.end('<head></head>');
-        expect(getBody(res)).to.equal(
+        expect(getBody(res)).to.include(
           '<head>\n<script>test inject</script></head>',
         );
       });
@@ -115,7 +117,7 @@ describe('patch', () => {
           'Content-Security-Policy',
           "default-src 'self'; connect-src 'self'",
         );
-        expect(res.getHeader('Content-Security-Policy')).to.equal(
+        expect(res.getHeader('Content-Security-Policy')).to.include(
           "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; ",
         );
       });
@@ -129,7 +131,7 @@ describe('patch', () => {
           },
         });
         res.setHeader('Content-Security-Policy', "default-src 'self'");
-        expect(res.getHeader('Content-Security-Policy')).to.equal(
+        expect(res.getHeader('Content-Security-Policy')).to.include(
           "default-src 'self'; connect-src http://localhost:3529/dvlpreload; ",
         );
       });
@@ -176,7 +178,7 @@ describe('patch', () => {
           'Content-Security-Policy',
           "default-src 'self'; script-src 'self' 'unsafe-inline'",
         );
-        expect(res.getHeader('Content-Security-Policy')).to.equal(
+        expect(res.getHeader('Content-Security-Policy')).to.include(
           "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src http://localhost:3529/dvlpreload; ",
         );
       });
@@ -198,7 +200,7 @@ describe('patch', () => {
           'Content-Security-Policy',
           "default-src 'self'; script-src 'self'",
         );
-        expect(res.getHeader('Content-Security-Policy')).to.equal(
+        expect(res.getHeader('Content-Security-Policy')).to.include(
           "default-src 'self'; script-src 'self' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
         );
       });
@@ -220,7 +222,7 @@ describe('patch', () => {
           'Content-Security-Policy',
           "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo'",
         );
-        expect(res.getHeader('Content-Security-Policy')).to.equal(
+        expect(res.getHeader('Content-Security-Policy')).to.include(
           "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
         );
       });
@@ -242,7 +244,7 @@ describe('patch', () => {
           'Content-Security-Policy',
           "default-src 'self'; script-src 'self' 'unsafe-inline' 'sha512-yyyyyy'",
         );
-        expect(res.getHeader('Content-Security-Policy')).to.equal(
+        expect(res.getHeader('Content-Security-Policy')).to.include(
           "default-src 'self'; script-src 'self' 'unsafe-inline' 'sha512-yyyyyy' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
         );
       });
@@ -252,7 +254,7 @@ describe('patch', () => {
         patchResponse(req, res, {});
         res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.equal(
+        expect(res.getHeader('Cache-Control')).to.include(
           'no-cache, no-store, dvlp-disabled',
         );
       });
@@ -261,7 +263,7 @@ describe('patch', () => {
         const res = getResponse(req);
         patchResponse(req, res, {});
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.equal(
+        expect(res.getHeader('Cache-Control')).to.include(
           'no-cache, no-store, dvlp-disabled',
         );
       });
@@ -271,14 +273,14 @@ describe('patch', () => {
         patchResponse(req, res, {});
         res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.equal('max-age=600');
+        expect(res.getHeader('Cache-Control')).to.include('max-age=600');
       });
       it('should enable cross origin headers', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req, res, {});
         res.end('done');
-        expect(res.getHeader('Access-Control-Allow-Origin')).to.equal('*');
+        expect(res.getHeader('Access-Control-Allow-Origin')).to.include('*');
       });
     });
 
@@ -293,7 +295,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import "./dep.css";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `@import "${cwd}/test/unit/fixtures/www/dep.css";`,
           );
         });
@@ -306,7 +308,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import "dep.css";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `@import "${cwd}/test/unit/fixtures/www/dep.css";`,
           );
         });
@@ -319,7 +321,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import url("./dep.css");');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `@import url("${cwd}/test/unit/fixtures/www/dep.css");`,
           );
         });
@@ -332,7 +334,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import url("dep.css");');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `@import url("${cwd}/test/unit/fixtures/www/dep.css");`,
           );
         });
@@ -345,7 +347,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import "css";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `@import "${cwd}/test/unit/fixtures/node_modules/css/styles.css";`,
           );
         });
@@ -358,7 +360,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import url("css");');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `@import url("${cwd}/test/unit/fixtures/node_modules/css/styles.css");`,
           );
         });
@@ -371,7 +373,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('@import "http://something.com/dep.css";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `@import "http://something.com/dep.css";`,
           );
         });
@@ -386,7 +388,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import "./module.js";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import "${cwd}/test/unit/fixtures/www/module.js";`,
           );
         });
@@ -412,7 +414,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import $$observable from "./$$.js";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import $$observable from "${cwd}/test/unit/fixtures/www/$$.js";`,
           );
         });
@@ -482,7 +484,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end(reactDomError);
-          expect(getBody(res)).to.equal(reactDomError);
+          expect(getBody(res)).to.include(reactDomError);
         });
         it('should resolve multiple bare js import ids', () => {
           const req = getRequest('/index.js', {
@@ -523,7 +525,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import module from "./module";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import module from "${cwd}/test/unit/fixtures/www/module.js";`,
           );
         });
@@ -536,7 +538,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import component from "../component";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import component from "${cwd}/test/unit/fixtures/component.jsx";`,
           );
         });
@@ -549,7 +551,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import route from "../route";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import route from "${cwd}/test/unit/fixtures/route.ts";`,
           );
         });
@@ -562,7 +564,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import module from "./nested";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import module from "${cwd}/test/unit/fixtures/www/nested/index.js";`,
           );
         });
@@ -575,7 +577,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import module from "./nested-ts";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import module from "${cwd}/test/unit/fixtures/www/nested-ts/index.ts";`,
           );
         });
@@ -588,7 +590,9 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('"this is use of a fake import text"');
-          expect(getBody(res)).to.equal(`"this is use of a fake import text"`);
+          expect(getBody(res)).to.include(
+            `"this is use of a fake import text"`,
+          );
         });
         it('should resolve js import with browser field', () => {
           const req = getRequest('/test/unit/fixtures/index.js', {
@@ -599,7 +603,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import "bar";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import "${cwd}/test/unit/fixtures/node_modules/bar/browser.js";`,
           );
         });
@@ -612,7 +616,7 @@ describe('patch', () => {
             resolveImport: hooks.resolveImport,
           });
           res.end('import "bat";');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import "${cwd}/test/unit/fixtures/node_modules/bat/browser.js";`,
           );
         });
@@ -645,7 +649,7 @@ describe('patch', () => {
             },
           });
           res.end('import "module"');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import "${cwd}/test/unit/fixtures/www/module.js"`,
           );
         });
@@ -660,7 +664,7 @@ describe('patch', () => {
             },
           });
           res.end('import "./module.js"');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import "${cwd}/test/unit/fixtures/www/module.js"`,
           );
         });
@@ -676,7 +680,7 @@ describe('patch', () => {
             },
           });
           res.end('import("module");');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `import("${cwd}/test/unit/fixtures/www/module.js");`,
           );
         });
@@ -691,7 +695,7 @@ describe('patch', () => {
             },
           });
           res.end('import("module");');
-          expect(getBody(res)).to.equal(`dynamicImport('module');`);
+          expect(getBody(res)).to.include(`dynamicImport('module');`);
         });
         it('should replace js dynamic import expression with resolve hook return value, including optional arguments', () => {
           const req = getRequest('/index.js', {
@@ -704,7 +708,7 @@ describe('patch', () => {
             },
           });
           res.end('import("module");');
-          expect(getBody(res)).to.equal(
+          expect(getBody(res)).to.include(
             `dynamicImport('./test/unit/fixtures/www/module.js', '/index.js');`,
           );
         });
@@ -719,7 +723,7 @@ describe('patch', () => {
       });
       res.setHeader('Content-Encoding', 'gzip');
       res.end(gzipSync(Buffer.from('<head></head>')));
-      expect(getBody(res)).to.equal(
+      expect(getBody(res)).to.include(
         '<head>\n<script>test inject</script></head>',
       );
     });
@@ -729,7 +733,7 @@ describe('patch', () => {
       patchResponse(req, res, {});
       res.setHeader('Content-Encoding', 'gzip');
       res.end(gzipSync(Buffer.from('body { backgroundColor: #fff; }')));
-      expect(getBody(res)).to.equal('body { backgroundColor: #fff; }');
+      expect(getBody(res)).to.include('body { backgroundColor: #fff; }');
     });
     it('should uncompress brotli compressed html response', () => {
       const req = getRequest('/index.html', { accept: 'text/html' });
@@ -739,7 +743,7 @@ describe('patch', () => {
       });
       res.setHeader('Content-Encoding', 'br');
       res.end(brotliCompressSync(Buffer.from('<head></head>')));
-      expect(getBody(res)).to.equal(
+      expect(getBody(res)).to.include(
         '<head>\n<script>test inject</script></head>',
       );
     });
