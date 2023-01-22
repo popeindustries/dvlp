@@ -1,3 +1,4 @@
+import { exports, imports } from 'resolve.exports';
 import { find, resolveNodeModulesDirectories } from '../utils/file.js';
 import {
   isAbsoluteFilePath,
@@ -9,7 +10,6 @@ import {
 import { error } from '../utils/log.js';
 import fs from 'node:fs';
 import path from 'node:path';
-import { resolve as resolveExports } from 'resolve.exports';
 
 const MAX_FILE_SYSTEM_DEPTH = 10;
 const RE_TRAILING = /\/+$|\\+$/;
@@ -63,7 +63,7 @@ export function getPackage(
     let main = find(json.module || json.main || 'index.js', findOptions);
 
     if (json.imports) {
-      pkg.imports = parsePackageImports(json.imports);
+      pkg.imports = json.imports;
     }
     if (json.exports) {
       pkg.exports = json.exports;
@@ -233,12 +233,10 @@ export function resolvePackageSourcePath(
  * @param { Package } pkg
  */
 export function resolveImportPath(specifier, pkg) {
-  const entry = specifier.replace('#', './');
-
   try {
-    const resolved = resolveExports(
-      { name: pkg.name, exports: pkg.imports },
-      entry,
+    const resolved = imports(
+      { name: pkg.name, imports: pkg.imports },
+      specifier,
       {
         // `node` automatically added if not set
         browser: pkg.env === 'browser',
@@ -246,15 +244,15 @@ export function resolveImportPath(specifier, pkg) {
       },
     );
 
-    if (resolved) {
-      return isBareSpecifier(resolved)
-        ? resolved
-        : path.resolve(pkg.path, resolved);
+    if (resolved?.length) {
+      return isBareSpecifier(resolved[0])
+        ? resolved[0]
+        : path.resolve(pkg.path, resolved[0]);
     }
   } catch (err) {
     if (/** @type { Error } */ (err).message.includes('Missing')) {
       error(
-        `unable to resolve internal package reference. The ${pkg.name} package does not specify ${entry} in it's "imports" map.`,
+        `unable to resolve internal package reference. The ${pkg.name} package does not specify ${specifier} in it's "imports" map.`,
       );
     }
   }
@@ -273,14 +271,14 @@ function resolveExportPath(filePathOrSpecifier, pkg) {
   );
 
   try {
-    const resolved = resolveExports(pkg, entry.replace(/\\/g, '/'), {
+    const resolved = exports(pkg, entry.replace(/\\/g, '/'), {
       // `node` automatically added if not set
       browser: pkg.env === 'browser',
       conditions: pkg.exportsConditions,
     });
 
-    if (resolved) {
-      return path.resolve(pkg.path, resolved);
+    if (resolved?.length) {
+      return path.resolve(pkg.path, resolved[0]);
     }
   } catch (err) {
     if (/** @type { Error } */ (err).message.includes('Missing')) {
@@ -333,27 +331,4 @@ function resolvePackageName(packageName, packagePath) {
       packagePath,
     )
     .replace(/\\/g, '/');
-}
-
-/**
- * Replace all '#' prefixes to make compatible with resolve.exports
- *
- * @param { Record<string, string | Record<string, string>> } imports
- */
-function parsePackageImports(imports) {
-  /** @type { Record<string, string | Record<string, string>> } */
-  const parsed = {};
-
-  for (let key in imports) {
-    const value = imports[key];
-
-    if (key.startsWith('#')) {
-      key = `./${key.slice(1)}`;
-    }
-    // @ts-ignore
-    parsed[key] =
-      typeof value === 'object' ? parsePackageImports(value) : value;
-  }
-
-  return parsed;
 }
