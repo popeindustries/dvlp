@@ -224,7 +224,7 @@ export async function importModule(filePath) {
   /** @type { ModuleType } */ // @ts-ignore
   let module = await import(pathToFileURL(filePath));
 
-  if (module && 'default' in module) {
+  if (module != null && typeof module === 'object' && 'default' in module) {
     // @ts-ignore
     module = module.default;
   }

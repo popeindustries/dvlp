@@ -62,7 +62,7 @@ function restoreClientRequest(fn) {
  * Create client request Proxy apply trap for 'protocol'
  *
  * @param { string } protocol
- * @returns { (target: object, ctx: object, args: [import('http').RequestOptions | string | URL, Function?] | [string | URL, import('http').RequestOptions, Function?]) => Res }
+ * @returns { (target: object, ctx: object, args: [import('http').RequestOptions | string | URL, Function?] | [string | URL, import('http').RequestOptions, Function?]) => Res | undefined }
  */
 function clientRequestApplyTrap(protocol) {
   return function apply(target, ctx, args) {

@@ -52,9 +52,7 @@ type Http2SecureServer = import('http2').Http2SecureServer;
 type Http2SecureServerOptions = import('http2').SecureServerOptions;
 type esbuild = {
   build(options: import('esbuild').BuildOptions & { write: false }): Promise<
-    import('esbuild').BuildResult & {
-      outputFiles: import('esbuild').OutputFile[];
-    }
+    import('esbuild').BuildResult
   >;
   transform(
     input: string,
