@@ -325,7 +325,7 @@ export class Dvlp {
       }
     });
 
-    const context = getContextForReq(req);
+    let context = getContextForReq(req);
 
     res.url = req.url;
 
@@ -388,6 +388,7 @@ export class Dvlp {
           res.rerouted = req.url !== '/';
           // @ts-ignore
           req.url = '/';
+          context = getContextForReq(req);
           context.filePath = find(req);
 
           if (context.filePath !== undefined) {
