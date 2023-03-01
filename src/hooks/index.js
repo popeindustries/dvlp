@@ -1,5 +1,6 @@
 import { error, noisyWarn } from '../utils/log.js';
 import { bundleDependency } from './bundle-dependency.js';
+import chalk from 'chalk';
 import esbuild from 'esbuild';
 import { isNodeModuleFilePath } from '../utils/is.js';
 import { resolve } from '../resolver/index.js';
@@ -27,7 +28,9 @@ export class Hooker {
       for (const name of Object.keys(hooks)) {
         if (!HOOK_NAMES.includes(name) && name !== 'filePath') {
           noisyWarn(
-            `⚠️  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(
+            `${chalk.yellow(
+              '⚠️',
+            )}  no hook named "${name}". Valid hooks include: ${HOOK_NAMES.join(
               ', ',
             )}`,
           );

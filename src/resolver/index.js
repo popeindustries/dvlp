@@ -14,6 +14,7 @@ import {
   isNodeModuleFilePath,
   isRelativeFilePath,
 } from '../utils/is.js';
+import chalk from 'chalk';
 import fs from 'node:fs';
 import { noisyWarn } from '../utils/log.js';
 import path from 'node:path';
@@ -245,7 +246,7 @@ function resolvePackage(dir, env) {
 
       if (versions.size > 1) {
         noisyWarn(
-          `⚠️  multiple versions of the "${
+          `${chalk.yellow('⚠️')}  multiple versions of the "${
             pkg.name
           }" package used: ${Array.from(versions).join(', ')}`,
         );

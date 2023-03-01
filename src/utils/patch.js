@@ -12,6 +12,7 @@ import {
   isJsRequest,
   isNodeModuleFilePath,
 } from './is.js';
+import chalk from 'chalk';
 import Debug from 'debug';
 import { filePathToUrl } from './url.js';
 import { Metrics } from './metrics.js';
@@ -309,7 +310,9 @@ function rewriteCSSImports(res, filePath, css, resolveImport) {
         createContext(newId, undefined, false, importPath, true, 'css');
       } else {
         noisyWarn(
-          `⚠️  unable to resolve path for "${id}" from "${projectFilePath}"`,
+          `${chalk.yellow(
+            '⚠️',
+          )}  unable to resolve path for "${id}" from "${projectFilePath}"`,
         );
       }
     }
@@ -469,7 +472,9 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
           );
         } else {
           noisyWarn(
-            `⚠️  unable to resolve path for "${specifier}" from "${projectFilePath}"`,
+            `${chalk.yellow(
+              '⚠️',
+            )}  unable to resolve path for "${specifier}" from "${projectFilePath}"`,
           );
         }
       }

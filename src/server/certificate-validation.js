@@ -67,7 +67,7 @@ export function validateCert(certFileData) {
       fatal('ssl certificate has expired!\n');
     } else if (diff / 86400000 < 10) {
       noisyWarn(
-        `\n  ⚠️  ${chalk.yellow('ssl certificate will expire soon!')}\n`,
+        `\n  ${chalk.yellow('⚠️  ssl certificate will expire soon!')}\n`,
       );
     }
 
