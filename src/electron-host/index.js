@@ -106,6 +106,7 @@ export class ElectronHost {
 
       this.activeProcess = this.createProcess();
 
+      // TODO: remove message send
       this.activeProcess.send(
         {
           type: 'start',
@@ -137,6 +138,7 @@ export class ElectronHost {
   createProcess() {
     const child = childProcess.spawn(
       this.pathToElectron,
+      // TODO: pass data as argv
       [fileURLToPath(config.electronEntryURL.href), ...this.argv],
       {
         stdio: ['pipe', 'inherit', 'pipe', 'ipc'],

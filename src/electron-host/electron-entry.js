@@ -1,12 +1,6 @@
-import config from '../config.js';
-import crypto from 'node:crypto';
 import electron from 'electron';
-import fs from 'node:fs';
 import { interceptClientRequest } from '../utils/intercept-client-request.js';
 import { isEqualSearchParams } from '../utils/url.js';
-import path from 'node:path';
-
-const RE_DATA_URL = /^data:text\/html;([^,]+,)?/;
 
 const originalLoadURL = electron.BrowserWindow.prototype.loadURL;
 
@@ -14,6 +8,8 @@ const originalLoadURL = electron.BrowserWindow.prototype.loadURL;
 let origin;
 /** @type { Array<DeserializedMock> | undefined } */
 let mocks;
+
+// TODO: Proxy loadFile/loadURL
 
 /**
  * @param { string } filePath
@@ -31,24 +27,11 @@ electron.BrowserWindow.prototype.loadFile = function loadFile(
  * @param { Electron.LoadURLOptions} [options]
  */
 electron.BrowserWindow.prototype.loadURL = function loadURL(url, options) {
-  if (RE_DATA_URL.test(url)) {
-    const [match, encoding] = /** @type { RegExpExecArray } */ (
-      RE_DATA_URL.exec(url)
-    );
-    const encodedMarkup = url.replace(match, '');
-    const markup =
-      encoding === 'base64,'
-        ? Buffer.from(encodedMarkup, 'base64').toString('utf-8')
-        : decodeURI(encodedMarkup);
-    const hash = crypto.createHash('md5').update(markup).digest('hex');
-    const filePath = path.join(config.electronDirPath, `${hash}.html`);
-
-    fs.writeFileSync(filePath, markup, 'utf-8');
-    url = path.relative(process.cwd(), filePath);
-  }
-
   return originalLoadURL.call(this, new URL(url, origin).href);
 };
+
+// TODO: parse argv for passed data
+// TODO: require(if.cjs) otherwise import()
 
 process.on(
   'message',
