@@ -20,6 +20,7 @@ initInterceptClientRequest();
  * @returns { () => void }
  */
 export function interceptClientRequest(fn) {
+  initInterceptClientRequest();
   clientRequestListeners.add(fn);
   return restoreClientRequest.bind(null, fn);
 }
