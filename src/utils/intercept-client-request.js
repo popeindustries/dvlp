@@ -4,10 +4,14 @@ import https from 'node:https';
 
 /** @type { Set<InterceptClientRequestCallback> } */
 const clientRequestListeners = new Set();
+const originalFetch = globalThis.fetch;
 const originalHttpRequest = http.request;
 const originalHttpGet = http.get;
 const originalHttpsRequest = https.request;
 const originalHttpsGet = https.get;
+
+// Early init to ensure that all references are proxied
+initInterceptClientRequest();
 
 /**
  * Listen for client requests
@@ -16,7 +20,6 @@ const originalHttpsGet = https.get;
  * @returns { () => void }
  */
 export function interceptClientRequest(fn) {
-  initInterceptClientRequest();
   clientRequestListeners.add(fn);
   return restoreClientRequest.bind(null, fn);
 }
@@ -26,6 +29,12 @@ export function interceptClientRequest(fn) {
  */
 function initInterceptClientRequest() {
   if (!isProxy(http.request)) {
+    if (originalFetch !== undefined) {
+      // @ts-ignore
+      globalThis.fetch = new Proxy(globalThis.fetch, {
+        apply: fetchApplyTrap(),
+      });
+    }
     // @ts-ignore
     http.request = new Proxy(http.request, {
       apply: clientRequestApplyTrap('http'),
@@ -51,11 +60,48 @@ function initInterceptClientRequest() {
 function restoreClientRequest(fn) {
   clientRequestListeners.delete(fn);
   if (!clientRequestListeners.size) {
+    globalThis.fetch = originalFetch;
     http.request = originalHttpRequest;
     http.get = originalHttpGet;
     https.request = originalHttpsRequest;
     https.get = originalHttpsGet;
   }
+}
+
+/**
+ * Create `fetch` Proxy apply trap
+ *
+ * @returns { (target: object, ctx: object, args: [URL | RequestInfo, RequestInit | undefined]) => Promise<Response> }
+ */
+function fetchApplyTrap() {
+  return function apply(target, ctx, args) {
+    if (clientRequestListeners.size > 0) {
+      let [urlOrRequestInfo, requestInit] = args;
+      /** @type { URL } */
+      let url;
+
+      if (urlOrRequestInfo instanceof Request) {
+        url = new URL(urlOrRequestInfo.url);
+      } else {
+        url = new URL(urlOrRequestInfo);
+      }
+
+      // TODO: pass method/headers
+      if (notifyListeners(clientRequestListeners, url) === false) {
+        return Promise.reject(new Error('request blocked'));
+      }
+
+      if (isLocalhost(url.hostname)) {
+        // Force to http
+        url.protocol = 'http:';
+      }
+
+      args = [url, requestInit];
+    }
+
+    // @ts-ignore
+    return Reflect.apply(target, ctx, args);
+  };
 }
 
 /**

@@ -1,9 +1,10 @@
 import EventSource from 'eventsource';
 import { expect } from 'chai';
-import fetch from 'node-fetch';
+import nodeFetch from 'node-fetch';
 import { testServer } from '../../src/dvlp-test.js';
 import websocket from 'faye-websocket';
 
+const fetch = globalThis.fetch ?? nodeFetch;
 const { Client: WebSocket } = websocket;
 let es, server, ws;
 
@@ -108,7 +109,8 @@ describe('testServer', () => {
       await fetch('http://localhost:8080/foo.js?offline');
       expect(Error('should have errored'));
     } catch (err) {
-      expect(err).to.have.property('code', 'ECONNRESET');
+      const code = (err.cause ?? err).code;
+      expect(code === 'ECONNRESET' || code === 'UND_ERR_SOCKET').to.be.true;
     }
   });
   it('should respond with custon "max-age"', async () => {

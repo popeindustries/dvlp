@@ -17,7 +17,6 @@ initInterceptFileRead();
  * @returns { () => void }
  */
 export function interceptFileRead(fn) {
-  initInterceptFileRead();
   fileReadListeners.add(fn);
   return restoreFileRead.bind(null, fn);
 }

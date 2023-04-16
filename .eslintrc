@@ -13,6 +13,7 @@
     "prettier"
   ],
   "globals": {
+    "globalThis": "writable",
     "$MOCKS": "readonly",
     "$RELOAD_PATHNAME": "readonly",
     "sourceFiles": "readonly"
