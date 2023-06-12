@@ -7,7 +7,7 @@ declare interface ApplicationWorker {
 declare type ApplicationHostMessage = { type: 'start'; main: string };
 
 declare type ApplicationWorkerMessage =
-  | { type: 'started' }
+  | { type: 'started'; port: number }
   | { type: 'watch'; paths: Array<string> };
 
 declare interface ApplicationWorkerPendingHandle {

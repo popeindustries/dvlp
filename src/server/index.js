@@ -124,11 +124,8 @@ export class Dvlp {
     }
 
     if (entry.isApp && entry.main !== undefined) {
-      const appPort = this.port === 443 ? config.defaultPort : this.port + 9;
-
       this.applicationHost = new ApplicationHost(
         entry.main,
-        appPort,
         this.origin,
         reload ? this.triggerClientReload : undefined,
         this.mocks?.toJSON(),
@@ -370,7 +367,7 @@ export class Dvlp {
       }
     }
 
-    if (!res.finished) {
+    if (!res.writableEnded) {
       if (context.filePath !== undefined) {
         debug(`sending "${context.filePath}"`);
         handleFile(context.filePath, req, res, true);

@@ -5,7 +5,6 @@ import { syncBuiltinESMExports } from 'node:module';
 import { workerData } from 'node:worker_threads';
 
 const hostUrl = /** @type { URL } */ (new URL(workerData.hostOrigin));
-const serverPort = /** @type { number } */ (workerData.serverPort);
 const mocks = /** @type { Array<DeserializedMock> } */ (
   workerData.serializedMocks
 )?.map((mockData) => {
@@ -26,7 +25,6 @@ messagePort.on(
   /** @param { ApplicationHostMessage } msg */
   async (msg) => {
     if (msg.type === 'start') {
-      /* eslint no-useless-catch: 0 */
       try {
         await import(msg.main);
         messagePort.postMessage({
@@ -51,25 +49,31 @@ http.createServer = new Proxy(http.createServer, {
       throw err;
     });
     server.on('listening', () => {
-      messagePort.postMessage({ type: 'started' });
+      messagePort.postMessage({
+        type: 'started',
+        port: /** @type { import('net').AddressInfo } */ (server.address())
+          .port,
+      });
     });
     server.listen = new Proxy(server.listen, {
       apply(target, ctx, args) {
         // Override port and host
         // listen(options)
         if (typeof args[0] === 'object') {
-          args[0].port = serverPort;
+          args[0].port = 0;
           args[0].host = 'localhost';
-        } else {
-          // listen(port[, host])
+        }
+        // listen(port[, host])
+        else {
           if (typeof args[0] === 'number') {
-            args[0] = serverPort;
+            args[0] = 0;
             if (typeof args[1] === 'string') {
               args[1] = 'localhost';
             }
-            // listen(path)
-          } else {
-            args = [serverPort, 'localhost', ...args.slice(1)];
+          }
+          // listen(path)
+          else {
+            args = [0, 'localhost', ...args.slice(1)];
           }
         }
 

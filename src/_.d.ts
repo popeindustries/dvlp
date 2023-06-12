@@ -36,10 +36,9 @@ declare interface Entry {
   directories: Array<string>;
   isApp: boolean;
   isElectron: boolean;
-  isFunction: boolean;
   isSecure: boolean;
   isStatic: boolean;
-  main: string | (() => void) | undefined;
+  main: string | undefined;
 }
 
 type Http2ServerRequest = import('http2').Http2ServerRequest;
@@ -51,9 +50,9 @@ type HttpServerOptions = import('http').ServerOptions;
 type Http2SecureServer = import('http2').Http2SecureServer;
 type Http2SecureServerOptions = import('http2').SecureServerOptions;
 type esbuild = {
-  build(options: import('esbuild').BuildOptions & { write: false }): Promise<
-    import('esbuild').BuildResult
-  >;
+  build(
+    options: import('esbuild').BuildOptions & { write: false },
+  ): Promise<import('esbuild').BuildResult>;
   transform(
     input: string,
     options?: import('esbuild').TransformOptions,

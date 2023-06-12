@@ -8,11 +8,8 @@ import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
 import { getProjectPath } from '../utils/file.js';
-import http from 'node:http';
-import { isProxy } from '../utils/is.js';
 import { performance } from 'node:perf_hooks';
 import { request } from 'node:http';
-import { syncBuiltinESMExports } from 'node:module';
 import { watch } from '../utils/watch.js';
 
 const debug = Debug('dvlp:apphost');
@@ -49,29 +46,22 @@ export function createApplicationLoaderFile(filePath, hooksConfig) {
 
 export class ApplicationHost {
   /**
-   * @param { string | (() => void) } main
-   * @param { number } appPort
+   * @param { string  } main
    * @param { string } hostOrigin
    * @param { (filePath: string, silent?: boolean) => void } [triggerClientReload]
    * @param { Array<SerializedMock> } [serializedMocks]
    * @param { Array<string> } [argv]
    */
-  constructor(
-    main,
-    appPort,
-    hostOrigin,
-    triggerClientReload,
-    serializedMocks,
-    argv,
-  ) {
+  constructor(main, hostOrigin, triggerClientReload, serializedMocks, argv) {
+    /** @type { string } */
+    this.appOrigin;
+    /** @type { number } */
+    this.appPort;
+
     this.argv = argv;
-    this.appOrigin = `http://localhost:${appPort}`;
-    this.appPort = appPort;
     this.hostOrigin = hostOrigin;
     this.main = main;
     this.serializedMocks = serializedMocks;
-    /** @type { DestroyableHttpServer | undefined } */
-    this.server;
     /** @type { Watcher | undefined } */
     this.watcher;
 
@@ -104,17 +94,12 @@ export class ApplicationHost {
    * @returns { Promise<void> }
    */
   async start() {
-    if (typeof this.main === 'function') {
-      proxyCreateServer(this);
-      this.main();
-      return;
-    }
-
     try {
       /** @type { [start: number, stop: number ]} */
       const times = [performance.now(), 0];
 
-      await this.activeThread.start(this.main);
+      this.appPort = await this.activeThread.start(this.main);
+      this.appOrigin = `http://localhost:${this.appPort}`;
 
       times[1] = performance.now();
       const duration = msDiff(times);
@@ -129,10 +114,8 @@ export class ApplicationHost {
    * Restart application
    */
   async restart() {
-    if (this.activeThread.isListening) {
-      debug(`terminating thread with id "${this.activeThread.threadId}"`);
-      await this.activeThread.terminate();
-    }
+    debug(`terminating thread with id "${this.activeThread.threadId}"`);
+    await this.activeThread.terminate();
     this.activeThread = this.pendingThread;
     this.pendingThread = this.createThread();
     noisyInfo('\n  restarting application server...');
@@ -213,7 +196,6 @@ export class ApplicationHost {
       workerData: {
         hostOrigin: this.hostOrigin,
         messagePort: port2,
-        serverPort: this.appPort,
         serializedMocks: this.serializedMocks,
       },
       transferList: [port2],
@@ -228,7 +210,6 @@ export class ApplicationHost {
   destroy() {
     this.activeThread?.terminate();
     this.pendingThread?.terminate();
-    this.server?.destroy();
     this.watcher?.close();
   }
 }
@@ -248,16 +229,30 @@ class ApplicationThread extends Worker {
     this.isRegistered = false;
     this.messagePort = messagePort;
     this.watcher = watcher;
-    /** @type { ((value?: void | PromiseLike<void>) => void) | undefined } */
+    /** @type { ((value: number | PromiseLike<number>) => void) | undefined } */
     this.resolveStarted;
     /** @type { ((value?: unknown) => void) | undefined } */
     this.rejectStarted;
 
-    this.messagePort.on('message', this.handleMessage.bind(this));
+    this.messagePort.on(
+      'message',
+      /** @param { ApplicationWorkerMessage} msg */
+      (msg) => {
+        if (msg.type === 'started') {
+          this.resolveStarted?.(msg.port);
+          this.isListening = true;
+        } else {
+          if (this.watcher !== undefined) {
+            this.watcher.add(msg.paths);
+          }
+        }
+      },
+    );
 
     this.on('error', (err) => {
       if (this.isListening === undefined) {
-        this.listening(err);
+        this.rejectStarted?.(err);
+        this.isListening = false;
       }
       fatal(err);
     });
@@ -279,7 +274,7 @@ class ApplicationThread extends Worker {
 
   /**
    * @param { string } main
-   * @returns { Promise<void>}
+   * @returns { Promise<number>}
    */
   start(main) {
     return new Promise((resolve, reject) => {
@@ -288,84 +283,5 @@ class ApplicationThread extends Worker {
       debug(`starting application at ${main}`);
       this.messagePort.postMessage({ type: 'start', main });
     });
-  }
-
-  /**
-   * @param { ApplicationWorkerMessage } msg
-   * @private
-   */
-  handleMessage(msg) {
-    switch (msg.type) {
-      case 'started': {
-        this.listening();
-        break;
-      }
-      case 'watch': {
-        if (this.watcher !== undefined) {
-          this.watcher.add(msg.paths);
-        }
-        break;
-      }
-    }
-  }
-
-  /**
-   * @param { Error } [err]
-   * @private
-   */
-  listening(err) {
-    if (err) {
-      this.rejectStarted?.(err);
-    } else {
-      this.resolveStarted?.();
-    }
-
-    this.isListening = err === undefined;
-    this.resolveStarted = this.rejectStarted = undefined;
-  }
-}
-
-/**
- * Intercept server creation
- *
- * @param { ApplicationHost } host
- */
-function proxyCreateServer(host) {
-  if (!isProxy(http.createServer)) {
-    http.createServer = new Proxy(http.createServer, {
-      apply(target, ctx, args) {
-        /** @type { DestroyableHttpServer } */
-        const server = Reflect.apply(target, ctx, args);
-        const connections = new Map();
-
-        server.on('connection', (connection) => {
-          const key = `${connection.remoteAddress}:${connection.remotePort}`;
-
-          connections.set(key, connection);
-          connection.on('close', () => {
-            connections.delete(key);
-          });
-        });
-        server.on('listening', () => {
-          const address = server.address();
-          host.appPort = /** @type { import('net').AddressInfo } */ (
-            address
-          ).port;
-        });
-
-        server.destroy = () => {
-          for (const connection of connections.values()) {
-            connection.destroy();
-          }
-          connections.clear();
-          server.close();
-        };
-
-        host.server = server;
-
-        return server;
-      },
-    });
-    syncBuiltinESMExports();
   }
 }

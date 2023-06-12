@@ -1,3 +1,9 @@
+/**
+ * - `createServer`: proxy in all threads, find first server, force to http, force random port, return used port to main process
+ * - intercept client requests in all threads, redirect mocks to main endpoint
+ * - intercept file reads in all threads, send filepath to main process
+ */
+
 import './utils/bootstrap.js';
 import { exists, getProjectPath, importModule } from './utils/file.js';
 import logger, { error, info } from './utils/log.js';
@@ -15,7 +21,7 @@ import path from 'node:path';
 /**
  * Server instance factory
  *
- * @param { string | Array<string> | (() => void) } filePath
+ * @param { string | Array<string> } filePath
  * @param { ServerOptions } options
  * @returns { Promise<Server> }
  */
@@ -56,10 +62,8 @@ export async function server(
   if (certsPath) {
     certsPath = expandPath(certsPath);
     entry.isSecure = true;
+    // TODO: don't force port number
     port = 443;
-  }
-  if (process.env.PORT === undefined) {
-    process.env.PORT = String(port);
   }
 
   createApplicationLoaderFile(config.applicationLoaderURL, {
@@ -99,8 +103,6 @@ export async function server(
         )
         .map((dir) => path.relative(parentDir, dir) || path.basename(parentDir))
         .join(', ')
-    : entry.isFunction
-    ? 'function'
     : getProjectPath(/** @type { string } */ (entry.main));
   const origin = server.origin;
   const appOrigin = server.applicationHost?.appOrigin;
@@ -172,7 +174,7 @@ export async function server(
 /**
  * Resolve entry data from "filePaths"
  *
- * @param { string | Array<string> | (() => void) } filePath
+ * @param { string | Array<string> } filePath
  * @param { Array<string> } directories
  * @param { boolean } electron
  * @returns { Entry }
@@ -183,42 +185,35 @@ function resolveEntry(filePath, directories = [], electron) {
     directories: [],
     isApp: false,
     isElectron: electron,
-    isFunction: false,
     isSecure: false,
     isStatic: false,
     main: undefined,
   };
 
-  if (typeof filePath !== 'function') {
-    filePath = expandPath(filePath);
-    exists(filePath);
+  filePath = expandPath(filePath);
+  exists(filePath);
 
-    for (let directory of [...filePath, process.cwd()]) {
-      directory = path.resolve(directory);
+  for (let directory of [...filePath, process.cwd()]) {
+    directory = path.resolve(directory);
 
-      if (fs.statSync(directory).isFile()) {
-        entry.isApp = !electron;
-        entry.main = directory;
-        directory = path.dirname(directory);
-      }
-
-      const nodeModules = path.join(directory, 'node_modules');
-
-      entry.directories.push(directory);
-      if (fs.existsSync(nodeModules)) {
-        entry.directories.push(nodeModules);
-      }
-      if (electron) {
-        entry.directories.push(config.electronDirPath);
-      }
+    if (fs.statSync(directory).isFile()) {
+      entry.isApp = !electron;
+      entry.main = directory;
+      directory = path.dirname(directory);
     }
 
-    entry.isStatic = !entry.isApp;
-  } else {
-    entry.isApp = true;
-    entry.isFunction = true;
-    entry.main = filePath;
+    const nodeModules = path.join(directory, 'node_modules');
+
+    entry.directories.push(directory);
+    if (fs.existsSync(nodeModules)) {
+      entry.directories.push(nodeModules);
+    }
+    if (electron) {
+      entry.directories.push(config.electronDirPath);
+    }
   }
+
+  entry.isStatic = !entry.isApp;
 
   for (const directory of directories) {
     entry.directories.push(path.resolve(directory));
