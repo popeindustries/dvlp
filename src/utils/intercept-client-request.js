@@ -1,6 +1,7 @@
-import { isLocalhost, isProxy } from './is.js';
 import http from 'node:http';
 import https from 'node:https';
+import { isLocalhost } from './is.js';
+import util from 'node:util';
 
 /** @type { Set<InterceptClientRequestCallback> } */
 const clientRequestListeners = new Set();
@@ -29,7 +30,7 @@ export function interceptClientRequest(fn) {
  * Initialise `http.request` proxy
  */
 function initInterceptClientRequest() {
-  if (!isProxy(http.request)) {
+  if (!util.types.isProxy(http.request)) {
     if (originalFetch !== undefined) {
       // @ts-ignore
       globalThis.fetch = new Proxy(globalThis.fetch, {

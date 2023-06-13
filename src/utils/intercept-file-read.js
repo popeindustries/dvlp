@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { isProxy } from './is.js';
+import util from 'node:util';
 
 /** @type { Set<InterceptFileReadCallback> } */
 const fileReadListeners = new Set();
@@ -26,7 +26,7 @@ export function interceptFileRead(fn) {
  * Initialise `fileRead` proxy
  */
 function initInterceptFileRead() {
-  if (!isProxy(fs.readFile)) {
+  if (!util.types.isProxy(fs.readFile)) {
     // Proxy ReadStream private method to work around patching by graceful-fs
     const ReadStream = fs.ReadStream.prototype;
 

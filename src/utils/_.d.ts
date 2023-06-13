@@ -55,6 +55,7 @@ declare interface Platform {
 
 declare type InterceptClientRequestCallback = (url: URL) => boolean;
 declare type InterceptFileReadCallback = (filePath: string) => void;
+declare type InterceptCreateServerCallback = (port: number) => void;
 
 declare interface Watcher {
   add: (filePath: string | Array<string> | Set<string>) => void;

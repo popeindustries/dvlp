@@ -39,7 +39,7 @@ export function createApplicationLoaderFile(filePath, hooksConfig) {
     (hooksPath
       ? `import customHooks from '${hooksPath}';\n`
       : 'const customHooks = {};\n') +
-    readFileSync(join(__dirname, 'application-loader.js'));
+    readFileSync(join(__dirname, 'application-loader.js'), 'utf-8');
 
   writeFileSync(filePath, contents);
 }

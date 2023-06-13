@@ -4,9 +4,9 @@
  * - intercept file reads in all threads, send filepath to main process
  */
 
-import './utils/bootstrap.js';
 import { exists, getProjectPath, importModule } from './utils/file.js';
 import logger, { error, info } from './utils/log.js';
+import { bootstrap } from './utils/bootstrap.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
 import config from './config.js';
@@ -16,7 +16,15 @@ import { Dvlp } from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
 import { expandPath } from './utils/expand-path.js';
 import fs from 'node:fs';
+import { interceptClientRequest } from './utils/intercept-client-request.js';
+import { isEqualSearchParams } from './utils/url.js';
 import path from 'node:path';
+
+// Export utils used by application-worker/application-loader/electron-entry
+export const __dvlp__ = {
+  interceptClientRequest,
+  isEqualSearchParams,
+};
 
 /**
  * Server instance factory
@@ -39,6 +47,7 @@ export async function server(
     silent,
   } = {},
 ) {
+  bootstrap();
   const entry = resolveEntry(filePath, directories, electron);
   /** @type { Hooks | undefined } */
   let hooks;
@@ -97,10 +106,7 @@ export async function server(
   const parentDir = path.resolve(process.cwd(), '..');
   const paths = entry.isStatic
     ? config.directories
-        .filter(
-          (dir) =>
-            dir !== config.electronDirPath && !dir.includes('node_modules'),
-        )
+        .filter((dir) => !dir.includes('node_modules'))
         .map((dir) => path.relative(parentDir, dir) || path.basename(parentDir))
         .join(', ')
     : getProjectPath(/** @type { string } */ (entry.main));
@@ -207,9 +213,6 @@ function resolveEntry(filePath, directories = [], electron) {
     entry.directories.push(directory);
     if (fs.existsSync(nodeModules)) {
       entry.directories.push(nodeModules);
-    }
-    if (electron) {
-      entry.directories.push(config.electronDirPath);
     }
   }
 

@@ -1,9 +1,7 @@
 import config from '../config.js';
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
-const HAS_UTIL_IS_PROXY = util.types && util.types.isProxy !== undefined;
 const RE_BARE_SPECIFIER = /^[^./](?!:)/; // Discard if A: (windows file path)
 const RE_INVALID = /[<>:"|?*]/;
 const RE_JSON = /.json$/i;
@@ -187,34 +185,6 @@ export function isNodeModuleFilePath(filePath) {
     return RE_NODE_MODULES.test(realPath(filePath));
   } catch (err) {
     return true;
-  }
-}
-
-/**
- * Determine if 'obj' is Proxy
- *
- * @param { any } obj
- * @returns { obj is Proxy }
- */
-export function isProxy(obj) {
-  if (HAS_UTIL_IS_PROXY) {
-    return util.types.isProxy(obj);
-  } else {
-    return obj instanceof Proxy;
-  }
-}
-
-/**
- * Determine if 'obj' is Promise instance
- *
- * @param { any } obj
- * @returns { obj is Promise<T> }
- */
-export function isPromise(obj) {
-  if (HAS_UTIL_IS_PROXY) {
-    return util.types.isPromise(obj);
-  } else {
-    return obj instanceof Promise;
   }
 }
 

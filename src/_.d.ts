@@ -9,7 +9,6 @@ declare interface Config {
   directories: Array<string>;
   dirPath: string;
   dvlpDirPath: string;
-  electronDirPath: string;
   electronEntryURL: import('url').URL;
   esbuildTargetByExtension: {
     [extension: string]: string;

@@ -17,9 +17,8 @@ const bundleDirName = path.join(DIR_NAME, VERSION, 'bundled');
 const bundleDirPath = path.resolve(bundleDirName);
 const bundleDirMetaPath = path.join(bundleDirPath, '__meta__.json');
 const defaultPort = process.env.PORT ? Number(process.env.PORT) : 8080;
-const electronDirPath = path.join(versionDirPath, 'electron');
 const electronEntryURL = pathToFileURL(
-  path.join(electronDirPath, 'electron-entry.cjs'),
+  path.join(versionDirPath, 'electron-entry.cjs'),
 );
 
 /**
@@ -36,7 +35,6 @@ const config = {
   directories: [],
   dirPath,
   dvlpDirPath: path.resolve(DIR_NAME),
-  electronDirPath,
   electronEntryURL,
   esbuildTargetByExtension: {
     '.js': 'js',

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { dirname, join } from 'path';
+import { dirname, join } from 'node:path';
 import { Command } from 'commander';
-import { fileURLToPath } from 'url';
-import { readFileSync } from 'fs';
+import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 
 const pkg = JSON.parse(
   readFileSync(

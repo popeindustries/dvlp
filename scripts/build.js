@@ -78,7 +78,7 @@ await esbuild.build({
   outdir: '.',
   platform: 'node',
   splitting: false,
-  target: 'node14',
+  target: 'node16',
 });
 
 await esbuild.build({
@@ -88,7 +88,7 @@ await esbuild.build({
   external: ['esbuild'],
   format: 'esm',
   splitting: false,
-  target: 'node14',
+  target: 'node16',
   outdir: '.',
   platform: 'node',
   plugins: [

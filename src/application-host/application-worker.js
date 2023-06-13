@@ -1,9 +1,9 @@
+import { __dvlp__ } from 'dvlp';
 import http from 'node:http';
-import { interceptClientRequest } from '../utils/intercept-client-request.js';
-import { isEqualSearchParams } from '../utils/url.js';
 import { syncBuiltinESMExports } from 'node:module';
 import { workerData } from 'node:worker_threads';
 
+const { interceptClientRequest, isEqualSearchParams } = __dvlp__;
 const hostUrl = /** @type { URL } */ (new URL(workerData.hostOrigin));
 const mocks = /** @type { Array<DeserializedMock> } */ (
   workerData.serializedMocks
