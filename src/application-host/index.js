@@ -1,4 +1,4 @@
-import { dirname, join, relative } from 'node:path';
+import { dirname, join } from 'node:path';
 import { error, fatal, noisyInfo } from '../utils/log.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { format, msDiff } from '../utils/metrics.js';
@@ -15,14 +15,7 @@ import { watch } from '../utils/watch.js';
 
 const debug = Debug('dvlp:apphost');
 const __dirname = dirname(fileURLToPath(import.meta.url));
-let workerPath = relative(
-  process.cwd(),
-  join(__dirname, './application-worker.js'),
-).replace(/\\/g, '/');
-
-if (!workerPath.startsWith('.')) {
-  workerPath = `./${workerPath}`;
-}
+const workerPath = join(__dirname, './application-worker.js');
 
 /**
  * Create application loader based on passed hooks
@@ -78,7 +71,9 @@ export class ApplicationHost {
         await this.restart();
       });
 
-      this.watcher.add(this.main);
+      getDependencies(this.main, 'node').then((dependencies) =>
+        this.watcher?.add(dependencies),
+      );
     }
   }
 
@@ -236,10 +231,6 @@ class ApplicationThread extends Worker {
       debug(`starting application at ${main}`);
 
       this.messagePort.postMessage({ type: 'start', main });
-
-      if (this.watcher !== undefined) {
-        this.watcher.add(await getDependencies(main, 'node'));
-      }
     });
   }
 }

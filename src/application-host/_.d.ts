@@ -8,6 +8,7 @@ declare interface ApplicationProcessWorkerData {
   origin: string;
   hostOrigin: string;
   postMessage(msg: ApplicationWorkerMessage): void;
+  main?: string;
   serializedMocks?: Array<SerializedMock>;
 }
 

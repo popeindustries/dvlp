@@ -17,4 +17,5 @@ declare type ElectronProcessMessage =
       type: 'listening';
       origin: string;
     }
-  | { type: 'started' };
+  | { type: 'started' }
+  | { type: 'watch'; filePath: string };

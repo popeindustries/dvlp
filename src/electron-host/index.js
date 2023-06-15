@@ -143,9 +143,9 @@ export class ElectronHost {
           '--workerData',
           Buffer.from(
             JSON.stringify({
+              hostOrigin: this.hostOrigin,
               main: this.main,
               serializedMocks: this.serializedMocks,
-              hostOrigin: this.hostOrigin,
             }),
           ).toString('base64'),
           ...this.argv,
@@ -165,6 +165,10 @@ export class ElectronHost {
             resolve(child);
           } else if (msg.type === 'started') {
             resolve(child);
+          } else if (msg.type === 'watch' && this.watcher !== undefined) {
+            getDependencies(msg.filePath, 'node').then((dependencies) =>
+              this.watcher?.add(dependencies),
+            );
           }
         },
       );

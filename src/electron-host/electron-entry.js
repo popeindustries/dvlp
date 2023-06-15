@@ -1,24 +1,31 @@
+import { dirname, join } from 'node:path';
 import {
   filePathToUrlPathname,
   getElectronWorkerData,
   interceptInProcess,
 } from 'dvlp/internal';
+import { fileURLToPath } from 'node:url';
+import { syncBuiltinESMExports } from 'node:module';
+import workerThreads from 'node:worker_threads';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const workerPath = join(__dirname, './electron-worker.js');
 
 export async function bootstrapElectron() {
-  const workerData = getElectronWorkerData();
+  const electronWorkerData = getElectronWorkerData();
   const { BrowserWindow } = await import('electron');
 
-  interceptInProcess(workerData);
+  interceptInProcess(electronWorkerData);
 
+  // Forward filePath to host server
   BrowserWindow.prototype.loadFile = new Proxy(
     BrowserWindow.prototype.loadFile,
     {
       apply(target, ctx, args) {
         const filePath = /** @type { string } */ (args[0]);
-        // Forward filePath to host server
         const url = new URL(
           filePathToUrlPathname(filePath),
-          workerData.hostOrigin,
+          electronWorkerData.hostOrigin,
         );
 
         return BrowserWindow.prototype.loadURL.call(ctx, url.href);
@@ -26,13 +33,17 @@ export async function bootstrapElectron() {
     },
   );
 
+  // Forward file or app urls to host server
   BrowserWindow.prototype.loadURL = new Proxy(BrowserWindow.prototype.loadURL, {
     apply(target, ctx, args) {
       let url = /** @type { string } */ (args[0]);
 
-      // Forward file or app urls to host server
-      if (url.startsWith('file://') || url.startsWith(workerData.origin)) {
-        url = new URL(new URL(url).pathname, workerData.hostOrigin).href;
+      if (
+        url.startsWith('file://') ||
+        url.startsWith(electronWorkerData.origin)
+      ) {
+        url = new URL(new URL(url).pathname, electronWorkerData.hostOrigin)
+          .href;
       }
 
       args[0] = url;
@@ -41,67 +52,47 @@ export async function bootstrapElectron() {
     },
   });
 
+  // Intercept Worker construction in order to instead load electron-worker
+  workerThreads.Worker = new Proxy(workerThreads.Worker, {
+    construct(target, args, newTarget) {
+      const [filePath, options] = args;
+      const { port1, port2 } = new workerThreads.MessageChannel();
+
+      port1.on(
+        'message',
+        /** @param { ElectronProcessMessage} msg */
+        (msg) => {
+          if (msg.type === 'listening') {
+            electronWorkerData.origin = msg.origin;
+            electronWorkerData.postMessage(msg);
+          }
+        },
+      );
+
+      electronWorkerData.postMessage({ type: 'watch', filePath });
+      options.workerData ??= {};
+      options.transferList ??= [];
+
+      args[0] = workerPath;
+      options.workerData.dvlp = {
+        hostOrigin: electronWorkerData.hostOrigin,
+        main: filePath,
+        messagePort: port2,
+        serializedMocks: electronWorkerData.serializedMocks,
+      };
+      options.transferList.push(port2);
+
+      return Reflect.construct(target, args, newTarget);
+    },
+  });
+
+  syncBuiltinESMExports();
+
   try {
-    await import(workerData.main);
-    workerData.postMessage({ type: 'started' });
+    await import(electronWorkerData.main);
+    electronWorkerData.postMessage({ type: 'started' });
   } catch (err) {
     console.error(err);
     process.exit(1);
   }
 }
-
-// const originalLoadURL = electron.BrowserWindow.prototype.loadURL;
-
-// /** @type { string } */
-// let origin;
-// /** @type { Array<DeserializedMock> | undefined } */
-// let mocks;
-
-// // TODO: Proxy loadFile/loadURL
-
-// /**
-//  * @param { string } filePath
-//  * @param { Electron.LoadFileOptions} [options]
-//  */
-// electron.BrowserWindow.prototype.loadFile = function loadFile(
-//   filePath,
-//   options,
-// ) {
-//   return originalLoadURL.call(this, new URL(filePath, origin).href);
-// };
-
-// /**
-//  * @param { string } url
-//  * @param { Electron.LoadURLOptions} [options]
-//  */
-// electron.BrowserWindow.prototype.loadURL = function loadURL(url, options) {
-//   return originalLoadURL.call(this, new URL(url, origin).href);
-// };
-
-// // TODO: parse argv for passed data
-// // TODO: require(if.cjs) otherwise import()
-
-// process.on(
-//   'message',
-//   /** @param { ElectronHostMessage } msg */
-//   async (msg) => {
-//     if (msg.type === 'start') {
-//       origin = msg.origin;
-
-//       mocks = msg.mocks?.map((mockData) => {
-//         mockData.originRegex = new RegExp(mockData.originRegex);
-//         mockData.pathRegex = new RegExp(mockData.pathRegex);
-//         mockData.search = new URLSearchParams(mockData.search);
-//         return mockData;
-//       });
-
-//       try {
-//         await import(msg.main);
-//         process.send?.({ type: 'started' });
-//       } catch (err) {
-//         console.error(err);
-//         process.exit(1);
-//       }
-//     }
-//   },
-// );

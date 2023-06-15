@@ -103,14 +103,20 @@ export async function server(
         .join(', ')
     : getProjectPath(/** @type { string } */ (entry.main));
   const origin = server.origin;
-  const appOrigin =
-    server.applicationHost?.appOrigin ?? server.electronHost?.appOrigin;
+  const appOrigin = server.applicationHost?.appOrigin;
+  const electronAppOrigin = server.electronHost?.appOrigin;
 
   info(`\n  💥 serving ${chalk.green(paths)}`);
   info(`    ...at ${chalk.green.underline(origin)}`);
   if (appOrigin) {
     info(
       `    (proxied application server started at ${chalk.bold(appOrigin)})`,
+    );
+  } else if (electronAppOrigin) {
+    info(
+      `    (proxied Electron application server started at ${chalk.bold(
+        electronAppOrigin,
+      )})`,
     );
   }
   info('\n  👀 watching for changes...\n');

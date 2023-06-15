@@ -73,6 +73,7 @@ await esbuild.build({
     './src/dvlp.js',
     './src/dvlp-internal.js',
     './src/application-host/application-worker.js',
+    './src/electron-host/electron-worker.js',
   ],
   external: ['electron', 'esbuild', 'fsevents', 'dvlp/internal'],
   format: 'esm',
