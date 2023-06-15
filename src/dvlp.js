@@ -16,15 +16,7 @@ import { Dvlp } from './server/index.js';
 import { init as esLexerInit } from 'es-module-lexer';
 import { expandPath } from './utils/expand-path.js';
 import fs from 'node:fs';
-import { interceptClientRequest } from './utils/intercept-client-request.js';
-import { isEqualSearchParams } from './utils/url.js';
 import path from 'node:path';
-
-// Export utils used by application-worker/application-loader/electron-entry
-export const __dvlp__ = {
-  interceptClientRequest,
-  isEqualSearchParams,
-};
 
 /**
  * Server instance factory
@@ -111,7 +103,8 @@ export async function server(
         .join(', ')
     : getProjectPath(/** @type { string } */ (entry.main));
   const origin = server.origin;
-  const appOrigin = server.applicationHost?.appOrigin;
+  const appOrigin =
+    server.applicationHost?.appOrigin ?? server.electronHost?.appOrigin;
 
   info(`\n  💥 serving ${chalk.green(paths)}`);
   info(`    ...at ${chalk.green.underline(origin)}`);
@@ -144,12 +137,9 @@ export async function server(
     : undefined;
   const electronProcess = server.electronHost
     ? {
+        origin: server.electronHost.appOrigin,
         get isListening() {
           return server.electronHost?.isListening ?? false;
-        },
-        /** @param { string | Array<string> } filePaths */
-        addWatchFiles(filePaths) {
-          server.electronHost?.addWatchFiles(filePaths);
         },
         /** @param { string | object | number | boolean | bigint } msg */
         sendMessage(msg) {

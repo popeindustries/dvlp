@@ -18,6 +18,7 @@ export async function getDependencies(filePath, platform) {
       entryPoints: [filePath],
       format: 'esm',
       logLevel: 'silent',
+      minify: true,
       platform,
       splitting: false,
       target: 'esnext',

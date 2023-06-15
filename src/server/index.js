@@ -70,20 +70,19 @@ export class Dvlp {
     this.hooks = new Hooker(hooks, this.watcher);
     this.isListening = false;
     this.lastChanged = '';
-    this.origin = `http://localhost:${port}`;
     /** @type { Http2SecureServerOptions } */
     this.secureServerOptions;
 
+    let protocol = 'http';
+
     if (certsPath) {
       const serverOptions = resolveCerts(certsPath);
-      const commonName = validateCert(serverOptions.cert);
-
-      if (commonName) {
-        this.origin = `https://${commonName}`;
-      }
+      validateCert(serverOptions.cert);
       this.secureServerOptions = { allowHTTP1: true, ...serverOptions };
+      protocol = 'https';
     }
 
+    this.origin = `${protocol}://localhost:${port}`;
     // Make sure mocks instance has access to active port
     this.port = config.activePort = port;
     this.mocks = mockPath ? new Mocks(mockPath) : undefined;
@@ -131,9 +130,9 @@ export class Dvlp {
         this.mocks?.toJSON(),
         argv,
       );
-    } else if (entry.isElectron) {
+    } else if (entry.isElectron && entry.main !== undefined) {
       this.electronHost = new ElectronHost(
-        /** @type { string } */ (entry.main),
+        entry.main,
         this.origin,
         reload ? this.triggerClientReload : undefined,
         this.mocks?.toJSON(),
@@ -335,7 +334,6 @@ export class Dvlp {
     }
 
     // Allow manual response handling via user hook
-    // TODO: avoid task tick if no user hook registered
     if (await this.hooks.handleRequest(req, res)) {
       return;
     }
@@ -379,6 +377,9 @@ export class Dvlp {
       if (this.applicationHost) {
         noisyInfo(`    allowing app to handle "${req.url}"`);
         this.applicationHost.handle(req, res);
+      } else if (this.electronHost) {
+        noisyInfo(`    allowing Electron app to handle "${req.url}"`);
+        this.electronHost.handle(req, res);
       } else {
         // Reroute to root index.html
         if (context.type === 'html') {

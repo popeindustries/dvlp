@@ -1,6 +1,7 @@
 import http from 'node:http';
 import https from 'node:https';
 import { isLocalhost } from './is.js';
+import { syncBuiltinESMExports } from 'node:module';
 import util from 'node:util';
 
 /** @type { Set<InterceptClientRequestCallback> } */
@@ -51,6 +52,8 @@ function initInterceptClientRequest() {
     https.get = new Proxy(https.get, {
       apply: clientRequestApplyTrap('https'),
     });
+
+    syncBuiltinESMExports();
   }
 }
 
@@ -67,6 +70,7 @@ function restoreClientRequest(fn) {
     http.get = originalHttpGet;
     https.request = originalHttpsRequest;
     https.get = originalHttpsGet;
+    syncBuiltinESMExports();
   }
 }
 

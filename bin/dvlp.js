@@ -26,7 +26,7 @@ program
     'path to mock files (directory, file, glob pattern)',
   )
   .option('-k, --hooks <path>', 'path to optional hooks registration file')
-  // .option('-e, --electron', 'run "path" file as electron.js entry file')
+  .option('-e, --electron', 'run "path" file as electron.js entry file')
   .option(
     '--ssl <path>',
     `enable https mode by specifying path to directory containing ".crt" and ".key" files (directory, glob pattern)`,

@@ -1,16 +1,20 @@
 declare interface ElectronProcess {
+  readonly origin: string | undefined;
   readonly isListening: boolean;
-  addWatchFiles(filePaths: string | Array<string>): void;
   sendMessage(message: string | object | number | boolean | bigint): void;
 }
 
-declare type ElectronHostMessage = {
-  type: 'start';
-  main: string;
-  mocks?: Array<DeserializedMock>;
+declare interface ElectronProcessWorkerData {
   origin: string;
-};
+  hostOrigin: string;
+  main: string;
+  postMessage(msg: ElectronProcessMessage): void;
+  serializedMocks?: Array<SerializedMock>;
+}
 
-declare type ElectronProcessMessage = {
-  type: 'started';
-};
+declare type ElectronProcessMessage =
+  | {
+      type: 'listening';
+      origin: string;
+    }
+  | { type: 'started' };

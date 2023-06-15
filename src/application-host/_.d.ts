@@ -4,11 +4,15 @@ declare interface ApplicationWorker {
   sendMessage(message: string | object | number | boolean | bigint): void;
 }
 
-declare type ApplicationHostMessage = { type: 'start'; main: string };
+declare interface ApplicationProcessWorkerData {
+  origin: string;
+  hostOrigin: string;
+  postMessage(msg: ApplicationWorkerMessage): void;
+  serializedMocks?: Array<SerializedMock>;
+}
 
-declare type ApplicationWorkerMessage =
-  | { type: 'started'; port: number }
-  | { type: 'watch'; paths: Array<string> };
+declare type ApplicationHostMessage = { type: 'start'; main: string };
+declare type ApplicationWorkerMessage = { type: 'listening'; origin: string };
 
 declare interface ApplicationWorkerPendingHandle {
   promise: Promise<{ body: string; href: string }>;

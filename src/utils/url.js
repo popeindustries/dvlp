@@ -62,8 +62,12 @@ export function getUrlCacheKey(url) {
  * @param { string } filePath
  * @returns { string }
  */
-export function filePathToUrl(filePath) {
-  return encodeURI(filePath.replace(/^[A-Z]:\\/, '/').replace(/\\/g, '/'));
+export function filePathToUrlPathname(filePath) {
+  return encodeURI(
+    filePath
+      .replace(/^(?:file:\/\/)|(?:[a-zA-Z]:[\\/])/, '/')
+      .replace(/\\/g, '/'),
+  );
 }
 
 /**

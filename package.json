@@ -13,6 +13,8 @@
   },
   "exports": {
     ".": "./src/dvlp.js",
+    "./internal": "./src/dvlp-internal.js",
+    "./dvlp-internal.js": "./src/dvlp-internal.js",
     "./resolver": "./src/resolver/index.js",
     "./test-browser": "./src/dvlp-test-browser.js",
     "./dvlp-test-browser.js": "./src/dvlp-test-browser.js",
@@ -23,6 +25,8 @@
     "main": "./dvlp.js",
     "exports": {
       ".": "./dvlp.js",
+      "./internal": "./dvlp-internal.js",
+      "./dvlp-internal.js": "./dvlp-internal.js",
       "./test-browser": "./dvlp-test-browser.js",
       "./dvlp-test-browser.js": "./dvlp-test-browser.js",
       "./test": "./dvlp-test.js",

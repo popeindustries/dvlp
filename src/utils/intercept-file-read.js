@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
 import util from 'node:util';
 
 /** @type { Set<InterceptFileReadCallback> } */
@@ -46,6 +47,8 @@ function initInterceptFileRead() {
         },
       });
     }
+
+    syncBuiltinESMExports();
   }
 }
 
@@ -60,6 +63,7 @@ function restoreFileRead(fn) {
     fs.ReadStream.prototype._read = originalReadStreamRead;
     fs.readFile = originalReadFile;
     fs.readFileSync = originalReadFileSync;
+    syncBuiltinESMExports();
   }
 }
 

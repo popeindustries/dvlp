@@ -1,6 +1,7 @@
 import http from 'node:http';
 import http2 from 'node:http2';
 import https from 'node:https';
+import { syncBuiltinESMExports } from 'node:module';
 import util from 'node:util';
 
 /** @type { Set<InterceptCreateServerCallback> } */
@@ -17,8 +18,8 @@ const originalHttpsCreateServer = https.createServer;
  * @returns { () => void }
  */
 export function interceptCreateServer(reservedPort, fn) {
-  initInterceptCreateServer(reservedPort);
   createServerListeners.add(fn);
+  initInterceptCreateServer(reservedPort);
   return restoreCreateServer.bind(null, fn);
 }
 
@@ -28,6 +29,7 @@ export function interceptCreateServer(reservedPort, fn) {
  * @param { number } reservedPort
  */
 function initInterceptCreateServer(reservedPort) {
+  // TODO: forward https/http2 to unsecure http?
   if (!util.types.isProxy(http.createServer)) {
     for (const [lib, method] of [
       [http, 'createServer'],
@@ -44,12 +46,14 @@ function initInterceptCreateServer(reservedPort) {
             throw err;
           });
           server.on('listening', () => {
-            const port = /** @type { import('net').AddressInfo } */ (
+            const protocol = lib === http ? 'http' : 'https';
+            const { port } = /** @type { import('net').AddressInfo } */ (
               server.address()
-            ).port;
+            );
+            const origin = `${protocol}://localhost:${port}`;
 
             for (const listener of createServerListeners) {
-              listener(port);
+              listener(origin);
             }
           });
           server.listen = new Proxy(server.listen, {
@@ -76,6 +80,8 @@ function initInterceptCreateServer(reservedPort) {
         },
       });
     }
+
+    syncBuiltinESMExports();
   }
 }
 
@@ -90,5 +96,6 @@ function restoreCreateServer(fn) {
     http.createServer = originalHttpCreateServer;
     http2.createSecureServer = originalHttp2CreateSecureServer;
     https.createServer = originalHttpsCreateServer;
+    syncBuiltinESMExports();
   }
 }

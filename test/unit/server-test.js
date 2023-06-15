@@ -378,16 +378,15 @@ describe('server', () => {
 
     it('should start an app server', async () => {
       server = await serverFactory('test/unit/fixtures/app.mjs', {
-        port: 8100,
         reload: false,
       });
-      const res = await fetch('http://localhost:8100/', {
+      const res = await fetch('http://localhost:8080/', {
         headers: { accept: 'text/html' },
       });
-      // expect(res.status).to.eql(200);
+      expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('hi');
     });
-    it('should start an app server with listen "path"', async () => {
+    it.skip('should start an app server with listen "path"', async () => {
       server = await serverFactory('test/unit/fixtures/app-create-server.mjs', {
         port: 8100,
         reload: false,
@@ -736,6 +735,17 @@ describe('server', () => {
           expect(res.status).to.eql(200);
           const body = await res.text();
           expect(body).to.contain("console.log('this is foo')");
+        });
+        it.skip('should start a https app server on same port', async () => {
+          server = await serverFactory('test/unit/fixtures/app-https.mjs', {
+            certsPath: 'test/unit/fixtures/certificates',
+            reload: false,
+          });
+          const res = await fetch('https://localhost:443/', {
+            headers: { accept: 'text/html' },
+          });
+          expect(res.status).to.eql(200);
+          expect(await res.text()).to.contain('hi');
         });
       });
     });

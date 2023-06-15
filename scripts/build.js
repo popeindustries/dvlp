@@ -61,7 +61,7 @@ await esbuild.build({
   format: 'esm',
   outfile: 'dvlp-test.js',
   platform: 'node',
-  target: 'node14',
+  target: 'node16',
 });
 
 await esbuild.build({
@@ -71,9 +71,10 @@ await esbuild.build({
   entryNames: '[name]',
   entryPoints: [
     './src/dvlp.js',
+    './src/dvlp-internal.js',
     './src/application-host/application-worker.js',
   ],
-  external: ['electron', 'esbuild', 'fsevents'],
+  external: ['electron', 'esbuild', 'fsevents', 'dvlp/internal'],
   format: 'esm',
   outdir: '.',
   platform: 'node',
@@ -117,10 +118,10 @@ await esbuild.build({
   bundle: true,
   define,
   entryPoints: ['./src/electron-host/electron-entry.js'],
-  external: ['electron'],
-  format: 'cjs',
+  format: 'esm',
   splitting: false,
-  target: 'node14',
-  outfile: './electron-entry.cjs',
+  target: 'node16',
+  outfile: './electron-entry.js',
+  packages: 'external',
   platform: 'node',
 });

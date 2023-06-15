@@ -1,36 +1,47 @@
-import { dirname, join } from 'node:path';
 import { error, fatal, noisyInfo } from '../utils/log.js';
+import { format, msDiff } from '../utils/metrics.js';
 import chalk from 'chalk';
 import childProcess from 'node:child_process';
 import config from '../config.js';
-import { copyFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import Debug from 'debug';
 import { fileURLToPath } from 'node:url';
+import { forwardRequest } from '../utils/request.js';
 import { getDependencies } from '../utils/module.js';
 import { getProjectPath } from '../utils/file.js';
 import { watch } from '../utils/watch.js';
+import { writeFileSync } from 'node:fs';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const debug = Debug('dvlp:electronhost');
 const require = createRequire(import.meta.url);
 
 /**
- * Copy electron entry file
+ * Generate electron entry file (.cjs)
  *
  * @param { import('url').URL } filePath
  */
 export function createElectronEntryFile(filePath) {
-  copyFileSync(join(__dirname, 'electron-entry.cjs'), filePath);
+  writeFileSync(
+    filePath,
+    `import('dvlp/internal').then((m) => m.bootstrapElectron());`,
+  );
 }
 
 export class ElectronHost {
   /**
    * @param { string } main
-   * @param { string } origin
+   * @param { string } hostOrigin
    * @param { (filePath: string, silent?: boolean) => void } [triggerClientReload]
    * @param { Array<SerializedMock> } [serializedMocks]
    * @param { Array<string> } [argv]
    */
-  constructor(main, origin, triggerClientReload, serializedMocks, argv = []) {
+  constructor(
+    main,
+    hostOrigin,
+    triggerClientReload,
+    serializedMocks,
+    argv = [],
+  ) {
     try {
       /** @type { string } */
       // @ts-ignore
@@ -41,19 +52,19 @@ export class ElectronHost {
       );
       throw err;
     }
+
+    /** @type { string | undefined } */
+    this.appOrigin;
+
     this.argv = argv;
     /** @type { childProcess.ChildProcess } */
     this.activeProcess;
+    this.hostOrigin = hostOrigin;
     this.isListening = false;
-    this.origin = origin;
     this.main = main;
     this.serializedMocks = serializedMocks;
     /** @type { Watcher | undefined } */
     this.watcher;
-    /** @type { ((value?: void | PromiseLike<void>) => void) | undefined } */
-    this.resolveStarted;
-    /** @type { ((value?: unknown) => void) | undefined } */
-    this.rejectStarted;
 
     if (triggerClientReload !== undefined) {
       this.watcher = watch(async (filePath) => {
@@ -64,115 +75,111 @@ export class ElectronHost {
         );
         await this.start();
       });
-      this.addWatchFiles(this.main);
-    }
-  }
 
-  /**
-   * Add `filePaths` to file watcher.
-   * Includes dependencies since electron doesn't support esm loaders
-   *
-   * @param { string | Array<string> } filePaths
-   */
-  async addWatchFiles(filePaths) {
-    if (this.watcher !== undefined) {
-      if (!Array.isArray(filePaths)) {
-        filePaths = [filePaths];
-      }
-
-      for (const filePath of filePaths) {
-        this.watcher.add(await getDependencies(filePath, 'node'));
-      }
+      getDependencies(this.main, 'node').then((dependencies) =>
+        this.watcher?.add(dependencies),
+      );
     }
   }
 
   /**
    * Start/restart electron application
    */
-  start() {
+  async start() {
+    let isRestart = false;
     this.isListening = false;
 
-    return new Promise(async (resolve, reject) => {
-      this.resolveStarted = resolve;
-      this.rejectStarted = reject;
+    if (this.activeProcess !== undefined) {
+      debug(`terminating active process`);
+      this.activeProcess.removeAllListeners();
+      this.activeProcess.kill();
+      isRestart = true;
+    }
 
-      let isRestart = false;
+    debug(`starting Electron application at ${this.main}`);
 
-      if (this.activeProcess !== undefined) {
-        this.activeProcess.removeAllListeners();
-        this.activeProcess.kill();
-        isRestart = true;
-      }
+    /** @type { [start: number, stop: number ]} */
+    const times = [performance.now(), 0];
 
-      this.activeProcess = this.createProcess();
+    this.activeProcess = await this.createProcess();
 
-      // TODO: remove message send
-      this.activeProcess.send(
-        {
-          type: 'start',
-          main: this.main,
-          mocks: this.serializedMocks,
-          origin: this.origin,
-        },
-        /** @param { Error | null } err */
-        (err) => {
-          if (err) {
-            error(err);
-            this.rejectStarted?.(err);
-            return;
-          }
+    times[1] = performance.now();
 
-          noisyInfo(
-            isRestart
-              ? '\n  restarting electron application...'
-              : `\n  electron application started`,
-          );
-        },
-      );
-    });
+    if (isRestart) {
+      noisyInfo('\n  restarting Electron application...');
+    } else {
+      noisyInfo(`${format(msDiff(times))} Electron application started`);
+    }
+  }
+
+  /**
+   * Handle application request.
+   * Pipe incoming request to application running in Electron.
+   *
+   * @param { Req } req
+   * @param { Res } res
+   */
+  handle(req, res) {
+    debug(`handling request for "${req.url}"`);
+
+    if (this.appOrigin === undefined) {
+      res.writeHead(404);
+      res.end('no running Electron server to respond to request');
+      return;
+    }
+
+    forwardRequest(this.appOrigin, req, res);
   }
 
   /**
    * @private
    */
   createProcess() {
-    const child = childProcess.spawn(
-      this.pathToElectron,
-      // TODO: pass data as argv
-      [fileURLToPath(config.electronEntryURL.href), ...this.argv],
-      {
-        stdio: ['pipe', 'inherit', 'pipe', 'ipc'],
-      },
-    );
+    return new Promise((resolve, reject) => {
+      const child = childProcess.spawn(
+        this.pathToElectron,
+        [
+          fileURLToPath(config.electronEntryURL.href),
+          '--workerData',
+          Buffer.from(
+            JSON.stringify({
+              main: this.main,
+              serializedMocks: this.serializedMocks,
+              hostOrigin: this.hostOrigin,
+            }),
+          ).toString('base64'),
+          ...this.argv,
+        ],
+        {
+          stdio: ['pipe', 'inherit', 'pipe', 'ipc'],
+        },
+      );
 
-    child.on(
-      'message',
-      /** @param { ElectronProcessMessage } msg */
-      (msg) => {
-        if (msg.type === 'started') {
-          this.resolveStarted?.();
-          this.isListening = true;
-          this.resolveStarted = this.rejectStarted = undefined;
-        }
-      },
-    );
-    child.on('error', (err) => {
-      if (!this.isListening) {
-        this.rejectStarted?.(err);
-      } else {
+      child.on(
+        'message',
+        /** @param { ElectronProcessMessage } msg */
+        (msg) => {
+          if (msg.type === 'listening') {
+            this.appOrigin = msg.origin;
+            this.isListening = true;
+            resolve(child);
+          } else if (msg.type === 'started') {
+            resolve(child);
+          }
+        },
+      );
+      child.on('error', (err) => {
+        reject(err);
         error(err);
-      }
-    });
-    child.on('close', (code) => {
-      if (this.isListening) {
+      });
+      child.on('close', (code) => {
+        debug('process closed');
         process.exit(code ?? 1);
-      }
+      });
+      child.stderr?.on('data', (chunk) => {
+        error(chunk.toString().trimEnd());
+      });
     });
-    child.stderr?.on('data', (chunk) => {
-      error(chunk.toString().trimEnd());
-    });
-
-    return child;
   }
 
   /**

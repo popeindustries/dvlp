@@ -7,9 +7,10 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
+import { forwardRequest } from '../utils/request.js';
+import { getDependencies } from '../utils/module.js';
 import { getProjectPath } from '../utils/file.js';
 import { performance } from 'node:perf_hooks';
-import { request } from 'node:http';
 import { watch } from '../utils/watch.js';
 
 const debug = Debug('dvlp:apphost');
@@ -55,13 +56,15 @@ export class ApplicationHost {
   constructor(main, hostOrigin, triggerClientReload, serializedMocks, argv) {
     /** @type { string } */
     this.appOrigin;
-    /** @type { number } */
-    this.appPort;
 
     this.argv = argv;
     this.hostOrigin = hostOrigin;
-    this.main = main;
+    this.main = pathToFileURL(main).href;
     this.serializedMocks = serializedMocks;
+    /** @type { ApplicationThread } */
+    this.activeThread = this.createThread();
+    /** @type { ApplicationThread } */
+    this.pendingThread = this.createThread();
     /** @type { Watcher | undefined } */
     this.watcher;
 
@@ -74,17 +77,8 @@ export class ApplicationHost {
         );
         await this.restart();
       });
-    }
 
-    if (typeof this.main === 'string') {
-      if (this.watcher !== undefined) {
-        this.watcher.add(this.main);
-      }
-      this.main = pathToFileURL(this.main).href;
-      /** @type { ApplicationThread } */
-      this.activeThread = this.createThread();
-      /** @type { ApplicationThread } */
-      this.pendingThread = this.createThread();
+      this.watcher.add(this.main);
     }
   }
 
@@ -98,8 +92,7 @@ export class ApplicationHost {
       /** @type { [start: number, stop: number ]} */
       const times = [performance.now(), 0];
 
-      this.appPort = await this.activeThread.start(this.main);
-      this.appOrigin = `http://localhost:${this.appPort}`;
+      this.appOrigin = await this.activeThread.start(this.main);
 
       times[1] = performance.now();
       const duration = msDiff(times);
@@ -138,43 +131,7 @@ export class ApplicationHost {
       return;
     }
 
-    /** @type { Record<string, string> } */
-    const headers = {
-      connection: 'keep-alive',
-      // @ts-ignore
-      host: req.headers.host || req.headers[':authority'],
-    };
-
-    // Prune http2 headers
-    for (const header in req.headers) {
-      if (header && !header.startsWith(':')) {
-        // @ts-ignore
-        headers[header] = req.headers[header];
-      }
-    }
-
-    const requestOptions = {
-      headers,
-      method: req.method,
-      path: req.url,
-      port: this.appPort,
-    };
-    const appRequest = request(requestOptions, (originResponse) => {
-      const { statusCode, headers } = originResponse;
-
-      delete headers.connection;
-      delete headers['keep-alive'];
-
-      res.writeHead(statusCode || 200, headers);
-      originResponse.pipe(res);
-    });
-
-    appRequest.on('error', (err) => {
-      res.writeHead(500);
-      res.end(err.message);
-    });
-
-    req.pipe(appRequest);
+    forwardRequest(this.appOrigin, req, res);
   }
 
   /**
@@ -229,7 +186,7 @@ class ApplicationThread extends Worker {
     this.isRegistered = false;
     this.messagePort = messagePort;
     this.watcher = watcher;
-    /** @type { ((value: number | PromiseLike<number>) => void) | undefined } */
+    /** @type { ((value: string | PromiseLike<string>) => void) | undefined } */
     this.resolveStarted;
     /** @type { ((value?: unknown) => void) | undefined } */
     this.rejectStarted;
@@ -238,21 +195,16 @@ class ApplicationThread extends Worker {
       'message',
       /** @param { ApplicationWorkerMessage} msg */
       (msg) => {
-        if (msg.type === 'started') {
-          this.resolveStarted?.(msg.port);
+        if (msg.type === 'listening') {
           this.isListening = true;
-        } else {
-          if (this.watcher !== undefined) {
-            this.watcher.add(msg.paths);
-          }
+          this.resolveStarted?.(msg.origin);
         }
       },
     );
-
     this.on('error', (err) => {
       if (this.isListening === undefined) {
-        this.rejectStarted?.(err);
         this.isListening = false;
+        this.rejectStarted?.(err);
       }
       fatal(err);
     });
@@ -274,14 +226,20 @@ class ApplicationThread extends Worker {
 
   /**
    * @param { string } main
-   * @returns { Promise<number>}
+   * @returns { Promise<string>}
    */
   start(main) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       this.resolveStarted = resolve;
       this.rejectStarted = reject;
+
       debug(`starting application at ${main}`);
+
       this.messagePort.postMessage({ type: 'start', main });
+
+      if (this.watcher !== undefined) {
+        this.watcher.add(await getDependencies(main, 'node'));
+      }
     });
   }
 }

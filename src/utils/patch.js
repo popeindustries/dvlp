@@ -14,7 +14,7 @@ import {
 } from './is.js';
 import chalk from 'chalk';
 import Debug from 'debug';
-import { filePathToUrl } from './url.js';
+import { filePathToUrlPathname } from './url.js';
 import { Metrics } from './metrics.js';
 import { parse } from 'es-module-lexer';
 import path from 'node:path';
@@ -302,7 +302,7 @@ function rewriteCSSImports(res, filePath, css, resolveImport) {
       }
 
       if (importPath) {
-        const newId = filePathToUrl(importPath);
+        const newId = filePathToUrlPathname(importPath);
 
         debug(`rewrote import id from "${id}" to "${newId}"`);
 
@@ -444,7 +444,7 @@ function rewriteJSImports(res, filePath, js, resolveImport) {
             newId = importPath;
           }
 
-          newId = filePathToUrl(newId);
+          newId = filePathToUrlPathname(newId);
 
           if (newId !== specifier || before || after) {
             debug(
