@@ -156,7 +156,7 @@ export class ElectronHost {
           ...this.argv,
         ],
         {
-          stdio: ['pipe', 'inherit', 'pipe', 'ipc'],
+          stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
         },
       );
 
