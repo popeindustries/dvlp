@@ -4,7 +4,7 @@ import {
   getElectronWorkerData,
   interceptInProcess,
 } from 'dvlp/internal';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { syncBuiltinESMExports } from 'node:module';
 import workerThreads from 'node:worker_threads';
 
@@ -89,7 +89,7 @@ export async function bootstrapElectron() {
   syncBuiltinESMExports();
 
   try {
-    await import(electronWorkerData.main);
+    await import(pathToFileURL(electronWorkerData.main).href);
     electronWorkerData.postMessage({ type: 'started' });
   } catch (err) {
     console.error(err);

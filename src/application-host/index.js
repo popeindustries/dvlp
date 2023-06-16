@@ -13,8 +13,8 @@ import { getProjectPath } from '../utils/file.js';
 import { performance } from 'node:perf_hooks';
 import { watch } from '../utils/watch.js';
 
-const debug = Debug('dvlp:apphost');
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const debug = Debug('dvlp:apphost');
 const workerPath = join(__dirname, './application-worker.js');
 
 /**

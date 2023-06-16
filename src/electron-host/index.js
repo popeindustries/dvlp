@@ -1,3 +1,4 @@
+import { dirname, relative } from 'node:path';
 import { error, fatal, noisyInfo } from '../utils/log.js';
 import { format, msDiff } from '../utils/metrics.js';
 import chalk from 'chalk';
@@ -12,6 +13,7 @@ import { getProjectPath } from '../utils/file.js';
 import { watch } from '../utils/watch.js';
 import { writeFileSync } from 'node:fs';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const debug = Debug('dvlp:electronhost');
 const require = createRequire(import.meta.url);
 
@@ -43,9 +45,12 @@ export class ElectronHost {
     argv = [],
   ) {
     try {
+      const pathToElectron = require.resolve('electron', {
+        paths: [process.cwd()],
+      });
       /** @type { string } */
       // @ts-ignore
-      this.pathToElectron = require('electron');
+      this.pathToElectron = require(relative(__dirname, pathToElectron));
     } catch (err) {
       fatal(
         'unable to resolve "electron" package. Make sure it has been added as a project dependency',
