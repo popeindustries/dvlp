@@ -13,7 +13,9 @@ declare interface ApplicationProcessWorkerData {
 }
 
 declare type ApplicationHostMessage = { type: 'start'; main: string };
-declare type ApplicationWorkerMessage = { type: 'listening'; origin: string };
+declare type ApplicationWorkerMessage =
+  | { type: 'listening'; origin: string }
+  | { type: 'watch'; filePath: string };
 
 declare interface ApplicationWorkerPendingHandle {
   promise: Promise<{ body: string; href: string }>;

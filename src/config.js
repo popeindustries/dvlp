@@ -62,7 +62,16 @@ const config = {
     js: ['.ts', '.mts', '.cts', '.tsx', '.jsx', '.mjs', '.cjs', '.js', '.json'],
   },
   jsMimeTypes: {
-    'application/javascript': ['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx'],
+    'application/javascript': [
+      'js',
+      'mjs',
+      'cjs',
+      'jsx',
+      'ts',
+      'mts',
+      'cts',
+      'tsx',
+    ],
   },
   latency: 50,
   maxAge: '10m',

@@ -80,10 +80,6 @@ export class ElectronHost {
         );
         await this.start();
       });
-
-      getDependencies(this.main, 'node').then((dependencies) =>
-        this.watcher?.add(dependencies),
-      );
     }
   }
 
@@ -107,6 +103,7 @@ export class ElectronHost {
     const times = [performance.now(), 0];
 
     this.activeProcess = await this.createProcess();
+    this.watcher?.add(await getDependencies(this.main, 'node'));
 
     times[1] = performance.now();
 
@@ -163,17 +160,15 @@ export class ElectronHost {
       child.on(
         'message',
         /** @param { ElectronProcessMessage } msg */
-        (msg) => {
+        async (msg) => {
           if (msg.type === 'listening') {
             this.appOrigin = msg.origin;
             this.isListening = true;
             resolve(child);
           } else if (msg.type === 'started') {
             resolve(child);
-          } else if (msg.type === 'watch' && this.watcher !== undefined) {
-            getDependencies(msg.filePath, 'node').then((dependencies) =>
-              this.watcher?.add(dependencies),
-            );
+          } else if (msg.type === 'watch') {
+            this.watcher?.add(await getDependencies(msg.filePath, 'node'));
           }
         },
       );
@@ -183,6 +178,7 @@ export class ElectronHost {
       });
       child.on('close', (code) => {
         debug('process closed');
+        noisyInfo(`    Exiting due to Electron application close`);
         process.exit(code ?? 1);
       });
       child.stderr?.on('data', (chunk) => {

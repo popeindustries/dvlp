@@ -1,3 +1,8 @@
+export function info(msg: string): void;
+export function noisyInfo(msg: string): void;
+export function warn(...args: Array<unknown>): void;
+export function error(...args: Array<unknown>): void;
+export function fatal(...args: Array<unknown>): void;
 export function bootstrapElectron(): Promise<void>;
 export function filePathToUrlPathname(filePath: string): string;
 export function getDependencies(

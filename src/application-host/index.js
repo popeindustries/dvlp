@@ -70,10 +70,6 @@ export class ApplicationHost {
         );
         await this.restart();
       });
-
-      getDependencies(this.main, 'node').then((dependencies) =>
-        this.watcher?.add(dependencies),
-      );
     }
   }
 
@@ -88,6 +84,7 @@ export class ApplicationHost {
       const times = [performance.now(), 0];
 
       this.appOrigin = await this.activeThread.start(this.main);
+      this.watcher?.add(await getDependencies(this.main, 'node'));
 
       times[1] = performance.now();
       const duration = msDiff(times);
@@ -190,9 +187,13 @@ class ApplicationThread extends Worker {
       'message',
       /** @param { ApplicationWorkerMessage} msg */
       (msg) => {
-        if (msg.type === 'listening') {
+        const { type } = msg;
+
+        if (type === 'listening') {
           this.isListening = true;
           this.resolveStarted?.(msg.origin);
+        } else if (type === 'watch') {
+          watcher?.add(msg.filePath);
         }
       },
     );

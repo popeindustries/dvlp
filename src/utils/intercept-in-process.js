@@ -1,5 +1,6 @@
 import { interceptClientRequest } from './intercept-client-request.js';
 import { interceptCreateServer } from './intercept-create-server.js';
+import { interceptFileRead } from './intercept-file-read.js';
 import { isEqualSearchParams } from './url.js';
 
 /**
@@ -51,5 +52,10 @@ export function interceptInProcess(workerData) {
     }
 
     return true;
+  });
+
+  // Notify on file read
+  interceptFileRead((filePath) => {
+    workerData.postMessage({ type: 'watch', filePath });
   });
 }
