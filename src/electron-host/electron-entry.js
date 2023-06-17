@@ -1,5 +1,6 @@
 import { dirname, join } from 'node:path';
 import {
+  error,
   filePathToUrlPathname,
   getElectronWorkerData,
   interceptInProcess,
@@ -92,7 +93,6 @@ export async function bootstrapElectron() {
     await import(pathToFileURL(electronWorkerData.main).href);
     electronWorkerData.postMessage({ type: 'started' });
   } catch (err) {
-    console.error(err);
-    process.exit(1);
+    error(err);
   }
 }
