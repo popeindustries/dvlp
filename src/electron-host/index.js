@@ -178,7 +178,7 @@ export class ElectronHost {
       });
       child.on('close', (code) => {
         debug('process closed');
-        noisyInfo(`    Exiting due to Electron application close`);
+        noisyInfo(`    exiting due to Electron application close`);
         process.exit(code ?? 1);
       });
       child.stderr?.on('data', (chunk) => {
