@@ -43,8 +43,12 @@ export async function bootstrapElectron() {
         url.startsWith('file://') ||
         url.startsWith(electronWorkerData.origin)
       ) {
-        url = new URL(new URL(url).pathname, electronWorkerData.hostOrigin)
-          .href;
+        const incomingUrl = new URL(url);
+
+        url = new URL(
+          incomingUrl.pathname + incomingUrl.search,
+          electronWorkerData.hostOrigin,
+        ).href;
       }
 
       args[0] = url;
@@ -88,6 +92,12 @@ export async function bootstrapElectron() {
   });
 
   syncBuiltinESMExports();
+
+  process.on('message', (msg) => {
+    if (msg === 'close') {
+      BrowserWindow.getAllWindows().forEach((window) => window.close());
+    }
+  });
 
   try {
     await import(pathToFileURL(electronWorkerData.main).href);

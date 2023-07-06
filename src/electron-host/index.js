@@ -87,31 +87,28 @@ export class ElectronHost {
    * Start/restart electron application
    */
   async start() {
-    let isRestart = false;
     this.isListening = false;
+
+    /** @type { [start: number, stop: number] } */
+    const times = [performance.now(), 0];
 
     if (this.activeProcess !== undefined) {
       debug(`terminating active process`);
       this.activeProcess.removeAllListeners();
+      this.activeProcess.send('close');
+      await new Promise((resolve) => setTimeout(resolve, 100));
       this.activeProcess.kill();
-      isRestart = true;
+      noisyInfo('\n   restarting Electon application...');
     }
 
     debug(`starting Electron application at ${this.main}`);
-
-    /** @type { [start: number, stop: number ]} */
-    const times = [performance.now(), 0];
 
     this.activeProcess = await this.createProcess();
     this.watcher?.add(await getDependencies(this.main, 'node'));
 
     times[1] = performance.now();
 
-    if (isRestart) {
-      noisyInfo('\n  restarting Electron application...');
-    } else {
-      noisyInfo(`${format(msDiff(times))} Electron application started`);
-    }
+    noisyInfo(`${format(msDiff(times))} Electron application started`);
   }
 
   /**

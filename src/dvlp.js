@@ -5,7 +5,7 @@
  */
 
 import { exists, getProjectPath, importModule } from './utils/file.js';
-import logger, { error, info } from './utils/log.js';
+import logger, { error, noisyInfo } from './utils/log.js';
 import { bootstrap } from './utils/bootstrap.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
@@ -47,6 +47,10 @@ export async function server(
   await cjsLexerInit();
   await esLexerInit;
 
+  if (silent) {
+    logger.silent = true;
+  }
+
   config.directories = Array.from(new Set(entry.directories));
   if (mockPath) {
     mockPath = expandPath(mockPath);
@@ -54,7 +58,7 @@ export async function server(
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
     hooks = /** @type { Hooks } */ (await importModule(hooksPath));
-    info(
+    noisyInfo(
       `${chalk.green('✔')} registered hooks at ${chalk.green(
         getProjectPath(hooksPath),
       )}`,
@@ -106,24 +110,20 @@ export async function server(
   const appOrigin = server.applicationHost?.appOrigin;
   const electronAppOrigin = server.electronHost?.appOrigin;
 
-  info(`\n  💥 serving ${chalk.green(paths)}`);
-  info(`    ...at ${chalk.green.underline(origin)}`);
+  noisyInfo(`\n  💥 serving ${chalk.green(paths)}`);
+  noisyInfo(`    ...at ${chalk.green.underline(origin)}`);
   if (appOrigin) {
-    info(
+    noisyInfo(
       `    (proxied application server started at ${chalk.bold(appOrigin)})`,
     );
   } else if (electronAppOrigin) {
-    info(
+    noisyInfo(
       `    (proxied Electron application server started at ${chalk.bold(
         electronAppOrigin,
       )})`,
     );
   }
-  info('\n  👀 watching for changes...\n');
-
-  if (silent) {
-    logger.silent = true;
-  }
+  noisyInfo('\n  👀 watching for changes...\n');
 
   process.on('exit', () => {
     server.destroy();
