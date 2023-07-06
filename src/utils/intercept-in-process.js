@@ -1,3 +1,4 @@
+import { getRepoPath } from './file.js';
 import { interceptClientRequest } from './intercept-client-request.js';
 import { interceptCreateServer } from './intercept-create-server.js';
 import { interceptFileRead } from './intercept-file-read.js';
@@ -54,8 +55,10 @@ export function interceptInProcess(workerData) {
     return true;
   });
 
-  // Notify on file read
+  // Notify to watch project files
   interceptFileRead((filePath) => {
-    workerData.postMessage({ type: 'watch', filePath });
+    if (filePath.startsWith(getRepoPath())) {
+      workerData.postMessage({ type: 'watch', filePath });
+    }
   });
 }

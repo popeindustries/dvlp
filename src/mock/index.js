@@ -58,7 +58,7 @@ export class Mocks {
   addResponse(req, res, once = false, onMockCallback) {
     const ignoreSearch = (isMockRequest(req) && req.ignoreSearch) || false;
     const filePath =
-      (isMockRequest(req) && req.filePath) || path.join(process.cwd(), 'mock');
+      (isMockRequest(req) && req.filePath) || path.resolve('mock');
     const [url, originRegex, pathRegex, paramsMatch, searchParams] =
       getUrlSegmentsForMatching(req, ignoreSearch);
     /** @type { MockResponseDataType } */
@@ -112,8 +112,7 @@ export class Mocks {
     const ignoreSearch =
       (isMockPushStream(stream) && stream.ignoreSearch) || false;
     const filePath =
-      (isMockPushStream(stream) && stream.filePath) ||
-      path.join(process.cwd(), 'mock');
+      (isMockPushStream(stream) && stream.filePath) || path.resolve('mock');
     const [url, originRegex, pathRegex, paramsMatch, searchParams] =
       getUrlSegmentsForMatching(stream, ignoreSearch);
     /** @type { MockStreamDataType } */

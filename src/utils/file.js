@@ -23,6 +23,8 @@ const realPath =
   'native' in fs.realpathSync && typeof fs.realpathSync.native === 'function'
     ? fs.realpathSync.native
     : fs.realpathSync;
+/** @type { string } */
+let repoPath;
 
 /**
  * Validate that all file paths exist
@@ -178,6 +180,21 @@ export function getProjectPath(filePath) {
   return projectFilePath.startsWith('/')
     ? projectFilePath.slice(1)
     : projectFilePath;
+}
+
+/**
+ * Retrieve the repo root path
+ *
+ * @returns { string }
+ */
+export function getRepoPath() {
+  if (repoPath === undefined) {
+    const gitDir = findClosest('.git');
+
+    repoPath = gitDir !== undefined ? path.dirname(gitDir) : process.cwd();
+  }
+
+  return repoPath;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { find, isEsmFile } from '../../src/utils/file.js';
+import { find, getRepoPath, isEsmFile } from '../../src/utils/file.js';
 import { expandPath } from '../../src/utils/expand-path.js';
 import { expect } from 'chai';
 import path from 'node:path';
@@ -196,6 +196,13 @@ describe('file', () => {
     it('should return true for .mjs file', () => {
       const filePath = path.resolve('test/unit/fixtures/hooks-bundle.mjs');
       expect(isEsmFile(filePath)).to.be.true;
+    });
+  });
+
+  describe('getRepoPath()', () => {
+    it('should return path to directory containing .git directory', () => {
+      const rootPath = getRepoPath();
+      expect(rootPath).to.equal(process.cwd());
     });
   });
 });

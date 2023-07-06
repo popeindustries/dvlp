@@ -5,7 +5,7 @@ import {
   getProcessEnvString,
   hashScript,
 } from '../utils/scripts.js';
-import { find, getProjectPath } from '../utils/file.js';
+import { find, getProjectPath, getRepoPath } from '../utils/file.js';
 import {
   getContextForFilePath,
   getContextForReq,
@@ -59,7 +59,9 @@ export class Dvlp {
     // Register early to catch all reads, including transformers that patch fs.readFile
     this.watcher = watch(this.triggerClientReload);
     this.unlistenForFileRead = interceptFileRead((filePath) => {
-      this.addWatchFiles(filePath);
+      if (filePath.startsWith(getRepoPath())) {
+        this.addWatchFiles(filePath);
+      }
     });
 
     this.certsPath = certsPath;
