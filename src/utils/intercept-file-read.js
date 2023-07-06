@@ -33,7 +33,7 @@ function initInterceptFileRead() {
 
     ReadStream._read = new Proxy(ReadStream._read, {
       apply(target, ctx, args) {
-        notifyListeners(fileReadListeners, ctx.path);
+        notifyListeners(fileReadListeners, String(ctx.path));
         return Reflect.apply(target, ctx, args);
       },
     });
@@ -42,7 +42,7 @@ function initInterceptFileRead() {
       // @ts-ignore
       fs[method] = new Proxy(fs[method], {
         apply(target, ctx, args) {
-          notifyListeners(fileReadListeners, args[0]);
+          notifyListeners(fileReadListeners, String(args[0]));
           return Reflect.apply(target, ctx, args);
         },
       });
