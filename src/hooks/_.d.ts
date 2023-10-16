@@ -8,7 +8,7 @@ declare interface Hooks {
     filePath: string,
     fileContents: string,
     context: DependencyBundleHookContext,
-  ): Promise<string> | string | undefined;
+  ): Promise<string | undefined> | string | undefined;
   /**
    * Transform file contents for file requested by the browser.
    * This hook is run after file read, and before any modifications by dvlp.
@@ -17,7 +17,7 @@ declare interface Hooks {
     filePath: string,
     fileContents: string,
     context: TransformHookContext,
-  ): Promise<string> | string | undefined;
+  ): Promise<string | undefined> | string | undefined;
   /**
    * Manually resolve import specifier.
    * This hook is run for each import statement.
@@ -37,7 +37,7 @@ declare interface Hooks {
   onRequest?(
     request: IncomingMessage | Http2ServerRequest,
     response: ServerResponse | Http2ServerResponse,
-  ): Promise<boolean> | boolean | undefined;
+  ): Promise<boolean | undefined> | boolean | undefined;
   /**
    * Modify response body before sending to the browser.
    * This hook is run after all modifications by dvlp, and before sending to the browser.
