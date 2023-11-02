@@ -61,7 +61,7 @@ await esbuild.build({
   format: 'esm',
   outfile: 'dvlp-test.js',
   platform: 'node',
-  target: 'node16',
+  target: 'node18',
 });
 
 await esbuild.build({
@@ -80,17 +80,20 @@ await esbuild.build({
   outdir: '.',
   platform: 'node',
   splitting: false,
-  target: 'node16',
+  target: 'node18',
 });
 
 await esbuild.build({
   bundle: true,
   entryNames: '[name]',
-  entryPoints: ['./src/application-host/application-loader.js'],
+  entryPoints: [
+    './src/application-host/application-loader-legacy.js',
+    './src/application-host/application-loader.js',
+  ],
   external: ['esbuild'],
   format: 'esm',
   splitting: false,
-  target: 'node16',
+  target: 'node18',
   outdir: '.',
   platform: 'node',
   plugins: [
@@ -121,7 +124,7 @@ await esbuild.build({
   entryPoints: ['./src/electron-host/electron-entry.js'],
   format: 'esm',
   splitting: false,
-  target: 'node16',
+  target: 'node18',
   outfile: './electron-entry.js',
   packages: 'external',
   platform: 'node',

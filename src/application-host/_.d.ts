@@ -13,6 +13,10 @@ declare interface ApplicationProcessWorkerData {
 }
 
 declare type ApplicationHostMessage = { type: 'start'; main: string };
+declare type ApplicationLoaderMessage = {
+  type: 'dependency';
+  filePath: string;
+};
 declare type ApplicationWorkerMessage =
   | { type: 'listening'; origin: string }
   | { type: 'watch'; filePath: string };

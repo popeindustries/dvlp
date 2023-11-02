@@ -9,6 +9,8 @@ await app.whenReady();
 
 const { port1, port2 } = new MessageChannel();
 
+port1.unref();
+
 await new Promise((resolve, reject) => {
   new Worker(join(__dirname, 'worker.js'), {
     transferList: [port2],

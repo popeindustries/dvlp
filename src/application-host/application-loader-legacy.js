@@ -9,11 +9,7 @@ import { nodeResolve } from 'dvlp/resolver';
 const IS_WIN32 = process.platform === 'win32';
 const RE_EXTS = /\.(tsx?|json)$/;
 
-let port;
-
-export function initialize(data) {
-  port = data.port;
-}
+global.sources = new Set();
 
 export function resolve(specifier, context, nextResolve) {
   if (customHooks.onServerResolve !== undefined) {
@@ -45,10 +41,7 @@ function doResolve(specifier, context, nextResolve) {
 }
 
 export function load(url, context, nextLoad) {
-  port.postMessage({
-    type: 'dependency',
-    filePath: url.startsWith('file://') ? fileURLToPath(url) : url,
-  });
+  global.sources.add(url.startsWith('file://') ? fileURLToPath(url) : url);
 
   if (customHooks.onServerTransform !== undefined) {
     const result = customHooks.onServerTransform(url, context, (url, context) =>
@@ -73,6 +66,39 @@ function doLoad(url, context, nextLoad) {
   }
 
   return nextLoad(url, context);
+}
+
+export function getFormat(url, context, defaultGetFormat) {
+  if (RE_EXTS.test(new URL(url).pathname)) {
+    return { format: 'module' };
+  }
+
+  return defaultGetFormat(url, context, defaultGetFormat);
+}
+
+export function transformSource(source, context, defaultTransformSource) {
+  const { url } = context;
+
+  if (customHooks.onServerTransform !== undefined) {
+    return customHooks.onServerTransform(url, context, () =>
+      doTransformSource(source, context, defaultTransformSource),
+    );
+  }
+
+  return doTransformSource(source, context, defaultTransformSource);
+}
+
+function doTransformSource(source, context, defaultTransformSource) {
+  const { url, format } = context;
+
+  if (RE_EXTS.test(new URL(url).pathname)) {
+    const filename = IS_WIN32 ? url : fileURLToPath(url);
+    const { code } = transform(source, filename, url, format);
+
+    return { source: code };
+  }
+
+  return defaultTransformSource(source, context, defaultTransformSource);
 }
 
 function transform(source, filename, url, format) {

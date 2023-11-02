@@ -1,4 +1,6 @@
-import { interceptInProcess } from 'dvlp/internal';
+import { config, interceptInProcess } from 'dvlp/internal';
+import { MessageChannel } from 'node:worker_threads';
+import module from 'node:module';
 import { workerData } from 'node:worker_threads';
 
 const messagePort = /** @type { import('worker_threads').MessagePort } */ (
@@ -20,6 +22,14 @@ messagePort.on(
     if (msg.type === 'start') {
       try {
         await import(msg.main);
+        // TODO: deprecate with Node18
+        if ('sources' in global) {
+          for (const filePath of /** @type { Set<string> } */ (
+            global.sources
+          )) {
+            messagePort.postMessage({ type: 'watch', filePath });
+          }
+        }
       } catch (err) {
         console.error(err);
         throw err;
@@ -27,3 +37,29 @@ messagePort.on(
     }
   },
 );
+
+if ('register' in module) {
+  const { port1, port2 } = new MessageChannel();
+
+  port1.unref();
+  port1.on(
+    'message',
+    /** @param { ApplicationLoaderMessage } msg */
+    (msg) => {
+      if (msg.type === 'dependency') {
+        const { filePath } = msg;
+
+        messagePort.postMessage({ type: 'watch', filePath });
+      }
+    },
+  );
+
+  // @ts-ignore
+  module.register(config.applicationLoaderURL.href, {
+    parentURL: import.meta.url,
+    data: {
+      port: port2,
+    },
+    transferList: [port2],
+  });
+}

@@ -63,6 +63,7 @@ export async function bootstrapElectron() {
       const [filePath, options] = args;
       const { port1, port2 } = new workerThreads.MessageChannel();
 
+      port1.unref();
       port1.on(
         'message',
         /** @param { ElectronProcessMessage} msg */

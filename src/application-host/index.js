@@ -8,7 +8,6 @@ import chalk from 'chalk';
 import config from '../config.js';
 import Debug from 'debug';
 import { forwardRequest } from '../utils/request.js';
-import { getDependencies } from '../utils/module.js';
 import { getProjectPath } from '../utils/file.js';
 import { performance } from 'node:perf_hooks';
 import { watch } from '../utils/watch.js';
@@ -24,6 +23,9 @@ const workerPath = join(__dirname, './application-worker.js');
  * @param { { hooks?: Hooks, hooksPath?: string } } hooksConfig
  */
 export function createApplicationLoaderFile(filePath, hooksConfig) {
+  const loaderName = process.versions.node.startsWith('18')
+    ? 'application-loader-legacy.js'
+    : 'application-loader.js';
   const hooksPath =
     hooksConfig.hooks &&
     (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
@@ -33,7 +35,7 @@ export function createApplicationLoaderFile(filePath, hooksConfig) {
     (hooksPath
       ? `import customHooks from '${hooksPath}';\n`
       : 'const customHooks = {};\n') +
-    readFileSync(join(__dirname, 'application-loader.js'), 'utf-8');
+    readFileSync(join(__dirname, loaderName), 'utf-8');
 
   writeFileSync(filePath, contents);
 }
@@ -84,7 +86,6 @@ export class ApplicationHost {
       const times = [performance.now(), 0];
 
       this.appOrigin = await this.activeThread.start(this.main);
-      this.watcher?.add(await getDependencies(this.main, 'node'));
 
       times[1] = performance.now();
       const duration = msDiff(times);
@@ -131,16 +132,18 @@ export class ApplicationHost {
    */
   createThread() {
     const { port1, port2 } = new MessageChannel();
+    const execArgv = ['--enable-source-maps', '--no-warnings'];
+
+    port1.unref();
+
+    if (process.versions.node.startsWith('18')) {
+      execArgv.push('--experimental-loader', config.applicationLoaderURL.href);
+    }
+
     const thread = new ApplicationThread(workerPath, port1, this.watcher, {
       argv: this.argv,
       env: SHARE_ENV,
-      // @ts-ignore
-      execArgv: [
-        '--enable-source-maps',
-        '--no-warnings',
-        '--experimental-loader',
-        config.applicationLoaderURL.href,
-      ],
+      execArgv,
       stderr: true,
       workerData: {
         hostOrigin: this.hostOrigin,

@@ -22,3 +22,4 @@ export function isEqualSearchParams(
   params1: URLSearchParams,
   params2: URLSearchParams,
 ): boolean;
+export { default as config } from './config.js';
