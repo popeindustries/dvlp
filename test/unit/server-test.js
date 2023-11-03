@@ -376,7 +376,7 @@ describe('server', () => {
       clearContexts();
     });
 
-    if (!process.env.CI) {
+    if (!process.env.CI || process.versions.node.startsWith('18')) {
       it('should start an app server', async () => {
         server = await serverFactory('test/unit/fixtures/app.mjs', {
           reload: false,
