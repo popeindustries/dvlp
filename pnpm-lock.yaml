@@ -95,8 +95,8 @@ devDependencies:
     specifier: ^15.0.2
     version: 15.0.2
   lit-html:
-    specifier: ^3.0.1
-    version: 3.0.1
+    specifier: ^3.0.2
+    version: 3.0.2
   mime:
     specifier: ^3.0.0
     version: 3.0.0
@@ -2066,8 +2066,8 @@ packages:
       wrap-ansi: 8.1.0
     dev: true
 
-  /lit-html@3.0.1:
-    resolution: {integrity: sha512-1nmGaNNQg9rBvE1yJ6oS3ZNbLs3FXtlG4+jgGkix8O740qVEwwiFVTgDGIIH8N5TcQ8V9tBk5T+sxqBgffcjJg==}
+  /lit-html@3.0.2:
+    resolution: {integrity: sha512-Q1A5lHza3bnmxoWJn6yS6vQZQdExl4fghk8W1G+jnAEdoFNYo5oeBBb/Ol7zSEdKd3TR7+r0zsJQyuWEVguiyQ==}
     dependencies:
       '@types/trusted-types': 2.0.5
     dev: true
