@@ -18,4 +18,4 @@ declare type ElectronProcessMessage =
       origin: string;
     }
   | { type: 'started' }
-  | { type: 'watch'; filePath: string };
+  | { type: 'watch'; filePath: string; mode: 'read' | 'write' };

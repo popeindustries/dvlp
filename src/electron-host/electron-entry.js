@@ -75,7 +75,7 @@ export async function bootstrapElectron() {
         },
       );
 
-      electronWorkerData.postMessage({ type: 'watch', filePath });
+      electronWorkerData.postMessage({ type: 'watch', filePath, mode: 'read' });
       options.workerData ??= {};
       options.transferList ??= [];
 

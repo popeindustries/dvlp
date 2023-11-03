@@ -32,7 +32,7 @@ messagePort.on(
           for (const filePath of /** @type { Set<string> } */ (
             global.sources
           )) {
-            messagePort.postMessage({ type: 'watch', filePath });
+            messagePort.postMessage({ type: 'watch', filePath, mode: 'read' });
           }
         }
       }
@@ -51,7 +51,7 @@ if ('register' in module) {
       if (msg.type === 'dependency') {
         const { filePath } = msg;
 
-        messagePort.postMessage({ type: 'watch', filePath });
+        messagePort.postMessage({ type: 'watch', filePath, mode: 'read' });
       }
     },
   );

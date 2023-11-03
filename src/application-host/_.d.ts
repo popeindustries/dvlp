@@ -20,7 +20,7 @@ declare type ApplicationLoaderMessage = {
 declare type ApplicationWorkerMessage =
   | { type: 'error'; error: string }
   | { type: 'listening'; origin: string }
-  | { type: 'watch'; filePath: string };
+  | { type: 'watch'; filePath: string; mode: 'read' | 'write' };
 
 declare interface ApplicationWorkerPendingHandle {
   promise: Promise<{ body: string; href: string }>;

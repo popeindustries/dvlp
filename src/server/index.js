@@ -30,7 +30,7 @@ import { getReloadClientEmbed } from '../reload/reload-client-embed.js';
 import { Hooker } from '../hooks/index.js';
 import http from 'node:http';
 import http2 from 'node:http2';
-import { interceptFileRead } from '../utils/intercept-file-read.js';
+import { interceptFileAccess } from '../utils/intercept-file-access.js';
 import { Metrics } from '../utils/metrics.js';
 import { Mocks } from '../mock/index.js';
 import { parseUserAgent } from '../utils/platform.js';
@@ -58,7 +58,7 @@ export class Dvlp {
     // Listen for all upcoming file system reads
     // Register early to catch all reads, including transformers that patch fs.readFile
     this.watcher = watch(this.triggerClientReload);
-    this.unlistenForFileRead = interceptFileRead((filePath) => {
+    this.unlistenForFileRead = interceptFileAccess((filePath) => {
       if (filePath.startsWith(getRepoPath())) {
         this.addWatchFiles(filePath);
       }

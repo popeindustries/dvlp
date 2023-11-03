@@ -28,12 +28,12 @@ declare interface PatchResponseOptions {
     string: string;
     url?: string;
   };
-  send?: (filePath: string, responseBody: string) => string | undefined;
-  resolveImport?: (
+  send?(filePath: string, responseBody: string): string | undefined;
+  resolveImport?(
     specifier: string,
     context: ResolveHookContext,
     defaultResolve: DefaultResolve,
-  ) => string | false | undefined;
+  ): string | false | undefined;
 }
 
 declare interface FindOptions {
@@ -54,12 +54,17 @@ declare interface Platform {
 }
 
 declare type InterceptClientRequestCallback = (url: URL) => boolean;
-declare type InterceptFileReadCallback = (filePath: string) => void;
+declare type InterceptFileAccessCallback = (
+  filePath: string,
+  mode: 'read' | 'write',
+) => void;
 declare type InterceptCreateServerCallback = (origin: string) => void;
 
 declare interface Watcher {
-  add: (filePath: string | Array<string> | Set<string>) => void;
-  close: () => void;
+  has(filePath: string): boolean;
+  add(filePath: string | Array<string> | Set<string>): void;
+  remove(filePath: string): void;
+  close(): void;
 }
 
 declare interface RequestContext {

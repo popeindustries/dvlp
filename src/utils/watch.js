@@ -43,6 +43,9 @@ export function watch(fn) {
   });
 
   return {
+    has(filePath) {
+      return files.has(path.resolve(filePath));
+    },
     add(filePath) {
       if (filePath instanceof Set) {
         Array.from(filePath).forEach(this.add);
@@ -67,9 +70,15 @@ export function watch(fn) {
         watcher.add(filePath);
       }
     },
+    remove(filePath) {
+      debug(`unwatching file "${getProjectPath(filePath)}"`);
+      filePath = path.resolve(filePath);
+      files.delete(filePath);
+      watcher.unwatch(filePath);
+    },
     close() {
-      watcher.close();
       files.clear();
+      watcher.close();
     },
   };
 }

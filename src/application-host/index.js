@@ -192,7 +192,13 @@ class ApplicationThread extends Worker {
           this.isListening = true;
           this.resolveStarted?.(msg.origin);
         } else if (type === 'watch') {
-          watcher?.add(msg.filePath);
+          if (msg.mode === 'write') {
+            if (this.watcher?.has(msg.filePath)) {
+              this.watcher.remove(msg.filePath);
+            }
+          } else {
+            this.watcher?.add(msg.filePath);
+          }
         } else if (type === 'error') {
           if (this.isListening === undefined) {
             this.isListening = false;

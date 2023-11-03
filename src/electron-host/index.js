@@ -165,7 +165,13 @@ export class ElectronHost {
           } else if (msg.type === 'started') {
             resolve(child);
           } else if (msg.type === 'watch') {
-            this.watcher?.add(await getDependencies(msg.filePath, 'node'));
+            if (msg.mode === 'write') {
+              if (this.watcher?.has(msg.filePath)) {
+                this.watcher.remove(msg.filePath);
+              }
+            } else {
+              this.watcher?.add(await getDependencies(msg.filePath, 'node'));
+            }
           }
         },
       );
