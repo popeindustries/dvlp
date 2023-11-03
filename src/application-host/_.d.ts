@@ -18,6 +18,7 @@ declare type ApplicationLoaderMessage = {
   filePath: string;
 };
 declare type ApplicationWorkerMessage =
+  | { type: 'error'; error: string }
   | { type: 'listening'; origin: string }
   | { type: 'watch'; filePath: string };
 

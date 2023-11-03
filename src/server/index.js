@@ -5,6 +5,7 @@ import {
   getProcessEnvString,
   hashScript,
 } from '../utils/scripts.js';
+import { error, info, noisyInfo } from '../utils/log.js';
 import { find, getProjectPath, getRepoPath } from '../utils/file.js';
 import {
   getContextForFilePath,
@@ -17,7 +18,6 @@ import {
   handleMockWebSocket,
   handlePushEvent,
 } from './handlers.js';
-import { info, noisyInfo } from '../utils/log.js';
 import { isBundledFilePath, isNodeModuleFilePath } from '../utils/is.js';
 import { resolveCerts, validateCert } from './certificate-validation.js';
 import { ApplicationHost } from '../application-host/index.js';
@@ -173,7 +173,7 @@ export class Dvlp {
           }
           this.isListening = true;
         } catch (err) {
-          // Ignore
+          error(err);
         }
         resolve();
       });

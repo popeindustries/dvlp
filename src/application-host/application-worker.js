@@ -1,11 +1,13 @@
+/**
+ * @typedef { import('worker_threads').MessagePort } MessagePort
+ */
+
 import { config, interceptInProcess } from 'dvlp/internal';
 import { MessageChannel } from 'node:worker_threads';
 import module from 'node:module';
 import { workerData } from 'node:worker_threads';
 
-const messagePort = /** @type { import('worker_threads').MessagePort } */ (
-  workerData.messagePort
-);
+const messagePort = /** @type { MessagePort } */ (workerData.messagePort);
 
 interceptInProcess({
   origin: '',
@@ -22,6 +24,9 @@ messagePort.on(
     if (msg.type === 'start') {
       try {
         await import(msg.main);
+      } catch (err) {
+        messagePort.postMessage({ type: 'error', error: err });
+      } finally {
         // TODO: deprecate with Node18
         if ('sources' in global) {
           for (const filePath of /** @type { Set<string> } */ (
@@ -30,9 +35,6 @@ messagePort.on(
             messagePort.postMessage({ type: 'watch', filePath });
           }
         }
-      } catch (err) {
-        console.error(err);
-        throw err;
       }
     }
   },

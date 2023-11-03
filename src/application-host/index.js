@@ -81,19 +81,15 @@ export class ApplicationHost {
    * @returns { Promise<void> }
    */
   async start() {
-    try {
-      /** @type { [start: number, stop: number ]} */
-      const times = [performance.now(), 0];
+    /** @type { [start: number, stop: number ]} */
+    const times = [performance.now(), 0];
 
-      this.appOrigin = await this.activeThread.start(this.main);
+    this.appOrigin = await this.activeThread.start(this.main);
 
-      times[1] = performance.now();
-      const duration = msDiff(times);
+    times[1] = performance.now();
+    const duration = msDiff(times);
 
-      noisyInfo(`${format(duration)} application server started`);
-    } catch (err) {
-      error(err);
-    }
+    noisyInfo(`${format(duration)} application server started`);
   }
 
   /**
@@ -197,16 +193,15 @@ class ApplicationThread extends Worker {
           this.resolveStarted?.(msg.origin);
         } else if (type === 'watch') {
           watcher?.add(msg.filePath);
+        } else if (type === 'error') {
+          if (this.isListening === undefined) {
+            this.isListening = false;
+            this.rejectStarted?.(msg.error);
+          }
+          fatal(msg.error);
         }
       },
     );
-    this.on('error', (err) => {
-      if (this.isListening === undefined) {
-        this.isListening = false;
-        this.rejectStarted?.(err);
-      }
-      fatal(err);
-    });
     this.on('exit', (exitCode) => {
       this.messagePort.removeAllListeners();
       this.messagePort.close();
