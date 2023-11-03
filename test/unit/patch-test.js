@@ -420,6 +420,17 @@ describe('patch', () => {
             `import debug from "/${bundleDir}/debug`,
           );
         });
+        it('should ignore import.meta', () => {
+          const req = getRequest('/index.js', {
+            accept: 'application/javascript',
+          });
+          const res = getResponse(req);
+          patchResponse(req, res, {
+            resolveImport: hooks.resolveImport,
+          });
+          res.end('console.log(import.meta.url);');
+          expect(getBody(res)).to.include(`console.log(import.meta.url);`);
+        });
         it('should escape "$" when resolving js import id', () => {
           const req = getRequest('/index.js', {
             accept: 'application/javascript',

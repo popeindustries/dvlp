@@ -376,6 +376,7 @@ describe('server', () => {
       clearContexts();
     });
 
+    // TODO: find out why test suite hangs in CI
     if (!process.env.CI || process.versions.node.startsWith('18')) {
       it('should start an app server', async () => {
         server = await serverFactory('test/unit/fixtures/app.mjs', {
