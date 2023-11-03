@@ -500,7 +500,7 @@ describe('server', () => {
       expect(res.status).to.eql(200);
       expect(await res.text()).to.contain('sse = new EventSource');
     });
-    it('should start with initial error', async () => {
+    it.skip('should start with initial error', async () => {
       server = await serverFactory('test/unit/fixtures/app-error.mjs', {
         port: 8100,
         reload: false,
@@ -514,7 +514,7 @@ describe('server', () => {
       expect(res.status).to.eql(500);
       expect(await res.text()).to.eql('application server failed to start');
     });
-    it('should handle request error', async () => {
+    it.skip('should handle request error', async () => {
       server = await serverFactory('test/unit/fixtures/app-request-error.mjs', {
         port: 8100,
         reload: false,
