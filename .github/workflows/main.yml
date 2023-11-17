@@ -14,7 +14,6 @@ jobs:
         node: ['18', '20']
     runs-on: ${{ matrix.os }}
     name: Install, build, and test (OS ${{ matrix.os }} - Node ${{ matrix.node }})
-    timeout-minutes: 2
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -37,6 +36,7 @@ jobs:
         run: pnpm run build
 
       - name: Test:unit
+        timeout-minutes: 1
         run: pnpm run test
 
       - name: Test:integration
