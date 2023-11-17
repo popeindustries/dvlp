@@ -281,10 +281,10 @@ export class Dvlp {
         const modifier = res.bundled
           ? ' bundled '
           : res.mocked
-          ? ' mocked '
-          : res.transformed
-          ? ' transformed '
-          : ' ';
+            ? ' mocked '
+            : res.transformed
+              ? ' transformed '
+              : ' ';
         let localFilePath = getProjectPath(req.filePath || req.url);
 
         if (res.mocked) {
