@@ -2,7 +2,6 @@
   "name": "dvlp",
   "version": "16.0.0-beta.2",
   "description": "A no-nonsense dev server toolkit to help you develop quickly and easily for the web",
-  "main": "./src/dvlp.js",
   "type": "module",
   "types": "dvlp.d.ts",
   "repository": "https://github.com/popeindustries/dvlp.git",
@@ -22,7 +21,6 @@
     "./dvlp-test.js": "./src/dvlp-test.js"
   },
   "publishConfig": {
-    "main": "./dvlp.js",
     "exports": {
       ".": "./dvlp.js",
       "./internal": "./dvlp-internal.js",
