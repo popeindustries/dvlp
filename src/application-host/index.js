@@ -9,6 +9,7 @@ import config from '../config.js';
 import Debug from 'debug';
 import { forwardRequest } from '../utils/request.js';
 import { getProjectPath } from '../utils/file.js';
+import module from 'node:module';
 import { performance } from 'node:perf_hooks';
 import { watch } from '../utils/watch.js';
 
@@ -23,9 +24,10 @@ const workerPath = join(__dirname, './application-worker.js');
  * @param { { hooks?: Hooks, hooksPath?: string } } hooksConfig
  */
 export function createApplicationLoaderFile(filePath, hooksConfig) {
-  const loaderName = process.versions.node.startsWith('18')
-    ? 'application-loader-legacy.js'
-    : 'application-loader.js';
+  const loaderName =
+    'register' in module
+      ? 'application-loader.js'
+      : 'application-loader-legacy.js';
   const hooksPath =
     hooksConfig.hooks &&
     (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
