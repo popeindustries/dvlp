@@ -166,13 +166,13 @@ export class Dvlp {
       this.server.on('error', reject);
       this.server.on('listening', async () => {
         debug('server started');
+        this.isListening = true;
         try {
           if (this.applicationHost) {
             await this.applicationHost.start();
           } else if (this.electronHost) {
             await this.electronHost.start();
           }
-          this.isListening = true;
         } catch (err) {
           error(err);
         }
