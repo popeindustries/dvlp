@@ -12,6 +12,7 @@ import {
   getContextForReq,
 } from '../utils/request-contexts.js';
 import {
+  handleDataUrl,
   handleFavicon,
   handleFile,
   handleMockResponse,
@@ -347,6 +348,10 @@ export class Dvlp {
     // Ignore unknown types
     if (context.type !== undefined) {
       patchResponse(req, res, this.patchResponseOptions);
+
+      if (context.type === 'html' && handleDataUrl(req, res)) {
+        return;
+      }
     }
 
     if (context.filePath !== undefined) {

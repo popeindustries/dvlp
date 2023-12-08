@@ -7,7 +7,10 @@ import {
 } from 'dvlp/internal';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { syncBuiltinESMExports } from 'node:module';
+import { toBase64Url } from '../utils/base64Url.js';
 import workerThreads from 'node:worker_threads';
+
+const RE_DATA_URL = /^data:text\/html;([^,]+,)?/;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const workerPath = join(__dirname, './electron-worker.js');
@@ -49,6 +52,19 @@ export async function bootstrapElectron() {
           incomingUrl.pathname + incomingUrl.search,
           electronWorkerData.hostOrigin,
         ).href;
+      } else if (RE_DATA_URL.test(url)) {
+        // data:text/html;base64,XXXXXXXX==
+        const [match, encoding] = /** @type { RegExpExecArray } */ (
+          RE_DATA_URL.exec(url)
+        );
+        const encodedMarkup = url.replace(match, '');
+        const markup =
+          encoding === 'base64,'
+            ? toBase64Url(encodedMarkup, true)
+            : toBase64Url(decodeURI(encodedMarkup));
+
+        url = new URL(`?dvlpdata=${markup}`, electronWorkerData.hostOrigin)
+          .href;
       }
 
       args[0] = url;

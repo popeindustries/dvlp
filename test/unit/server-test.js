@@ -369,6 +369,18 @@ describe('server', () => {
         });
       });
     });
+    it('should respond to proxied data url requests', async () => {
+      server = await serverFactory('test/unit/fixtures/www', {
+        port: 8100,
+        reload: true,
+      });
+      const res = await fetch(
+        'http://localhost:8100/?dvlpdata=PCFET0NUWVBFIGh0bWw-PGh0bWwgbGFuZz0iZW4iPjxoZWFkPjxtZXRhIGNoYXJzZXQ9IlVURi04IiAvPjwvaGVhZD48Ym9keT48L2JvZHk-PC9odG1sPg',
+      );
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('content-type')).to.include('text/html');
+      expect(await res.text()).to.include('window.DVLP=true;');
+    });
   });
 
   // TODO: find out why test suite hangs in CI

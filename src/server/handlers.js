@@ -4,6 +4,7 @@ import config from '../config.js';
 import { EventSource } from '../reload/event-source.js';
 import favicon from '../utils/favicon.js';
 import { find } from '../utils/file.js';
+import { fromBase64Url } from '../utils/base64Url.js';
 import { noisyInfo } from '../utils/log.js';
 import send from 'send';
 import WebSocket from 'faye-websocket';
@@ -184,4 +185,32 @@ export function handleFile(filePath, req, res, cacheControl) {
   };
 
   send(req, encodeURI(filePath), options).pipe(res);
+}
+
+/**
+ * Handle request for data URL (?dvlpdata=)
+ * Returns 'true' if handled
+ *
+ * @param { Req } req
+ * @param { Res } res
+ * @returns { boolean }
+ */
+export function handleDataUrl(req, res) {
+  const url = new URL(req.url, `http://localhost:${config.activePort}`);
+  const data = url.searchParams.get('dvlpdata');
+
+  if (data) {
+    const html = fromBase64Url(data);
+
+    res.writeHead(200, {
+      'Content-Length': Buffer.byteLength(html, 'utf-8'),
+      'Content-Type': 'text/html;charset=UTF-8',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.end(html);
+
+    return true;
+  }
+
+  return false;
 }
