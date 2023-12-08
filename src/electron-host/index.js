@@ -112,6 +112,14 @@ export class ElectronHost {
   }
 
   /**
+   * Add "filePaths" to watcher
+   *
+   * @param { string | Array<string> } filePaths
+   */
+  addWatchFiles(filePaths) {
+    this.watcher?.add(filePaths);
+  }
+  /**
    * Handle application request.
    * Pipe incoming request to application running in Electron.
    *

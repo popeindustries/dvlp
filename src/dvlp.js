@@ -135,6 +135,10 @@ export async function server(
         get isListening() {
           return server.applicationHost?.activeThread?.isListening ?? false;
         },
+        /** @param { string | Array<string> } filePaths */
+        addWatchFiles(filePaths) {
+          server.applicationHost?.addWatchFiles(filePaths);
+        },
         /** @param { string | object | number | boolean | bigint } msg */
         sendMessage(msg) {
           server.applicationHost?.activeThread?.messagePort.postMessage(msg);
@@ -146,6 +150,10 @@ export async function server(
         origin: server.electronHost.appOrigin,
         get isListening() {
           return server.electronHost?.isListening ?? false;
+        },
+        /** @param { string | Array<string> } filePaths */
+        addWatchFiles(filePaths) {
+          server.electronHost?.addWatchFiles(filePaths);
         },
         /** @param { string | object | number | boolean | bigint } msg */
         sendMessage(msg) {

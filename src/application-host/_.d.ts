@@ -1,6 +1,13 @@
 declare interface ApplicationWorker {
   readonly origin: string;
   readonly isListening: boolean;
+  /**
+   * Add `filePaths` to file watcher
+   */
+  addWatchFiles(filePaths: string | Array<string>): void;
+  /**
+   * Send message to the electron process
+   */
   sendMessage(message: string | object | number | boolean | bigint): void;
 }
 
