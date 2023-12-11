@@ -25,6 +25,10 @@ declare interface ServerOptions {
    */
   mockPath?: string | Array<string>;
   /**
+   * Disable/enable all logging regardless of other options (default `false`).
+   */
+  mute?: boolean;
+  /**
    * Port to expose on `localhost`.
    * Will use `process.env.PORT` if not specified here (default `8080`).
    */

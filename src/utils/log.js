@@ -15,9 +15,21 @@ export const WARN_CERTIFICATE_EXPIRY = `${chalk.yellow(
 const SEG_LENGTH = 80;
 
 const seenWarnings = new Set();
+let mute = false;
 let silent = false;
 
 export default {
+  /**
+   * Set mute state
+   *
+   * @param { boolean } value
+   */
+  set mute(value) {
+    mute = value;
+    if (value) {
+      silent = true;
+    }
+  },
   /**
    * Set silent state
    *
@@ -45,7 +57,7 @@ export function info(msg) {
  * @param { string } msg
  */
 export function noisyInfo(msg) {
-  if (!config.testing) {
+  if (!config.testing && !mute) {
     console.log(truncate(' ' + msg.replace(/\\/g, '/')));
   }
 }
@@ -75,10 +87,12 @@ export function warn(...args) {
  * @param { ...unknown } args
  */
 export function noisyWarn(...args) {
-  const initialValue = silent;
-  silent = false;
-  warn(...args);
-  silent = initialValue;
+  if (!config.testing && !mute) {
+    const initialValue = silent;
+    silent = false;
+    warn(...args);
+    silent = initialValue;
+  }
 }
 
 /**
