@@ -18,6 +18,8 @@ import { expandPath } from './utils/expand-path.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
+export { getDependencies } from './utils/module.js';
+
 /**
  * Server instance factory
  *
