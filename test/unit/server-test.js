@@ -6,6 +6,7 @@ import { expect } from 'chai';
 import { fileURLToPath } from 'node:url';
 import { getBundleFilePath } from './utils.js';
 import http2 from 'node:http2';
+import { needsLegacyLoader } from '../../src/utils/module.js';
 import nodeFetch from 'node-fetch';
 import path from 'node:path';
 import { platform } from 'node:os';
@@ -383,8 +384,8 @@ describe('server', () => {
     });
   });
 
-  // TODO: find out why test suite hangs in CI
-  if (!process.env.CI || process.versions.node.startsWith('18')) {
+  // TODO: find out why test suite hangs in CI with new loader API
+  if (!process.env.CI || needsLegacyLoader()) {
     describe('application', () => {
       beforeEach(() => {
         clearContexts();
