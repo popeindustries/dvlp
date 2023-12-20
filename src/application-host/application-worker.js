@@ -56,12 +56,18 @@ if ('register' in module) {
     },
   );
 
-  // @ts-ignore
-  module.register(config.applicationLoaderURL.href, {
+  /**
+   * @type { { parentURL: string, data?: unknown, transferList?: Array<MessagePort> } }
+   */
+  const options = {
     parentURL: import.meta.url,
-    data: {
-      port: port2,
-    },
-    transferList: [port2],
-  });
+  };
+
+  // Disable in CI to prevent process from hanging due to port transfer(?)
+  if (!process.env.CI) {
+    options.data = { port: port2 };
+    options.transferList = [port2];
+  }
+
+  module.register(config.applicationLoaderURL.href, options);
 }

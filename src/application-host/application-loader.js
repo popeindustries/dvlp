@@ -45,7 +45,7 @@ function doResolve(specifier, context, nextResolve) {
 }
 
 export function load(url, context, nextLoad) {
-  port.postMessage({
+  port?.postMessage({
     type: 'dependency',
     filePath: url.startsWith('file://') ? fileURLToPath(url) : url,
   });
