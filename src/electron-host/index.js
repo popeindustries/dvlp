@@ -78,28 +78,19 @@ export class ElectronHost {
             getProjectPath(filePath),
           )}`,
         );
-        await this.start();
+        await this.restart();
       });
     }
   }
 
   /**
-   * Start/restart electron application
+   * Start electron application
    */
   async start() {
     this.isListening = false;
 
     /** @type { [start: number, stop: number] } */
     const times = [performance.now(), 0];
-
-    if (this.activeProcess !== undefined) {
-      debug(`terminating active process`);
-      this.activeProcess.removeAllListeners();
-      this.activeProcess.send('close');
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      this.activeProcess.kill();
-      noisyInfo('\n   restarting Electon application...');
-    }
 
     debug(`starting Electron application at ${this.main}`);
 
@@ -112,6 +103,22 @@ export class ElectronHost {
   }
 
   /**
+   * Restart electron application
+   */
+  async restart() {
+    if (this.activeProcess !== undefined) {
+      debug(`terminating active process`);
+      this.activeProcess.removeAllListeners();
+      this.activeProcess.send('close');
+      // Wait for windows to close
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      this.activeProcess.kill();
+      noisyInfo('\n   restarting Electon application...');
+      await this.start();
+    }
+  }
+
+  /**
    * Add "filePaths" to watcher
    *
    * @param { string | Array<string> } filePaths
@@ -119,6 +126,7 @@ export class ElectronHost {
   addWatchFiles(filePaths) {
     this.watcher?.add(filePaths);
   }
+
   /**
    * Handle application request.
    * Pipe incoming request to application running in Electron.

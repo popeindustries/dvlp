@@ -85,24 +85,27 @@ export class ApplicationHost {
     /** @type { [start: number, stop: number ]} */
     const times = [performance.now(), 0];
 
+    debug(`starting thread at ${this.main}`);
+
     this.appOrigin = await this.activeThread.start(this.main);
 
     times[1] = performance.now();
-    const duration = msDiff(times);
 
-    noisyInfo(`${format(duration)} application server started`);
+    noisyInfo(`${format(msDiff(times))} application server started`);
   }
 
   /**
    * Restart application
    */
   async restart() {
-    debug(`terminating thread with id "${this.activeThread.threadId}"`);
-    await this.activeThread.terminate();
-    this.activeThread = this.pendingThread;
-    this.pendingThread = this.createThread();
-    noisyInfo('\n  restarting application server...');
-    await this.start();
+    if (this.activeThread !== undefined) {
+      debug(`terminating thread with id "${this.activeThread.threadId}"`);
+      await this.activeThread.terminate();
+      this.activeThread = this.pendingThread;
+      this.pendingThread = this.createThread();
+      noisyInfo('\n  restarting application server...');
+      await this.start();
+    }
   }
 
   /**
@@ -142,7 +145,7 @@ export class ApplicationHost {
 
     port1.unref();
 
-    if (process.versions.node.startsWith('18')) {
+    if (needsLegacyLoader()) {
       execArgv.push('--experimental-loader', config.applicationLoaderURL.href);
     }
 
@@ -150,6 +153,7 @@ export class ApplicationHost {
       argv: this.argv,
       env: SHARE_ENV,
       execArgv,
+      // Don't pipe to parent process. Handled manually in ApplicationThread
       stderr: true,
       workerData: {
         hostOrigin: this.hostOrigin,
@@ -239,7 +243,7 @@ class ApplicationThread extends Worker {
    * @returns { Promise<string>}
    */
   start(main) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       this.resolveStarted = resolve;
       this.rejectStarted = reject;
 
