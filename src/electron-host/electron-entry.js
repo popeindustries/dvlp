@@ -11,6 +11,7 @@ import { toBase64Url } from '../utils/base64Url.js';
 import workerThreads from 'node:worker_threads';
 
 const RE_DATA_URL = /^data:text\/html;([^,]+,)?/;
+const RE_FILE_PROTOCOL = /(?<=(href|src)=["|'])(file:\/\/)/g;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const workerPath = join(__dirname, './electron-worker.js');
@@ -58,10 +59,19 @@ export async function bootstrapElectron() {
           RE_DATA_URL.exec(url)
         );
         const encodedMarkup = url.replace(match, '');
-        const markup =
+        const decodedMarkup =
           encoding === 'base64,'
-            ? toBase64Url(encodedMarkup, true)
-            : toBase64Url(decodeURI(encodedMarkup));
+            ? Buffer.from(encodedMarkup, 'base64').toString('utf8')
+            : decodeURIComponent(encodedMarkup);
+        const markup = toBase64Url(
+          // Remove protocol from any element file:// URLs
+          decodedMarkup.replaceAll(RE_FILE_PROTOCOL, ''),
+        );
+        const argOptions = args[1];
+
+        if (argOptions && 'baseURLForDataURL' in argOptions) {
+          delete argOptions.baseURLForDataURL;
+        }
 
         url = new URL(`?dvlpdata=${markup}`, electronWorkerData.hostOrigin)
           .href;
