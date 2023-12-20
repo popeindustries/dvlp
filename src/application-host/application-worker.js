@@ -41,21 +41,6 @@ messagePort.on(
 );
 
 if ('register' in module) {
-  const { port1, port2 } = new MessageChannel();
-
-  port1.unref();
-  port1.on(
-    'message',
-    /** @param { ApplicationLoaderMessage } msg */
-    (msg) => {
-      if (msg.type === 'dependency') {
-        const { filePath } = msg;
-
-        messagePort.postMessage({ type: 'watch', filePath, mode: 'read' });
-      }
-    },
-  );
-
   /**
    * @type { { parentURL: string, data?: unknown, transferList?: Array<MessagePort> } }
    */
@@ -65,6 +50,21 @@ if ('register' in module) {
 
   // Disable in CI to prevent process from hanging due to port transfer(?)
   if (!process.env.CI) {
+    const { port1, port2 } = new MessageChannel();
+
+    port1.unref();
+    port1.on(
+      'message',
+      /** @param { ApplicationLoaderMessage } msg */
+      (msg) => {
+        if (msg.type === 'dependency') {
+          const { filePath } = msg;
+
+          messagePort.postMessage({ type: 'watch', filePath, mode: 'read' });
+        }
+      },
+    );
+
     options.data = { port: port2 };
     options.transferList = [port2];
   }
