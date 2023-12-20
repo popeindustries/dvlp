@@ -11,7 +11,7 @@ const RE_EXTS = /\.(tsx?|json)$/;
 
 let port;
 
-export function initialize(data) {
+export function initialize(data = {}) {
   port = data.port;
 }
 
