@@ -662,38 +662,39 @@ describe('server', () => {
     });
   });
 
-  describe('electron', () => {
-    it('should start an electron app with loadFile()', (done) => {
-      serverFactory('test/unit/fixtures/electron-file.mjs', {
-        electron: true,
-        port: 8100,
-        reload: false,
-      }).then((srvr) => {
-        server = srvr;
-        srvr.electronProcess.activeProcess.on('message', (msg) => {
-          if (msg === 'test:done') {
-            done();
-          }
-        });
-      });
-    });
-    it('should start an electron app with internal server and loadURL()', (done) => {
-      serverFactory('test/unit/fixtures/electron-create-server.mjs', {
-        electron: true,
-        port: 8100,
-        reload: false,
-      }).then((srvr) => {
-        server = srvr;
-        srvr.electronProcess.activeProcess.on('message', (msg) => {
-          if (msg === 'test:done') {
-            done();
-          }
-        });
-      });
-    });
-  });
-
   if (!process.env.CI) {
+    // TODO: Missing X server or $DISPLAY
+    describe('electron', () => {
+      it('should start an electron app with loadFile()', (done) => {
+        serverFactory('test/unit/fixtures/electron-file.mjs', {
+          electron: true,
+          port: 8100,
+          reload: false,
+        }).then((srvr) => {
+          server = srvr;
+          srvr.electronProcess.activeProcess.on('message', (msg) => {
+            if (msg === 'test:done') {
+              done();
+            }
+          });
+        });
+      });
+      it('should start an electron app with internal server and loadURL()', (done) => {
+        serverFactory('test/unit/fixtures/electron-create-server.mjs', {
+          electron: true,
+          port: 8100,
+          reload: false,
+        }).then((srvr) => {
+          server = srvr;
+          srvr.electronProcess.activeProcess.on('message', (msg) => {
+            if (msg === 'test:done') {
+              done();
+            }
+          });
+        });
+      });
+    });
+
     describe('ssl', () => {
       describe('static', () => {
         it('should implicitly serve index.html over https', async () => {
