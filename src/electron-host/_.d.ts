@@ -1,14 +1,15 @@
 declare interface ElectronProcess {
+  readonly activeThread?: import('node:child_process').ChildProcess;
   readonly origin: string | undefined;
   readonly isListening: boolean;
- /**
+  /**
    * Add `filePaths` to file watcher
    */
- addWatchFiles(filePaths: string | Array<string>): void;
- /** 
-  * Send message to the electron process 
-  */
- sendMessage(message: string | object | number | boolean | bigint): void;
+  addWatchFiles(filePaths: string | Array<string>): void;
+  /**
+   * Send message to the electron process
+   */
+  sendMessage(message: string | object | number | boolean | bigint): void;
 }
 
 declare interface ElectronProcessWorkerData {

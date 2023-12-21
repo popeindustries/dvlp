@@ -1,4 +1,5 @@
 declare interface ApplicationWorker {
+  readonly activeProcess?: import('node:worker_threads').Worker;
   readonly origin: string;
   readonly isListening: boolean;
   /**
