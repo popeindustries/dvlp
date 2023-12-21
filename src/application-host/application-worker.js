@@ -2,7 +2,7 @@
  * @typedef { import('worker_threads').MessagePort } MessagePort
  */
 
-import { config, interceptInProcess } from 'dvlp/internal';
+import { config, error, interceptInProcess } from 'dvlp/internal';
 import { MessageChannel } from 'node:worker_threads';
 import module from 'node:module';
 import { workerData } from 'node:worker_threads';
@@ -39,6 +39,9 @@ messagePort.on(
     }
   },
 );
+
+process.on('uncaughtException', error);
+process.on('unhandledRejection', error);
 
 if ('register' in module) {
   /**

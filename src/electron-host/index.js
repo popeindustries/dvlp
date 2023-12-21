@@ -178,9 +178,13 @@ export class ElectronHost {
         /** @param { ElectronProcessMessage } msg */
         async (msg) => {
           if (msg.type === 'listening') {
-            this.appOrigin = msg.origin;
-            this.isListening = true;
-            resolve(child);
+            // Prevent multiple "listening" messages from multiple servers overwriting each other.
+            // We assume that the first "listening" message is from the application server.
+            if (!this.isListening) {
+              this.appOrigin = msg.origin;
+              this.isListening = true;
+              resolve(child);
+            }
           } else if (msg.type === 'started') {
             resolve(child);
           } else if (msg.type === 'watch') {

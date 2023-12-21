@@ -1,4 +1,16 @@
-import { request } from 'http';
+import { request } from 'node:http';
+import { request as secureRequest } from 'node:https';
+
+const CONNECTION_HEADERS = [
+  'connection',
+  'upgrade',
+  'http2-settings',
+  'te',
+  'transfer-encoding',
+  'proxy-connection',
+  'keep-alive',
+  'host',
+];
 
 /**
  * Forward request to `origin`.
@@ -10,14 +22,17 @@ import { request } from 'http';
 export function forwardRequest(origin, req, res) {
   /** @type { Record<string, string> } */
   const headers = {
-    connection: 'keep-alive',
     // @ts-ignore
-    host: req.headers.host || req.headers[':authority'],
+    // host: req.headers.host || req.headers[':authority'],
   };
 
-  // Prune http2 headers
+  // Prune headers
   for (const header in req.headers) {
-    if (header && !header.startsWith(':')) {
+    if (
+      header &&
+      !header.startsWith(':') &&
+      !CONNECTION_HEADERS.includes(header)
+    ) {
       // @ts-ignore
       headers[header] = req.headers[header];
     }
@@ -31,8 +46,10 @@ export function forwardRequest(origin, req, res) {
     path: req.url,
     port: url.port,
     protocol: url.protocol,
+    rejectUnauthorized: false,
   };
-  const fwdRequest = request(requestOptions, (originResponse) => {
+  const requestFn = url.protocol === 'https:' ? secureRequest : request;
+  const fwdRequest = requestFn(requestOptions, (originResponse) => {
     const { statusCode, headers } = originResponse;
 
     delete headers.connection;

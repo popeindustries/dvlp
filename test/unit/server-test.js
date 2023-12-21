@@ -12,7 +12,8 @@ import { server as serverFactory } from '../../src/dvlp.js';
 import websocket from 'faye-websocket';
 
 const { Client: WebSocket } = websocket;
-let es, server, ws;
+let server;
+let es, ws;
 
 describe('server', () => {
   beforeEach(() => {
@@ -661,6 +662,37 @@ describe('server', () => {
     });
   });
 
+  describe('electron', () => {
+    it('should start an electron app with loadFile()', (done) => {
+      serverFactory('test/unit/fixtures/electron-file.mjs', {
+        electron: true,
+        port: 8100,
+        reload: false,
+      }).then((srvr) => {
+        server = srvr;
+        srvr.electronProcess.activeProcess.on('message', (msg) => {
+          if (msg === 'test:done') {
+            done();
+          }
+        });
+      });
+    });
+    it('should start an electron app with internal server and loadURL()', (done) => {
+      serverFactory('test/unit/fixtures/electron-create-server.mjs', {
+        electron: true,
+        port: 8100,
+        reload: false,
+      }).then((srvr) => {
+        server = srvr;
+        srvr.electronProcess.activeProcess.on('message', (msg) => {
+          if (msg === 'test:done') {
+            done();
+          }
+        });
+      });
+    });
+  });
+
   if (!process.env.CI) {
     describe('ssl', () => {
       describe('static', () => {
@@ -746,9 +778,21 @@ describe('server', () => {
           const body = await res.text();
           expect(body).to.contain("console.log('this is foo')");
         });
-        it.skip('should start a https app server on same port', async () => {
+        it('should successfully forward http requests to https application', async () => {
+          server = await serverFactory('test/unit/fixtures/app-https.mjs', {
+            port: 8100,
+            reload: false,
+          });
+          const res = await fetch('http://localhost:8100/', {
+            headers: { accept: 'text/html' },
+          });
+          expect(res.status).to.eql(200);
+          expect(await res.text()).to.contain('hi');
+        });
+        it('should successfully forward https requests to https application', async () => {
           server = await serverFactory('test/unit/fixtures/app-https.mjs', {
             certsPath: 'test/unit/fixtures/certificates',
+            port: 8100,
             reload: false,
           });
           const res = await fetch('https://localhost:443/', {

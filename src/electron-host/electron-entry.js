@@ -1,3 +1,7 @@
+/**
+ * @typedef { import('electron') } Electron
+ */
+
 import { dirname, join } from 'node:path';
 import {
   error,
@@ -22,10 +26,14 @@ export async function bootstrapElectron() {
 
   interceptInProcess(electronWorkerData);
 
-  // Forward filePath to host server
-  BrowserWindow.prototype.loadFile = new Proxy(
-    BrowserWindow.prototype.loadFile,
-    {
+  try {
+    /** @type { typeof Electron.WebContents } */
+    // @ts-expect-error - use internal API to access internal WebContents class used by BrowserWindow and BrowserView
+    const WebContents = process._linkedBinding(
+      'electron_browser_web_contents',
+    ).WebContents;
+
+    WebContents.prototype.loadFile = new Proxy(WebContents.prototype.loadFile, {
       apply(target, ctx, args) {
         const filePath = /** @type { string } */ (args[0]);
         const url = new URL(
@@ -33,55 +41,56 @@ export async function bootstrapElectron() {
           electronWorkerData.hostOrigin,
         );
 
-        return BrowserWindow.prototype.loadURL.call(ctx, url.href);
+        return WebContents.prototype.loadURL.call(ctx, url.href);
       },
-    },
-  );
+    });
 
-  // Forward file or app urls to host server
-  BrowserWindow.prototype.loadURL = new Proxy(BrowserWindow.prototype.loadURL, {
-    apply(target, ctx, args) {
-      let url = /** @type { string } */ (args[0]);
+    WebContents.prototype.loadURL = new Proxy(WebContents.prototype.loadURL, {
+      apply(target, ctx, args) {
+        let url = /** @type { string } */ (args[0]);
 
-      if (
-        url.startsWith('file://') ||
-        url.startsWith(electronWorkerData.origin)
-      ) {
-        const incomingUrl = new URL(url);
+        if (
+          url.startsWith('file://') ||
+          url.startsWith(electronWorkerData.origin)
+        ) {
+          const incomingUrl = new URL(url);
 
-        url = new URL(
-          incomingUrl.pathname + incomingUrl.search,
-          electronWorkerData.hostOrigin,
-        ).href;
-      } else if (RE_DATA_URL.test(url)) {
-        // data:text/html;base64,XXXXXXXX==
-        const [match, encoding] = /** @type { RegExpExecArray } */ (
-          RE_DATA_URL.exec(url)
-        );
-        const encodedMarkup = url.replace(match, '');
-        const decodedMarkup =
-          encoding === 'base64,'
-            ? Buffer.from(encodedMarkup, 'base64').toString('utf8')
-            : decodeURIComponent(encodedMarkup);
-        const markup = toBase64Url(
-          // Remove protocol from any element file:// URLs
-          decodedMarkup.replaceAll(RE_FILE_PROTOCOL, ''),
-        );
-        const argOptions = args[1];
+          url = new URL(
+            incomingUrl.pathname + incomingUrl.search,
+            electronWorkerData.hostOrigin,
+          ).href;
+        } else if (RE_DATA_URL.test(url)) {
+          // data:text/html;base64,XXXXXXXX==
+          const [match, encoding] = /** @type { RegExpExecArray } */ (
+            RE_DATA_URL.exec(url)
+          );
+          const encodedMarkup = url.replace(match, '');
+          const decodedMarkup =
+            encoding === 'base64,'
+              ? Buffer.from(encodedMarkup, 'base64').toString('utf8')
+              : decodeURIComponent(encodedMarkup);
+          const markup = toBase64Url(
+            // Remove protocol from any element file:// URLs
+            decodedMarkup.replaceAll(RE_FILE_PROTOCOL, ''),
+          );
+          const argOptions = args[1];
 
-        if (argOptions && 'baseURLForDataURL' in argOptions) {
-          delete argOptions.baseURLForDataURL;
+          if (argOptions && 'baseURLForDataURL' in argOptions) {
+            delete argOptions.baseURLForDataURL;
+          }
+
+          url = new URL(`?dvlpdata=${markup}`, electronWorkerData.hostOrigin)
+            .href;
         }
 
-        url = new URL(`?dvlpdata=${markup}`, electronWorkerData.hostOrigin)
-          .href;
-      }
+        args[0] = url;
 
-      args[0] = url;
-
-      return Reflect.apply(target, ctx, args);
-    },
-  });
+        return Reflect.apply(target, ctx, args);
+      },
+    });
+  } catch (err) {
+    console.log(err);
+  }
 
   // Intercept Worker construction in order to instead load electron-worker
   workerThreads.Worker = new Proxy(workerThreads.Worker, {
@@ -125,6 +134,8 @@ export async function bootstrapElectron() {
       BrowserWindow.getAllWindows().forEach((window) => window.close());
     }
   });
+  process.on('uncaughtException', error);
+  process.on('unhandledRejection', error);
 
   try {
     await import(pathToFileURL(electronWorkerData.main).href);
