@@ -1,7 +1,5 @@
 import fastify from 'fastify';
-import nodeFetch from 'node-fetch';
 
-const fetch = globalThis.fetch ?? nodeFetch;
 const server = fastify();
 
 server.get('/', async (req, reply) => {

@@ -1,10 +1,8 @@
 import EventSource from 'eventsource';
 import { expect } from 'chai';
-import nodeFetch from 'node-fetch';
 import { testServer } from '../../src/dvlp-test.js';
 import websocket from 'faye-websocket';
 
-const fetch = globalThis.fetch ?? nodeFetch;
 const { Client: WebSocket } = websocket;
 let es, server, ws;
 
