@@ -248,32 +248,27 @@ describe('patch', () => {
           "default-src 'self'; script-src 'self' 'unsafe-inline' 'sha512-yyyyyy' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
         );
       });
-      it('should disable cache-control headers for local files', () => {
+      it('should set cache-control headers for project files', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req, res, {});
         res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.include(
-          'no-cache, no-store, dvlp-disabled',
-        );
+        expect(res.getHeader('Cache-Control')).to.include('no-store');
       });
-      it('should disable cache-control headers for local files when cache-control not set', () => {
+      it('should set cache-control headers for project files when cache-control not set', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req, res, {});
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.include(
-          'no-cache, no-store, dvlp-disabled',
-        );
+        expect(res.getHeader('Cache-Control')).to.include('no-store');
       });
-      it('should not disable cache-control headers for node_modules files', () => {
-        const req = getRequest('/node_modules/foo');
+      it('should set cache-control headers for node_modules files', () => {
+        const req = getRequest('/node_modules/foo/foo.js');
         const res = getResponse(req);
         patchResponse(req, res, {});
-        res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.include('max-age=600');
+        expect(res.getHeader('Cache-Control')).to.include('max-age=3600');
       });
       it('should enable cross origin headers', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });

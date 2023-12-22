@@ -199,7 +199,7 @@ describe('testServer', () => {
       const res = await fetch('http://localhost:8080/1234.jpg');
       expect(res).to.exist;
       expect(res.headers.get('Content-type')).to.include('image/jpeg');
-      expect(res.headers.get('Cache-Control')).to.equal('public, max-age=10');
+      expect(res.headers.get('Cache-Control')).to.equal('public, max-age=60');
       expect(res.headers.get('x-foo')).to.equal('foo');
     });
     it('should respond to mocked external json request', async () => {

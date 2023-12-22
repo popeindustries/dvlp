@@ -280,7 +280,7 @@ export class Mocks {
         res.setHeader('Access-Control-Allow-Origin', '*');
         send(
           {
-            // @ts-ignore
+            // @ts-expect-error - fake request object
             url: href,
             headers: {},
           },
@@ -291,9 +291,10 @@ export class Mocks {
             maxAge:
               getMaxAgeFromHeaders(
                 normaliseHeaderKeys(headers, ['Cache-Control']),
-              ) || config.maxAge,
+              ) || Number(config.maxAge) * 1000,
           },
         ).pipe(res);
+
         return true;
       }
       case 'json': {
@@ -304,10 +305,15 @@ export class Mocks {
 
     // @ts-ignore
     res.writeHead(status, {
-      // Allow Content-Type/Date to be overwritten
+      // Allow some headers to be overwritten
+      'Cache-Control': `public, max-age=${config.maxAge}`,
       'Content-Type': mime.getType(type),
       Date: new Date().toUTCString(),
-      ...normaliseHeaderKeys(headers, ['Content-Type', 'Date']),
+      ...normaliseHeaderKeys(headers, [
+        'Cache-Control',
+        'Content-Type',
+        'Date',
+      ]),
       // @ts-ignore
       'Content-Length': Buffer.byteLength(content),
       'Access-Control-Allow-Origin': '*',

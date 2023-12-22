@@ -13,6 +13,7 @@ import {
   isNodeModuleFilePath,
 } from './is.js';
 import chalk from 'chalk';
+import config from '../config.js';
 import Debug from 'debug';
 import { filePathToUrlPathname } from './url.js';
 import { Metrics } from './metrics.js';
@@ -84,9 +85,9 @@ export function patchResponse(
       injectCSPHeader.bind(injectCSPHeader, res, urls, hashes),
     );
     proxyBodyWrite(res, (html) => {
-      // TODO: parse css.js imports?
+      // TODO: parse css/js imports?
       enableCrossOriginHeader(res);
-      disableCacheControlHeader(res, req.url);
+      setCacheControlHeader(res, req.url);
 
       const transformed = send?.(filePath, html);
 
@@ -100,7 +101,7 @@ export function patchResponse(
     proxyBodyWrite(res, (css) => {
       enableCrossOriginHeader(res);
       // @ts-ignore
-      disableCacheControlHeader(res, req.url);
+      setCacheControlHeader(res, req.url);
       css = rewriteCSSImports(res, filePath, css, resolveImport);
 
       const transformed = send?.(filePath, css);
@@ -115,7 +116,7 @@ export function patchResponse(
     proxyBodyWrite(res, (js) => {
       enableCrossOriginHeader(res);
       // @ts-ignore
-      disableCacheControlHeader(res, req.url);
+      setCacheControlHeader(res, req.url);
       js = rewriteJSImports(res, filePath, js, resolveImport);
 
       const transformed = send?.(filePath, js);
@@ -149,17 +150,23 @@ function disableContentEncodingHeader(res, headerKey, headerValue) {
 }
 
 /**
- * Disable Cache-Control, Content-Encoding headers
+ * Set Cache-Control headers
  *
  * @param { Res } res
  * @param { string } url
  * @returns { void }
  */
-function disableCacheControlHeader(res, url) {
+function setCacheControlHeader(res, url) {
   if (!res.headersSent) {
-    if (!isNodeModuleFilePath(url) && !isBundledUrl(url)) {
-      res.setHeader('cache-control', 'no-cache, no-store, dvlp-disabled');
+    let cacheControl = `public, max-age=${config.maxAge}`;
+
+    if (isBundledUrl(url) || isNodeModuleFilePath(url)) {
+      cacheControl = 'public, max-age=3600';
+    } else {
+      cacheControl = 'no-store';
     }
+
+    res.setHeader('cache-control', cacheControl);
   }
 }
 
