@@ -25,7 +25,8 @@ const RE_CLOSE_BODY_TAG = /<\/body>/i;
 const RE_CSS_IMPORT = /(@import\b[^'"]+['"])([^'"\n]+)(['"])/gm;
 const RE_DYNAMIC_IMPORT = /(^[^(]+\(['"])([^'"]+)(['"][^)]*\))/;
 const RE_HTTP = /^https?:\/\//;
-const RE_NONCE_SHA = /nonce-|sha\d{3}-/;
+const RE_INLINE_CSP =
+  /<meta\s+http-equiv=['"]Content-Security-Policy['"]\s+content=(?:"([^"]+)|'([^']+))['"]\s+\/?>/;
 const RE_OPEN_HEAD_TAG = /<head>/i;
 
 const debug = Debug('dvlp:patch');
@@ -55,7 +56,9 @@ export function patchResponse(
   );
 
   if (isHtmlRequest(req)) {
+    /** @type { Array<string> } */
     const urls = [];
+    /** @type { Array<string> } */
     const hashes = [];
     const scripts = {
       header: '',
@@ -88,6 +91,8 @@ export function patchResponse(
       // TODO: parse css/js imports?
       enableCrossOriginHeader(res);
       setCacheControlHeader(res, req.url);
+
+      html = injectCSPMetaTag(res, html, urls, hashes);
 
       const transformed = send?.(filePath, html);
 
@@ -161,7 +166,7 @@ function setCacheControlHeader(res, url) {
     let cacheControl = `public, max-age=${config.maxAge}`;
 
     if (isBundledUrl(url) || isNodeModuleFilePath(url)) {
-      cacheControl = 'public, max-age=3600';
+      cacheControl = `public, max-age=${config.maxAgeLong}`;
     } else {
       cacheControl = 'no-store';
     }
@@ -211,7 +216,7 @@ function injectScripts(res, scripts, html) {
 }
 
 /**
- * Inject CSP headers allowing inline script tag
+ * Inject CSP headers allowing inline scripts
  *
  * @param { Res } res
  * @param { Array<string> } urls
@@ -230,42 +235,47 @@ function injectCSPHeader(res, urls, hashes, key, value) {
   ) {
     const urlsString = urls.join(' ');
     const hashesString = hashes.map((hash) => `'sha256-${hash}'`).join(' ');
-    const rules = value
-      .split(';')
-      .map((ruleString) => ruleString.trim())
-      .reduce((/** @type { {[key: string]: string} } */ rules, ruleString) => {
-        const firstSpace = ruleString.indexOf(' ');
-
-        rules[ruleString.slice(0, firstSpace)] = ruleString.slice(
-          firstSpace + 1,
-        );
-        return rules;
-      }, {});
-
-    if (rules['connect-src']) {
-      rules['connect-src'] = `${rules['connect-src']} ${urlsString}`;
-    } else {
-      rules['connect-src'] = urlsString;
-    }
-    if (
-      rules['script-src'] &&
-      (RE_NONCE_SHA.test(value) || !value.includes('unsafe-inline'))
-    ) {
-      rules['script-src'] = `${rules['script-src']} ${hashesString}`;
-    }
-    if (rules['default-src'] === "'none'") {
-      rules['default-src'] = `* ${hashesString}`;
-    }
-
-    value = Object.keys(rules).reduce((value, name) => {
-      value += `${name} ${rules[name]}; `;
-      return value;
-    }, '');
+    value = parseCSPRules(value, urlsString, hashesString);
   }
 
   res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
 
   return value;
+}
+
+/**
+ * Inject CSP meta tag allowing inline scripts
+ *
+ * @param { Res } res
+ * @param { string } html
+ * @param { Array<string> } urls
+ * @param { Array<string> } hashes
+ * @returns { string }
+ */
+function injectCSPMetaTag(res, html, urls, hashes) {
+  const match = RE_INLINE_CSP.exec(html);
+
+  if (match !== null) {
+    res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
+
+    const [matchingTag, doubleQuotedContent, singleQuotedContent] = match;
+    const content = doubleQuotedContent ?? singleQuotedContent;
+
+    if (content) {
+      const urlsString = urls.join(' ');
+      const hashesString = hashes.map((hash) => `'sha256-${hash}'`).join(' ');
+      const newContent = parseCSPRules(content, urlsString, hashesString);
+
+      html = html.replace(
+        matchingTag,
+        matchingTag.replace(content, newContent),
+      );
+    }
+
+    res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
+  }
+
+  return html;
 }
 
 /**
@@ -632,4 +642,45 @@ function proxyBodyWrite(res, action) {
       return Reflect.apply(target, ctx, args);
     },
   });
+}
+
+/**
+ * @param { string } cspString
+ * @param { string } urlsString
+ * @param { string } hashesString
+ */
+function parseCSPRules(cspString, urlsString, hashesString) {
+  const rules = cspString
+    .split(';')
+    .map((ruleString) => ruleString.trim())
+    .reduce((/** @type { {[key: string]: string} } */ rules, ruleString) => {
+      const firstSpace = ruleString.indexOf(' ');
+
+      rules[ruleString.slice(0, firstSpace)] = ruleString.slice(firstSpace + 1);
+      return rules;
+    }, {});
+
+  // Allow dvlp urls
+  if (urlsString.length > 0) {
+    const connectSrcProp = rules['connect-src'] ? 'connect-src' : 'default-src';
+
+    rules[connectSrcProp] = `${
+      rules[connectSrcProp] ? `${rules[connectSrcProp]} ` : ''
+    }${urlsString}`;
+  }
+  // Allow dvlp inlined scripts
+  if (hashesString.length > 0) {
+    const scriptSrcProp = rules['script-src'] ? 'script-src' : 'default-src';
+
+    if (!rules[scriptSrcProp]?.includes("'unsafe-inline'")) {
+      rules[scriptSrcProp] = `${
+        rules[scriptSrcProp] ? `${rules[scriptSrcProp]} ` : ''
+      }${hashesString}`;
+    }
+  }
+
+  return Object.keys(rules).reduce((value, name) => {
+    value += `${name} ${rules[name]}; `;
+    return value;
+  }, '');
 }
