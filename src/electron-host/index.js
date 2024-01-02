@@ -13,7 +13,8 @@ import { getProjectPath } from '../utils/file.js';
 import { watch } from '../utils/watch.js';
 import { writeFileSync } from 'node:fs';
 
-const RE_ELECTRON_ERROR = /Electron\[\d|ERROR:node|ERROR:CONSOLE\(0\)/;
+const RE_ELECTRON_ERROR =
+  /Electron\[\d|ERROR:node|ERROR:CONSOLE\(0\)|[/[:.\d]+:ERROR/;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const debug = Debug('dvlp:electronhost');
