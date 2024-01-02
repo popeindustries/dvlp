@@ -16,7 +16,7 @@ const program = new Command();
 program
   .usage('[options] [path...]')
   .description(
-    `Start a development server, restarting and reloading connected browsers on file changes.
+    `Start a development server, restarting and reloading connected clients on file changes.
     Serves static files from one or more "path" directories, or a custom application
     server if "path" is a single application server file.`,
   )
@@ -32,7 +32,7 @@ program
     `enable https mode by specifying path to directory containing ".crt" and ".key" files (directory, glob pattern)`,
   )
   .option('-s, --silent', 'suppress default logging')
-  .option('--no-reload', 'disable reloading connected browsers on file change')
+  .option('--no-reload', 'disable reloading connected clients on file change')
   .version(pkg.version, '-v, --version', 'output the current version')
   .arguments('[path...]')
   .action(boot);

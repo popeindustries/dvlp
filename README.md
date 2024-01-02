@@ -11,13 +11,13 @@
 - **No middleware**: write application servers without special dev/build/bundle middleware
 - **No infrastructure**: mock external JSON/EventSource/WebSocket resources
 - **No waiting**: restart application servers in the blink of an eye
-- **No refreshing**: automatically reload browsers on file change
+- **No refreshing**: automatically reload clients on file change
 
 ### How it works
 
-**dvlp** allows you to easily serve files from one or more project directories (`static` mode), or from your custom application server (`app` mode). In both cases, **dvlp** automatically injects the necessary reload script into HTML responses to enable reloading, watches all files for changes, restarts the `app` server if necessary, and reloads all connected browsers.
+**dvlp** allows you to easily serve resources from one or more project directories (`static` mode), from your custom application server (`app` mode), or from your Electron desktop application (`electron` mode). In all cases, **dvlp** automatically injects the necessary reload script into HTML responses to enable reloading, watches all files for changes, restarts the `app` server/ `electron` application if necessary, and reloads all connected clients.
 
-In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (`import "lodash"`), which are not supported by browsers, work by re-writing all import paths to valid urls. Since most `node_modules` packages are still published as CommonJS modules, each bare import is also bundled and converted to an ESM module using [esbuild](https://esbuild.github.io). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under your project root.
+In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (`import "lodash"`), which are not natively supported by browsers, work by re-writing all import paths to valid urls. Since some `node_modules` packages are still published as CommonJS modules, non-ESM packages are bundled and converted to an ESM module using [esbuild](https://esbuild.github.io). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under your project root.
 
 ### Bonus!
 
@@ -36,19 +36,20 @@ $ npm install dvlp
 ```text
 Usage: dvlp [options] [path...]
 
-Start a development server, restarting and reloading connected browsers on file changes.
-  Serves static files from one or more "path" directories, or a custom application
-  server if "path" is a single application server file.
+Start a development server, restarting and reloading connected clients on file changes.
+    Serves static files from one or more "path" directories, or a custom application
+    server if "path" is a single application server file.
 
 Options:
   -p, --port <port>   port number
   -m, --mock <path>   path to mock files (directory, file, glob pattern)
   -k, --hooks <path>  path to optional hooks registration file
-  --ssl <path>        enable https mode by specifying path to directory containing
-                      ".crt" and ".key" files (directory, glob pattern)
+  -e, --electron      run "path" file as electron.js entry file
+  --ssl <path>        enable https mode by specifying path to directory containing ".crt" and
+                      ".key" files (directory, glob pattern)
   -s, --silent        suppress default logging
-  --no-reload         disable reloading connected browsers on file change
-  -v, --version       output the version number
+  --no-reload         disable reloading connected clients on file change
+  -v, --version       output the current version
   -h, --help          display help for command
 ```
 
