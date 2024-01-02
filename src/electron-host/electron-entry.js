@@ -104,7 +104,7 @@ export async function bootstrapElectron() {
         /** @param { ElectronProcessMessage} msg */
         (msg) => {
           if (msg.type === 'listening') {
-            electronWorkerData.origin = msg.origin;
+            electronWorkerData.origin ??= msg.origin;
             electronWorkerData.postMessage(msg);
           }
         },
