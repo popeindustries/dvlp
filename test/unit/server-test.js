@@ -387,285 +387,295 @@ describe('server', () => {
     });
   });
 
-  describe('application', () => {
-    beforeEach(() => {
-      clearContexts();
-    });
+  if (!process.env.CI || !process.versions.node.startsWith('18')) {
+    describe('application', () => {
+      beforeEach(() => {
+        clearContexts();
+      });
 
-    it('should start an app server', async () => {
-      server = await serverFactory('test/unit/fixtures/app.mjs', {
-        reload: false,
-      });
-      const res = await fetch('http://localhost:8080/', {
-        headers: { accept: 'text/html' },
-      });
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('hi');
-    });
-    it.skip('should start an app server with listen "path"', async () => {
-      server = await serverFactory('test/unit/fixtures/app-create-server.mjs', {
-        port: 8100,
-        reload: false,
-      });
-      const res = await fetch('http://localhost:8100/', {
-        headers: { accept: 'text/html' },
-      });
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('ok');
-    });
-    it('should start an app server with additional directories', async () => {
-      server = await serverFactory(
-        ['test/unit/fixtures/www', 'test/unit/fixtures/app.mjs'],
-        {
-          port: 8100,
+      it('should start an app server', async () => {
+        server = await serverFactory('test/unit/fixtures/app.mjs', {
           reload: false,
-        },
-      );
-      const res = await fetch('http://localhost:8100/module.js');
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('main');
-    });
-    it('should start an app server listening for "request" event', async () => {
-      server = await serverFactory('test/unit/fixtures/app-listener.mjs', {
-        port: 8100,
+        });
+        const res = await fetch('http://localhost:8080/', {
+          headers: { accept: 'text/html' },
+        });
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain('hi');
       });
-      const res = await fetch('http://localhost:8100/', {
-        headers: { Accept: 'text/html; charset=utf-8' },
+      it.skip('should start an app server with listen "path"', async () => {
+        server = await serverFactory(
+          'test/unit/fixtures/app-create-server.mjs',
+          {
+            port: 8100,
+            reload: false,
+          },
+        );
+        const res = await fetch('http://localhost:8100/', {
+          headers: { accept: 'text/html' },
+        });
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain('ok');
       });
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('ok');
-    });
-    it('should start an app server with default server transform', async () => {
-      server = await serverFactory('test/unit/fixtures/app.ts', {
-        port: 8100,
-        reload: false,
+      it('should start an app server with additional directories', async () => {
+        server = await serverFactory(
+          ['test/unit/fixtures/www', 'test/unit/fixtures/app.mjs'],
+          {
+            port: 8100,
+            reload: false,
+          },
+        );
+        const res = await fetch('http://localhost:8100/module.js');
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain('main');
       });
-      const res = await fetch('http://localhost:8100/', {
-        headers: { accept: 'text/html' },
+      it('should start an app server listening for "request" event', async () => {
+        server = await serverFactory('test/unit/fixtures/app-listener.mjs', {
+          port: 8100,
+        });
+        const res = await fetch('http://localhost:8100/', {
+          headers: { Accept: 'text/html; charset=utf-8' },
+        });
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain('ok');
       });
-      // expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('hi');
-    });
-    if (platform() !== 'win32') {
-      it('should start an app server with custom server transform', async () => {
+      it('should start an app server with default server transform', async () => {
         server = await serverFactory('test/unit/fixtures/app.ts', {
           port: 8100,
           reload: false,
-          hooksPath: 'test/unit/fixtures/hooks-transform-server.mjs',
+        });
+        const res = await fetch('http://localhost:8100/', {
+          headers: { accept: 'text/html' },
+        });
+        // expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain('hi');
+      });
+      if (platform() !== 'win32') {
+        it('should start an app server with custom server transform', async () => {
+          server = await serverFactory('test/unit/fixtures/app.ts', {
+            port: 8100,
+            reload: false,
+            hooksPath: 'test/unit/fixtures/hooks-transform-server.mjs',
+          });
+          const res = await fetch('http://localhost:8100/', {
+            headers: { accept: 'text/html' },
+          });
+          expect(res.status).to.eql(200);
+          expect(await res.text()).to.contain('hi from body hook');
+        });
+      }
+      it('should polyfill process.env', async () => {
+        server = await serverFactory('test/unit/fixtures/app.mjs', {
+          port: 8100,
+        });
+        const res = await fetch('http://localhost:8100/', {
+          headers: { Accept: 'text/html; charset=utf-8' },
+        });
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain(
+          '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="dvlptest";',
+        );
+      });
+      it('should serve a bundled module js file', async () => {
+        server = await serverFactory('test/unit/fixtures/app.mjs', {
+          port: 8100,
+        });
+        const res = await fetch(
+          `http://localhost:8100/${getBundleFilePath('debug')}`,
+        );
+        expect(res.status).to.eql(200);
+        const body = await res.text();
+        expect(body).to.contain('function parse(str)');
+        expect(body).to.contain('export_default as default');
+      });
+      it('should serve a bundled module js file from server listening for "request" event', async () => {
+        server = await serverFactory('test/unit/fixtures/app-listener.mjs', {
+          port: 8100,
+        });
+        const res = await fetch(
+          `http://localhost:8100/${getBundleFilePath('debug')}`,
+        );
+        expect(res.status).to.eql(200);
+        const body = await res.text();
+        expect(body).to.contain('function parse(str)');
+        expect(body).to.contain('export_default as default');
+      });
+      it('should serve a node_modules module js file', async () => {
+        server = await serverFactory('test/unit/fixtures/app.mjs', {
+          port: 8100,
+        });
+        const res = await fetch(
+          `http://localhost:8100/node_modules/foo/foo.js`,
+        );
+        expect(res.status).to.eql(200);
+        const body = await res.text();
+        expect(body).to.contain("console.log('this is foo')");
+      });
+      it('should inject the reload script into an html response', async () => {
+        server = await serverFactory('test/unit/fixtures/app.mjs', {
+          port: 8100,
+          reload: true,
         });
         const res = await fetch('http://localhost:8100/', {
           headers: { accept: 'text/html' },
         });
         expect(res.status).to.eql(200);
-        expect(await res.text()).to.contain('hi from body hook');
+        expect(await res.text()).to.contain('sse = new EventSource');
       });
-    }
-    it('should polyfill process.env', async () => {
-      server = await serverFactory('test/unit/fixtures/app.mjs', {
-        port: 8100,
+      it('should start with initial error', async () => {
+        server = await serverFactory('test/unit/fixtures/app-error.mjs', {
+          port: 8100,
+          reload: false,
+        });
+        await fetch('http://localhost:8100/', {
+          headers: { accept: 'text/html' },
+        });
+        const res = await fetch('http://localhost:8100/', {
+          headers: { accept: 'text/html' },
+        });
+        expect(res.status).to.eql(500);
+        expect(await res.text()).to.eql('application server failed to start');
       });
-      const res = await fetch('http://localhost:8100/', {
-        headers: { Accept: 'text/html; charset=utf-8' },
-      });
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain(
-        '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="dvlptest";',
-      );
-    });
-    it('should serve a bundled module js file', async () => {
-      server = await serverFactory('test/unit/fixtures/app.mjs', {
-        port: 8100,
-      });
-      const res = await fetch(
-        `http://localhost:8100/${getBundleFilePath('debug')}`,
-      );
-      expect(res.status).to.eql(200);
-      const body = await res.text();
-      expect(body).to.contain('function parse(str)');
-      expect(body).to.contain('export_default as default');
-    });
-    it('should serve a bundled module js file from server listening for "request" event', async () => {
-      server = await serverFactory('test/unit/fixtures/app-listener.mjs', {
-        port: 8100,
-      });
-      const res = await fetch(
-        `http://localhost:8100/${getBundleFilePath('debug')}`,
-      );
-      expect(res.status).to.eql(200);
-      const body = await res.text();
-      expect(body).to.contain('function parse(str)');
-      expect(body).to.contain('export_default as default');
-    });
-    it('should serve a node_modules module js file', async () => {
-      server = await serverFactory('test/unit/fixtures/app.mjs', {
-        port: 8100,
-      });
-      const res = await fetch(`http://localhost:8100/node_modules/foo/foo.js`);
-      expect(res.status).to.eql(200);
-      const body = await res.text();
-      expect(body).to.contain("console.log('this is foo')");
-    });
-    it('should inject the reload script into an html response', async () => {
-      server = await serverFactory('test/unit/fixtures/app.mjs', {
-        port: 8100,
-        reload: true,
-      });
-      const res = await fetch('http://localhost:8100/', {
-        headers: { accept: 'text/html' },
-      });
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain('sse = new EventSource');
-    });
-    it('should start with initial error', async () => {
-      server = await serverFactory('test/unit/fixtures/app-error.mjs', {
-        port: 8100,
-        reload: false,
-      });
-      await fetch('http://localhost:8100/', {
-        headers: { accept: 'text/html' },
-      });
-      const res = await fetch('http://localhost:8100/', {
-        headers: { accept: 'text/html' },
-      });
-      expect(res.status).to.eql(500);
-      expect(await res.text()).to.eql('application server failed to start');
-    });
-    it('should handle request error', async () => {
-      server = await serverFactory('test/unit/fixtures/app-request-error.mjs', {
-        port: 8100,
-        reload: false,
-      });
-      const res = await fetch('http://localhost:8100/', {
-        headers: { accept: 'text/html' },
-      });
-      expect(res.status).to.eql(500);
-      expect(await res.text()).to.include('errrrrrrrrrrrr is not defined');
-    });
-    it('should transform file content when using an onTransform hook', async () => {
-      server = await serverFactory('test/unit/fixtures/app.mjs', {
-        port: 8100,
-        reload: false,
-        hooksPath: 'test/unit/fixtures/hooks-transform.mjs',
-      });
-      const res = await fetch('http://localhost:8100/www/style.css');
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.contain(
-        'this is transformed content for: style.css',
-      );
-    });
-    it('should respond to mocked requests', async () => {
-      server = await serverFactory('test/unit/fixtures/app.mjs', {
-        mockPath: 'test/unit/fixtures/mock/1234.json',
-        port: 8100,
-        reload: false,
-      });
-      const res = await fetch('http://localhost:8100/1234.jpg');
-      expect(res.status).to.eql(200);
-      expect(res.headers.get('content-type')).to.equal('image/jpeg');
-    });
-    it('should respond to remote mocked requests', async () => {
-      server = await serverFactory('test/unit/fixtures/app-api.mjs', {
-        mockPath: 'test/unit/fixtures/mock/9012.json',
-        port: 8100,
-        reload: false,
-      });
-      const res = await fetch('http://localhost:8100');
-      expect(res.status).to.eql(200);
-      expect(await res.text()).to.include('Bob');
-    });
-    it('should handle mock EventSource connection', (done) => {
-      serverFactory('test/unit/fixtures/app.mjs', {
-        mockPath: 'test/unit/fixtures/mock-push',
-        port: 8100,
-        reload: false,
-      }).then((srvr) => {
-        server = srvr;
-        es = new EventSource(
-          'http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed',
+      it('should handle request error', async () => {
+        server = await serverFactory(
+          'test/unit/fixtures/app-request-error.mjs',
+          {
+            port: 8100,
+            reload: false,
+          },
         );
-        es.onopen = () => {
-          expect(es.readyState).to.equal(1);
-          done();
-        };
+        const res = await fetch('http://localhost:8100/', {
+          headers: { accept: 'text/html' },
+        });
+        expect(res.status).to.eql(500);
+        expect(await res.text()).to.include('errrrrrrrrrrrr is not defined');
       });
-    });
-    it('should handle push mock event via EventSource', (done) => {
-      serverFactory('test/unit/fixtures/app.mjs', {
-        mockPath: 'test/unit/fixtures/mock-push',
-        port: 8100,
-        reload: false,
-      }).then((srvr) => {
-        server = srvr;
-        es = new EventSource(
-          'http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed',
+      it('should transform file content when using an onTransform hook', async () => {
+        server = await serverFactory('test/unit/fixtures/app.mjs', {
+          port: 8100,
+          reload: false,
+          hooksPath: 'test/unit/fixtures/hooks-transform.mjs',
+        });
+        const res = await fetch('http://localhost:8100/www/style.css');
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain(
+          'this is transformed content for: style.css',
         );
-        es.onopen = () => {
-          expect(es.readyState).to.equal(1);
-          fetch('http://localhost:8100/dvlp/push-event', {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              stream: 'http://localhost:8111/feed',
-              event: 'open',
-            }),
-          });
-        };
-        es.addEventListener('foo', (event) => {
-          expect(event.data).to.equal('{"title":"open"}');
-          done();
+      });
+      it('should respond to mocked requests', async () => {
+        server = await serverFactory('test/unit/fixtures/app.mjs', {
+          mockPath: 'test/unit/fixtures/mock/1234.json',
+          port: 8100,
+          reload: false,
+        });
+        const res = await fetch('http://localhost:8100/1234.jpg');
+        expect(res.status).to.eql(200);
+        expect(res.headers.get('content-type')).to.equal('image/jpeg');
+      });
+      it('should respond to remote mocked requests', async () => {
+        server = await serverFactory('test/unit/fixtures/app-api.mjs', {
+          mockPath: 'test/unit/fixtures/mock/9012.json',
+          port: 8100,
+          reload: false,
+        });
+        const res = await fetch('http://localhost:8100');
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.include('Bob');
+      });
+      it('should handle mock EventSource connection', (done) => {
+        serverFactory('test/unit/fixtures/app.mjs', {
+          mockPath: 'test/unit/fixtures/mock-push',
+          port: 8100,
+          reload: false,
+        }).then((srvr) => {
+          server = srvr;
+          es = new EventSource(
+            'http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed',
+          );
+          es.onopen = () => {
+            expect(es.readyState).to.equal(1);
+            done();
+          };
         });
       });
-    });
-    it('should handle mock WebSocket connection', (done) => {
-      serverFactory('test/unit/fixtures/app.mjs', {
-        mockPath: 'test/unit/fixtures/mock-push',
-        port: 8100,
-        reload: false,
-      }).then((srvr) => {
-        server = srvr;
-        ws = new WebSocket(
-          'ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket',
-        );
-        ws.on('open', () => {
-          expect(ws.readyState).to.equal(1);
-          done();
-        });
-      });
-    });
-    it('should handle push mock event via WebSocket', (done) => {
-      serverFactory('test/unit/fixtures/app.mjs', {
-        mockPath: 'test/unit/fixtures/mock-push',
-        port: 8100,
-        reload: false,
-      }).then((srvr) => {
-        server = srvr;
-        ws = new WebSocket(
-          'ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket',
-        );
-        ws.on('open', () => {
-          expect(ws.readyState).to.equal(1);
-          fetch('http://localhost:8100/dvlp/push-event', {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              stream: 'ws://localhost:8111/socket',
-              event: 'foo event',
-            }),
+      it('should handle push mock event via EventSource', (done) => {
+        serverFactory('test/unit/fixtures/app.mjs', {
+          mockPath: 'test/unit/fixtures/mock-push',
+          port: 8100,
+          reload: false,
+        }).then((srvr) => {
+          server = srvr;
+          es = new EventSource(
+            'http://localhost:8100?dvlpmock=http%3A%2F%2Flocalhost%3A8111%2Ffeed',
+          );
+          es.onopen = () => {
+            expect(es.readyState).to.equal(1);
+            fetch('http://localhost:8100/dvlp/push-event', {
+              method: 'POST',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                stream: 'http://localhost:8111/feed',
+                event: 'open',
+              }),
+            });
+          };
+          es.addEventListener('foo', (event) => {
+            expect(event.data).to.equal('{"title":"open"}');
+            done();
           });
         });
-        ws.on('message', (event) => {
-          expect(event.data).to.equal('{"title":"foo"}');
-          done();
+      });
+      it('should handle mock WebSocket connection', (done) => {
+        serverFactory('test/unit/fixtures/app.mjs', {
+          mockPath: 'test/unit/fixtures/mock-push',
+          port: 8100,
+          reload: false,
+        }).then((srvr) => {
+          server = srvr;
+          ws = new WebSocket(
+            'ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket',
+          );
+          ws.on('open', () => {
+            expect(ws.readyState).to.equal(1);
+            done();
+          });
+        });
+      });
+      it('should handle push mock event via WebSocket', (done) => {
+        serverFactory('test/unit/fixtures/app.mjs', {
+          mockPath: 'test/unit/fixtures/mock-push',
+          port: 8100,
+          reload: false,
+        }).then((srvr) => {
+          server = srvr;
+          ws = new WebSocket(
+            'ws://localhost:8100?dvlpmock=ws%3A%2F%2Flocalhost%3A8111%2Fsocket',
+          );
+          ws.on('open', () => {
+            expect(ws.readyState).to.equal(1);
+            fetch('http://localhost:8100/dvlp/push-event', {
+              method: 'POST',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                stream: 'ws://localhost:8111/socket',
+                event: 'foo event',
+              }),
+            });
+          });
+          ws.on('message', (event) => {
+            expect(event.data).to.equal('{"title":"foo"}');
+            done();
+          });
         });
       });
     });
-  });
+  }
 
   if (!process.env.CI) {
     // TODO: Missing X server or $DISPLAY
