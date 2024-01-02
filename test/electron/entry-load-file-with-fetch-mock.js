@@ -1,7 +1,4 @@
 import { app, BrowserWindow } from 'electron';
-import nodeFetch from 'node-fetch';
-
-const fetch = globalThis.fetch ?? nodeFetch;
 
 await app.whenReady();
 

@@ -19,6 +19,7 @@ declare interface Config {
   jsMimeTypes: Record<string, Array<string>>;
   latency: number;
   maxAge: string;
+  maxAgeLong: string;
   reloadEndpoint: string;
   serverStartTimeout: number;
   testing: boolean;

@@ -145,8 +145,7 @@ export class Dvlp {
   }
 
   /**
-   * Start app server
-   * Proxies createServer to grab instance and register for events
+   * Start server
    *
    * @returns { Promise<void> }
    */
@@ -182,7 +181,7 @@ export class Dvlp {
         const key = `${connection.remoteAddress}:${connection.remotePort}`;
 
         this.connections.set(key, connection);
-        connection.on('close', () => {
+        connection.once('close', () => {
           this.connections.delete(key);
         });
       });
@@ -375,7 +374,7 @@ export class Dvlp {
     if (!res.writableEnded) {
       if (context.filePath !== undefined) {
         debug(`sending "${context.filePath}"`);
-        handleFile(context.filePath, req, res, true);
+        handleFile(context.filePath, req, res);
         return;
       }
 
@@ -398,7 +397,7 @@ export class Dvlp {
 
           if (context.filePath !== undefined) {
             debug(`sending "${context.filePath}"`);
-            handleFile(context.filePath, req, res, false);
+            handleFile(context.filePath, req, res);
             return;
           }
         }
@@ -445,7 +444,7 @@ export class Dvlp {
    * @returns { Promise<void> }
    */
   destroy() {
-    this.mocks && this.mocks.clear();
+    this.mocks?.clear();
     this.unlistenForFileRead();
     this.watcher.close();
     this.hooks.destroy();

@@ -33,7 +33,7 @@ export function handleFavicon(req, res) {
     } else {
       res.writeHead(200, {
         'Content-Length': favIcon.length,
-        'Cache-Control': `public, max-age=${config.maxAge}`,
+        'Cache-Control': `public, max-age=${60 * 10}`,
         'Content-Type': 'image/x-icon;charset=UTF-8',
       });
       res.end(favIcon);
@@ -172,16 +172,14 @@ export function handlePushEvent(req, res, mocks) {
  * @param { string } filePath
  * @param { Req } req
  * @param { Res } res
- * @param { boolean } cacheControl
  */
-export function handleFile(filePath, req, res, cacheControl) {
+export function handleFile(filePath, req, res) {
   /** @type { import('send').SendOptions } */
   const options = {
-    cacheControl,
+    cacheControl: false,
     dotfiles: 'allow',
     etag: false,
     lastModified: false,
-    maxAge: cacheControl ? config.maxAge : 0,
   };
 
   send(req, encodeURI(filePath), options).pipe(res);

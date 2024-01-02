@@ -5,7 +5,7 @@
  */
 
 import { exists, getProjectPath, importModule } from './utils/file.js';
-import logger, { error, noisyInfo } from './utils/log.js';
+import logger, { fatal, noisyInfo } from './utils/log.js';
 import { bootstrap } from './utils/bootstrap.js';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
@@ -102,7 +102,8 @@ export async function server(
   try {
     await server.start();
   } catch (err) {
-    error(err);
+    fatal(err);
+    process.exit(1);
   }
 
   const parentDir = path.resolve(process.cwd(), '..');
@@ -137,10 +138,13 @@ export async function server(
 
   const applicationWorker = server.applicationHost
     ? {
-        origin: server.applicationHost.appOrigin,
+        get activeThread() {
+          return server.applicationHost?.activeThread;
+        },
         get isListening() {
           return server.applicationHost?.activeThread?.isListening ?? false;
         },
+        origin: server.applicationHost.appOrigin,
         /** @param { string | Array<string> } filePaths */
         addWatchFiles(filePaths) {
           server.applicationHost?.addWatchFiles(filePaths);
@@ -153,10 +157,13 @@ export async function server(
     : undefined;
   const electronProcess = server.electronHost
     ? {
-        origin: server.electronHost.appOrigin,
+        get activeProcess() {
+          return server.electronHost?.activeProcess;
+        },
         get isListening() {
           return server.electronHost?.isListening ?? false;
         },
+        origin: server.electronHost.appOrigin,
         /** @param { string | Array<string> } filePaths */
         addWatchFiles(filePaths) {
           server.electronHost?.addWatchFiles(filePaths);

@@ -13,6 +13,7 @@ const cwd = process
   .replace(/\\/g, '/');
 const bundleDir = config.bundleDirName.replace(/\\/g, '/');
 const hooks = new Hooker();
+const html = String.raw;
 
 function getBody(res) {
   const output = (res.output || res.outputData)
@@ -98,6 +99,66 @@ describe('patch', () => {
           '<head>\n<script>test inject</script></head>',
         );
       });
+      it('should inject updated CSP meta tag into buffered html response', () => {
+        const req = getRequest('/index.html', { accept: 'text/html' });
+        const res = getResponse(req);
+        patchResponse(req, res, {
+          footerScript: {
+            hash: 'xxxxxx',
+            string: 'test inject',
+            url: 'http://localhost:3529/dvlpreload',
+          },
+          headerScript: {
+            hash: 'yyyyyy',
+            string: 'test inject',
+          },
+        });
+        res.end(
+          html`<head>
+            <meta
+              http-equiv="Content-Security-Policy"
+              content="default-src 'self' 'sha256-12345';
+                style-src 'self' 'unsafe-inline';
+                connect-src 'self' https://127.0.0.1:5635/ https://some-link.com/;
+                img-src 'self' data:;
+                font-src 'self' data:"
+            />
+          </head>`,
+        );
+        expect(getBody(res)).to.include(
+          "default-src 'self' 'sha256-12345' 'sha256-xxxxxx' 'sha256-yyyyyy'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://127.0.0.1:5635/ https://some-link.com/ http://localhost:3529/dvlpreload; img-src 'self' data:; font-src 'self' data:; ",
+        );
+      });
+      it('should not inject updated CSP meta tag into buffered html response if "unsafe-inline"', () => {
+        const req = getRequest('/index.html', { accept: 'text/html' });
+        const res = getResponse(req);
+        patchResponse(req, res, {
+          footerScript: {
+            hash: 'xxxxxx',
+            string: 'test inject',
+            url: 'http://localhost:3529/dvlpreload',
+          },
+          headerScript: {
+            hash: 'yyyyyy',
+            string: 'test inject',
+          },
+        });
+        res.end(
+          html`<head>
+            <meta
+              http-equiv="Content-Security-Policy"
+              content="default-src 'self' 'unsafe-inline';
+                style-src 'self' 'unsafe-inline';
+                connect-src 'self' https://127.0.0.1:5635/ https://some-link.com/;
+                img-src 'self' data:;
+                font-src 'self' data:"
+            />
+          </head>`,
+        );
+        expect(getBody(res)).to.include(
+          "default-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://127.0.0.1:5635/ https://some-link.com/ http://localhost:3529/dvlpreload; img-src 'self' data:; font-src 'self' data:; ",
+        );
+      });
     });
 
     describe('headers', () => {
@@ -132,7 +193,7 @@ describe('patch', () => {
         });
         res.setHeader('Content-Security-Policy', "default-src 'self'");
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self'; connect-src http://localhost:3529/dvlpreload; ",
+          "default-src 'self' http://localhost:3529/dvlpreload; ",
         );
       });
       it('should inject csp header with writeHead when connect-src', () => {
@@ -162,7 +223,7 @@ describe('patch', () => {
         });
         res.writeHead(200, { 'Content-Security-Policy': "default-src 'self'" });
         expect(res._header).to.contain(
-          "default-src 'self'; connect-src http://localhost:3529/dvlpreload; ",
+          "default-src 'self' http://localhost:3529/dvlpreload; ",
         );
       });
       it('should not inject script hash in csp header when no nonce/sha and unsafe-inline', () => {
@@ -179,7 +240,7 @@ describe('patch', () => {
           "default-src 'self'; script-src 'self' 'unsafe-inline'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src http://localhost:3529/dvlpreload; ",
+          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'unsafe-inline'; ",
         );
       });
       it('should inject script hash in csp header when no nonce/sha and missing unsafe-inline', () => {
@@ -201,7 +262,7 @@ describe('patch', () => {
           "default-src 'self'; script-src 'self'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self'; script-src 'self' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
+          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'sha256-xxxxxx' 'sha256-yyyyyy'; ",
         );
       });
       it('should inject script hash in csp header when nonce', () => {
@@ -220,10 +281,10 @@ describe('patch', () => {
         });
         res.setHeader(
           'Content-Security-Policy',
-          "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo'",
+          "default-src 'self'; script-src 'self' 'nonce-foo'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-foo' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
+          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'nonce-foo' 'sha256-xxxxxx' 'sha256-yyyyyy'; ",
         );
       });
       it('should inject script hash in csp header when sha', () => {
@@ -242,38 +303,33 @@ describe('patch', () => {
         });
         res.setHeader(
           'Content-Security-Policy',
-          "default-src 'self'; script-src 'self' 'unsafe-inline' 'sha512-yyyyyy'",
+          "default-src 'self'; script-src 'self' 'sha512-yyyyyy'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self'; script-src 'self' 'unsafe-inline' 'sha512-yyyyyy' 'sha256-xxxxxx' 'sha256-yyyyyy'; connect-src http://localhost:3529/dvlpreload; ",
+          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'sha512-yyyyyy' 'sha256-xxxxxx' 'sha256-yyyyyy'; ",
         );
       });
-      it('should disable cache-control headers for local files', () => {
+      it('should set cache-control headers for project files', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req, res, {});
         res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.include(
-          'no-cache, no-store, dvlp-disabled',
-        );
+        expect(res.getHeader('Cache-Control')).to.include('no-store');
       });
-      it('should disable cache-control headers for local files when cache-control not set', () => {
+      it('should set cache-control headers for project files when cache-control not set', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req, res, {});
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.include(
-          'no-cache, no-store, dvlp-disabled',
-        );
+        expect(res.getHeader('Cache-Control')).to.include('no-store');
       });
-      it('should not disable cache-control headers for node_modules files', () => {
-        const req = getRequest('/node_modules/foo');
+      it('should set cache-control headers for node_modules files', () => {
+        const req = getRequest('/node_modules/foo/foo.js');
         const res = getResponse(req);
         patchResponse(req, res, {});
-        res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.include('max-age=600');
+        expect(res.getHeader('Cache-Control')).to.include('max-age=3600');
       });
       it('should enable cross origin headers', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });

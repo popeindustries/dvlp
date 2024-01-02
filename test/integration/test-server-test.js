@@ -1,8 +1,6 @@
 import { expect } from 'chai';
-import nodeFetch from 'node-fetch';
 import { testServer } from 'dvlp/test';
 
-const fetch = globalThis.fetch ?? nodeFetch;
 let server;
 
 describe('testServer', () => {

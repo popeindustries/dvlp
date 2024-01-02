@@ -8,6 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const server = fastify({
   http2: true,
   https: {
+    allowHTTP1: true,
     key: fs.readFileSync(
       path.join(__dirname, 'certificates/dvlp.key'),
       'utf-8',
@@ -32,6 +33,6 @@ server.get('/', async (req, reply) => {
     </html>`);
 });
 
-server.listen({ port: 443 }, (err, address) => {
+server.listen({ port: 3333 }, (err, address) => {
   err && console.error(err);
 });

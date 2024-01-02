@@ -248,6 +248,7 @@ describe('mock', () => {
       expect(res.headers['x-custom']).to.equal('custom header');
       expect(res.headers['Date']).to.equal('Fri, 13 Oct 2020 23:59:59 GMT');
       expect(res.headers['Access-Control-Allow-Origin']).to.equal('*');
+      expect(res.headers['Cache-Control']).to.equal('public, max-age=60');
     });
     it('should respond to request for mock json with search params', () => {
       const href = 'http://www.someapi.com/v1/search?foo=foo&bar=bar';
@@ -277,12 +278,14 @@ describe('mock', () => {
       expect(res.statusCode).to.equal(200);
       expect(res.headers['Content-Type']).to.equal('application/json');
     });
-    it('should respond to request for mock image', (done) => {
+    it('should respond to request for mock file', (done) => {
       const href = '/1234.jpg';
       const res = getResponse();
       mocks.matchResponse(href, getRequest(href), res);
       setTimeout(() => {
         expect(res.headers['Content-Type']).to.equal('image/jpeg');
+        expect(res.headers['Cache-Control']).to.equal('public, max-age=60');
+        expect(res.headers['x-foo']).to.equal('foo');
         done();
       }, 50);
     });

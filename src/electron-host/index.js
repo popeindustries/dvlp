@@ -13,6 +13,8 @@ import { getProjectPath } from '../utils/file.js';
 import { watch } from '../utils/watch.js';
 import { writeFileSync } from 'node:fs';
 
+const RE_ELECTRON_ERROR = /Electron\[\d|ERROR:node|ERROR:CONSOLE\(0\)/;
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const debug = Debug('dvlp:electronhost');
 const require = createRequire(import.meta.url);
@@ -166,7 +168,8 @@ export class ElectronHost {
           ...this.argv,
         ],
         {
-          stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+          // 'pipe' stderr to allow filtering of Electron errors
+          stdio: ['inherit', 'inherit', 'pipe', 'ipc'],
         },
       );
 
@@ -175,9 +178,13 @@ export class ElectronHost {
         /** @param { ElectronProcessMessage } msg */
         async (msg) => {
           if (msg.type === 'listening') {
-            this.appOrigin = msg.origin;
-            this.isListening = true;
-            resolve(child);
+            // Prevent multiple "listening" messages from multiple servers overwriting each other.
+            // We assume that the first "listening" message is from the application server.
+            if (!this.isListening) {
+              this.appOrigin = msg.origin;
+              this.isListening = true;
+              resolve(child);
+            }
           } else if (msg.type === 'started') {
             resolve(child);
           } else if (msg.type === 'watch') {
@@ -201,7 +208,11 @@ export class ElectronHost {
         process.exit(code ?? 1);
       });
       child.stderr?.on('data', (chunk) => {
-        error(chunk.toString().trimEnd());
+        const msg = chunk.toString().trimEnd();
+
+        if (!RE_ELECTRON_ERROR.test(msg)) {
+          console.error(msg);
+        }
       });
     });
   }

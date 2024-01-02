@@ -2,7 +2,7 @@
  * @typedef { import('worker_threads').MessagePort } MessagePort
  */
 
-import { config, interceptInProcess } from 'dvlp/internal';
+import { config, error, interceptInProcess } from 'dvlp/internal';
 import { MessageChannel } from 'node:worker_threads';
 import module from 'node:module';
 import { workerData } from 'node:worker_threads';
@@ -40,28 +40,37 @@ messagePort.on(
   },
 );
 
+process.on('uncaughtException', error);
+process.on('unhandledRejection', error);
+
 if ('register' in module) {
-  const { port1, port2 } = new MessageChannel();
-
-  port1.unref();
-  port1.on(
-    'message',
-    /** @param { ApplicationLoaderMessage } msg */
-    (msg) => {
-      if (msg.type === 'dependency') {
-        const { filePath } = msg;
-
-        messagePort.postMessage({ type: 'watch', filePath, mode: 'read' });
-      }
-    },
-  );
-
-  // @ts-ignore
-  module.register(config.applicationLoaderURL.href, {
+  /**
+   * @type { { parentURL: string, data?: unknown, transferList?: Array<MessagePort> } }
+   */
+  const options = {
     parentURL: import.meta.url,
-    data: {
-      port: port2,
-    },
-    transferList: [port2],
-  });
+  };
+
+  // Disable in CI to prevent process from hanging due to port transfer(?)
+  if (!process.env.CI) {
+    const { port1, port2 } = new MessageChannel();
+
+    port1.unref();
+    port1.on(
+      'message',
+      /** @param { ApplicationLoaderMessage } msg */
+      (msg) => {
+        if (msg.type === 'dependency') {
+          const { filePath } = msg;
+
+          messagePort.postMessage({ type: 'watch', filePath, mode: 'read' });
+        }
+      },
+    );
+
+    options.data = { port: port2 };
+    options.transferList = [port2];
+  }
+
+  module.register(config.applicationLoaderURL.href, options);
 }

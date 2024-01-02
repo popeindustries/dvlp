@@ -112,7 +112,6 @@ export async function transform(
     res.transformed = true;
     res.writeHead(200, {
       'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'max-age=0',
       'Content-Length': Buffer.byteLength(code),
       'Content-Type':
         mime.getType(getTypeFromPath(filePath) || filePath) || undefined,

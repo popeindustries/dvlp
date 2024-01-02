@@ -71,6 +71,13 @@ function initInterceptCreateServer(reservedPort) {
                   args[0] = 0;
                 }
               }
+              // listen('localhost:port')
+              else if (typeof args[0] === 'string') {
+                const [, port] = args[0].split(':');
+                if (Number(port) === reservedPort) {
+                  args[0] = 0;
+                }
+              }
 
               return Reflect.apply(target, ctx, args);
             },

@@ -4,6 +4,6 @@
   },
   "response": {
     "body": "1234.jpg",
-    "headers": { "Cache-Control": "public, max-age=10", "x-foo": "foo" }
+    "headers": { "x-foo": "foo" }
   }
 }

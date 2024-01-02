@@ -11,7 +11,7 @@ const RE_EXTS = /\.(tsx?|json)$/;
 
 let port;
 
-export function initialize(data) {
+export function initialize(data = {}) {
   port = data.port;
 }
 
@@ -45,7 +45,7 @@ function doResolve(specifier, context, nextResolve) {
 }
 
 export function load(url, context, nextLoad) {
-  port.postMessage({
+  port?.postMessage({
     type: 'dependency',
     filePath: url.startsWith('file://') ? fileURLToPath(url) : url,
   });
