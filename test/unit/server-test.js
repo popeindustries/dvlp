@@ -387,7 +387,7 @@ describe('server', () => {
     });
   });
 
-  if (!process.env.CI || !process.versions.node.startsWith('18')) {
+  if (!process.env.CI) {
     describe('application', () => {
       beforeEach(() => {
         clearContexts();
