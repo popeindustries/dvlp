@@ -4,7 +4,7 @@ import { error } from '../utils/log.js';
 import { extname } from 'node:path';
 import { isTransformableJsFile } from '../utils/is.js';
 import { Metrics } from '../utils/metrics.js';
-import mime from 'mime';
+import mime from '../utils/mime.js';
 import { parseEsbuildTarget } from '../utils/platform.js';
 import { readFileSync } from 'node:fs';
 

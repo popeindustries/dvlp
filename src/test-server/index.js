@@ -10,7 +10,7 @@ import { EventSource } from '../reload/event-source.js';
 import fs from 'node:fs';
 import http from 'node:http';
 import { Metrics } from '../utils/metrics.js';
-import mime from 'mime';
+import mime from '../utils/mime.js';
 import { Mocks } from '../mock/index.js';
 import path from 'node:path';
 import WebSocket from 'faye-websocket';

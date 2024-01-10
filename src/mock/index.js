@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import { getProjectPath } from '../utils/file.js';
 import { interceptClientRequest } from '../utils/intercept-client-request.js';
 import { Metrics } from '../utils/metrics.js';
-import mime from 'mime';
+import mime from '../utils/mime.js';
 import path from 'node:path';
 import send from 'send';
 

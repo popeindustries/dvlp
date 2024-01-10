@@ -1,8 +1,6 @@
 import config from '../config.js';
 import fs from 'node:fs';
-import mime from 'mime';
 import path from 'node:path';
-import send from 'send';
 
 /**
  * Create directory structure:
@@ -25,8 +23,4 @@ export function bootstrap() {
   if (!bundleDirExists) {
     fs.mkdirSync(bundleDirPath, { recursive: true });
   }
-
-  mime.define(config.jsMimeTypes, true);
-  // @ts-ignore
-  send.mime.define(config.jsMimeTypes, true);
 }
