@@ -85,6 +85,17 @@ export async function bootstrapElectron() {
 
         args[0] = url;
 
+        // Internal hidden method to get preload path passed during BrowserWindow/BrowserView construction
+        const [preloadPath] = ctx._getPreloadPaths?.() ?? [];
+
+        if (preloadPath) {
+          electronWorkerData.postMessage({
+            type: 'watch',
+            filePath: preloadPath,
+            mode: 'read',
+          });
+        }
+
         return Reflect.apply(target, ctx, args);
       },
     });
