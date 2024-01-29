@@ -58,8 +58,6 @@ export function patchResponse(
   if (isHtmlRequest(req)) {
     /** @type { Array<string> } */
     const urls = [];
-    /** @type { Array<string> } */
-    const hashes = [];
     const scripts = {
       header: '',
       footer: '',
@@ -69,30 +67,21 @@ export function patchResponse(
       if (footerScript.url) {
         urls.push(footerScript.url);
       }
-      if (footerScript.hash) {
-        hashes.push(footerScript.hash);
-      }
       scripts.footer = footerScript.string;
     }
     if (headerScript) {
       if (headerScript.url) {
         urls.push(headerScript.url);
       }
-      if (headerScript.hash) {
-        hashes.push(headerScript.hash);
-      }
       scripts.header = headerScript.string;
     }
-    proxySetHeader(
-      res,
-      injectCSPHeader.bind(injectCSPHeader, res, urls, hashes),
-    );
+    proxySetHeader(res, injectCSPHeader.bind(injectCSPHeader, res, urls));
     proxyBodyWrite(res, (html) => {
       // TODO: parse css/js imports?
       enableCrossOriginHeader(res);
       setCacheControlHeader(res, req.url);
 
-      html = injectCSPMetaTag(res, html, urls, hashes);
+      html = injectCSPMetaTag(res, html, urls);
 
       const transformed = send?.(filePath, html);
 
@@ -201,13 +190,16 @@ function injectScripts(res, scripts, html) {
 
   if (header && RE_OPEN_HEAD_TAG.test(html)) {
     debug('injecting header script');
-    html = html.replace(RE_OPEN_HEAD_TAG, `<head>\n<script>${header}</script>`);
+    html = html.replace(
+      RE_OPEN_HEAD_TAG,
+      `<head>\n<script nonce="dvlp">${header}</script>`,
+    );
   }
   if (footer && RE_CLOSE_BODY_TAG.test(html)) {
     debug('injecting footer script');
     html = html.replace(
       RE_CLOSE_BODY_TAG,
-      `<script>${footer}</script>\n</body>`,
+      `<script nonce="dvlp">${footer}</script>\n</body>`,
     );
   }
 
@@ -220,12 +212,11 @@ function injectScripts(res, scripts, html) {
  *
  * @param { Res } res
  * @param { Array<string> } urls
- * @param { Array<string> } hashes
  * @param { string } key
  * @param { string } value
  * @returns { string }
  */
-function injectCSPHeader(res, urls, hashes, key, value) {
+function injectCSPHeader(res, urls, key, value) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
   const lcKey = key.toLowerCase();
 
@@ -234,8 +225,7 @@ function injectCSPHeader(res, urls, hashes, key, value) {
     lcKey === 'content-security-policy'
   ) {
     const urlsString = urls.join(' ');
-    const hashesString = hashes.map((hash) => `'sha256-${hash}'`).join(' ');
-    value = parseCSPRules(value, urlsString, hashesString);
+    value = parseCSPRules(value, urlsString);
   }
 
   res.metrics.recordEvent(Metrics.EVENT_NAMES.csp);
@@ -249,10 +239,9 @@ function injectCSPHeader(res, urls, hashes, key, value) {
  * @param { Res } res
  * @param { string } html
  * @param { Array<string> } urls
- * @param { Array<string> } hashes
  * @returns { string }
  */
-function injectCSPMetaTag(res, html, urls, hashes) {
+function injectCSPMetaTag(res, html, urls) {
   const match = RE_INLINE_CSP.exec(html);
 
   if (match !== null) {
@@ -263,8 +252,7 @@ function injectCSPMetaTag(res, html, urls, hashes) {
 
     if (content) {
       const urlsString = urls.join(' ');
-      const hashesString = hashes.map((hash) => `'sha256-${hash}'`).join(' ');
-      const newContent = parseCSPRules(content, urlsString, hashesString);
+      const newContent = parseCSPRules(content, urlsString);
 
       html = html.replace(
         matchingTag,
@@ -647,9 +635,8 @@ function proxyBodyWrite(res, action) {
 /**
  * @param { string } cspString
  * @param { string } urlsString
- * @param { string } hashesString
  */
-function parseCSPRules(cspString, urlsString, hashesString) {
+function parseCSPRules(cspString, urlsString) {
   const rules = cspString
     .split(';')
     .map((ruleString) => ruleString.trim())
@@ -669,14 +656,12 @@ function parseCSPRules(cspString, urlsString, hashesString) {
     }${urlsString}`;
   }
   // Allow dvlp inlined scripts
-  if (hashesString.length > 0) {
-    const scriptSrcProp = rules['script-src'] ? 'script-src' : 'default-src';
+  const scriptSrcProp = rules['script-src'] ? 'script-src' : 'default-src';
 
-    if (!rules[scriptSrcProp]?.includes("'unsafe-inline'")) {
-      rules[scriptSrcProp] = `${
-        rules[scriptSrcProp] ? `${rules[scriptSrcProp]} ` : ''
-      }${hashesString}`;
-    }
+  if (!rules[scriptSrcProp]?.includes("'unsafe-inline'")) {
+    rules[scriptSrcProp] = `${
+      rules[scriptSrcProp] ? `${rules[scriptSrcProp]} ` : ''
+    }'nonce-dvlp'`;
   }
 
   return Object.keys(rules).reduce((value, name) => {

@@ -473,7 +473,7 @@ describe('server', () => {
         });
         expect(res.status).to.eql(200);
         expect(await res.text()).to.contain(
-          '<script>window.process=window.process||{env:{}};window.process.env.NODE_ENV="dvlptest";',
+          '<script nonce="dvlp">window.process=window.process||{env:{}};window.process.env.NODE_ENV="dvlptest";',
         );
       });
       it('should serve a bundled module js file', async () => {

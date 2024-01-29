@@ -3,7 +3,6 @@ import {
   getDvlpGlobalString,
   getPatchedAdoptedStyleSheets,
   getProcessEnvString,
-  hashScript,
 } from '../utils/scripts.js';
 import { error, info, noisyInfo } from '../utils/log.js';
 import { find, getProjectPath, getRepoPath } from '../utils/file.js';
@@ -103,11 +102,9 @@ export class Dvlp {
     /** @type { PatchResponseOptions } */
     this.patchResponseOptions = {
       footerScript: {
-        hash: hashScript(reloadEmbed),
         string: reloadEmbed,
       },
       headerScript: {
-        hash: hashScript(headerScript),
         string: headerScript,
       },
       resolveImport: this.hooks.resolveImport,
@@ -119,7 +116,6 @@ export class Dvlp {
         // @ts-ignore
         headerScript += `\n${this.mocks.client}`;
         this.patchResponseOptions.headerScript = {
-          hash: hashScript(headerScript),
           string: headerScript,
         };
       });

@@ -19,12 +19,10 @@ declare namespace Metrics {
 declare interface PatchResponseOptions {
   directories?: Array<string>;
   footerScript?: {
-    hash?: string;
     string: string;
     url?: string;
   };
   headerScript?: {
-    hash?: string;
     string: string;
     url?: string;
   };

@@ -61,7 +61,7 @@ describe('patch', () => {
         });
         res.end('</body>');
         expect(getBody(res)).to.include(
-          '<script>test inject</script>\n</body>',
+          '<script nonce="dvlp">test inject</script>\n</body>',
         );
       });
       it('should inject header script into buffered html response', () => {
@@ -72,7 +72,7 @@ describe('patch', () => {
         });
         res.end('<head></head>');
         expect(getBody(res)).to.include(
-          '<head>\n<script>test inject</script></head>',
+          '<head>\n<script nonce="dvlp">test inject</script></head>',
         );
       });
       it('should inject footer script into streamed html response', () => {
@@ -84,7 +84,7 @@ describe('patch', () => {
         res.write('</body>');
         res.end();
         expect(getBody(res)).to.include(
-          '<script>test inject</script>\n</body>',
+          '<script nonce="dvlp">test inject</script>\n</body>',
         );
       });
       it('should inject header script into streamed html response', () => {
@@ -96,7 +96,7 @@ describe('patch', () => {
         res.write('<head></head>');
         res.end();
         expect(getBody(res)).to.include(
-          '<head>\n<script>test inject</script></head>',
+          '<head>\n<script nonce="dvlp">test inject</script></head>',
         );
       });
       it('should inject updated CSP meta tag into buffered html response', () => {
@@ -104,12 +104,10 @@ describe('patch', () => {
         const res = getResponse(req);
         patchResponse(req, res, {
           footerScript: {
-            hash: 'xxxxxx',
             string: 'test inject',
             url: 'http://localhost:3529/dvlpreload',
           },
           headerScript: {
-            hash: 'yyyyyy',
             string: 'test inject',
           },
         });
@@ -126,7 +124,7 @@ describe('patch', () => {
           </head>`,
         );
         expect(getBody(res)).to.include(
-          "default-src 'self' 'sha256-12345' 'sha256-xxxxxx' 'sha256-yyyyyy'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://127.0.0.1:5635/ https://some-link.com/ http://localhost:3529/dvlpreload; img-src 'self' data:; font-src 'self' data:; ",
+          "default-src 'self' 'sha256-12345' 'nonce-dvlp'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://127.0.0.1:5635/ https://some-link.com/ http://localhost:3529/dvlpreload; img-src 'self' data:; font-src 'self' data:; ",
         );
       });
       it('should not inject updated CSP meta tag into buffered html response if "unsafe-inline"', () => {
@@ -134,12 +132,10 @@ describe('patch', () => {
         const res = getResponse(req);
         patchResponse(req, res, {
           footerScript: {
-            hash: 'xxxxxx',
             string: 'test inject',
             url: 'http://localhost:3529/dvlpreload',
           },
           headerScript: {
-            hash: 'yyyyyy',
             string: 'test inject',
           },
         });
@@ -179,7 +175,7 @@ describe('patch', () => {
           "default-src 'self'; connect-src 'self'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; ",
+          "default-src 'self' 'nonce-dvlp'; connect-src 'self' http://localhost:3529/dvlpreload; ",
         );
       });
       it('should inject csp header when no connect-src', () => {
@@ -193,7 +189,7 @@ describe('patch', () => {
         });
         res.setHeader('Content-Security-Policy', "default-src 'self'");
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self' http://localhost:3529/dvlpreload; ",
+          "default-src 'self' http://localhost:3529/dvlpreload 'nonce-dvlp'; ",
         );
       });
       it('should inject csp header with writeHead when connect-src', () => {
@@ -209,7 +205,7 @@ describe('patch', () => {
           'Content-Security-Policy': "default-src 'self'; connect-src 'self'",
         });
         expect(res._header).to.contain(
-          "default-src 'self'; connect-src 'self' http://localhost:3529/dvlpreload; ",
+          "default-src 'self' 'nonce-dvlp'; connect-src 'self' http://localhost:3529/dvlpreload; ",
         );
       });
       it('should inject csp header with writeHead when no connect-src', () => {
@@ -223,10 +219,10 @@ describe('patch', () => {
         });
         res.writeHead(200, { 'Content-Security-Policy': "default-src 'self'" });
         expect(res._header).to.contain(
-          "default-src 'self' http://localhost:3529/dvlpreload; ",
+          "default-src 'self' http://localhost:3529/dvlpreload 'nonce-dvlp'; ",
         );
       });
-      it('should not inject script hash in csp header when no nonce/sha and unsafe-inline', () => {
+      it('should not inject script nonce in csp header when no nonce/sha and unsafe-inline', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req, res, {
@@ -248,12 +244,10 @@ describe('patch', () => {
         const res = getResponse(req);
         patchResponse(req, res, {
           footerScript: {
-            hash: 'xxxxxx',
             string: 'test inject',
             url: 'http://localhost:3529/dvlpreload',
           },
           headerScript: {
-            hash: 'yyyyyy',
             string: 'test inject',
           },
         });
@@ -262,7 +256,7 @@ describe('patch', () => {
           "default-src 'self'; script-src 'self'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'sha256-xxxxxx' 'sha256-yyyyyy'; ",
+          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'nonce-dvlp'; ",
         );
       });
       it('should inject script hash in csp header when nonce', () => {
@@ -270,12 +264,10 @@ describe('patch', () => {
         const res = getResponse(req);
         patchResponse(req, res, {
           footerScript: {
-            hash: 'xxxxxx',
             string: 'test inject',
             url: 'http://localhost:3529/dvlpreload',
           },
           headerScript: {
-            hash: 'yyyyyy',
             string: 'test inject',
           },
         });
@@ -284,7 +276,7 @@ describe('patch', () => {
           "default-src 'self'; script-src 'self' 'nonce-foo'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'nonce-foo' 'sha256-xxxxxx' 'sha256-yyyyyy'; ",
+          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'nonce-foo' 'nonce-dvlp'; ",
         );
       });
       it('should inject script hash in csp header when sha', () => {
@@ -292,12 +284,10 @@ describe('patch', () => {
         const res = getResponse(req);
         patchResponse(req, res, {
           footerScript: {
-            hash: 'xxxxxx',
             string: 'test inject',
             url: 'http://localhost:3529/dvlpreload',
           },
           headerScript: {
-            hash: 'yyyyyy',
             string: 'test inject',
           },
         });
@@ -306,7 +296,7 @@ describe('patch', () => {
           "default-src 'self'; script-src 'self' 'sha512-yyyyyy'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'sha512-yyyyyy' 'sha256-xxxxxx' 'sha256-yyyyyy'; ",
+          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'sha512-yyyyyy' 'nonce-dvlp'; ",
         );
       });
       it('should set cache-control headers for project files', () => {
@@ -832,7 +822,7 @@ describe('patch', () => {
       res.setHeader('Content-Encoding', 'gzip');
       res.end(gzipSync(Buffer.from('<head></head>')));
       expect(getBody(res)).to.include(
-        '<head>\n<script>test inject</script></head>',
+        '<head>\n<script nonce="dvlp">test inject</script></head>',
       );
     });
     it('should uncompress gzipped css response', () => {
@@ -852,7 +842,7 @@ describe('patch', () => {
       res.setHeader('Content-Encoding', 'br');
       res.end(brotliCompressSync(Buffer.from('<head></head>')));
       expect(getBody(res)).to.include(
-        '<head>\n<script>test inject</script></head>',
+        '<head>\n<script nonce="dvlp">test inject</script></head>',
       );
     });
   });
