@@ -11,12 +11,12 @@ import { readFileSync } from 'node:fs';
 const debug = Debug('dvlp:transform');
 const tsconfigPath = findClosest('tsconfig.json');
 const tsconfig = tsconfigPath
-  ? JSON.parse(readFileSync(tsconfigPath, 'utf8'))
-  : {
+  ? readFileSync(tsconfigPath, 'utf8')
+  : `{
       compilerOptions: {
         useDefineForClassFields: true,
       },
-    };
+    }`;
 
 /**
  * Transform file content for request for 'filePath'
