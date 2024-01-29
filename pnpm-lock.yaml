@@ -65,8 +65,8 @@ devDependencies:
     specifier: ^4.3.4
     version: 4.3.4(supports-color@8.1.1)
   electron:
-    specifier: 28.1.2
-    version: 28.1.2
+    specifier: 28.2.0
+    version: 28.2.0
   es-module-lexer:
     specifier: ~1.4.1
     version: 1.4.1
@@ -1211,8 +1211,8 @@ packages:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
     dev: true
 
-  /electron@28.1.2:
-    resolution: {integrity: sha512-rbRuIj5pRn6K16Hx3XYlI2C4jp6s0ZJ4QptQ+wGw0blO5563cXCtZxK/wifVGfuwVfa3n/UqMuUwn3IshjZ8dw==}
+  /electron@28.2.0:
+    resolution: {integrity: sha512-22SylXQQ9IHtwLw4D+Z4Si7OUpeDtpHfJVTjy3yv53iLg5zJKKPOCWT4ZwgYGHQZ0eldyBrYBHF/P9FPd2CcVQ==}
     engines: {node: '>= 12.20.55'}
     hasBin: true
     requiresBuild: true
