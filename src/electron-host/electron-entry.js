@@ -18,11 +18,14 @@ import workerThreads from 'node:worker_threads';
 const RE_DATA_URL = /^data:text\/html;([^,]+,)?/;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const cwd = process.cwd();
 const workerPath = join(__dirname, './electron-worker.js');
+const cwd = pathToFileURL(process.cwd()).href;
 const reFileProtocol = new RegExp(
-  `(?<=(href|src)=["|'])(file://${escapeRegExp(cwd)})`,
+  `(?<=(href|src)=["|'])(${escapeRegExp(cwd)})`,
+  'g',
 );
+
+console.log(cwd, reFileProtocol);
 
 export async function bootstrapElectron() {
   const electronWorkerData = getElectronWorkerData();
