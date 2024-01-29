@@ -10,15 +10,19 @@ import {
   interceptInProcess,
 } from 'dvlp/internal';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { escapeRegExp } from '../utils/regexp.js';
 import { syncBuiltinESMExports } from 'node:module';
 import { toBase64Url } from '../utils/base64Url.js';
 import workerThreads from 'node:worker_threads';
 
 const RE_DATA_URL = /^data:text\/html;([^,]+,)?/;
-const RE_FILE_PROTOCOL = /(?<=(href|src)=["|'])(file:\/\/)/g;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const cwd = process.cwd();
 const workerPath = join(__dirname, './electron-worker.js');
+const reFileProtocol = new RegExp(
+  `(?<=(href|src)=["|'])(file://${escapeRegExp(cwd)})`,
+);
 
 export async function bootstrapElectron() {
   const electronWorkerData = getElectronWorkerData();
@@ -71,7 +75,7 @@ export async function bootstrapElectron() {
               : decodeURIComponent(encodedMarkup);
           const markup = toBase64Url(
             // Remove protocol from any element file:// URLs
-            decodedMarkup.replaceAll(RE_FILE_PROTOCOL, ''),
+            decodedMarkup.replaceAll(reFileProtocol, ''),
           );
           const argOptions = args[1];
 
