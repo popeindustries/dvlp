@@ -25,8 +25,6 @@ const reFileProtocol = new RegExp(
   'g',
 );
 
-console.log(cwd, reFileProtocol);
-
 export async function bootstrapElectron() {
   const electronWorkerData = getElectronWorkerData();
   const { BrowserWindow } = await import('electron');

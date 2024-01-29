@@ -13,9 +13,6 @@ import { getProjectPath } from '../utils/file.js';
 import { watch } from '../utils/watch.js';
 import { writeFileSync } from 'node:fs';
 
-const RE_ELECTRON_ERROR =
-  /Electron\[\d|ERROR:node|ERROR:CONSOLE\(0\)|[/[:.\d]+:ERROR/;
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const debug = Debug('dvlp:electronhost');
 const require = createRequire(import.meta.url);
@@ -169,8 +166,7 @@ export class ElectronHost {
           ...this.argv,
         ],
         {
-          // 'pipe' stderr to allow filtering of Electron errors
-          stdio: ['inherit', 'inherit', 'pipe', 'ipc'],
+          stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
         },
       );
 
@@ -207,13 +203,6 @@ export class ElectronHost {
         debug('process closed');
         noisyInfo(`    exiting due to Electron application close`);
         process.exit(code ?? 1);
-      });
-      child.stderr?.on('data', (chunk) => {
-        const msg = chunk.toString().trimEnd();
-
-        if (!RE_ELECTRON_ERROR.test(msg)) {
-          console.error(msg);
-        }
       });
     });
   }
