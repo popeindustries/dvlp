@@ -1,5 +1,6 @@
 import { isJsFilePath, isNodeModuleFilePath } from './is.js';
 import esbuild from 'esbuild';
+import { fileURLToPath } from 'node:url';
 import module from 'node:module';
 
 /**
@@ -9,6 +10,10 @@ import module from 'node:module';
  * @param { 'browser' | 'node' } platform
  */
 export async function getDependencies(filePath, platform) {
+  if (filePath.startsWith('file://')) {
+    filePath = fileURLToPath(filePath);
+  }
+
   /** @type { Set<string> } */
   const dependencies = new Set([filePath]);
 

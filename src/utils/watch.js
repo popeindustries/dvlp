@@ -1,5 +1,6 @@
 import config from '../config.js';
 import Debug from 'debug';
+import { fileURLToPath } from 'node:url';
 import { FSWatcher } from 'chokidar';
 import { getProjectPath } from './file.js';
 import { isNodeModuleFilePath } from './is.js';
@@ -44,7 +45,7 @@ export function watch(fn) {
 
   return {
     has(filePath) {
-      return files.has(path.resolve(filePath));
+      return files.has(resolveFilePath(filePath));
     },
     add(filePath) {
       if (filePath instanceof Set) {
@@ -56,7 +57,7 @@ export function watch(fn) {
         return;
       }
 
-      filePath = path.resolve(filePath);
+      filePath = resolveFilePath(filePath);
 
       if (
         !files.has(filePath) &&
@@ -72,7 +73,7 @@ export function watch(fn) {
     },
     remove(filePath) {
       debug(`unwatching file "${getProjectPath(filePath)}"`);
-      filePath = path.resolve(filePath);
+      filePath = resolveFilePath(filePath);
       files.delete(filePath);
       watcher.unwatch(filePath);
     },
@@ -81,4 +82,13 @@ export function watch(fn) {
       watcher.close();
     },
   };
+}
+
+/**
+ * @param { string } filePath
+ */
+function resolveFilePath(filePath) {
+  return path.resolve(
+    filePath.startsWith('file://') ? fileURLToPath(filePath) : filePath,
+  );
 }
