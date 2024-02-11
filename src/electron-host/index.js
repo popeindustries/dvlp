@@ -155,6 +155,7 @@ export class ElectronHost {
         this.pathToElectron,
         [
           fileURLToPath(config.electronEntryURL.href),
+          '--disable-http-cache',
           '--workerData',
           Buffer.from(
             JSON.stringify({
