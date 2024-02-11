@@ -86,11 +86,8 @@ export class ApplicationHost {
     const times = [performance.now(), 0];
 
     debug(`starting thread at ${this.main}`);
-
     this.appOrigin = await this.activeThread.start(this.main);
-
     times[1] = performance.now();
-
     noisyInfo(`${format(msDiff(times))} application server started`);
   }
 

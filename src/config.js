@@ -18,7 +18,7 @@ const bundleDirPath = path.resolve(bundleDirName);
 const bundleDirMetaPath = path.join(bundleDirPath, '__meta__.json');
 const defaultPort = process.env.PORT ? Number(process.env.PORT) : 8080;
 const electronEntryURL = pathToFileURL(
-  path.join(versionDirPath, 'electron-entry.cjs'),
+  path.join(versionDirPath, 'electron-entry.mjs'),
 );
 
 /**
