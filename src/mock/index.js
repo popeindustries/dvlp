@@ -422,9 +422,12 @@ export class Mocks {
       if (this.hasMatch(url.href)) {
         url.searchParams.append('dvlpmock', encodeURIComponent(url.href));
         // Reroute to active server
+        url.protocol = 'http:';
         url.host = `localhost:${config.activePort}`;
+        return true;
       }
-      return true;
+
+      return false;
     });
   }
 

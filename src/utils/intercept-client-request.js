@@ -82,27 +82,26 @@ function restoreClientRequest(fn) {
 function fetchApplyTrap() {
   return function apply(target, ctx, args) {
     if (clientRequestListeners.size > 0) {
-      let [urlOrRequestInfo, requestInit] = args;
+      let [resource, options] = args;
       /** @type { URL } */
       let url;
+      /** @type { RequestInit | undefined } */
+      let requestInit;
 
-      if (urlOrRequestInfo instanceof Request) {
-        url = new URL(urlOrRequestInfo.url);
+      if (resource instanceof Request) {
+        url = new URL(resource.url);
+        requestInit = resource;
       } else {
-        url = new URL(urlOrRequestInfo);
+        url = new URL(resource);
+        requestInit = options;
       }
 
-      // TODO: pass method/headers
-      if (notifyListeners(clientRequestListeners, url) === false) {
-        return Promise.reject(new Error('request blocked'));
-      }
+      // Allow listeners to mutate url
+      const modified = notifyListeners(clientRequestListeners, url);
 
-      if (isLocalhost(url.hostname)) {
-        // Force to http
-        url.protocol = 'http:';
+      if (modified) {
+        args = [url, requestInit];
       }
-
-      args = [url, requestInit];
     }
 
     // @ts-ignore
@@ -120,10 +119,10 @@ function clientRequestApplyTrap(protocol) {
   return function apply(target, ctx, args) {
     if (clientRequestListeners.size > 0) {
       let [urlOrOptions, optionsOrCallback, callback] = args;
-      /** @type { import('http').RequestOptions } */
-      let options;
       /** @type { URL } */
       let url;
+      /** @type { import('http').RequestOptions } */
+      let options;
 
       if (typeof urlOrOptions === 'string' || urlOrOptions instanceof URL) {
         url = new URL(urlOrOptions);
@@ -136,37 +135,32 @@ function clientRequestApplyTrap(protocol) {
         options = urlOrOptions;
       }
 
-      // TODO: pass method/headers
-      if (notifyListeners(clientRequestListeners, url) === false) {
-        return;
-      }
+      // Allow listeners to mutate url
+      const modified = notifyListeners(clientRequestListeners, url);
 
-      if (isLocalhost(url.hostname)) {
-        // Force to http
-        url.protocol = 'http:';
+      if (modified) {
         target =
           target === originalHttpsGet || target === originalHttpGet
             ? originalHttpGet
             : originalHttpRequest;
-      }
-
-      options.protocol = url.protocol;
-      options.host = url.host;
-      options.hostname = url.hostname;
-      options.port = url.port;
-      options.path = `${url.href.replace(url.origin, '')}`;
-      // @ts-ignore
-      options.href = url.href;
-      // Force http agent when localhost (due to mocking most likely)
-      if (
-        options.agent &&
-        options.agent instanceof http.Agent &&
+        options.protocol = url.protocol;
+        options.host = url.host;
+        options.hostname = url.hostname;
+        options.port = url.port;
+        options.path = `${url.href.replace(url.origin, '')}`;
         // @ts-ignore
-        options.agent.protocol === 'https:' &&
-        isLocalhost(url.hostname)
-      ) {
-        // @ts-ignore
-        options.agent = new http.Agent(options.agent.options || {});
+        options.href = url.href;
+        // Force http agent when localhost (due to mocking most likely)
+        if (
+          options.agent &&
+          options.agent instanceof http.Agent &&
+          // @ts-ignore
+          options.agent.protocol === 'https:' &&
+          isLocalhost(url.hostname)
+        ) {
+          // @ts-ignore
+          options.agent = new http.Agent(options.agent.options || {});
+        }
       }
 
       args = [url, options, callback];
@@ -202,15 +196,19 @@ function getHrefFromRequestOptions(options, protocol) {
 }
 
 /**
- * Notify 'listeners' with 'args'
+ * Notify 'listeners' with 'url'
  *
  * @param { Set<InterceptClientRequestCallback > } listeners
  * @param { URL } url
  */
 function notifyListeners(listeners, url) {
+  let modified = false;
+
   for (const listener of listeners) {
-    if (listener(url) === false) {
-      return false;
+    if (listener(url) === true) {
+      modified = true;
     }
   }
+
+  return modified;
 }

@@ -44,15 +44,17 @@ export function interceptInProcess(workerData) {
         }
 
         if (mock.pathRegex.exec(url.pathname) != null) {
-          const href = url.href;
+          const { href } = url;
+          // Reroute back to host server
+          url.protocol = 'http:';
           url.host = hostUrl.host;
           url.search = `?dvlpmock=${encodeURIComponent(href)}`;
-          break;
+          return true;
         }
       }
     }
 
-    return true;
+    return false;
   });
 
   // Notify to watch project files

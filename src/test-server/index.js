@@ -94,8 +94,7 @@ export class TestServer {
           debug(`not ok: ${req.url} offline`);
           req.socket.destroy();
           return;
-          // @ts-ignore
-        } else if (req.aborted) {
+        } else if (req.destroyed) {
           debug(`not ok: ${req.url} aborted`);
           return;
         } else if (mock) {
@@ -106,11 +105,12 @@ export class TestServer {
         }
 
         const trimmedPath = url.pathname.slice(1);
-        let type = mime.getType(trimmedPath);
+        const type = mime.getType(trimmedPath);
+        /** @type { Record<string, string> } */
+        const headers = {};
         // TODO: handle encoded query strings in path name?
         let filePath = path.resolve(path.join(this.webroot, trimmedPath));
         let body = '';
-        let headers = {};
         let size = 0;
         let stat;
         let msg = '';
@@ -122,6 +122,9 @@ export class TestServer {
 
         try {
           stat = fs.statSync(filePath);
+          if (stat.isDirectory()) {
+            throw new Error('path is directory');
+          }
           size = stat.size;
           msg = `ok: ${req.url} responding with file`;
         } catch (err) {
@@ -129,7 +132,7 @@ export class TestServer {
             res.writeHead(404);
             return res.end();
           }
-          body = '"hello"';
+          body = `"hello from ${url.href}!"`;
           size = Buffer.byteLength(body);
           msg = `ok: ${req.url} responding with dummy file`;
         }

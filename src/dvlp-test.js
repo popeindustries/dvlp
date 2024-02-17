@@ -7,7 +7,7 @@ import { TestServer } from './test-server/index.js';
 const instances = new Set();
 let reroute = false;
 let networkDisabled = false;
-/** @type { () => void } */
+/** @type { () => void | undefined } */
 let uninterceptClientRequest;
 
 /**
@@ -21,7 +21,7 @@ export async function testServer(options) {
 
   const server = new TestServer(options || {});
 
-  // @ts-ignore: private
+  // @ts-expect-error: private
   await server._start();
 
   // Force testing mode to suppress logging
@@ -60,7 +60,7 @@ testServer.disableNetwork = function disableNetwork(
  * @returns { void }
  */
 testServer.enableNetwork = function enableNetwork() {
-  enableRequestIntercept();
+  uninterceptClientRequest?.();
   networkDisabled = false;
   reroute = false;
 };
@@ -136,19 +136,21 @@ function enableRequestIntercept() {
       const isMocked = Array.from(instances).some((instance) => {
         return instance.mocks.hasMatch(url);
       });
-      let hostname = url.hostname || url.host;
+      const hostname = url.hostname || url.host;
 
-      // Allow mocked requests to pass-through
+      // Allow mocked requests to pass-through and be intercepted by mock/index.js
       if (!isMocked && !isLocalhost(hostname)) {
         if (reroute) {
           // Reroute back to this server
+          url.protocol = 'http:';
           url.host = url.hostname = `localhost:${config.activePort}`;
+          return true;
         } else if (networkDisabled) {
           throw Error(`network connections disabled. Unable to request ${url}`);
         }
       }
 
-      return true;
+      return false;
     });
   }
 }
