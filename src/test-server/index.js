@@ -115,6 +115,14 @@ export class TestServer {
         let stat;
         let msg = '';
 
+        // Copy custom headers to response
+        for (const [key, value] of Object.entries(req.headers)) {
+          if (key.startsWith('x-')) {
+            // @ts-ignore
+            headers[key] = value;
+          }
+        }
+
         // Ignore webroot if no file
         if (!fs.existsSync(filePath)) {
           filePath = path.resolve(trimmedPath);
