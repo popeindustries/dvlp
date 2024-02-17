@@ -6,8 +6,8 @@
     "esModuleInterop": true,
     "isolatedModules": true,
     "lib": ["esnext", "DOM"],
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "noEmit": true,
     "strict": true,
     "target": "esnext"
