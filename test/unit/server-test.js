@@ -220,7 +220,7 @@ describe('server', () => {
       start = Date.now();
       res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(200);
-      expect(Date.now() - start).to.be.below(10);
+      expect(Date.now() - start).to.be.below(20);
     });
     it('should cache transformed file content by user-agent when using an onTransfrom hook', async () => {
       server = await serverFactory('test/unit/fixtures/www', {

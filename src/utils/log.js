@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import config from '../config.js';
 
 export const WARN_BARE_IMPORT = `${chalk.yellow('⚠️')} re-writing bare import`;
 export const WARN_MISSING_EXTENSION = `${chalk.yellow(
@@ -15,60 +14,56 @@ export const WARN_CERTIFICATE_EXPIRY = `${chalk.yellow(
 const SEG_LENGTH = 80;
 
 const seenWarnings = new Set();
-let mute = false;
-let silent = false;
+let level = 1;
 
 export default {
-  /**
-   * Set mute state
-   *
-   * @param { boolean } value
-   */
-  set mute(value) {
-    mute = value;
-    if (value) {
-      silent = true;
-    }
-  },
   /**
    * Set silent state
    *
    * @param { boolean } value
    */
   set silent(value) {
-    silent = value;
+    level = 0;
+  },
+  /**
+   * Set silent state
+   *
+   * @param { boolean } value
+   */
+  set verbose(value) {
+    level = 2;
   },
 };
 
 /**
- * Log if not testing/silent
+ * Log if verbose
  *
  * @param { string } msg
  */
 export function info(msg) {
-  if (!config.testing && !silent) {
+  if (level > 1) {
     console.log(truncate(' ' + msg.replace(/\\/g, '/')));
   }
 }
 
 /**
- * Log if not testing, even if silent
+ * Log if not silent
  *
  * @param { string } msg
  */
 export function noisyInfo(msg) {
-  if (!config.testing && !mute) {
+  if (level > 0) {
     console.log(truncate(' ' + msg.replace(/\\/g, '/')));
   }
 }
 
 /**
- * Warn if not testing/silent
+ * Warn if verbose
  *
  * @param { ...unknown } args
  */
 export function warn(...args) {
-  if (!config.testing && !silent) {
+  if (level > 1) {
     const warning = args.join(' ');
 
     // Only warn one time
@@ -82,16 +77,16 @@ export function warn(...args) {
 }
 
 /**
- * Warn if not testing, even if silent
+ * Warn if not silent
  *
  * @param { ...unknown } args
  */
 export function noisyWarn(...args) {
-  if (!config.testing && !mute) {
-    const initialValue = silent;
-    silent = false;
+  if (level > 0) {
+    const initialLevel = level;
+    level = 2;
     warn(...args);
-    silent = initialValue;
+    level = initialLevel;
   }
 }
 
@@ -101,7 +96,7 @@ export function noisyWarn(...args) {
  * @param { ...unknown } args
  */
 export function error(...args) {
-  if (!config.testing) {
+  if (level > 0) {
     console.error('\n', chalk.red.inverse(' error '), ...args, '\n');
   }
 }
@@ -112,7 +107,7 @@ export function error(...args) {
  * @param { ...unknown } args
  */
 export function fatal(...args) {
-  if (!config.testing) {
+  if (level > 0) {
     console.error('\n', chalk.red.inverse(' fatal error '), ...args, '\n');
   }
 }

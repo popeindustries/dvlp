@@ -36,10 +36,10 @@ export async function server(
     electron = false,
     hooksPath,
     mockPath,
-    mute,
     port = config.defaultPort,
     reload = true,
-    silent,
+    silent = false,
+    verbose = false,
   } = {},
 ) {
   bootstrap();
@@ -53,8 +53,8 @@ export async function server(
   if (silent) {
     logger.silent = true;
   }
-  if (mute) {
-    logger.mute = true;
+  if (verbose) {
+    logger.verbose = true;
   }
 
   config.directories = Array.from(new Set(entry.directories));

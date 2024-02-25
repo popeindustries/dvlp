@@ -1,6 +1,7 @@
 import config from './config.js';
 import { interceptClientRequest } from './utils/intercept-client-request.js';
 import { isLocalhost } from './utils/is.js';
+import log from './utils/log.js';
 import { TestServer } from './test-server/index.js';
 
 /** @type { Set<TestServer> } */
@@ -24,8 +25,8 @@ export async function testServer(options) {
   // @ts-expect-error: private
   await server._start();
 
-  // Force testing mode to suppress logging
-  config.testing = true;
+  // Force silent mode to suppress logging
+  log.silent = true;
 
   instances.add(server);
 
