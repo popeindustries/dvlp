@@ -1,19 +1,18 @@
 declare interface ApplicationWorker {
   readonly activeProcess?: import('node:worker_threads').Worker;
-  readonly origin: string;
+  readonly origins: Set<string>;
   readonly isListening: boolean;
   /**
    * Add `filePaths` to file watcher
    */
   addWatchFiles(filePaths: string | Array<string>): void;
   /**
-   * Send message to the electron process
+   * Send message to the application thread
    */
   sendMessage(message: string | object | number | boolean | bigint): void;
 }
 
 declare interface ApplicationProcessWorkerData {
-  origin: string;
   hostOrigin: string;
   postMessage(msg: ApplicationWorkerMessage): void;
   main?: string;
@@ -28,6 +27,7 @@ declare type ApplicationLoaderMessage = {
 declare type ApplicationWorkerMessage =
   | { type: 'error'; error: string }
   | { type: 'listening'; origin: string }
+  | { type: 'started' }
   | { type: 'watch'; filePath: string; mode: 'read' | 'write' };
 
 declare interface ApplicationWorkerPendingHandle {

@@ -403,6 +403,16 @@ describe('server', () => {
         expect(res.status).to.eql(200);
         expect(await res.text()).to.contain('hi');
       });
+      it('should start an app with multiple servers', async () => {
+        server = await serverFactory('test/unit/fixtures/app-multi.mjs', {
+          reload: false,
+        });
+        const res = await fetch('http://localhost:8080/', {
+          headers: { accept: 'text/html' },
+        });
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain('hi');
+      });
       it.skip('should start an app server with listen "path"', async () => {
         server = await serverFactory(
           'test/unit/fixtures/app-create-server.mjs',
@@ -450,6 +460,18 @@ describe('server', () => {
         // expect(res.status).to.eql(200);
         expect(await res.text()).to.contain('hi');
       });
+      it('should polyfill process.env', async () => {
+        server = await serverFactory('test/unit/fixtures/app.mjs', {
+          port: 8100,
+        });
+        const res = await fetch('http://localhost:8100/', {
+          headers: { Accept: 'text/html; charset=utf-8' },
+        });
+        expect(res.status).to.eql(200);
+        expect(await res.text()).to.contain(
+          '<script nonce="dvlp">window.process=window.process||{env:{}};window.process.env.NODE_ENV="dvlptest";',
+        );
+      });
       if (platform() !== 'win32') {
         it('should start an app server with custom server transform', async () => {
           server = await serverFactory('test/unit/fixtures/app.ts', {
@@ -464,18 +486,6 @@ describe('server', () => {
           expect(await res.text()).to.contain('hi from body hook');
         });
       }
-      it('should polyfill process.env', async () => {
-        server = await serverFactory('test/unit/fixtures/app.mjs', {
-          port: 8100,
-        });
-        const res = await fetch('http://localhost:8100/', {
-          headers: { Accept: 'text/html; charset=utf-8' },
-        });
-        expect(res.status).to.eql(200);
-        expect(await res.text()).to.contain(
-          '<script nonce="dvlp">window.process=window.process||{env:{}};window.process.env.NODE_ENV="dvlptest";',
-        );
-      });
       it('should serve a bundled module js file', async () => {
         server = await serverFactory('test/unit/fixtures/app.mjs', {
           port: 8100,
@@ -678,38 +688,6 @@ describe('server', () => {
   }
 
   if (!process.env.CI) {
-    // TODO: Missing X server or $DISPLAY
-    describe('electron', () => {
-      it('should start an electron app with loadFile()', (done) => {
-        serverFactory('test/unit/fixtures/electron-file.mjs', {
-          electron: true,
-          port: 8100,
-          reload: false,
-        }).then((srvr) => {
-          server = srvr;
-          srvr.electronProcess.activeProcess.on('message', (msg) => {
-            if (msg === 'test:done') {
-              done();
-            }
-          });
-        });
-      });
-      it('should start an electron app with internal server and loadURL()', (done) => {
-        serverFactory('test/unit/fixtures/electron-create-server.mjs', {
-          electron: true,
-          port: 8100,
-          reload: false,
-        }).then((srvr) => {
-          server = srvr;
-          srvr.electronProcess.activeProcess.on('message', (msg) => {
-            if (msg === 'test:done') {
-              done();
-            }
-          });
-        });
-      });
-    });
-
     describe('ssl', () => {
       describe('static', () => {
         it('should implicitly serve index.html over https', async () => {

@@ -1,0 +1,10 @@
+import './file-test.js';
+import './hooks-test.js';
+import './intercept-test.js';
+import './platform-test.js';
+import './patch-test.js';
+import './resolver-test.js';
+import './mock-test.js';
+import './test-server-test.js';
+import './server-test.js';
+import './electron-test.js';

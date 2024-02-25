@@ -114,21 +114,25 @@ export async function server(
         .join(', ')
     : getProjectPath(/** @type { string } */ (entry.main));
   const origin = server.origin;
-  const appOrigin = server.applicationHost?.appOrigin;
-  const electronAppOrigin = server.electronHost?.appOrigin;
+  const appOrigins = server.applicationHost?.appOrigins;
+  const electronAppOrigins = server.electronHost?.appOrigins;
 
   noisyInfo(`\n  💥 serving ${chalk.green(paths)}`);
   noisyInfo(`    ...at ${chalk.green.underline(origin)}`);
-  if (appOrigin) {
-    noisyInfo(
-      `    (proxied application server started at ${chalk.bold(appOrigin)})`,
-    );
-  } else if (electronAppOrigin) {
-    noisyInfo(
-      `    (proxied Electron application server started at ${chalk.bold(
-        electronAppOrigin,
-      )})`,
-    );
+  if (appOrigins) {
+    for (const appOrigin of appOrigins) {
+      noisyInfo(
+        `    (proxied application server started at ${chalk.bold(appOrigin)})`,
+      );
+    }
+  } else if (electronAppOrigins) {
+    for (const electronAppOrigin of electronAppOrigins) {
+      noisyInfo(
+        `    (proxied Electron application server started at ${chalk.bold(
+          electronAppOrigin,
+        )})`,
+      );
+    }
   }
   noisyInfo('\n  👀 watching for changes...\n');
 
@@ -144,7 +148,7 @@ export async function server(
         get isListening() {
           return server.applicationHost?.activeThread?.isListening ?? false;
         },
-        origin: server.applicationHost.appOrigin,
+        origins: server.applicationHost.appOrigins,
         /** @param { string | Array<string> } filePaths */
         addWatchFiles(filePaths) {
           server.applicationHost?.addWatchFiles(filePaths);
@@ -163,7 +167,7 @@ export async function server(
         get isListening() {
           return server.electronHost?.isListening ?? false;
         },
-        origin: server.electronHost.appOrigin,
+        origins: server.electronHost.appOrigins,
         /** @param { string | Array<string> } filePaths */
         addWatchFiles(filePaths) {
           server.electronHost?.addWatchFiles(filePaths);

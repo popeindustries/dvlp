@@ -16,6 +16,7 @@ import { toBase64Url } from '../utils/base64Url.js';
 import workerThreads from 'node:worker_threads';
 
 const RE_DATA_URL = /^data:text\/html;([^,]+,)?/;
+const RE_HTTP_URL = /^https?:\/\//;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const workerPath = join(__dirname, './electron-worker.js');
@@ -54,10 +55,7 @@ export async function bootstrapElectron() {
       apply(target, ctx, args) {
         let url = /** @type { string } */ (args[0]);
 
-        if (
-          url.startsWith('file://') ||
-          url.startsWith(electronWorkerData.origin)
-        ) {
+        if (url.startsWith('file://') || RE_HTTP_URL.test(url)) {
           const incomingUrl = new URL(url);
 
           url = new URL(
@@ -120,7 +118,6 @@ export async function bootstrapElectron() {
         /** @param { ElectronProcessMessage} msg */
         (msg) => {
           if (msg.type === 'listening') {
-            electronWorkerData.origin ??= msg.origin;
             electronWorkerData.postMessage(msg);
           }
         },

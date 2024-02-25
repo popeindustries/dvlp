@@ -1,6 +1,6 @@
 declare interface ElectronProcess {
   readonly activeThread?: import('node:child_process').ChildProcess;
-  readonly origin: string | undefined;
+  readonly origins: Set<string>;
   readonly isListening: boolean;
   /**
    * Add `filePaths` to file watcher
@@ -13,7 +13,6 @@ declare interface ElectronProcess {
 }
 
 declare interface ElectronProcessWorkerData {
-  origin: string;
   hostOrigin: string;
   main: string;
   postMessage(msg: ElectronProcessMessage): void;
@@ -21,9 +20,9 @@ declare interface ElectronProcessWorkerData {
 }
 
 declare type ElectronProcessMessage =
+  | { type: 'started' }
   | {
       type: 'listening';
       origin: string;
     }
-  | { type: 'started' }
   | { type: 'watch'; filePath: string; mode: 'read' | 'write' };

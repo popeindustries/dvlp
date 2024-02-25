@@ -1,8 +1,17 @@
 /**
- * Parse `workerData` from argv passed to Electron child process
+ * Parse `--workerData=` from argv passed to Electron child process
  */
 export function getElectronWorkerData() {
-  const workerDataArgv = process.argv[process.argv.indexOf('--workerData') + 1];
+  const key = '--workerData=';
+  /** @type { string | undefined } */
+  let workerDataArgv;
+
+  for (const arg of process.argv) {
+    if (arg.startsWith(key)) {
+      workerDataArgv = arg.slice(key.length);
+      break;
+    }
+  }
 
   if (workerDataArgv) {
     const workerData = /** @type { ElectronProcessWorkerData } */ (

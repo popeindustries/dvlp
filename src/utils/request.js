@@ -1,68 +1,113 @@
+/**
+ * @typedef { import('node:http').ClientRequest } ClientRequest
+ * @typedef { import('node:http').IncomingHttpHeaders } IncomingHttpHeaders
+ */
+
 import { request } from 'node:http';
 import { request as secureRequest } from 'node:https';
 
-const CONNECTION_HEADERS = [
+const FORBIDDEN_REQUEST_HEADERS = [
   'connection',
-  'upgrade',
-  'http2-settings',
-  'te',
-  'transfer-encoding',
-  'proxy-connection',
-  'keep-alive',
+  'content-length',
   'host',
+  'sec-fetch-mode',
+];
+const FORBIDDEN_RESPONSE_HEADERS = [
+  'connection',
+  'content-encoding',
+  'content-length',
+  'content-security-policy',
+  'keep-alive',
+  'transfer-encoding',
 ];
 
 /**
  * Forward request to `origin`.
  *
- * @param { string } origin
+ * @param { Set<string> } origins
  * @param { Req } req
  * @param { Res } res
  */
-export function forwardRequest(origin, req, res) {
-  /** @type { Record<string, string> } */
-  const headers = {
-    // @ts-ignore
-    // host: req.headers.host || req.headers[':authority'],
-  };
+export async function forwardRequest(origins, req, res) {
+  for (const origin of origins) {
+    const url = new URL(origin);
+    const requestOptions = {
+      headers: copyRequestHeaders(req.headers, {}),
+      method: req.method,
+      host: url.hostname,
+      path: req.url,
+      port: url.port,
+      protocol: url.protocol,
+      rejectUnauthorized: false,
+    };
+    const requestFn = url.protocol === 'https:' ? secureRequest : request;
+    const fwdRequest = requestFn(requestOptions);
 
-  // Prune headers
-  for (const header in req.headers) {
-    if (
-      header &&
-      !header.startsWith(':') &&
-      !CONNECTION_HEADERS.includes(header)
-    ) {
-      // @ts-ignore
-      headers[header] = req.headers[header];
+    req.pipe(fwdRequest);
+
+    try {
+      const fwdResponse = await getForwardResponse(fwdRequest);
+      const statusCode = /** @type { number } */ (fwdResponse.statusCode);
+
+      if (statusCode !== 404) {
+        res.writeHead(statusCode, copyResponseHeaders(fwdResponse.headers, {}));
+        fwdResponse.pipe(res);
+        return;
+      }
+    } catch {
+      // Continue to next origin
     }
   }
 
-  const url = new URL(origin);
-  const requestOptions = {
-    headers,
-    method: req.method,
-    host: url.hostname,
-    path: req.url,
-    port: url.port,
-    protocol: url.protocol,
-    rejectUnauthorized: false,
-  };
-  const requestFn = url.protocol === 'https:' ? secureRequest : request;
-  const fwdRequest = requestFn(requestOptions, (originResponse) => {
-    const { statusCode, headers } = originResponse;
+  if (!res.headersSent) {
+    res.writeHead(404);
+    res.end();
+  }
+}
 
-    delete headers.connection;
-    delete headers['keep-alive'];
+/**
+ * @param { ClientRequest } fwdRequest
+ * @returns { Promise<import('node:http').IncomingMessage> }
+ */
+function getForwardResponse(fwdRequest) {
+  return new Promise((resolve, reject) => {
+    fwdRequest.on('response', (originResponse) => {
+      resolve(originResponse);
+    });
 
-    res.writeHead(statusCode || 200, headers);
-    originResponse.pipe(res);
+    fwdRequest.on('error', (err) => {
+      reject(err);
+    });
   });
+}
 
-  fwdRequest.on('error', (err) => {
-    res.writeHead(500);
-    res.end(err.message);
-  });
+/**
+ * @param { IncomingHttpHeaders } from
+ * @param { Record<string, string> } to
+ */
+function copyRequestHeaders(from, to) {
+  for (const [header, value] of Object.entries(from)) {
+    if (
+      !header.startsWith(':') &&
+      !FORBIDDEN_REQUEST_HEADERS.includes(header)
+    ) {
+      to[header] = /** @type { string } */ (value);
+    }
+  }
 
-  req.pipe(fwdRequest);
+  return to;
+}
+
+/**
+ * @param { IncomingHttpHeaders } from
+ * @param { Record<string, string> } to
+ */
+function copyResponseHeaders(from, to) {
+  for (const [header, value] of Object.entries(from)) {
+    if (!FORBIDDEN_RESPONSE_HEADERS.includes(header)) {
+      to[header] = /** @type { string } */ (value);
+    }
+  }
+
+  return to;
 }
