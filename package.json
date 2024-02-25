@@ -63,7 +63,6 @@
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
     "lit-html": "^3.1.2",
-    "mime": "^4.0.1",
     "mocha": "^10.3.0",
     "path-to-regexp": "^6.2.1",
     "permessage-deflate": "~0.1.7",
@@ -71,8 +70,6 @@
     "prettier": "^3.2.5",
     "react": "^18.2.0",
     "resolve.exports": "^2.0.2",
-    "send": "~0.18.0",
-    "server-destroy": "^1.0.1",
     "terser": "^5.28.1",
     "typescript": "^5.3.3"
   },

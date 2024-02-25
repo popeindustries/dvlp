@@ -6,7 +6,8 @@ import favicon from '../utils/favicon.js';
 import { find } from '../utils/file.js';
 import { fromBase64Url } from '../utils/base64Url.js';
 import { noisyInfo } from '../utils/log.js';
-import send from 'send';
+import { send } from '../utils/send.js';
+// @ts-expect-error
 import WebSocket from 'faye-websocket';
 
 const favIcon = Buffer.from(favicon, 'base64');
@@ -24,12 +25,8 @@ export function handleFavicon(req, res) {
     const customFavIcon = find(req);
 
     if (customFavIcon) {
-      send(req, customFavIcon, {
-        cacheControl: true,
-        maxAge: config.maxAge,
-        etag: false,
-        lastModified: false,
-      }).pipe(res);
+      res.setHeader('Cache-Coontrol', `public, max-age=${config.maxAge}`);
+      send(customFavIcon, res);
     } else {
       res.writeHead(200, {
         'Content-Length': favIcon.length,
@@ -170,19 +167,10 @@ export function handlePushEvent(req, res, mocks) {
  * Handle file request
  *
  * @param { string } filePath
- * @param { Req } req
  * @param { Res } res
  */
-export function handleFile(filePath, req, res) {
-  /** @type { import('send').SendOptions } */
-  const options = {
-    cacheControl: false,
-    dotfiles: 'allow',
-    etag: false,
-    lastModified: false,
-  };
-
-  send(req, encodeURI(filePath), options).pipe(res);
+export function handleFile(filePath, res) {
+  send(filePath, res);
 }
 
 /**

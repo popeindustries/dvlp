@@ -370,7 +370,7 @@ export class Dvlp {
     if (!res.writableEnded) {
       if (context.filePath !== undefined) {
         debug(`sending "${context.filePath}"`);
-        handleFile(context.filePath, req, res);
+        handleFile(context.filePath, res);
         return;
       }
 
@@ -393,7 +393,7 @@ export class Dvlp {
 
           if (context.filePath !== undefined) {
             debug(`sending "${context.filePath}"`);
-            handleFile(context.filePath, req, res);
+            handleFile(context.filePath, res);
             return;
           }
         }

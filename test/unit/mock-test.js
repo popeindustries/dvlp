@@ -44,6 +44,7 @@ function getResponse() {
     on() {},
     once() {},
     emit() {},
+    write() {},
   };
 }
 

@@ -12,11 +12,11 @@ import config from '../config.js';
 import Debug from 'debug';
 import fs from 'node:fs';
 import { getProjectPath } from '../utils/file.js';
+import { getType } from '../utils/mime.js';
 import { interceptClientRequest } from '../utils/intercept-client-request.js';
 import { Metrics } from '../utils/metrics.js';
-import mime from '../utils/mime.js';
 import path from 'node:path';
-import send from 'send';
+import { send } from '../utils/send.js';
 
 const RE_MAX_AGE = /max-age=(\d+)/;
 
@@ -273,27 +273,23 @@ export class Mocks {
 
     switch (type) {
       case 'file': {
+        const maxAge =
+          getMaxAgeFromHeaders(
+            normaliseHeaderKeys(headers, ['Cache-Control']),
+          ) || Number(config.maxAge);
+
         // Set custom headers
         for (const header in headers) {
           res.setHeader(header, headers[header]);
         }
         res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cache-Control', `public, max-age=${maxAge}`);
+
         send(
-          {
-            // @ts-expect-error - fake request object
-            url: href,
-            headers: {},
-          },
-          // @ts-ignore - body is path to file (relative to mock file)
+          // @ts-expect-error - body is path to file (relative to mock file)
           path.resolve(path.dirname(filePath), body),
-          {
-            dotfiles: 'allow',
-            maxAge:
-              getMaxAgeFromHeaders(
-                normaliseHeaderKeys(headers, ['Cache-Control']),
-              ) || Number(config.maxAge) * 1000,
-          },
-        ).pipe(res);
+          res,
+        );
 
         return true;
       }
@@ -307,7 +303,7 @@ export class Mocks {
     res.writeHead(status, {
       // Allow some headers to be overwritten
       'Cache-Control': `public, max-age=${config.maxAge}`,
-      'Content-Type': mime.getType(type),
+      'Content-Type': getType(`mock.${type}`),
       Date: new Date().toUTCString(),
       ...normaliseHeaderKeys(headers, [
         'Cache-Control',
