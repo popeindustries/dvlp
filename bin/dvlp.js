@@ -31,7 +31,8 @@ program
     '--ssl <path>',
     `enable https mode by specifying path to directory containing ".crt" and ".key" files (directory, glob pattern)`,
   )
-  .option('-s, --silent', 'suppress default logging')
+  .option('-s, --silent', 'suppress all logging')
+  .option('--verbose', 'enable verbose logging')
   .option('--no-reload', 'disable reloading connected clients on file change')
   .version(pkg.version, '-v, --version', 'output the current version')
   .arguments('[path...]')
@@ -52,6 +53,7 @@ async function boot(path = [process.cwd()]) {
       port: options.port,
       reload: options.reload,
       silent: options.silent,
+      verbose: options.verbose,
     });
   } catch (err) {
     console.error(err);

@@ -10,7 +10,6 @@ import { workerData } from 'node:worker_threads';
 const messagePort = /** @type { MessagePort } */ (workerData.messagePort);
 
 interceptInProcess({
-  origin: '',
   hostOrigin: workerData.hostOrigin,
   postMessage: /** @param { ApplicationWorkerMessage } msg */ (msg) =>
     messagePort.postMessage(msg),
@@ -24,6 +23,7 @@ messagePort.on(
     if (msg.type === 'start') {
       try {
         await import(msg.main);
+        messagePort.postMessage({ type: 'started' });
       } catch (err) {
         messagePort.postMessage({ type: 'error', error: err });
       } finally {

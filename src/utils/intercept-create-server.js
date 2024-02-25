@@ -29,7 +29,6 @@ export function interceptCreateServer(reservedPort, fn) {
  * @param { number } reservedPort
  */
 function initInterceptCreateServer(reservedPort) {
-  // TODO: forward https/http2 to unsecure http?
   if (!util.types.isProxy(http.createServer)) {
     for (const [lib, method] of [
       [http, 'createServer'],
@@ -45,7 +44,7 @@ function initInterceptCreateServer(reservedPort) {
           server.on('error', (err) => {
             throw err;
           });
-          server.on('listening', () => {
+          server.once('listening', () => {
             const protocol = lib === http ? 'http' : 'https';
             const { port } = /** @type { import('net').AddressInfo } */ (
               server.address()

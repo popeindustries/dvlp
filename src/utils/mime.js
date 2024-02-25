@@ -1,13 +1,37 @@
 import config from '../config.js';
-import { Mime } from 'mime/lite';
-import otherTypes from 'mime/types/other.js';
-import send from 'send';
-import standardTypes from 'mime/types/standard.js';
+import path from 'node:path';
 
-const mime = new Mime(standardTypes, otherTypes);
+const TYPES = {
+  'text/css': config.extensionsByType.css,
+  'text/html': config.extensionsByType.html,
+  'application/javascript': config.extensionsByType.js.filter(
+    (ext) => ext !== '.json',
+  ),
+  'application/json': ['.json', '.json5'],
+  'image/gif': ['.gif'],
+  'image/jpeg': ['.jpeg', '.jpg', '.jpe'],
+  'image/png': ['.png'],
+  'image/svg+xml': ['.svg', '.svgz'],
+  'image/webp': ['.webp'],
+  'font/otf': ['.otf'],
+  'font/ttf': ['.ttf'],
+  'font/woff': ['.woff'],
+  'font/woff2': ['.woff2'],
+};
 
-mime.define(config.jsMimeTypes, true);
-// @ts-ignore
-send.mime.define(config.jsMimeTypes, true);
+/**
+ * Retrieve the mime type for 'filePath'
+ *
+ * @param { string } filePath
+ */
+export function getType(filePath) {
+  const ext = path.extname(filePath);
 
-export default mime;
+  for (const [type, extensions] of Object.entries(TYPES)) {
+    if (extensions.includes(ext)) {
+      return type;
+    }
+  }
+
+  return 'application/octet-stream';
+}

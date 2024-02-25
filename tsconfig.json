@@ -4,6 +4,7 @@
     "allowSyntheticDefaultImports": true,
     "checkJs": true,
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "lib": ["esnext", "DOM"],
     "module": "NodeNext",

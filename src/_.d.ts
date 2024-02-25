@@ -16,7 +16,6 @@ declare interface Config {
   extensionsByType: {
     [type: string]: Array<string>;
   };
-  jsMimeTypes: Record<string, Array<string>>;
   latency: number;
   maxAge: string;
   maxAgeLong: string;

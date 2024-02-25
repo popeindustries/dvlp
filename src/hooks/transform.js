@@ -2,9 +2,9 @@ import { findClosest, getProjectPath, getTypeFromPath } from '../utils/file.js';
 import Debug from 'debug';
 import { error } from '../utils/log.js';
 import { extname } from 'node:path';
+import { getType } from '../utils/mime.js';
 import { isTransformableJsFile } from '../utils/is.js';
 import { Metrics } from '../utils/metrics.js';
-import mime from '../utils/mime.js';
 import { parseEsbuildTarget } from '../utils/platform.js';
 import { readFileSync } from 'node:fs';
 
@@ -114,7 +114,7 @@ export async function transform(
       'Access-Control-Allow-Origin': '*',
       'Content-Length': Buffer.byteLength(code),
       'Content-Type':
-        mime.getType(getTypeFromPath(filePath) || filePath) || undefined,
+        getType(getTypeFromPath(filePath) || filePath) || undefined,
     });
     res.end(code);
     res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);

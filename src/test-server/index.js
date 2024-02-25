@@ -5,19 +5,25 @@ import {
 } from '../push-events/index.js';
 import config from '../config.js';
 import Debug from 'debug';
-import decorateWithServerDestroy from 'server-destroy';
 import { EventSource } from '../reload/event-source.js';
 import fs from 'node:fs';
+import { getType } from '../utils/mime.js';
 import http from 'node:http';
 import { Metrics } from '../utils/metrics.js';
-import mime from '../utils/mime.js';
 import { Mocks } from '../mock/index.js';
 import path from 'node:path';
+// @ts-expect-error - missing types
 import WebSocket from 'faye-websocket';
 
 const debug = Debug('dvlp:test');
 
 export class TestServer {
+  #autorespond;
+  /** @type { Map<string, import('node:stream').Duplex> } */
+  #connections = new Map();
+  /** @type { HttpServer | undefined } */
+  #server;
+
   /**
    * Constructor
    *
@@ -31,13 +37,13 @@ export class TestServer {
       webroot = '',
     } = options;
 
-    this._autorespond = autorespond;
-    this._server;
     this.latency = latency;
     this.webroot = webroot;
     // Make sure mocks instance has access to active port
     this.port = config.activePort = port;
     this.mocks = new Mocks();
+
+    this.#autorespond = autorespond;
   }
 
   /**
@@ -48,7 +54,7 @@ export class TestServer {
    */
   _start() {
     return new Promise((resolve, reject) => {
-      this._server = http.createServer(async (req, res) => {
+      this.#server = http.createServer(async (req, res) => {
         // @ts-ignore
         res.metrics = new Metrics(res);
 
@@ -105,7 +111,7 @@ export class TestServer {
         }
 
         const trimmedPath = url.pathname.slice(1);
-        const type = mime.getType(trimmedPath);
+        const type = getType(trimmedPath);
         /** @type { Record<string, string> } */
         const headers = {};
         // TODO: handle encoded query strings in path name?
@@ -136,7 +142,7 @@ export class TestServer {
           size = stat.size;
           msg = `ok: ${req.url} responding with file`;
         } catch (err) {
-          if (!this._autorespond) {
+          if (!this.#autorespond) {
             res.writeHead(404);
             return res.end();
           }
@@ -158,11 +164,18 @@ export class TestServer {
         return body ? res.end(body) : fs.createReadStream(filePath).pipe(res);
       });
 
-      decorateWithServerDestroy(this._server);
-      this._server.unref();
-      this._server.on('error', reject);
-      this._server.on('listening', resolve);
-      this._server.on('upgrade', (req, socket, body) => {
+      this.#server.unref();
+      this.#server.on('error', reject);
+      this.#server.on('listening', resolve);
+      this.#server.on('connection', (connection) => {
+        const key = `${connection.remoteAddress}:${connection.remotePort}`;
+
+        this.#connections.set(key, connection);
+        connection.once('close', () => {
+          this.#connections.delete(key);
+        });
+      });
+      this.#server.on('upgrade', (req, socket, body) => {
         if (WebSocket.isWebSocket(req)) {
           const url = /** @type { string } */ (req.url);
 
@@ -183,7 +196,7 @@ export class TestServer {
         }
       });
 
-      this._server.listen(this.port);
+      this.#server.listen(this.port);
     });
   }
 
@@ -253,16 +266,24 @@ export class TestServer {
    */
   _stop() {
     return new Promise((resolve) => {
-      if (!this._server) {
+      for (const connection of this.#connections.values()) {
+        connection.destroy();
+      }
+      this.#connections.clear();
+
+      if (!this.#server) {
         return resolve();
       }
 
-      this._server.removeAllListeners();
-      // @ts-ignore
-      this._server.destroy(() => {
-        debug('server stopped');
+      debug('server stopped');
+      this.#server.removeAllListeners();
+      if (!this.#server.listening) {
         resolve();
-      });
+      } else {
+        this.#server.close(() => {
+          resolve();
+        });
+      }
     });
   }
 

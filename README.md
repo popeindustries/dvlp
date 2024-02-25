@@ -15,7 +15,7 @@
 
 ### How it works
 
-**dvlp** allows you to easily serve resources from one or more project directories (`static` mode), from your custom application server (`app` mode), or from your Electron desktop application (`electron` mode). In all cases, **dvlp** automatically injects the necessary reload script into HTML responses to enable reloading, watches all files for changes, restarts the `app` server/ `electron` application if necessary, and reloads all connected clients.
+**dvlp** allows you to easily serve resources from one or more project directories (`static` mode), from your custom application server (`app` mode), or from your Electron desktop application (`electron` mode). In all cases, **dvlp** creates a proxy server in front of your content, automatically injecting the necessary reload script into HTML responses to enable reloading, and watches all files for changes, restarts the `app` server/ `electron` application if necessary, and reloads all connected clients.
 
 In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (`import "lodash"`), which are not natively supported by browsers, work by re-writing all import paths to valid urls. Since some `node_modules` packages are still published as CommonJS modules, non-ESM packages are bundled and converted to an ESM module using [esbuild](https://esbuild.github.io). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under your project root.
 
@@ -45,9 +45,10 @@ Options:
   -m, --mock <path>   path to mock files (directory, file, glob pattern)
   -k, --hooks <path>  path to optional hooks registration file
   -e, --electron      run "path" file as electron.js entry file
-  --ssl <path>        enable https mode by specifying path to directory containing ".crt" and
-                      ".key" files (directory, glob pattern)
-  -s, --silent        suppress default logging
+  --ssl <path>        enable https mode by specifying path to directory containing ".crt" and ".key" files (directory,
+                      glob pattern)
+  -s, --silent        suppress all logging
+  --verbose           enable verbose logging
   --no-reload         disable reloading connected clients on file change
   -v, --version       output the current version
   -h, --help          display help for command

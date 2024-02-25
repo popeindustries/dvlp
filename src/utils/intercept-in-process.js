@@ -18,15 +18,12 @@ export function interceptInProcess(workerData) {
     };
   });
 
-  // Capture application/renderer server port
-  const restoreCreateServer = interceptCreateServer(
+  // Capture application/renderer server ports
+  interceptCreateServer(
     // Default port numbers are ignored when parsed in URL
     Number(hostUrl.port || (hostUrl.protocol === 'http:' ? 80 : 443)),
     (origin) => {
-      workerData.origin = origin;
       workerData.postMessage({ type: 'listening', origin });
-      // Assume first server is application/renderer server
-      restoreCreateServer();
     },
   );
 

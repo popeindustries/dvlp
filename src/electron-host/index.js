@@ -58,8 +58,8 @@ export class ElectronHost {
       throw err;
     }
 
-    /** @type { string | undefined } */
-    this.appOrigin;
+    /** @type { Set<string> } */
+    this.appOrigins = new Set();
 
     this.argv = argv;
     /** @type { childProcess.ChildProcess } */
@@ -108,11 +108,13 @@ export class ElectronHost {
   async restart() {
     if (this.activeProcess !== undefined) {
       debug(`terminating active process`);
+
       this.activeProcess.removeAllListeners();
       this.activeProcess.send('close');
       // Wait for windows to close
       await new Promise((resolve) => setTimeout(resolve, 100));
       this.activeProcess.kill();
+
       noisyInfo('\n   restarting Electon application...');
       await this.start();
     }
@@ -136,14 +138,7 @@ export class ElectronHost {
    */
   handle(req, res) {
     debug(`handling request for "${req.url}"`);
-
-    if (this.appOrigin === undefined) {
-      res.writeHead(404);
-      res.end('no running Electron server to respond to request');
-      return;
-    }
-
-    forwardRequest(this.appOrigin, req, res);
+    forwardRequest(this.appOrigins, req, res);
   }
 
   /**
@@ -151,19 +146,19 @@ export class ElectronHost {
    */
   createProcess() {
     return new Promise((resolve, reject) => {
+      const workerData = Buffer.from(
+        JSON.stringify({
+          hostOrigin: this.hostOrigin,
+          main: this.main,
+          serializedMocks: this.serializedMocks,
+        }),
+      ).toString('base64');
       const child = childProcess.spawn(
         this.pathToElectron,
         [
           fileURLToPath(config.electronEntryURL.href),
           '--disable-http-cache',
-          '--workerData',
-          Buffer.from(
-            JSON.stringify({
-              hostOrigin: this.hostOrigin,
-              main: this.main,
-              serializedMocks: this.serializedMocks,
-            }),
-          ).toString('base64'),
+          `--workerData=${workerData}`,
           ...this.argv,
         ],
         {
@@ -175,16 +170,11 @@ export class ElectronHost {
         'message',
         /** @param { ElectronProcessMessage } msg */
         async (msg) => {
-          if (msg.type === 'listening') {
-            // Prevent multiple "listening" messages from multiple servers overwriting each other.
-            // We assume that the first "listening" message is from the application server.
-            if (!this.isListening) {
-              this.appOrigin = msg.origin;
-              this.isListening = true;
-              resolve(child);
-            }
-          } else if (msg.type === 'started') {
+          if (msg.type === 'started') {
             resolve(child);
+          } else if (msg.type === 'listening') {
+            this.isListening = true;
+            this.appOrigins.add(msg.origin);
           } else if (msg.type === 'watch') {
             if (msg.mode === 'write') {
               if (this.watcher?.has(msg.filePath)) {

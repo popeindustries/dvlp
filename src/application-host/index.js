@@ -50,8 +50,8 @@ export class ApplicationHost {
    * @param { Array<string> } [argv]
    */
   constructor(main, hostOrigin, triggerClientReload, serializedMocks, argv) {
-    /** @type { string } */
-    this.appOrigin;
+    /** @type { Set<string> } */
+    this.appOrigins = new Set();
 
     this.argv = argv;
     this.hostOrigin = hostOrigin;
@@ -59,8 +59,6 @@ export class ApplicationHost {
     this.serializedMocks = serializedMocks;
     /** @type { ApplicationThread } */
     this.activeThread = this.createThread();
-    /** @type { ApplicationThread } */
-    this.pendingThread = this.createThread();
     /** @type { Watcher | undefined } */
     this.watcher;
 
@@ -86,7 +84,9 @@ export class ApplicationHost {
     const times = [performance.now(), 0];
 
     debug(`starting thread at ${this.main}`);
-    this.appOrigin = await this.activeThread.start(this.main);
+
+    await this.activeThread.start(this.main);
+
     times[1] = performance.now();
     noisyInfo(`${format(msDiff(times))} application server started`);
   }
@@ -97,9 +97,11 @@ export class ApplicationHost {
   async restart() {
     if (this.activeThread !== undefined) {
       debug(`terminating thread with id "${this.activeThread.threadId}"`);
+
+      this.activeThread.removeAllListeners();
       await this.activeThread.terminate();
-      this.activeThread = this.pendingThread;
-      this.pendingThread = this.createThread();
+      this.activeThread = this.createThread();
+
       noisyInfo('\n  restarting application server...');
       await this.start();
     }
@@ -130,7 +132,7 @@ export class ApplicationHost {
       return;
     }
 
-    forwardRequest(this.appOrigin, req, res);
+    forwardRequest(this.appOrigins, req, res);
   }
 
   /**
@@ -160,6 +162,10 @@ export class ApplicationHost {
       transferList: [port2],
     });
 
+    thread.on('listening', (origin) => {
+      this.appOrigins.add(origin);
+    });
+
     return thread;
   }
 
@@ -168,7 +174,6 @@ export class ApplicationHost {
    */
   destroy() {
     this.activeThread?.terminate();
-    this.pendingThread?.terminate();
     this.watcher?.close();
   }
 }
@@ -188,7 +193,7 @@ class ApplicationThread extends Worker {
     this.isRegistered = false;
     this.messagePort = messagePort;
     this.watcher = watcher;
-    /** @type { ((value: string | PromiseLike<string>) => void) | undefined } */
+    /** @type { (() => void) | undefined } */
     this.resolveStarted;
     /** @type { ((value?: unknown) => void) | undefined } */
     this.rejectStarted;
@@ -199,9 +204,13 @@ class ApplicationThread extends Worker {
       (msg) => {
         const { type } = msg;
 
-        if (type === 'listening') {
+        if (type === 'started') {
+          //
+        } else if (type === 'listening') {
           this.isListening = true;
-          this.resolveStarted?.(msg.origin);
+          this.emit('listening', msg.origin);
+          // Assume that apps start listening after they are done loading
+          this.resolveStarted?.();
         } else if (type === 'watch') {
           if (msg.mode === 'write') {
             if (this.watcher?.has(msg.filePath)) {
@@ -241,7 +250,7 @@ class ApplicationThread extends Worker {
    */
   start(main) {
     return new Promise((resolve, reject) => {
-      this.resolveStarted = resolve;
+      this.resolveStarted = /** @type { () => void } */ (resolve);
       this.rejectStarted = reject;
 
       debug(`starting application at ${main}`);
