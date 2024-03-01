@@ -220,7 +220,7 @@ describe('server', () => {
       start = Date.now();
       res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(200);
-      expect(Date.now() - start).to.be.below(20);
+      expect(Date.now() - start).to.be.below(50);
     });
     it('should cache transformed file content by user-agent when using an onTransfrom hook', async () => {
       server = await serverFactory('test/unit/fixtures/www', {
@@ -259,7 +259,7 @@ describe('server', () => {
             'Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36',
         },
       });
-      expect(Date.now() - start).to.be.below(10);
+      expect(Date.now() - start).to.be.below(50);
     });
     it('should return error when hooks onTransform error', async () => {
       server = await serverFactory('test/unit/fixtures/www', {

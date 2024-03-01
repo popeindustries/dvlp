@@ -25,6 +25,9 @@ function getResponse() {
     end(body) {
       this.body = body;
     },
+    hasHeader(name) {
+      return this.headers[name] !== undefined;
+    },
     getHeader(name) {
       return this.headers[name];
     },
