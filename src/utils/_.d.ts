@@ -61,7 +61,7 @@ declare type InterceptCreateServerCallback = (origin: string) => void;
 declare interface Watcher {
   has(filePath: string): boolean;
   add(filePath: string | Array<string> | Set<string>): void;
-  remove(filePath: string): void;
+  remove(filePath: string, permanent?: boolean): void;
   close(): void;
 }
 

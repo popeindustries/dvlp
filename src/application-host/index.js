@@ -214,7 +214,7 @@ class ApplicationThread extends Worker {
         } else if (type === 'watch') {
           if (msg.mode === 'write') {
             if (this.watcher?.has(msg.filePath)) {
-              this.watcher.remove(msg.filePath);
+              this.watcher.remove(msg.filePath, true);
             }
           } else {
             this.watcher?.add(msg.filePath);

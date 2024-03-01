@@ -178,7 +178,7 @@ export class ElectronHost {
           } else if (msg.type === 'watch') {
             if (msg.mode === 'write') {
               if (this.watcher?.has(msg.filePath)) {
-                this.watcher.remove(msg.filePath);
+                this.watcher.remove(msg.filePath, true);
               }
             } else {
               this.watcher?.add(await getDependencies(msg.filePath, 'node'));

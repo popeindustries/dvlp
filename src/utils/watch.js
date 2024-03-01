@@ -23,6 +23,9 @@ export function watch(fn) {
     ignoreInitial: true,
     persistent: true,
   });
+  /** @type { Set<string> } */
+  const banned = new Set();
+  /** @type { Set<string> } */
   const files = new Set();
   let changing = false;
 
@@ -60,6 +63,7 @@ export function watch(fn) {
       filePath = resolveFilePath(filePath);
 
       if (
+        !banned.has(filePath) &&
         !files.has(filePath) &&
         !filePath.startsWith(tmpdir) &&
         !filePath.startsWith(config.dvlpDirPath) &&
@@ -71,11 +75,14 @@ export function watch(fn) {
         watcher.add(filePath);
       }
     },
-    remove(filePath) {
+    remove(filePath, permanent = false) {
       debug(`unwatching file "${getProjectPath(filePath)}"`);
       filePath = resolveFilePath(filePath);
       files.delete(filePath);
       watcher.unwatch(filePath);
+      if (permanent) {
+        banned.add(filePath);
+      }
     },
     close() {
       files.clear();
