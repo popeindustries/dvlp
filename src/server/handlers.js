@@ -188,10 +188,12 @@ export function handleDataUrl(req, res) {
   if (data) {
     const html = fromBase64Url(data);
 
+    if (!res.hasHeader('Access-Control-Allow-Origin')) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
     res.writeHead(200, {
       'Content-Length': Buffer.byteLength(html, 'utf-8'),
       'Content-Type': 'text/html;charset=UTF-8',
-      'Access-Control-Allow-Origin': '*',
     });
     res.end(html);
 

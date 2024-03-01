@@ -40,10 +40,12 @@ export class EventSource extends EventEmitter {
     }
 
     req.socket.setKeepAlive(true);
+    if (!res.hasHeader('Access-Control-Allow-Origin')) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-store',
-      'Access-Control-Allow-Origin': '*',
     });
 
     this._write(`retry: ${Math.floor(DEFAULT_RETRY)}\r\n\r\n`);

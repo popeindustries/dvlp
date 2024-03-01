@@ -170,7 +170,7 @@ function setCacheControlHeader(res, url) {
  * @param { Res } res
  */
 function enableCrossOriginHeader(res) {
-  if (!res.headersSent) {
+  if (!res.headersSent && !res.hasHeader('Access-Control-Allow-Origin')) {
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
 }

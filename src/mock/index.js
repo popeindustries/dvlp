@@ -1,4 +1,4 @@
-import { error, info, noisyInfo } from '../utils/log.js';
+import { error, noisyInfo } from '../utils/log.js';
 import { fileURLToPath, pathToFileURL, URLSearchParams } from 'node:url';
 import { getUrl, isEqualSearchParams } from '../utils/url.js';
 import {
@@ -282,7 +282,9 @@ export class Mocks {
         for (const header in headers) {
           res.setHeader(header, headers[header]);
         }
-        res.setHeader('Access-Control-Allow-Origin', '*');
+        if (!res.hasHeader('Access-Control-Allow-Origin')) {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+        }
         res.setHeader('Cache-Control', `public, max-age=${maxAge}`);
 
         send(
@@ -299,7 +301,9 @@ export class Mocks {
       }
     }
 
-    // @ts-ignore
+    if (!res.hasHeader('Access-Control-Allow-Origin')) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
     res.writeHead(status, {
       // Allow some headers to be overwritten
       'Cache-Control': `public, max-age=${config.maxAge}`,
@@ -312,7 +316,6 @@ export class Mocks {
       ]),
       // @ts-ignore
       'Content-Length': Buffer.byteLength(content),
-      'Access-Control-Allow-Origin': '*',
     });
     // @ts-ignore
     res.end(content);
@@ -538,7 +541,7 @@ export class Mocks {
         }
       }
 
-      info(
+      noisyInfo(
         `${chalk.green('✔')} loaded ${count} mock ${type}${
           count > 1 ? 's' : ''
         } from ${chalk.green(getProjectPath(filePath))}`,
