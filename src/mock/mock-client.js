@@ -93,9 +93,6 @@
       }
     }
 
-    console.log(
-      'mocking xhr response (with remote data) for: ' + parseOriginalHref(href),
-    );
     return originalXMLHttpRequestOpen.call(this, method, href);
   };
 
@@ -154,10 +151,6 @@
             }
           }
 
-          console.log(
-            'mocking fetch response (with remote data) for: ' +
-              parseOriginalHref(href),
-          );
           return Reflect.apply(target, ctx, args);
         },
       });
