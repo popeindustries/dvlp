@@ -6,7 +6,6 @@ const messagePort = /** @type { import('worker_threads').MessagePort } */ (
 );
 
 interceptInProcess({
-  origin: '',
   hostOrigin: workerData.dvlp.hostOrigin,
   postMessage: /** @param { ApplicationWorkerMessage } msg */ (msg) =>
     messagePort.postMessage(msg),
