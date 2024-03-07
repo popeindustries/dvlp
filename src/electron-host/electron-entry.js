@@ -109,8 +109,10 @@ export async function bootstrapElectron() {
   // Intercept Worker construction in order to instead load electron-worker
   workerThreads.Worker = new Proxy(workerThreads.Worker, {
     construct(target, args, newTarget) {
-      const [filePath, options] = args;
+      const [filePathOrURL, options] = args;
       const { port1, port2 } = new workerThreads.MessageChannel();
+      const filePath =
+        filePathOrURL instanceof URL ? filePathOrURL.href : filePathOrURL;
 
       port1.unref();
       port1.on(
