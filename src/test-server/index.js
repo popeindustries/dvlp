@@ -56,6 +56,8 @@ export class TestServer {
     return new Promise((resolve, reject) => {
       this.#server = http.createServer(async (req, res) => {
         // @ts-ignore
+        res.url ??= req.url;
+        // @ts-ignore
         res.metrics = new Metrics(res);
 
         if (EventSource.isEventSource(req)) {
@@ -80,7 +82,7 @@ export class TestServer {
         const maxage = url.searchParams.get('maxage') || 0;
         const missing = url.searchParams.get('missing') != null;
         const offline = url.searchParams.get('offline') != null;
-        const mock = url.searchParams.get('dvlpmock');
+        const mock = url.searchParams.get('dvlpmock') ?? url.href;
 
         if (hang) {
           return;
@@ -106,8 +108,9 @@ export class TestServer {
         } else if (mock) {
           debug(`ok: ${req.url} responding with mocked data`);
           // @ts-ignore
-          this.mocks.matchResponse(mock, req, res);
-          return;
+          if (this.mocks.matchResponse(mock, req, res)) {
+            return;
+          }
         }
 
         const trimmedPath = url.pathname.slice(1);
