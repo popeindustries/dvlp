@@ -618,6 +618,10 @@ ws.addEventListener('message', (event) => {
 mockApi.pushEvent('ws://www.somesocket.com/stream', 'so scary');
 ```
 
+- **`ref(): void`** prevent process from exiting while this server is active
+
+- **`unref(): void`** allow process to exit if this is the only active
+
 - **`destroy(): Promise<void>`** stop and clean up running server
 
 In addition, `testServer` supports the following special query parameters:
