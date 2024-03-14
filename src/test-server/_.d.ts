@@ -57,6 +57,14 @@ declare class TestServer {
    */
   clearMockFiles(): void;
   /**
+   * Prevent process from exiting while this server is active
+   */
+  ref(): void;
+  /**
+   * Allow process to exit if this is the only active
+   */
+  unref(): void;
+  /**
    * Destroy server instance
    */
   destroy(): Promise<void>;

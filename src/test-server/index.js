@@ -258,6 +258,14 @@ export class TestServer {
     this.mocks.clear();
   }
 
+  ref() {
+    this.#server?.ref();
+  }
+
+  unref() {
+    this.#server?.unref();
+  }
+
   /**
    * Stop running server
    *
