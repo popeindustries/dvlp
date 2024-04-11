@@ -18,8 +18,6 @@ import { Metrics } from '../utils/metrics.js';
 import path from 'node:path';
 import { send } from '../utils/send.js';
 
-const RE_MAX_AGE = /max-age=(\d+)/;
-
 const debug = Debug('dvlp:mock');
 const mockClient =
   // @ts-ignore
@@ -273,11 +271,6 @@ export class Mocks {
 
     switch (type) {
       case 'file': {
-        const maxAge =
-          getMaxAgeFromHeaders(
-            normaliseHeaderKeys(headers, ['Cache-Control']),
-          ) || Number(config.maxAge);
-
         // Set custom headers
         for (const header in headers) {
           res.setHeader(header, headers[header]);
@@ -285,7 +278,9 @@ export class Mocks {
         if (!res.hasHeader('Access-Control-Allow-Origin')) {
           res.setHeader('Access-Control-Allow-Origin', '*');
         }
-        res.setHeader('Cache-Control', `public, max-age=${maxAge}`);
+        if (!res.hasHeader('Cache-Control')) {
+          res.setHeader('Cache-Control', `public, max-age=${config.maxAge}`);
+        }
 
         send(
           // @ts-expect-error - body is path to file (relative to mock file)
@@ -764,22 +759,4 @@ function normaliseHeaderKeys(headers, keys) {
   }
 
   return normalisedHeaders;
-}
-
-/**
- * Retrieve max-age in ms from "headers" Cache-Control string
- *
- * @param { { [key: string]: string } } headers
- * @returns { number }
- */
-function getMaxAgeFromHeaders(headers) {
-  const cacheControl = headers['Cache-Control'];
-
-  if (!cacheControl) {
-    return 0;
-  }
-
-  const maxAge = RE_MAX_AGE.exec(cacheControl);
-
-  return maxAge && maxAge[1] ? parseInt(maxAge[1], 10) * 1000 : 0;
 }
