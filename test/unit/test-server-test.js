@@ -137,7 +137,7 @@ describe('testServer', () => {
     testServer.disableNetwork(false);
   });
 
-  describe('mock()', () => {
+  describe('mockResponse()', () => {
     it('should respond to mocked json request', async () => {
       server = await testServer();
       server.mockResponse('/api/foo', { body: { foo: 'foo' } });
@@ -189,6 +189,18 @@ describe('testServer', () => {
       const res = await fetch('http://localhost:8080/foo');
       expect(res).to.exist;
       expect(res.status).to.equal(500);
+    });
+    it('should respect custom headers when responding to mocked file', async () => {
+      server = await testServer();
+      server.mockResponse('/foo', {
+        headers: { 'X-foo': 'foo', 'Cache-Control': 'private, max-age=2' },
+        body: './test/unit/fixtures/mock/test.json',
+      });
+      const response = await fetch('http://localhost:8080/foo');
+      expect(response.headers.get('Cache-Control')).to.equal(
+        'private, max-age=2',
+      );
+      expect(response.headers.get('X-Foo')).to.equal('foo');
     });
   });
 
