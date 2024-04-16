@@ -113,8 +113,7 @@ export async function transform(
     res.writeHead(200, {
       'Access-Control-Allow-Origin': '*',
       'Content-Length': Buffer.byteLength(code),
-      'Content-Type':
-        getType(getTypeFromPath(filePath) || filePath) || undefined,
+      'Content-Type': getType(filePath) || undefined,
     });
     res.end(code);
     res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
