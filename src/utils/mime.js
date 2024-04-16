@@ -17,6 +17,7 @@ const TYPES = {
   'font/ttf': ['.ttf'],
   'font/woff': ['.woff'],
   'font/woff2': ['.woff2'],
+  'video/mp4': ['.mp4'],
 };
 
 /**
