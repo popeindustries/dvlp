@@ -11,6 +11,7 @@ import {
 } from 'dvlp/internal';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { escapeRegExp } from '../utils/regexp.js';
+import path from 'node:path';
 import { syncBuiltinESMExports } from 'node:module';
 import { toBase64Url } from '../utils/base64Url.js';
 import workerThreads from 'node:worker_threads';
@@ -28,11 +29,18 @@ const reFileProtocol = new RegExp(
 
 export async function bootstrapElectron() {
   const electronWorkerData = getElectronWorkerData();
-  const { BrowserWindow } = await import('electron');
+  const { app, BrowserWindow } = await import('electron');
 
   interceptInProcess(electronWorkerData);
 
   try {
+    // Intercept app.getAppPath to return the directory of the main script instead of this file
+    app.getAppPath = new Proxy(app.getAppPath, {
+      apply(target, ctx, args) {
+        return path.dirname(electronWorkerData.main);
+      },
+    });
+
     /** @type { typeof Electron.WebContents } */
     // @ts-expect-error - use internal API to access internal WebContents class used by BrowserWindow and BrowserView
     const WebContents = process._linkedBinding(
