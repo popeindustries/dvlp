@@ -38,23 +38,27 @@ program
   .arguments('[path...]')
   .action(boot);
 
-program.parse(process.argv);
+program.allowUnknownOption(true).parse(process.argv);
 
 async function boot(path = [process.cwd()]) {
   try {
     const { server } = await import('dvlp');
     const options = program.opts();
 
-    await server(path, {
-      certsPath: options.ssl,
-      electron: options.electron,
-      hooksPath: options.hooks,
-      mockPath: options.mock,
-      port: options.port,
-      reload: options.reload,
-      silent: options.silent,
-      verbose: options.verbose,
-    });
+    await server(
+      path.filter((arg) => !arg.startsWith('-')),
+      {
+        argv: program.args.filter((arg) => arg.startsWith('-')),
+        certsPath: options.ssl,
+        electron: options.electron,
+        hooksPath: options.hooks,
+        mockPath: options.mock,
+        port: options.port,
+        reload: options.reload,
+        silent: options.silent,
+        verbose: options.verbose,
+      },
+    );
   } catch (err) {
     console.error(err);
     process.exit(1);
