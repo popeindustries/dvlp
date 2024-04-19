@@ -138,7 +138,7 @@ export async function bootstrapElectron() {
       options.transferList ??= [];
 
       args[0] = new URL(
-        `data:text/javascript,import '${workerPath}';import '${filePath}';`,
+        `data:text/javascript,import '${workerPath}';import '${!filePath.startsWith('file://') ? pathToFileURL(filePath) : filePath}';`,
       );
       options.workerData.dvlp = {
         hostOrigin: electronWorkerData.hostOrigin,
