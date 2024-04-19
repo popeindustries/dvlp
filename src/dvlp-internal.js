@@ -4,4 +4,5 @@ export { filePathToUrlPathname } from './utils/url.js';
 export { getDependencies } from './utils/module.js';
 export { getElectronWorkerData } from './electron-host/worker-data.js';
 export { interceptInProcess } from './utils/intercept-in-process.js';
+export { nodeResolve } from './resolver/index.js';
 export { default as config } from './config.js';

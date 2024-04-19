@@ -23,6 +23,7 @@ const define = {
   'global.$MOCK_CLIENT': `"${mockClient}"`,
   'global.$VERSION': `'${pkg.version}'`,
 };
+const external = ['electron', 'esbuild', 'fsevents', 'dvlp/internal'];
 let types = '';
 
 for (const typePath of glob.sync('src/**/_.d.ts')) {
@@ -75,7 +76,7 @@ await esbuild.build({
     './src/application-host/application-worker.js',
     './src/electron-host/electron-worker.js',
   ],
-  external: ['electron', 'esbuild', 'fsevents', 'dvlp/internal'],
+  external,
   format: 'esm',
   outdir: '.',
   platform: 'node',
@@ -90,7 +91,7 @@ await esbuild.build({
     './src/application-host/application-loader-legacy.js',
     './src/application-host/application-loader.js',
   ],
-  external: ['esbuild'],
+  external,
   format: 'esm',
   splitting: false,
   target: 'node18',
@@ -116,16 +117,4 @@ await esbuild.build({
       },
     },
   ],
-});
-
-await esbuild.build({
-  bundle: true,
-  define,
-  entryPoints: ['./src/electron-host/electron-entry.js'],
-  format: 'esm',
-  splitting: false,
-  target: 'node18',
-  outfile: './electron-entry.js',
-  packages: 'external',
-  platform: 'node',
 });

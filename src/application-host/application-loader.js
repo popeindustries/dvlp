@@ -4,7 +4,7 @@
 import esbuild from 'esbuild';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
-import { nodeResolve } from 'dvlp/resolver';
+import { nodeResolve } from 'dvlp/internal';
 
 const IS_WIN32 = process.platform === 'win32';
 const RE_EXTS = /\.(tsx?|json)$/;

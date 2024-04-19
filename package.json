@@ -14,7 +14,6 @@
     ".": "./src/dvlp.js",
     "./internal": "./src/dvlp-internal.js",
     "./dvlp-internal.js": "./src/dvlp-internal.js",
-    "./resolver": "./src/resolver/index.js",
     "./test-browser": "./src/dvlp-test-browser.js",
     "./dvlp-test-browser.js": "./src/dvlp-test-browser.js",
     "./test": "./src/dvlp-test.js",
