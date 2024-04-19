@@ -20,7 +20,7 @@ const RE_DATA_URL = /^data:text\/html;([^,]+,)?/;
 const RE_HTTP_URL = /^https?:\/\//;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const workerPath = join(__dirname, './electron-worker.js');
+const workerPath = pathToFileURL(join(__dirname, './electron-worker.js'));
 const cwd = pathToFileURL(process.cwd()).href;
 const reFileProtocol = new RegExp(
   `(?<=(href|src)=["|'])(${escapeRegExp(cwd)})`,
@@ -137,7 +137,9 @@ export async function bootstrapElectron() {
       options.workerData ??= {};
       options.transferList ??= [];
 
-      args[0] = workerPath;
+      args[0] = new URL(
+        `data:text/javascript,import '${workerPath}';import '${filePath}';`,
+      );
       options.workerData.dvlp = {
         hostOrigin: electronWorkerData.hostOrigin,
         main: filePath,

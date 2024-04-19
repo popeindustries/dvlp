@@ -25,7 +25,7 @@ const require = createRequire(import.meta.url);
 export function createElectronEntryFile(filePath) {
   writeFileSync(
     filePath,
-    `import('dvlp/internal').then((m) => m.bootstrapElectron());`,
+    `import { bootstrapElectron } from 'dvlp/internal'; bootstrapElectron();`,
   );
 }
 

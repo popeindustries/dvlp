@@ -11,5 +11,3 @@ interceptInProcess({
     messagePort.postMessage(msg),
   serializedMocks: workerData.dvlp.serializedMocks,
 });
-
-await import(workerData.dvlp.main);
