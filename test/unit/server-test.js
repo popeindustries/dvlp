@@ -719,7 +719,7 @@ describe('server', () => {
           }).then((srvr) => {
             server = srvr;
             const client = http2.connect('https://localhost:443');
-            const req = client.request({ ':path': '/dvlpreload' });
+            const req = client.request({ ':path': '/dvlp/reload' });
             req.setEncoding('utf8');
             req.on('data', (chunk) => {
               expect(chunk).to.include('retry: 5000');

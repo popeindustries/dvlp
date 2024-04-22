@@ -105,7 +105,7 @@ describe('patch', () => {
         patchResponse(req, res, {
           footerScript: {
             string: 'test inject',
-            url: 'http://localhost:3529/dvlpreload',
+            url: 'http://localhost:3529/dvlp/reload',
           },
           headerScript: {
             string: 'test inject',
@@ -124,7 +124,7 @@ describe('patch', () => {
           </head>`,
         );
         expect(getBody(res)).to.include(
-          "default-src 'self' 'sha256-12345' 'nonce-dvlp'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://127.0.0.1:5635/ https://some-link.com/ http://localhost:3529/dvlpreload; img-src 'self' data:; font-src 'self' data:; ",
+          "default-src 'self' 'sha256-12345' 'nonce-dvlp'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://127.0.0.1:5635/ https://some-link.com/ http://localhost:3529/dvlp/reload; img-src 'self' data:; font-src 'self' data:; ",
         );
       });
       it('should not inject updated CSP meta tag into buffered html response if "unsafe-inline"', () => {
@@ -133,7 +133,7 @@ describe('patch', () => {
         patchResponse(req, res, {
           footerScript: {
             string: 'test inject',
-            url: 'http://localhost:3529/dvlpreload',
+            url: 'http://localhost:3529/dvlp/reload',
           },
           headerScript: {
             string: 'test inject',
@@ -152,7 +152,7 @@ describe('patch', () => {
           </head>`,
         );
         expect(getBody(res)).to.include(
-          "default-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://127.0.0.1:5635/ https://some-link.com/ http://localhost:3529/dvlpreload; img-src 'self' data:; font-src 'self' data:; ",
+          "default-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://127.0.0.1:5635/ https://some-link.com/ http://localhost:3529/dvlp/reload; img-src 'self' data:; font-src 'self' data:; ",
         );
       });
     });
@@ -164,7 +164,7 @@ describe('patch', () => {
         patchResponse(req, res, {
           footerScript: {
             string: 'test inject',
-            url: 'http://localhost:3529/dvlpreload',
+            url: 'http://localhost:3529/dvlp/reload',
           },
           headerScript: {
             string: 'test inject',
@@ -175,7 +175,7 @@ describe('patch', () => {
           "default-src 'self'; connect-src 'self'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self' 'nonce-dvlp'; connect-src 'self' http://localhost:3529/dvlpreload; ",
+          "default-src 'self' 'nonce-dvlp'; connect-src 'self' http://localhost:3529/dvlp/reload; ",
         );
       });
       it('should inject csp header when no connect-src', () => {
@@ -184,12 +184,12 @@ describe('patch', () => {
         patchResponse(req, res, {
           footerScript: {
             string: 'test inject',
-            url: 'http://localhost:3529/dvlpreload',
+            url: 'http://localhost:3529/dvlp/reload',
           },
         });
         res.setHeader('Content-Security-Policy', "default-src 'self'");
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self' http://localhost:3529/dvlpreload 'nonce-dvlp'; ",
+          "default-src 'self' http://localhost:3529/dvlp/reload 'nonce-dvlp'; ",
         );
       });
       it('should inject csp header with writeHead when connect-src', () => {
@@ -198,14 +198,14 @@ describe('patch', () => {
         patchResponse(req, res, {
           footerScript: {
             string: 'test inject',
-            url: 'http://localhost:3529/dvlpreload',
+            url: 'http://localhost:3529/dvlp/reload',
           },
         });
         res.writeHead(200, {
           'Content-Security-Policy': "default-src 'self'; connect-src 'self'",
         });
         expect(res._header).to.contain(
-          "default-src 'self' 'nonce-dvlp'; connect-src 'self' http://localhost:3529/dvlpreload; ",
+          "default-src 'self' 'nonce-dvlp'; connect-src 'self' http://localhost:3529/dvlp/reload; ",
         );
       });
       it('should inject csp header with writeHead when no connect-src', () => {
@@ -214,12 +214,12 @@ describe('patch', () => {
         patchResponse(req, res, {
           footerScript: {
             string: 'test inject',
-            url: 'http://localhost:3529/dvlpreload',
+            url: 'http://localhost:3529/dvlp/reload',
           },
         });
         res.writeHead(200, { 'Content-Security-Policy': "default-src 'self'" });
         expect(res._header).to.contain(
-          "default-src 'self' http://localhost:3529/dvlpreload 'nonce-dvlp'; ",
+          "default-src 'self' http://localhost:3529/dvlp/reload 'nonce-dvlp'; ",
         );
       });
       it('should not inject script nonce in csp header when no nonce/sha and unsafe-inline', () => {
@@ -228,7 +228,7 @@ describe('patch', () => {
         patchResponse(req, res, {
           footerScript: {
             string: 'test inject',
-            url: 'http://localhost:3529/dvlpreload',
+            url: 'http://localhost:3529/dvlp/reload',
           },
         });
         res.setHeader(
@@ -236,7 +236,7 @@ describe('patch', () => {
           "default-src 'self'; script-src 'self' 'unsafe-inline'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'unsafe-inline'; ",
+          "default-src 'self' http://localhost:3529/dvlp/reload; script-src 'self' 'unsafe-inline'; ",
         );
       });
       it('should inject script hash in csp header when no nonce/sha and missing unsafe-inline', () => {
@@ -245,7 +245,7 @@ describe('patch', () => {
         patchResponse(req, res, {
           footerScript: {
             string: 'test inject',
-            url: 'http://localhost:3529/dvlpreload',
+            url: 'http://localhost:3529/dvlp/reload',
           },
           headerScript: {
             string: 'test inject',
@@ -256,7 +256,7 @@ describe('patch', () => {
           "default-src 'self'; script-src 'self'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'nonce-dvlp'; ",
+          "default-src 'self' http://localhost:3529/dvlp/reload; script-src 'self' 'nonce-dvlp'; ",
         );
       });
       it('should inject script hash in csp header when nonce', () => {
@@ -265,7 +265,7 @@ describe('patch', () => {
         patchResponse(req, res, {
           footerScript: {
             string: 'test inject',
-            url: 'http://localhost:3529/dvlpreload',
+            url: 'http://localhost:3529/dvlp/reload',
           },
           headerScript: {
             string: 'test inject',
@@ -276,7 +276,7 @@ describe('patch', () => {
           "default-src 'self'; script-src 'self' 'nonce-foo'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'nonce-foo' 'nonce-dvlp'; ",
+          "default-src 'self' http://localhost:3529/dvlp/reload; script-src 'self' 'nonce-foo' 'nonce-dvlp'; ",
         );
       });
       it('should inject script hash in csp header when sha', () => {
@@ -285,7 +285,7 @@ describe('patch', () => {
         patchResponse(req, res, {
           footerScript: {
             string: 'test inject',
-            url: 'http://localhost:3529/dvlpreload',
+            url: 'http://localhost:3529/dvlp/reload',
           },
           headerScript: {
             string: 'test inject',
@@ -296,7 +296,7 @@ describe('patch', () => {
           "default-src 'self'; script-src 'self' 'sha512-yyyyyy'",
         );
         expect(res.getHeader('Content-Security-Policy')).to.include(
-          "default-src 'self' http://localhost:3529/dvlpreload; script-src 'self' 'sha512-yyyyyy' 'nonce-dvlp'; ",
+          "default-src 'self' http://localhost:3529/dvlp/reload; script-src 'self' 'sha512-yyyyyy' 'nonce-dvlp'; ",
         );
       });
       it('should set cache-control headers for project files', () => {

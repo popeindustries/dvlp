@@ -64,7 +64,6 @@ const config = {
   latency: 50,
   maxAge: '60',
   maxAgeLong: '3600',
-  reloadEndpoint: '/dvlpreload',
   serverStartTimeout: TESTING ? 4000 : 10000,
   testing: TESTING,
   typesByExtension: {

@@ -19,7 +19,6 @@ declare interface Config {
   latency: number;
   maxAge: string;
   maxAgeLong: string;
-  reloadEndpoint: string;
   serverStartTimeout: number;
   testing: boolean;
   typesByExtension: {

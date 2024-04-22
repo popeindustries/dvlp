@@ -482,5 +482,5 @@ export class Dvlp {
  * @param { IncomingMessage | Http2ServerRequest } req
  */
 function isReloadRequest(req) {
-  return req.url && req.url.startsWith(config.reloadEndpoint);
+  return req.url && req.url.startsWith('/dvlp/reload');
 }

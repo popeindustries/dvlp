@@ -1,4 +1,3 @@
-import config from '../config.js';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,5 +16,5 @@ const reloadClient =
  * @param { number } port
  */
 export function getReloadClientEmbed(port) {
-  return reloadClient.replace(/\$RELOAD_PATHNAME/g, config.reloadEndpoint);
+  return reloadClient.replace(/\$RELOAD_PATHNAME/g, '/dvlp/reload');
 }
