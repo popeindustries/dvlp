@@ -8,6 +8,7 @@
 
   const originalXMLHttpRequestOpen = window.XMLHttpRequest.prototype.open;
   const originalFetch = window.fetch;
+  // Note: empty array replaced in mock/index.js#load
   /** @type {Array<MockResponseData | MockStreamData>} */
   const cache = [].map(function (mockData) {
     mockData.originRegex = new RegExp(mockData.originRegex);
@@ -23,7 +24,6 @@
   let networkDisabled = false;
   let reroute = false;
 
-  // IE11 friendly Proxy-less patch
   window.XMLHttpRequest.prototype.open = function open(method, href) {
     const hrefAndMock = matchHref(href);
     href = hrefAndMock[0];
@@ -35,7 +35,7 @@
         const xhr = this;
         const mockResponse = resolveMockResponse(mockData);
 
-        this.send = function send() {
+        xhr.send = function send() {
           // Hang
           if (mockResponse.status === 0) {
             return;
@@ -99,11 +99,9 @@
   if (typeof Proxy !== 'undefined') {
     if (typeof fetch !== 'undefined') {
       window.fetch = new Proxy(window.fetch, {
-        apply: function (target, ctx, args) {
+        apply(target, ctx, args) {
           const options = args[1] || {};
-          const hrefAndMock = matchHref(args[0]);
-          const href = hrefAndMock[0];
-          const mockData = hrefAndMock[1];
+          const [href, mockData] = matchHref(args[0]);
 
           args[0] = href;
 
@@ -140,11 +138,11 @@
               return Promise.resolve(res);
             } else if (mockData.callback) {
               return Reflect.apply(target, ctx, args)
-                .then(function (response) {
+                .then((response) => {
                   setTimeout(mockData.callback, 0);
                   return response;
                 })
-                .catch(function (err) {
+                .catch((err) => {
                   setTimeout(mockData.callback, 0);
                   throw err;
                 });
@@ -159,13 +157,41 @@
     if (typeof EventSource !== 'undefined') {
       window.EventSource = new Proxy(window.EventSource, {
         construct: function (target, args) {
-          if (!args[0].includes('dvlpreload')) {
-            args[0] = matchHref(args[0])[0];
+          const stream = args[0];
+          const [href, mockData] = matchHref(args[0]);
+          const isLocal = mockData && mockData.handlers !== undefined;
+
+          if (mockData) {
             console.log(
-              'mocking EventSource response (with remote data) for: ' + args[0],
+              `mocking EventSource response (with ${isLocal ? 'local' : 'remote'} data) for: ` +
+                args[0],
             );
           }
-          return Reflect.construct(target, args);
+
+          args[0] = href;
+
+          const es = Reflect.construct(target, args);
+
+          if (isLocal) {
+            es.addEventListener = new Proxy(es.addEventListener, {
+              apply(target, ctx, args) {
+                const [event, callback] = args;
+
+                if (event !== 'open' && event !== 'error') {
+                  mockData.handlers[event] = callback;
+                }
+
+                return Reflect.apply(target, ctx, args);
+              },
+            });
+            Object.defineProperty(mockData.handlers, 'message', {
+              get() {
+                return es.onmessage;
+              },
+            });
+          }
+
+          return es;
         },
       });
     }
@@ -173,11 +199,40 @@
     if (typeof WebSocket !== 'undefined') {
       window.WebSocket = new Proxy(window.WebSocket, {
         construct: function (target, args) {
-          args[0] = matchHref(args[0])[0];
-          console.log(
-            'mocking WebSocket response (with remote data) for: ' + args[0],
-          );
-          return Reflect.construct(target, args);
+          const [href, mockData] = matchHref(args[0]);
+          const isLocal = mockData && mockData.handlers !== undefined;
+
+          if (mockData) {
+            console.log(
+              `mocking WebSocket response (with ${isLocal ? 'local' : 'remote'} data) for: ` +
+                args[0],
+            );
+          }
+
+          args[0] = href;
+
+          const ws = Reflect.construct(target, args);
+
+          if (isLocal) {
+            ws.addEventListener = new Proxy(ws.addEventListener, {
+              apply(target, ctx, args) {
+                const [event, callback] = args;
+
+                if (event === 'message') {
+                  mockData.handlers.message = callback;
+                }
+
+                return Reflect.apply(target, ctx, args);
+              },
+            });
+            Object.defineProperty(mockData.handlers, 'message', {
+              get() {
+                return ws.onmessage;
+              },
+            });
+          }
+
+          return ws;
         },
       });
     }
@@ -185,7 +240,7 @@
 
   window.dvlp = {
     events,
-    cache: cache,
+    cache,
     /**
      * Disable all external network connections
      * and optionally reroute all external requests to this server
@@ -193,19 +248,21 @@
      * @param { boolean } [rerouteAllRequests]
      * @returns { void }
      */
-    disableNetwork: function disableNetwork(rerouteAllRequests) {
+    disableNetwork(rerouteAllRequests) {
       networkDisabled = true;
       reroute = rerouteAllRequests || false;
     },
+
     /**
      * Re-enable all external network connections
      *
      * @returns { void }
      */
-    enableNetwork: function enableNetwork() {
+    enableNetwork() {
       networkDisabled = false;
       reroute = false;
     },
+
     /**
      * Add mock response for "req"
      *
@@ -215,22 +272,13 @@
      * @param { () => void } [onMockCallback]
      * @returns { () => void } remove mock instance
      */
-    mockResponse: function mockResponse(req, res, once, onMockCallback) {
-      const ignoreSearch =
-        (req &&
-          typeof req === 'object' &&
-          req.url !== undefined &&
-          req.type === undefined &&
-          req.ignoreSearch) ||
-        false;
+    mockResponse(req, res, once = false, onMockCallback) {
+      const ignoreSearch = (isMockRequest(req) && req.ignoreSearch) || false;
       const url = getUrl(req);
       const originRegex = new RegExp(
-        url.origin
-          .replace(/http:|https:/, 'https?:')
-          .replace('ws:', 'wss?:')
-          .replace('//', '\\/\\/'),
+        url.origin.replace(/http:|https:/, 'https?:').replace('//', '\\/\\/'),
       );
-      const pathRegex = new RegExp(url.pathname.replace(/\//g, '\\/'));
+      const pathRegex = new RegExp(url.pathname.replaceAll(/\//g, '\\/'));
 
       if (typeof res !== 'function') {
         if (res && !res.body) {
@@ -241,37 +289,176 @@
       const mock = {
         callback: onMockCallback,
         href: url.href,
-        ignoreSearch: ignoreSearch,
-        once: once || false,
-        originRegex: originRegex,
-        pathRegex: pathRegex,
+        ignoreSearch,
+        once,
+        originRegex,
+        pathRegex,
         response: res,
         search: url.search,
       };
 
       cache.unshift(mock);
 
-      return function () {
+      return () => {
         remove(mock);
       };
     },
+
+    /**
+     * Register mock push "events" for "stream"
+     *
+     * @param { string | MockPushStream } stream
+     * @param { MockPushEvent | Array<MockPushEvent> } events
+     */
+    mockPushEvents(stream, events) {
+      if (!Array.isArray(events)) {
+        events = [events];
+      }
+      const ignoreSearch =
+        (isMockRequest(stream) && stream.ignoreSearch) || false;
+      const url = getUrl(stream);
+      const originRegex = new RegExp(
+        url.origin.replace(/ws:|wss:/, 'wss?:').replace('//', '\\/\\/'),
+      );
+      const pathRegex = new RegExp(url.pathname.replaceAll(/\//g, '\\/'));
+      /** @type { MockStreamDataType } */
+      const type = originRegex.source.includes('ws') ? 'ws' : 'es';
+      // Default to socket.io protocol for ws
+      const protocol = (isMockRequest(stream) && stream.protocol) || type;
+      /** @type { MockStreamData["events"] } */
+      const eventsData = {};
+
+      for (const event of events) {
+        // Ignore events without a name
+        if (event.name) {
+          /** @type { MockStreamEventData["options"] } */
+          const options = { delay: 0, ...event.options, protocol };
+
+          /** @type { Array<MockStreamEventData> } */
+          const sequence = [];
+
+          if (event.sequence) {
+            for (const sequenceEvent of event.sequence) {
+              sequence.push({
+                message: sequenceEvent.message || '',
+                options: { delay: 0, ...sequenceEvent.options, protocol },
+              });
+            }
+          } else {
+            sequence.push({
+              name: event.name,
+              message: event.message || '',
+              options,
+            });
+          }
+
+          if (options.connect) {
+            const connectEvent = eventsData.connect || [];
+
+            connectEvent.push(...sequence);
+            eventsData.connect = connectEvent;
+          }
+
+          eventsData[event.name] = sequence;
+        }
+      }
+
+      /** @type { MockStreamData & { handlers: Record<string, (event: MessageEvent) => void> } } */
+      const mock = {
+        href: url.href,
+        originRegex,
+        pathRegex,
+        search: url.search,
+        ignoreSearch,
+        events: eventsData,
+        handlers: {},
+      };
+
+      this.cache.unshift(mock);
+
+      return () => {
+        delete mock.handlers;
+        remove(mock);
+      };
+    },
+
     /**
      * Trigger EventSource/WebSocket event
      *
      * @param { string } stream
      * @param { string | { message: string | object, options: { event: string, id: string } } } event
      */
-    pushEvent: function pushEvent(stream, event) {
-      originalFetch('/dvlp/push-event', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ stream: stream, event: event }),
-      });
+    async pushEvent(stream, event) {
+      const [href, mockData] = matchHref(stream);
+
+      if (!mockData) {
+        throw Error(`no push event mocks registerd for ${stream}`);
+      }
+
+      if (!mockData.handlers) {
+        return originalFetch('/dvlp/push-event', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          // TODO: handle binary?
+          body: JSON.stringify({ stream, event }),
+        });
+      }
+
+      if (typeof event === 'string') {
+        const eventSequence = mockData.events[event];
+
+        if (eventSequence) {
+          for (const event of eventSequence) {
+            const {
+              message,
+              options: { delay = 0, ...options },
+            } = event;
+
+            await sleep(delay);
+
+            const handler =
+              mockData.handlers[options.event] || mockData.handlers.message;
+            const msg = new MessageEvent('message', {
+              data: message,
+              lastEventId: options.id || '',
+            });
+            handler(msg);
+          }
+        }
+      } else {
+        const { message, options } = event;
+        const handler =
+          mockData.handlers[options.event] || mockData.handlers.message;
+        const msg = new MessageEvent('message', {
+          data: message,
+          lastEventId: options.id || '',
+        });
+        handler(msg);
+      }
     },
   };
+
+  function sleep(duration) {
+    return new Promise((resolve) => setTimeout(resolve, duration));
+  }
+
+  /**
+   * Determine if "req" is a MockRequest
+   *
+   * @param { any } req
+   * @returns { req is MockRequest }
+   */
+  function isMockRequest(req) {
+    return (
+      req &&
+      typeof req === 'object' &&
+      req.url !== undefined &&
+      req.type === undefined
+    );
+  }
 
   /**
    * Retrieve resolved href and mock data for "href"
@@ -281,7 +468,8 @@
    */
   function matchHref(href) {
     const url = getUrl(href);
-    if (url.pathname === '/dvlpreload') {
+
+    if (url.pathname === '/dvlp/reload') {
       return [href];
     }
 
@@ -410,7 +598,6 @@
 
   /**
    * Determine if search params are equal
-   * IE11 friendly
    *
    * @param { string } search1
    * @param { string } search2
@@ -468,7 +655,7 @@
   }
 
   /**
-   * Parse original href from href with `??dvlpmock=` encoded href
+   * Parse original href from href with `?dvlpmock=` encoded href
    *
    * @param { string } hrefOrRequest
    * @returns { string }

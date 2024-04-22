@@ -1,6 +1,6 @@
 declare interface PushClient {
   on(event: string, callback: (event: { data: string }) => void): void;
-  send(msg: string, options?: PushEventOptions): void;
+  send(msg: Buffer | string, options?: PushEventOptions): void;
   removeAllListeners(): void;
   close(): void;
 }
@@ -10,14 +10,14 @@ declare interface PushStream {
   type: string;
 }
 
-declare interface PushEventOptions {
-  event?: string;
-  id?: string;
-  namespace?: string;
-  protocol?: string;
+declare interface PushEvent {
+  message: Buffer | string | Record<string, unknown>;
+  options?: PushEventOptions;
 }
 
-declare interface PushEvent {
-  message: string | { [key: string]: any };
-  options?: PushEventOptions;
+declare interface PushEventOptions {
+  id?: string; // EventSource ID
+  event?: string; // EventSource event OR Socket.IO event
+  namespace?: string; // Socket.IO namespace
+  protocol?: string; // Socket.IO protocol
 }

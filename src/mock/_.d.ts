@@ -56,7 +56,7 @@ declare interface MockResponseData {
 
 declare interface MockStreamEventData {
   name?: string;
-  message: string | { [key: string]: any };
+  message: Buffer | string | Record<string, any>;
   options: MockPushEventOptions & {
     protocol?: string;
   };
@@ -84,9 +84,9 @@ declare interface MockRequest {
 declare type MockResponseHandler = (req: Req, res: Res) => void;
 
 declare interface MockResponse {
-  body: string | { [key: string]: any };
+  body: string | Record<string, any>;
   hang?: boolean;
-  headers?: { [key: string]: any };
+  headers?: Record<string, any>;
   error?: boolean;
   missing?: boolean;
   offline?: boolean;
@@ -121,7 +121,7 @@ declare interface MockPushEventOptions {
 
 declare interface MockPushEvent {
   name: string;
-  message?: string | { [key: string]: any };
+  message?: Buffer | string | Record<string, any>;
   sequence?: Array<MockPushEvent>;
   options?: MockPushEventOptions;
 }

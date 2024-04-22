@@ -1,6 +1,20 @@
-import { MockRequest, MockResponse, MockResponseHandler, PushEvent } from './dvlp.js';
+import {
+  MockPushEvent,
+  MockPushStream,
+  MockRequest,
+  MockResponse,
+  MockResponseHandler,
+  PushEvent,
+} from './dvlp.js';
 
-export { MockRequest, MockResponse, MockResponseHandler, PushEvent };
+export {
+  MockPushEvent,
+  MockPushStream,
+  MockRequest,
+  MockResponse,
+  MockResponseHandler,
+  PushEvent,
+};
 
 export namespace testBrowser {
   /**
@@ -21,6 +35,13 @@ export namespace testBrowser {
     once?: boolean,
     onMockCallback?: () => void,
   ): () => void;
+  /**
+   * Register mock push "events" for "stream"
+   */
+  function mockPushEvents(
+    stream: string | MockPushStream,
+    events: MockPushEvent | Array<MockPushEvent>,
+  ): void;
   /**
    * Push data to WebSocket/EventSource clients
    * A string passed as `event` will be handled as a named mock push event

@@ -108,15 +108,15 @@ export class Mocks {
       events = [events];
     }
     const ignoreSearch =
-      (isMockPushStream(stream) && stream.ignoreSearch) || false;
+      (isMockRequest(stream) && stream.ignoreSearch) || false;
     const filePath =
-      (isMockPushStream(stream) && stream.filePath) || path.resolve('mock');
+      (isMockRequest(stream) && stream.filePath) || path.resolve('mock');
     const [url, originRegex, pathRegex, paramsMatch, searchParams] =
       getUrlSegmentsForMatching(stream, ignoreSearch);
     /** @type { MockStreamDataType } */
     const type = originRegex.source.includes('ws') ? 'ws' : 'es';
     // Default to socket.io protocol for ws
-    const protocol = (isMockPushStream(stream) && stream.protocol) || type;
+    const protocol = (isMockRequest(stream) && stream.protocol) || type;
     /** @type { MockStreamData["events"] } */
     const eventsData = {};
 
@@ -696,21 +696,6 @@ function isMockRequest(req) {
     typeof req === 'object' &&
     req.url !== undefined &&
     req.type === undefined
-  );
-}
-
-/**
- * Determine if "req" is a MockPushStream
- *
- * @param { any } req
- * @returns { req is MockPushStream }
- */
-function isMockPushStream(req) {
-  return (
-    req &&
-    typeof req === 'object' &&
-    req.url !== undefined &&
-    req.type !== undefined
   );
 }
 

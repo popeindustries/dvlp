@@ -3,6 +3,7 @@ import Debug from 'debug';
 import deflate from 'permessage-deflate';
 import { error } from '../utils/log.js';
 import { EventSource } from '../reload/event-source.js';
+// @ts-expect-error - missing types
 import WebSocket from 'faye-websocket';
 
 const RE_SOCKETIO_PROTOCOL = /socket\.?io|EIO/;
@@ -23,7 +24,7 @@ const debug = Debug('dvlp:push');
 export function connectClient(stream, ...args) {
   const { type, url } = getStream(stream);
   const cacheKey = getUrlCacheKey(getUrl(url));
-  const clients = cache.get(cacheKey) || new Set();
+  const clients = cache.get(cacheKey) ?? new Set();
   /** @type { PushClient } */
   let client;
 
@@ -98,23 +99,26 @@ export function pushEvent(stream, event) {
 
   let { message, options } = event;
 
-  if (!(typeof message === 'string')) {
-    try {
-      message = JSON.stringify(message);
-    } catch (err) {
-      return error(`unable to stringify message for push event`, message);
+  if (!Buffer.isBuffer(message)) {
+    if (typeof message !== 'string') {
+      try {
+        message = JSON.stringify(message);
+      } catch (err) {
+        return error(`unable to stringify message for push event`, message);
+      }
     }
-  }
-  if (type === 'ws' && options !== undefined) {
-    const { event = '', namespace = '/', protocol } = options;
 
-    // Handle socket.io protocol
-    // https://github.com/socketio/socket.io-protocol/blob/master/Readme.md
-    if (protocol && RE_SOCKETIO_PROTOCOL.test(protocol)) {
-      message = `42${namespace},["${event}",${message}]`;
-      // message = `${Buffer.from(message).length}:${message}`;
+    if (type === 'ws' && options !== undefined) {
+      const { event = '', namespace = '/', protocol } = options;
+
+      // Handle socket.io protocol
+      // https://github.com/socketio/socket.io-protocol/blob/master/Readme.md
+      if (protocol && RE_SOCKETIO_PROTOCOL.test(protocol)) {
+        // TODO: handle binary message
+        message = `42${namespace},["${event}",${message}]`;
+      }
+      options = undefined;
     }
-    options = undefined;
   }
 
   debug(
@@ -123,6 +127,7 @@ export function pushEvent(stream, event) {
     } connected on ${url}`,
   );
   debug(message);
+
   for (const client of clients) {
     client.send(message, options);
   }

@@ -30,6 +30,15 @@ export const testBrowser = {
     return window.dvlp.mockResponse(req, res, once, onMockCallback);
   },
   /**
+   * Register mock push "events" for "stream"
+   *
+   * @param { string | MockPushStream } stream
+   * @param { MockPushEvent | Array<MockPushEvent> } events
+   */
+  mockPushEvents(stream, events) {
+    return window.dvlp.mockPushEvents(stream, events);
+  },
+  /**
    * Trigger EventSource/WebSocket event
    *
    * @param { string } stream
