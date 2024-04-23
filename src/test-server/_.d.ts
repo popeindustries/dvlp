@@ -46,6 +46,7 @@ declare class TestServer {
   mockPushEvents(
     stream: string | MockPushStream,
     events: MockPushEvent | Array<MockPushEvent>,
+    onSendCallback?: (data: any) => void,
   ): void;
   /**
    * Push data to WebSocket/EventSource clients

@@ -29,7 +29,7 @@ export function connectClient(stream, ...args) {
   let client;
 
   if (type === 'ws') {
-    const [req, socket, body] = args;
+    const [req, socket, body, onSendCallback] = args;
     const isSocketio = RE_SOCKETIO_PROTOCOL.test(req.url);
     const extensionsHeaders = req.headers['Sec-WebSocket-Extensions'];
     const extensions =
@@ -40,6 +40,8 @@ export function connectClient(stream, ...args) {
     client = new WebSocket(req, socket, body, [], { extensions });
     client.on('message', (/** @type { { data: string } } */ event) => {
       debug('received ws message', event.data);
+
+      onSendCallback?.(event.data);
 
       // Handle Socket.io channel protocol
       // ex: 40/channel?somequery=foo

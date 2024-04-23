@@ -4,7 +4,8 @@ import { testServer } from '../../src/dvlp-test.js';
 import websocket from 'faye-websocket';
 
 const { Client: WebSocket } = websocket;
-let es, server, ws;
+let server;
+let es, ws;
 
 function sleep(dur) {
   return new Promise((resolve) => {
@@ -284,6 +285,17 @@ describe('testServer', () => {
           expect(event.data).to.equal('hi');
           done();
         });
+      });
+    });
+    it('should register WebSocket onSend callback', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        server.mockPushEvents('ws://localhost:8080/socket', [], (data) => {
+          expect(data).to.equal('hi');
+          done();
+        });
+        ws = new WebSocket('ws://localhost:8080/socket');
+        ws.send('hi');
       });
     });
     it('should push mock event via EventSource', (done) => {

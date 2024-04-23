@@ -231,6 +231,16 @@
             });
           }
 
+          if (mockData && mockData.callback) {
+            ws.send = new Proxy(ws.send, {
+              apply(target, ctx, args) {
+                const result = Reflect.apply(target, ctx, args);
+                mockData.callback(args[0]);
+                return result;
+              },
+            });
+          }
+
           return ws;
         },
       });
@@ -304,8 +314,10 @@
      *
      * @param { string | MockPushStream } stream
      * @param { MockPushEvent | Array<MockPushEvent> } events
+     * @param { () => void } [onSendCallback]
+     * @returns { () => void } remove mock instance
      */
-    mockPushEvents(stream, events) {
+    mockPushEvents(stream, events, onSendCallback) {
       if (!Array.isArray(events)) {
         events = [events];
       }
@@ -358,7 +370,7 @@
         }
       }
 
-      /** @type { MockStreamData & { handlers: Record<string, (event: MessageEvent) => void> } } */
+      /** @type { DeserializedMock & { callback?: (data: any) => void; handlers: Record<string, (event: MessageEvent) => void> } } */
       const mock = {
         href: url.href,
         originRegex,
@@ -367,6 +379,7 @@
         ignoreSearch,
         events: eventsData,
         handlers: {},
+        callback: onSendCallback,
       };
 
       this.cache.unshift(mock);

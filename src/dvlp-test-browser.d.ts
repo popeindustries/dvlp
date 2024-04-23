@@ -41,7 +41,8 @@ export namespace testBrowser {
   function mockPushEvents(
     stream: string | MockPushStream,
     events: MockPushEvent | Array<MockPushEvent>,
-  ): void;
+    onSendCallback?: (data: any) => void,
+  ): () => void;
   /**
    * Push data to WebSocket/EventSource clients
    * A string passed as `event` will be handled as a named mock push event

@@ -34,9 +34,11 @@ export const testBrowser = {
    *
    * @param { string | MockPushStream } stream
    * @param { MockPushEvent | Array<MockPushEvent> } events
+   * @param { (data: any) => void } [onSendCallback]
+   * @returns { () => void } remove mock instance
    */
-  mockPushEvents(stream, events) {
-    return window.dvlp.mockPushEvents(stream, events);
+  mockPushEvents(stream, events, onSendCallback) {
+    return window.dvlp.mockPushEvents(stream, events, onSendCallback);
   },
   /**
    * Trigger EventSource/WebSocket event

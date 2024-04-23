@@ -23,6 +23,8 @@ export class TestServer {
   #connections = new Map();
   /** @type { HttpServer | undefined } */
   #server;
+  /** @type { Record<string, (data: any) => void> } */
+  #onSendCallbacks = {};
 
   /**
    * Constructor
@@ -180,22 +182,24 @@ export class TestServer {
       });
       this.#server.on('upgrade', (req, socket, body) => {
         if (WebSocket.isWebSocket(req)) {
-          const url = /** @type { string } */ (req.url);
+          const url = new URL(
+            /** @type { string } */ (req.url),
+            `ws://${req.headers.host}`,
+          );
+          const callback = this.#onSendCallbacks[decodeURIComponent(url.href)];
 
           connectClient(
             {
-              url,
+              url: url.href,
               type: 'ws',
             },
             req,
             socket,
             body,
+            callback,
           );
 
-          this.pushEvent(
-            new URL(url, `ws://${req.headers.host}`).href,
-            'connect',
-          );
+          this.pushEvent(url.href, 'connect');
         }
       });
 
@@ -230,9 +234,14 @@ export class TestServer {
    *
    * @param { string | MockPushStream } stream
    * @param { MockPushEvent | Array<MockPushEvent> } events
+   * @param { (data: any) => void } [onSendCallback] - WS client send callback
    * @returns { () => void } remove mock
    */
-  mockPushEvents(stream, events) {
+  mockPushEvents(stream, events, onSendCallback) {
+    if (onSendCallback) {
+      const key = typeof stream === 'string' ? stream : stream.url;
+      this.#onSendCallbacks[key] = onSendCallback;
+    }
     return this.mocks.addPushEvents(stream, events);
   }
 
