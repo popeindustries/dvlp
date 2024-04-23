@@ -22,7 +22,6 @@
     return events;
   }, {});
   let networkDisabled = false;
-  let reroute = false;
 
   window.XMLHttpRequest.prototype.open = function open(method, href) {
     const hrefAndMock = matchHref(href);
@@ -243,14 +242,11 @@
     cache,
     /**
      * Disable all external network connections
-     * and optionally reroute all external requests to this server
      *
-     * @param { boolean } [rerouteAllRequests]
      * @returns { void }
      */
-    disableNetwork(rerouteAllRequests) {
+    disableNetwork() {
       networkDisabled = true;
-      reroute = rerouteAllRequests || false;
     },
 
     /**
@@ -260,7 +256,6 @@
      */
     enableNetwork() {
       networkDisabled = false;
-      reroute = false;
     },
 
     /**
@@ -510,10 +505,7 @@
         '?dvlpmock=' +
         encodeURIComponent(url.href);
     } else if (location.host !== url.host) {
-      if (reroute) {
-        url.host = location.host;
-        href = url.href;
-      } else if (networkDisabled) {
+      if (networkDisabled) {
         throw Error(
           'network connections disabled. Unable to request ' +
             parseOriginalHref(href),
