@@ -567,10 +567,14 @@
   /**
    * Parse "href" into URL-like object
    *
-   * @param { string | Request } href
-   * @returns { URL | { href: string, protocol: string, origin: string, pathname: string, search: string } }
+   * @param { string | URL | Request } href
+   * @returns { URL }
    */
   function getUrl(href) {
+    if (href instanceof URL) {
+      return href;
+    }
+
     href = typeof href === 'string' ? href : href.url;
     return new URL(href, location.href);
   }

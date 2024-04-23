@@ -87,7 +87,7 @@ export class Dvlp {
     this.origin = `${protocol}://localhost:${port}`;
     // Make sure mocks instance has access to active port
     this.port = config.activePort = port;
-    this.mocks = mockPath ? new Mocks(mockPath) : undefined;
+    this.mocks = new Mocks(mockPath);
     this.reload = reload;
     /** @type { HttpServer | Http2SecureServer } */
     this.server;
@@ -111,33 +111,31 @@ export class Dvlp {
       send: this.hooks.send,
     };
 
-    if (this.mocks !== undefined) {
-      this.mocks.loaded.then(() => {
-        // @ts-ignore
-        headerScript += `\n${this.mocks.client}`;
-        this.patchResponseOptions.headerScript = {
-          string: headerScript,
-        };
-      });
-    }
+    this.mocks.loaded.then(() => {
+      // @ts-ignore
+      headerScript += `\n${this.mocks.client}`;
+      this.patchResponseOptions.headerScript = {
+        string: headerScript,
+      };
 
-    if (entry.isApp && entry.main !== undefined) {
-      this.applicationHost = new ApplicationHost(
-        entry.main,
-        this.origin,
-        reload ? this.triggerClientReload : undefined,
-        this.mocks?.toJSON(),
-        argv,
-      );
-    } else if (entry.isElectron && entry.main !== undefined) {
-      this.electronHost = new ElectronHost(
-        entry.main,
-        this.origin,
-        reload ? this.triggerClientReload : undefined,
-        this.mocks?.toJSON(),
-        argv,
-      );
-    }
+      if (entry.isApp && entry.main !== undefined) {
+        this.applicationHost = new ApplicationHost(
+          entry.main,
+          this.origin,
+          reload ? this.triggerClientReload : undefined,
+          this.mocks.toJSON(),
+          argv,
+        );
+      } else if (entry.isElectron && entry.main !== undefined) {
+        this.electronHost = new ElectronHost(
+          entry.main,
+          this.origin,
+          reload ? this.triggerClientReload : undefined,
+          this.mocks.toJSON(),
+          argv,
+        );
+      }
+    });
   }
 
   /**

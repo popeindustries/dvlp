@@ -57,9 +57,9 @@ declare interface Server {
    */
   readonly origin: string;
   /**
-   * The `Mocks` instance, if initialised
+   * The `Mocks` instance
    */
-  readonly mocks?: Mocks;
+  readonly mocks: Mocks;
   /**
    * The localhost port number
    */
