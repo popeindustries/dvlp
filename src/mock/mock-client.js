@@ -428,7 +428,9 @@
             await sleep(delay);
 
             const handler =
-              mockData.handlers[options.event] || mockData.handlers.message;
+              mockData.handlers[options.event] ||
+              mockData.handlers.message ||
+              mockData.handlers.onmessage;
             const msg = new MessageEvent('message', {
               data: message,
               lastEventId: options.id || '',
