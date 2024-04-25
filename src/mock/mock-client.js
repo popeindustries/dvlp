@@ -183,7 +183,7 @@
                 return Reflect.apply(target, ctx, args);
               },
             });
-            Object.defineProperty(mockData.handlers, 'message', {
+            Object.defineProperty(mockData.handlers, 'onmessage', {
               get() {
                 return es.onmessage;
               },
@@ -224,7 +224,7 @@
                 return Reflect.apply(target, ctx, args);
               },
             });
-            Object.defineProperty(mockData.handlers, 'message', {
+            Object.defineProperty(mockData.handlers, 'onmessage', {
               get() {
                 return ws.onmessage;
               },
@@ -437,11 +437,13 @@
           }
         }
       } else {
-        const { message, options } = event;
+        const { message, options = {} } = event;
         const handler =
-          mockData.handlers[options.event] || mockData.handlers.message;
+          mockData.handlers[options.event] ||
+          mockData.handlers.message ||
+          mockData.handlers.onmessage;
         const msg = new MessageEvent('message', {
-          data: message,
+          data: typeof message !== 'string' ? JSON.stringify(message) : message,
           lastEventId: options.id || '',
         });
         handler(msg);
