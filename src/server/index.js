@@ -79,7 +79,12 @@ export class Dvlp {
 
     if (certsPath) {
       const serverOptions = resolveCerts(certsPath);
-      validateCert(serverOptions.cert);
+      const commonName = validateCert(serverOptions.cert);
+      const commonName = validateCert(serverOptions.cert);
+      if (commonName) {
+        this.origin = `https://${commonName}`;
+      }
+      
       this.secureServerOptions = { allowHTTP1: true, ...serverOptions };
       protocol = 'https';
     }
