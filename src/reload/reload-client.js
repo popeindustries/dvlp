@@ -156,7 +156,11 @@
         if (hrefMatches(href, rule.href, stylesheet.href)) {
           return reloadLink(rootStylesheet.ownerNode);
         }
-        return parseStylesheet(rule.styleSheet, href, rootStylesheet);
+        return parseStylesheet(
+          /** @type { CSSStyleSheet } */ (rule.styleSheet),
+          href,
+          rootStylesheet,
+        );
       }
     }
 
