@@ -76,15 +76,17 @@ export class Dvlp {
     this.secureServerOptions;
 
     let protocol = 'http';
-
+    let commonName = undefined;
     if (certsPath) {
       const serverOptions = resolveCerts(certsPath);
-      validateCert(serverOptions.cert);
+      commonName = validateCert(serverOptions.cert);
       this.secureServerOptions = { allowHTTP1: true, ...serverOptions };
       protocol = 'https';
     }
-
-    this.origin = `${protocol}://localhost:${port}`;
+    this.origin = commonName
+        ? `https://${commonName}`
+        : `${protocol}://localhost:${port}`;
+    
     // Make sure mocks instance has access to active port
     this.port = config.activePort = port;
     this.mocks = new Mocks(mockPath);
