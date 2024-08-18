@@ -5,12 +5,18 @@
   const INIT_RECONNECT_TIMEOUT = 1000;
   const MAX_RECONNECT_TIMEOUT = 16000;
   const RE_CSS_FILE_PATH = /--__dvlp-file-path__:\s"([^"]+)"/;
-  /** @type { EventSource } */
-  let sse;
-  let connected = false;
+  const canUseLeaderElection =
+    typeof BroadcastChannel !== 'undefined' &&
+    typeof navigator.locks !== 'undefined';
+  /** @type { BroadcastChannel } */
+  let channel;
+  let isConnected = false;
+  let isLeader = false;
   let currentReconnectTimeout = INIT_RECONNECT_TIMEOUT;
   let reconnectAttempts = 100;
   let reconnectTimeoutId = 0;
+  /** @type { EventSource } */
+  let sse;
   const url = new URL(location.protocol + '//' + location.hostname);
   url.pathname = '$RELOAD_PATHNAME';
   if (location.port) {
@@ -36,58 +42,117 @@
   adoptedStyleSheetsCollector.add(adoptedStyleSheetsCollector.sheets);
   adoptedStyleSheetsCollector.sheets = [];
 
-  connect();
+  if (!canUseLeaderElection) {
+    connect();
+  } else {
+    channel = new BroadcastChannel('dvlp/reload');
+    channel.onmessage = (event) => {
+      if (event.data.type === 'reload') {
+        onReload();
+      } else if (event.data.type === 'refresh') {
+        onRefresh(event.data.event);
+      }
+    };
+
+    requestLeadership((success) => {
+      if (success) {
+        isLeader = true;
+        connect();
+      }
+    });
+  }
+
+  /**
+   * @param {(success: boolean) => void} callback
+   */
+  function requestLeadership(callback) {
+    /** @type {() => void} */
+    let resolve;
+    /** @type {Promise<void>} */
+    const promise = new Promise((r) => (resolve = r));
+
+    navigator.locks.request(
+      'dvlp/reload',
+      { ifAvailable: false, mode: 'exclusive' },
+      (lock) => {
+        callback(lock !== null);
+        return promise;
+      },
+    );
+
+    // Relinquish leadership when called, otherwise automatically relinquished when process exits
+    return () => resolve();
+  }
 
   function connect() {
     clearTimeout(reconnectTimeoutId);
     sse = new EventSource(url.href);
-    sse.onopen = function () {
-      clearTimeout(reconnectTimeoutId);
-      // Force reload after server restart
-      if (connected) {
-        location.reload();
-      }
-      connected = true;
-      currentReconnectTimeout = INIT_RECONNECT_TIMEOUT;
-    };
-    sse.onerror = function (event) {
-      sse.close();
-      if (--reconnectAttempts > 0) {
-        reconnectTimeoutId = window.setTimeout(
-          connect,
-          currentReconnectTimeout,
-        );
-        // Exponential backoff
-        if (currentReconnectTimeout < MAX_RECONNECT_TIMEOUT) {
-          currentReconnectTimeout *= 2;
-        }
-      }
-    };
-    sse.addEventListener('reload', function () {
-      location.reload();
-    });
-    sse.addEventListener('refresh', function (event) {
-      try {
-        const { assert, filePath, href, type } =
-          /** @type { RequestContext } */ (JSON.parse(event.data));
+    sse.addEventListener('open', onOpen);
+    sse.addEventListener('error', onError);
+    sse.addEventListener('reload', onReload);
+    sse.addEventListener('refresh', onRefresh);
+  }
 
-        if (type === 'css') {
-          if (assert === 'css') {
-            if (filePath !== undefined) {
-              reloadAdoptedStyles(href, filePath);
-            } else {
-              throw Error('missing filePath');
-            }
+  function onOpen() {
+    clearTimeout(reconnectTimeoutId);
+    // Force reload after server restart
+    if (isConnected) {
+      onReload();
+    }
+    isConnected = true;
+    currentReconnectTimeout = INIT_RECONNECT_TIMEOUT;
+  }
+
+  function onError() {
+    sse.close();
+    if (--reconnectAttempts > 0) {
+      reconnectTimeoutId = window.setTimeout(connect, currentReconnectTimeout);
+      // Exponential backoff
+      if (currentReconnectTimeout < MAX_RECONNECT_TIMEOUT) {
+        currentReconnectTimeout *= 2;
+      }
+    }
+  }
+
+  function onReload() {
+    if (isLeader) {
+      channel.postMessage({ type: 'reload' });
+    }
+    location.reload();
+  }
+
+  /**
+   * @param {MessageEvent} event
+   */
+  function onRefresh(event) {
+    if (isLeader) {
+      channel.postMessage({
+        type: 'refresh',
+        event: { type: 'message', data: event.data },
+      });
+    }
+
+    try {
+      const { assert, filePath, href, type } = /** @type { RequestContext } */ (
+        JSON.parse(event.data)
+      );
+
+      if (type === 'css') {
+        if (assert === 'css') {
+          if (filePath !== undefined) {
+            reloadAdoptedStyles(href, filePath);
           } else {
-            reloadGlobalStyles(href);
+            throw Error('missing filePath');
           }
         } else {
-          throw Error('unsuported refresh type');
+          reloadGlobalStyles(href);
         }
-      } catch (err) {
-        location.reload();
+      } else {
+        throw Error('unsuported refresh type');
       }
-    });
+    } catch (err) {
+      location.reload();
+    }
   }
 
   /**
