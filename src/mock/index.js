@@ -1,3 +1,7 @@
+/**
+ * @import {MatchFunction} from 'path-to-regexp'
+ */
+
 import { error, noisyInfo } from '../utils/log.js';
 import { fileURLToPath, pathToFileURL, URLSearchParams } from 'node:url';
 import { getUrl, isEqualSearchParams } from '../utils/url.js';
@@ -576,7 +580,7 @@ export class Mocks {
  *
  * @param { string | MockRequest } req
  * @param { boolean } ignoreSearch
- * @returns { [URL, RegExp, RegExp, import('path-to-regexp').MatchFunction, URLSearchParams] }
+ * @returns { [URL, RegExp, RegExp, MatchFunction<any>, URLSearchParams] }
  */
 function getUrlSegmentsForMatching(req, ignoreSearch) {
   let href = typeof req === 'string' ? req : req.url;
