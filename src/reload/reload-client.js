@@ -66,22 +66,15 @@
    * @param {(success: boolean) => void} callback
    */
   function requestLeadership(callback) {
-    /** @type {() => void} */
-    let resolve;
-    /** @type {Promise<void>} */
-    const promise = new Promise((r) => (resolve = r));
-
     navigator.locks.request(
       'dvlp/reload',
       { ifAvailable: false, mode: 'exclusive' },
       (lock) => {
         callback(lock !== null);
-        return promise;
+        // Never relinquish until process exit
+        return new Promise(() => {});
       },
     );
-
-    // Relinquish leadership when called, otherwise automatically relinquished when process exits
-    return () => resolve();
   }
 
   function connect() {
