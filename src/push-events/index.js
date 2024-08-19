@@ -105,7 +105,7 @@ export function pushEvent(stream, event) {
     if (typeof message !== 'string') {
       try {
         message = JSON.stringify(message);
-      } catch (err) {
+      } catch {
         return error(`unable to stringify message for push event`, message);
       }
     }

@@ -146,7 +146,7 @@ export class TestServer {
           }
           size = stat.size;
           msg = `ok: ${req.url} responding with file`;
-        } catch (err) {
+        } catch {
           if (!this.#autorespond) {
             res.writeHead(404);
             return res.end();

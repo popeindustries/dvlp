@@ -1,4 +1,0 @@
-*.d.ts
-/test/unit/fixtures
-/node_modules
-*-client.js

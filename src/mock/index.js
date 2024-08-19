@@ -467,7 +467,7 @@ export class Mocks {
       } else {
         await this.loadFile(filePath);
       }
-    } catch (err) {
+    } catch {
       error(`unable to find mock file ${filePath}`);
     }
   }

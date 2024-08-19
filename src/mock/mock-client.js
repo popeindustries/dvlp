@@ -156,7 +156,6 @@
     if (typeof EventSource !== 'undefined') {
       window.EventSource = new Proxy(window.EventSource, {
         construct: function (target, args) {
-          const stream = args[0];
           const [href, mockData] = matchHref(args[0]);
           const isLocal = mockData && mockData.handlers !== undefined;
 
@@ -397,7 +396,7 @@
      * @param { string | { message: string | object, options: { event: string, id: string } } } event
      */
     async pushEvent(stream, event) {
-      const [href, mockData] = matchHref(stream);
+      const [, mockData] = matchHref(stream);
 
       if (!mockData) {
         throw Error(`no push event mocks registerd for ${stream}`);
@@ -624,7 +623,7 @@
       return false;
     }
 
-    for (let key in searchMap1) {
+    for (const key in searchMap1) {
       const values1 = searchMap1[key];
       const values2 = searchMap2[key];
 

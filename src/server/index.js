@@ -84,9 +84,9 @@ export class Dvlp {
       protocol = 'https';
     }
     this.origin = commonName
-        ? `https://${commonName}`
-        : `${protocol}://localhost:${port}`;
-    
+      ? `https://${commonName}`
+      : `${protocol}://localhost:${port}`;
+
     // Make sure mocks instance has access to active port
     this.port = config.activePort = port;
     this.mocks = new Mocks(mockPath);

@@ -41,7 +41,7 @@ export function send(filePath, res) {
 
       stream.pipe(res);
     }
-  } catch (err) {
+  } catch {
     res.writeHead(404);
     res.end('Not Found');
   }

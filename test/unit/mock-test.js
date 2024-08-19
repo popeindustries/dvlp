@@ -218,13 +218,13 @@ describe('mock', () => {
     it('should load mock files from directory path and update client string', async () => {
       await mocks.load('test/unit/fixtures/mock-push');
       expect(mocks.client).to.include(
-        '"pathRegex": "^\\\\/feed[\\\\/#\\\\?]?$"',
+        '"pathRegex": "^(?:\\\\/)+(?!\\\\/)feed(?:(?:\\\\/)+(?!\\\\/))?$"',
       );
     });
     it('should prepare inlineable client string', async () => {
       await mocks.load('test/unit/fixtures/mock');
       expect(mocks.client).to.include(
-        '"pathRegex": "^\\\\/1234\\\\.jpg[\\\\/#\\\\?]?$"',
+        '"pathRegex": "^(?:\\\\/)+(?!\\\\/)1234\\\\.jpg(?:(?:\\\\/)+(?!\\\\/))?$"',
       );
     });
   });

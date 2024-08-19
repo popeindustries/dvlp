@@ -150,7 +150,7 @@
       } else {
         throw Error('unsuported refresh type');
       }
-    } catch (err) {
+    } catch {
       location.reload();
     }
   }

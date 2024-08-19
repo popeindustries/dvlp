@@ -107,7 +107,7 @@ export function getPackage(
     pkg.main = main;
     pkg.type = type;
     pkg.version = json.version;
-  } catch (err) {
+  } catch {
     // No package.json found
   }
 
@@ -161,7 +161,7 @@ export function resolvePackagePath(filePath) {
         ) {
           return dir;
         }
-      } catch (err) {
+      } catch {
         // Ignore
       }
     }
