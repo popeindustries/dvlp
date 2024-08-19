@@ -51,7 +51,7 @@ export async function bundleDependency(filePath, res, esbuild, hookFn) {
 
         try {
           ({ exports } = parse(sourceContents));
-        } catch (err) {
+        } catch {
           // ignore
         }
 

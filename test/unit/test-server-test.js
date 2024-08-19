@@ -365,7 +365,7 @@ describe('testServer', () => {
     });
     it('should push a sequence of mock events via EventSource', (done) => {
       testServer({ port: 8111 }).then((srvr) => {
-        let events = [];
+        const events = [];
         let last;
         server = srvr;
         server.loadMockFiles('test/unit/fixtures/mock-push');
@@ -394,7 +394,7 @@ describe('testServer', () => {
     });
     it('should push a sequence of mock events via WebSocket', (done) => {
       testServer({ port: 8111 }).then((srvr) => {
-        let events = [];
+        const events = [];
         let last;
         server = srvr;
         server.loadMockFiles('test/unit/fixtures/mock-push');

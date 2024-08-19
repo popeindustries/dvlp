@@ -45,7 +45,7 @@ export async function getDependencies(filePath, platform) {
           },
         ],
       });
-    } catch (err) {
+    } catch {
       // Ignore
     }
   }

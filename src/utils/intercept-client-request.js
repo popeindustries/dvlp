@@ -82,7 +82,7 @@ function restoreClientRequest(fn) {
 function fetchApplyTrap() {
   return function apply(target, ctx, args) {
     if (clientRequestListeners.size > 0) {
-      let [resource, options] = args;
+      const [resource, options] = args;
       /** @type { URL } */
       let url;
       /** @type { RequestInit | undefined } */

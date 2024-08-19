@@ -605,7 +605,7 @@ function proxyBodyWrite(res, action) {
   // Prevent setting of Content-Length
   res.setHeader = new Proxy(res.setHeader, {
     apply(target, ctx, args) {
-      let [key, value] = args;
+      const [key, value] = args;
 
       if (key.toLowerCase() === 'content-length') {
         return;

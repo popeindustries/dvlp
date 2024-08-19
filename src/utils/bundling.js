@@ -62,7 +62,7 @@ export function cleanBundledFiles() {
     )) {
       try {
         unlinkSync(path.join(config.bundleDirPath, filePath));
-      } catch (err) {
+      } catch {
         // ignore
       }
     }

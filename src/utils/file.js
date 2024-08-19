@@ -276,7 +276,7 @@ export function isEsmFile(filePath, pkg) {
         const fileContents = fs.readFileSync(filePath, 'utf8');
         const [imports, exports] = parse(fileContents);
         isEsm = imports.length > 0 || exports.length > 0;
-      } catch (err) {
+      } catch {
         isEsm = false;
       }
     }
@@ -307,7 +307,7 @@ function resolveFilePath(filePath, type) {
     if (stat.isFile()) {
       return resolveRealFilePath(filePath);
     }
-  } catch (err) {
+  } catch {
     // Not found, possibly no extension, no package, or wrong extension.
     // If unable to resolve a file that has an extension,
     // we will ignore the existing extension and try all others.
@@ -391,7 +391,7 @@ export function resolveRealFilePath(filePath) {
 
   try {
     return realPath(filePath);
-  } catch (err) {
+  } catch {
     return filePath;
   }
 }
@@ -413,9 +413,9 @@ function isRequestObject(req) {
  * @returns { Array<string> }
  */
 export function resolveNodeModulesDirectories(filePath) {
-  let dir = path.extname(filePath) ? path.dirname(filePath) : filePath;
   /** @type { Array<string> } */
-  let dirs = [];
+  const dirs = [];
+  let dir = path.extname(filePath) ? path.dirname(filePath) : filePath;
   let depth = MAX_FILE_SYSTEM_DEPTH;
   let parent;
 

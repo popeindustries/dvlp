@@ -153,7 +153,7 @@ export class EventSource extends EventEmitter {
       // @ts-ignore
       this._res.write(chunk);
       return true;
-    } catch (err) {
+    } catch {
       this.close();
       return false;
     }

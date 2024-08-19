@@ -183,7 +183,7 @@ export function isNodeModuleFilePath(filePath) {
   try {
     // Resolve symlinks to determine if really a node_module
     return RE_NODE_MODULES.test(realPath(filePath));
-  } catch (err) {
+  } catch {
     return true;
   }
 }
@@ -250,7 +250,7 @@ export function isValidFilePath(filePath, fromDir = process.cwd()) {
     if (stat.isFile()) {
       return true;
     }
-  } catch (err) {
+  } catch {
     // Ignore
   }
   return false;
