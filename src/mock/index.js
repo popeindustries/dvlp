@@ -67,7 +67,7 @@ export class Mocks {
     let type = 'json';
 
     if (typeof res !== 'function') {
-      if (!res.body) {
+      if (res && res.body == null) {
         res = { body: res, headers: {} };
       }
       if (typeof res.body === 'string') {

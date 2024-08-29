@@ -285,7 +285,7 @@
       const pathRegex = new RegExp(url.pathname.replaceAll(/\//g, '\\/'));
 
       if (typeof res !== 'function') {
-        if (res && !res.body) {
+        if (res && res.body == null) {
           res = { body: res, headers: {} };
         }
       }
