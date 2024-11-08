@@ -16,6 +16,6 @@ server.get('/', async (req, reply) => {
     </html>`);
 });
 
-server.listen(8100, (err, address) => {
+server.listen({ port: 8100 }, (err, address) => {
   err && console.error(err);
 });

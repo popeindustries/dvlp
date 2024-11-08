@@ -619,7 +619,7 @@ function getUrlSegmentsForMatching(req, ignoreSearch) {
   return [
     url,
     origin,
-    pathToRegexp(pathname),
+    pathToRegexp(pathname).regexp,
     match(pathname, { decode: decodeURIComponent }),
     new URLSearchParams(search),
   ];
