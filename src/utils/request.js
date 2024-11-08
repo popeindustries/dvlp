@@ -18,6 +18,7 @@ const FORBIDDEN_RESPONSE_HEADERS = [
   'content-length',
   'content-security-policy',
   'keep-alive',
+  'strict-transport-security',
   'transfer-encoding',
 ];
 
