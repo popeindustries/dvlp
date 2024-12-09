@@ -6,8 +6,9 @@ import { getProjectPath } from './file.js';
 import { isNodeModuleFilePath } from './is.js';
 import os from 'node:os';
 import path from 'node:path';
+import { throttle } from './throttle.js';
 
-const TIMEOUT = 1000;
+const THROTTLE_LIMIT = 500;
 
 const debug = Debug('dvlp:watch');
 const tmpdir = os.tmpdir();
@@ -19,44 +20,46 @@ const tmpdir = os.tmpdir();
  * @returns { Watcher }
  */
 export function watch(fn) {
-  const watcher = new FSWatcher({
-    ignoreInitial: true,
-    persistent: true,
-  });
   /** @type { Set<string> } */
   const banned = new Set();
   /** @type { Set<string> } */
   const files = new Set();
-  let changing = false;
+  const watcher = new FSWatcher({
+    ignoreInitial: true,
+    persistent: true,
+  });
 
   watcher.on('unlink', (filePath) => {
     debug(`unwatching file "${getProjectPath(filePath)}"`);
     watcher.unwatch(filePath);
     files.delete(path.resolve(filePath));
   });
-  watcher.on('change', (filePath) => {
-    if (!changing) {
-      // Prevent double change
-      setTimeout(() => {
-        changing = false;
-      }, TIMEOUT);
-      changing = true;
-      debug(`change detected "${getProjectPath(filePath)}"`);
-      fn(path.resolve(filePath));
-    }
-  });
+  watcher.on(
+    'change',
+    // Throttle to allow time for files to be unwatched when file write intercepted in secondary process
+    throttle(
+      /**
+       * @param { string } filePath
+       */
+      (filePath) => {
+        if (files.has(filePath)) {
+          debug(`change detected "${getProjectPath(filePath)}"`);
+          fn(path.resolve(filePath));
+        }
+      },
+      THROTTLE_LIMIT,
+    ),
+  );
 
   return {
     has(filePath) {
       return files.has(resolveFilePath(filePath));
     },
     add(filePath) {
-      if (filePath instanceof Set) {
-        Array.from(filePath).forEach(this.add);
-        return;
-      }
-      if (Array.isArray(filePath)) {
-        filePath.forEach(this.add);
+      if (filePath instanceof Set || Array.isArray(filePath)) {
+        for (const file of filePath) {
+          this.add(file);
+        }
         return;
       }
 
@@ -85,6 +88,7 @@ export function watch(fn) {
       }
     },
     close() {
+      banned.clear();
       files.clear();
       watcher.close();
     },
