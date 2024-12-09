@@ -78,7 +78,7 @@
   },
   "pnpm": {
     "overrides": {
-      "debug": "^4.3.7"
+      "debug": "^4.4.0"
     }
   },
   "scripts": {
