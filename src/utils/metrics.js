@@ -50,7 +50,7 @@ export class Metrics {
     if (!this.events.has(name)) {
       this.events.set(name, [performance.now(), 0]);
     } else {
-      // @ts-ignore
+      // @ts-expect-error - non-null
       this.events.get(name)[1] = performance.now();
     }
   }

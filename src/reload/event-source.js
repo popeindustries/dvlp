@@ -121,7 +121,7 @@ export class EventSource extends EventEmitter {
       clearInterval(this._pingIntervalId);
     }
     this._res.end();
-    // @ts-ignore
+    // @ts-expect-error - clean up
     this._res = undefined;
 
     this.emit('close');
@@ -150,7 +150,7 @@ export class EventSource extends EventEmitter {
    */
   _write(chunk) {
     try {
-      // @ts-ignore
+      // @ts-expect-error - writeable
       this._res.write(chunk);
       return true;
     } catch {

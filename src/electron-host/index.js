@@ -49,7 +49,6 @@ export class ElectronHost {
         paths: [process.cwd()],
       });
       /** @type { string } */
-      // @ts-ignore
       this.pathToElectron = require(relative(__dirname, pathToElectron));
     } catch (err) {
       fatal(

@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck - this file is not type checked
 /* global customHooks */
 
 import esbuild from 'esbuild';

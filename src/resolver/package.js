@@ -81,7 +81,7 @@ export function getPackage(
           if (typeof value === 'string') {
             // If no extension, or not a relative path, it's a package reference
             if (path.extname(key) || isRelativeFilePath(key)) {
-              // @ts-ignore
+              // @ts-expect-error - non-null
               key = find(key, findOptions);
             }
             if (path.extname(value) || isRelativeFilePath(value)) {

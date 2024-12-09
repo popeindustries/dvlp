@@ -33,22 +33,22 @@ export function interceptClientRequest(fn) {
 function initInterceptClientRequest() {
   if (!util.types.isProxy(http.request)) {
     if (originalFetch !== undefined) {
-      // @ts-ignore
+      // @ts-expect-error - patch
       globalThis.fetch = new Proxy(globalThis.fetch, {
         apply: fetchApplyTrap(),
       });
     }
-    // @ts-ignore
+    // @ts-expect-error - patch
     http.request = new Proxy(http.request, {
       apply: clientRequestApplyTrap('http'),
     });
-    // @ts-ignore
+    // @ts-expect-error - patch
     http.get = new Proxy(http.get, { apply: clientRequestApplyTrap('http') });
-    // @ts-ignore
+    // @ts-expect-error - patch
     https.request = new Proxy(https.request, {
       apply: clientRequestApplyTrap('https'),
     });
-    // @ts-ignore
+    // @ts-expect-error - patch
     https.get = new Proxy(https.get, {
       apply: clientRequestApplyTrap('https'),
     });
@@ -104,7 +104,7 @@ function fetchApplyTrap() {
       }
     }
 
-    // @ts-ignore
+    // @ts-expect-error - Proxy
     return Reflect.apply(target, ctx, args);
   };
 }
@@ -148,17 +148,17 @@ function clientRequestApplyTrap(protocol) {
         options.hostname = url.hostname;
         options.port = url.port;
         options.path = `${url.href.replace(url.origin, '')}`;
-        // @ts-ignore
+        // @ts-expect-error - non-null
         options.href = url.href;
         // Force http agent when localhost (due to mocking most likely)
         if (
           options.agent &&
           options.agent instanceof http.Agent &&
-          // @ts-ignore
+          // @ts-expect-error - non-null
           options.agent.protocol === 'https:' &&
           isLocalhost(url.hostname)
         ) {
-          // @ts-ignore
+          // @ts-expect-error - non-null
           options.agent = new http.Agent(options.agent.options || {});
         }
       }
@@ -166,7 +166,7 @@ function clientRequestApplyTrap(protocol) {
       args = [url, options, callback];
     }
 
-    // @ts-ignore
+    // @ts-expect-error - Proxy
     return Reflect.apply(target, ctx, args);
   };
 }

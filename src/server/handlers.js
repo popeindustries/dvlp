@@ -7,7 +7,7 @@ import { find } from '../utils/file.js';
 import { fromBase64Url } from '../utils/base64Url.js';
 import { noisyInfo } from '../utils/log.js';
 import { send } from '../utils/send.js';
-// @ts-expect-error
+// @ts-expect-error - no types
 import WebSocket from 'faye-websocket';
 
 const favIcon = Buffer.from(favicon, 'base64');

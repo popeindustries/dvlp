@@ -35,7 +35,7 @@ function initInterceptCreateServer(reservedPort) {
       [http2, 'createSecureServer'],
       [https, 'createServer'],
     ]) {
-      // @ts-ignore
+      // @ts-expect-error - patch
       lib[method] = new Proxy(lib[method], {
         apply(target, ctx, args) {
           /** @type { import('http').Server } */

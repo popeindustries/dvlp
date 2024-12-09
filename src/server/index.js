@@ -114,7 +114,6 @@ export class Dvlp {
     };
 
     this.mocks.loaded.then(() => {
-      // @ts-ignore
       headerScript += `\n${this.mocks.client}`;
       this.patchResponseOptions.headerScript = {
         string: headerScript,
@@ -386,7 +385,6 @@ export class Dvlp {
         // Reroute to root index.html
         if (context.type === 'html') {
           res.rerouted = req.url !== '/';
-          // @ts-ignore
           req.url = '/';
           context = getContextForReq(req);
           context.filePath = find(req);
@@ -458,7 +456,7 @@ export class Dvlp {
     this.applicationHost?.destroy();
     this.electronHost?.destroy();
 
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       if (!this.server) {
         return resolve();
       }

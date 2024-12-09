@@ -35,7 +35,7 @@ export async function getDependencies(filePath, platform) {
           {
             name: 'deps',
             setup(build) {
-              // @ts-ignore
+              // @ts-expect-error - works
               build.onLoad({ filter: /.*/ }, (args) => {
                 if (!isNodeModuleFilePath(args.path)) {
                   dependencies.add(args.path);

@@ -78,9 +78,7 @@ export function filePathToUrlPathname(filePath) {
  * @returns { boolean }
  */
 export function isEqualSearchParams(params1, params2) {
-  // @ts-ignore
   const keys1 = Array.from(params1.keys());
-  // @ts-ignore
   const keys2 = Array.from(params2.keys());
 
   if (keys1.length !== keys2.length) {

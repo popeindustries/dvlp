@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const reloadClient =
-  // @ts-ignore
+  // @ts-expect-error - global
   global.$RELOAD_CLIENT ||
   fs.readFileSync(
     path.join(path.dirname(fileURLToPath(import.meta.url)), 'reload-client.js'),

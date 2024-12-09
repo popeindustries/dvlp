@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck - browser code
 (function () {
   if (window.dvlp) {
     return;
@@ -31,6 +31,7 @@
     if (mockData) {
       // Handle mock registered in browser
       if (mockData.response) {
+        // eslint-disable-next-line
         const xhr = this;
         const mockResponse = resolveMockResponse(mockData);
 

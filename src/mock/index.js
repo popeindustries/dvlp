@@ -24,7 +24,7 @@ import { send } from '../utils/send.js';
 
 const debug = Debug('dvlp:mock');
 const mockClient =
-  // @ts-ignore
+  // @ts-expect-error - not typed
   global.$MOCK_CLIENT ||
   fs.readFileSync(
     path.join(path.dirname(fileURLToPath(import.meta.url)), 'mock-client.js'),
@@ -313,10 +313,10 @@ export class Mocks {
         'Content-Type',
         'Date',
       ]),
-      // @ts-ignore
+      // @ts-expect-error - is string
       'Content-Length': Buffer.byteLength(content),
     });
-    // @ts-ignore
+    // @ts-expect-error - is string
     res.end(content);
     res.metrics.recordEvent(Metrics.EVENT_NAMES.mock);
 
@@ -443,7 +443,6 @@ export class Mocks {
     for (const mock of Array.from(this.cache).reverse()) {
       if (
         !mock.originRegex.test(url.origin) ||
-        // @ts-ignore
         (!mock.ignoreSearch &&
           !isEqualSearchParams(url.searchParams, mock.searchParams))
       ) {
@@ -523,7 +522,7 @@ export class Mocks {
           return error(`invalid mock format for ${filePath}`);
         }
 
-        // @ts-ignore
+        // @ts-expect-error - is MockResponseData | MockStreamData
         const { request, response, stream, events } = mock;
 
         if (request && response) {
@@ -566,7 +565,7 @@ export class Mocks {
       };
 
       if (isMockStreamData(mockData)) {
-        // @ts-ignore
+        // @ts-expect-error - is MockStreamData
         data.events = Object.keys(mockData.events);
       }
 

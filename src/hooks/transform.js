@@ -77,7 +77,7 @@ export async function transform(
         /** @type { import("esbuild").TransformOptions } */
         const options = {
           format: 'esm',
-          // @ts-ignore - filtered by "fileType"
+          // @ts-expect-error - filtered by "fileType"
           loader: fileExtension.slice(1),
           logLevel: 'warning',
           sourcefile: filePath,

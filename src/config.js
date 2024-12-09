@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 const DIR_NAME = '.dvlp';
 const TESTING =
   process.env.NODE_ENV === 'dvlptest' || process.env.CI != undefined;
-// @ts-ignore - Replaced during build
+// @ts-expect-error - Replaced during build
 const VERSION = global.$VERSION || '0.0.0';
 
 const dirPath = path.resolve(DIR_NAME);

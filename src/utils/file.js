@@ -238,11 +238,12 @@ export function getTypeFromRequest(req) {
  * @returns { Promise<ModuleType> }
  */
 export async function importModule(filePath) {
-  /** @type { ModuleType } */ // @ts-ignore
+  /** @type { ModuleType } */
+  // @ts-expect-error - works in Node
   let module = await import(pathToFileURL(filePath));
 
   if (module != null && typeof module === 'object' && 'default' in module) {
-    // @ts-ignore
+    // @ts-expect-error - works in Node
     module = module.default;
   }
 

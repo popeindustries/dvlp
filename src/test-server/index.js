@@ -57,27 +57,27 @@ export class TestServer {
   _start() {
     return new Promise((resolve, reject) => {
       this.#server = http.createServer(async (req, res) => {
-        // @ts-ignore
+        // @ts-expect-error - exists
         res.url ??= req.url;
-        // @ts-ignore
+        // @ts-expect-error - exists
         res.metrics = new Metrics(res);
 
         if (EventSource.isEventSource(req)) {
           connectClient(
             {
-              // @ts-ignore
+              // @ts-expect-error - non-null
               url: req.url,
               type: 'es',
             },
             req,
             res,
           );
-          // @ts-ignore
+          // @ts-expect-error - non-null
           this.pushEvent(req.url, 'connect');
           return;
         }
 
-        // @ts-ignore
+        // @ts-expect-error - non-null
         const url = new URL(req.url, `http://localhost:${this.port}`);
         const error = url.searchParams.get('error') != null;
         const hang = url.searchParams.get('hang') != null;
@@ -109,7 +109,7 @@ export class TestServer {
           return;
         } else if (mock) {
           debug(`ok: ${req.url} responding with mocked data`);
-          // @ts-ignore
+          // @ts-expect-error - type Req
           if (this.mocks.matchResponse(mock, req, res)) {
             return;
           }
@@ -129,7 +129,7 @@ export class TestServer {
         // Copy custom headers to response
         for (const [key, value] of Object.entries(req.headers)) {
           if (key.startsWith('x-')) {
-            // @ts-ignore
+            // @ts-expect-error - is string
             headers[key] = value;
           }
         }
@@ -156,7 +156,6 @@ export class TestServer {
           msg = `ok: ${req.url} responding with dummy file`;
         }
 
-        // @ts-ignore
         res.writeHead(200, {
           'Content-Length': size,
           'Cache-Control': `public, max-age=${maxage}`,
@@ -258,7 +257,7 @@ export class TestServer {
     if (typeof event === 'string') {
       this.mocks.matchPushEvent(stream, event, pushEvent);
     } else {
-      // @ts-ignore
+      // @ts-expect-error - non-null
       pushEvent(stream, event);
     }
   }

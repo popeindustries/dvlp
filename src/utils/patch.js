@@ -94,7 +94,7 @@ export function patchResponse(
   } else if (isCssRequest(req)) {
     proxyBodyWrite(res, (css) => {
       enableCrossOriginHeader(res);
-      // @ts-ignore
+      // @ts-expect-error - non-null
       setCacheControlHeader(res, req.url);
       css = rewriteCSSImports(res, filePath, css, resolveImport);
 
@@ -109,7 +109,7 @@ export function patchResponse(
   } else if (isJsRequest(req)) {
     proxyBodyWrite(res, (js) => {
       enableCrossOriginHeader(res);
-      // @ts-ignore
+      // @ts-expect-error - non-null
       setCacheControlHeader(res, req.url);
       js = rewriteJSImports(res, filePath, js, resolveImport);
 
@@ -591,7 +591,6 @@ function proxyBodyWrite(res, action) {
 
       if (!res.headersSent) {
         if (size) {
-          // @ts-ignore
           originalSetHeader.call(res, 'Content-Length', size);
         }
       }

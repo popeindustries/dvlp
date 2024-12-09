@@ -7,3 +7,4 @@
 /*.d.ts
 /*.map
 .npmrc
+!eslint.config.js

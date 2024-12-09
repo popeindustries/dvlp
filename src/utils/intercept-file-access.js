@@ -41,7 +41,7 @@ function initInterceptFileAccess() {
     });
 
     for (const method of ['readFile', 'readFileSync']) {
-      // @ts-ignore
+      // @ts-expect-error - patch
       fs[method] = new Proxy(fs[method], {
         apply(target, ctx, args) {
           notifyListeners(fileAccessListeners, String(args[0]), 'read');
@@ -50,7 +50,7 @@ function initInterceptFileAccess() {
       });
     }
     for (const method of ['writeFile', 'writeFileSync']) {
-      // @ts-ignore
+      // @ts-expect-error - patch
       fs[method] = new Proxy(fs[method], {
         apply(target, ctx, args) {
           notifyListeners(fileAccessListeners, String(args[0]), 'write');

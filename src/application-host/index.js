@@ -231,7 +231,7 @@ class ApplicationThread extends Worker {
     this.on('exit', (exitCode) => {
       this.messagePort.removeAllListeners();
       this.messagePort.close();
-      // @ts-ignore
+      // @ts-expect-error - clean up
       this.messagePort = undefined;
       this.watcher = undefined;
     });

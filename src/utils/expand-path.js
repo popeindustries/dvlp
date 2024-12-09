@@ -24,7 +24,6 @@ export function expandPath(filePath) {
   if (Array.isArray(filePath)) {
     return filePath.reduce((/** @type { Array<string> } */ filePaths, fp) => {
       if (fp) {
-        // @ts-ignore
         filePaths.push(...expandPath(fp));
       }
       return filePaths;
