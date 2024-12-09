@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  debug: ^4.3.7
+  debug: ^4.4.0
 
 importers:
 
@@ -58,7 +58,7 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       debug:
-        specifier: ^4.3.7
+        specifier: ^4.4.0
         version: 4.4.0(supports-color@8.1.1)
       electron:
         specifier: 33.2.1
