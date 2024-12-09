@@ -36,8 +36,11 @@ export function connectClient(stream, ...args) {
       extensionsHeaders && extensionsHeaders.includes('permessage-deflate')
         ? [deflate]
         : [];
+    const protocolHeader = req.headers['sec-websocket-protocol'] || '';
 
-    client = new WebSocket(req, socket, body, [], { extensions });
+    client = new WebSocket(req, socket, body, protocolHeader.split(','), {
+      extensions,
+    });
     client.on('message', (/** @type { { data: string } } */ event) => {
       debug('received ws message', event.data);
 
@@ -55,6 +58,7 @@ export function connectClient(stream, ...args) {
         }
       }
     });
+
     if (isSocketio) {
       client.send(
         '0{"sid":"dvlp","upgrades":[],"pingInterval":250000,"pingTimeout":600000}',
