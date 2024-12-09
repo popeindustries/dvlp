@@ -1,7 +1,7 @@
 import { cleanBundledFiles } from '../../src/utils/bundling.js';
 import { clearContexts } from '../../src/utils/request-contexts.js';
 import config from '../../src/config.js';
-import EventSource from 'eventsource';
+import { EventSource } from 'eventsource';
 import { expect } from 'chai';
 import { fileURLToPath } from 'node:url';
 import { getBundleFilePath } from './utils.js';
@@ -23,7 +23,6 @@ describe('server', () => {
     config.directories = [process.cwd()];
     cleanBundledFiles();
     if (es) {
-      es.removeAllListeners();
       es.close();
       es = null;
     }

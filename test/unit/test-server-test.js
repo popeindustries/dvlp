@@ -1,4 +1,4 @@
-import EventSource from 'eventsource';
+import { EventSource } from 'eventsource';
 import { expect } from 'chai';
 import { testServer } from '../../src/dvlp-test.js';
 import websocket from 'faye-websocket';
@@ -22,7 +22,6 @@ describe('testServer', () => {
   });
   afterEach(async () => {
     if (es) {
-      es.removeAllListeners();
       es.close();
       es = null;
     }
