@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { throttle } from './throttle.js';
 
-const THROTTLE_LIMIT = 500;
+const THROTTLE_LIMIT = 750;
 
 const debug = Debug('dvlp:watch');
 const tmpdir = os.tmpdir();
