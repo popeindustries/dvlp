@@ -11,8 +11,13 @@ const messagePort = /** @type { MessagePort } */ (workerData.messagePort);
 
 interceptInProcess({
   hostOrigin: workerData.hostOrigin,
-  postMessage: /** @param { ApplicationWorkerMessage } msg */ (msg) =>
-    messagePort.postMessage(msg),
+  postMessage: /** @param { ApplicationWorkerMessage } msg */ (msg) => {
+    try {
+      messagePort.postMessage(msg);
+    } catch {
+      // Ignroe
+    }
+  },
   serializedMocks: workerData.serializedMocks,
 });
 
