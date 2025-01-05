@@ -6,9 +6,9 @@ import { getProjectPath } from './file.js';
 import { isNodeModuleFilePath } from './is.js';
 import os from 'node:os';
 import path from 'node:path';
-import { throttle } from './throttle.js';
 
-const THROTTLE_LIMIT = 750;
+const CHANGE_DELAY = 250;
+const IGNORE_CHANGE_WINDOW = 750;
 
 const debug = Debug('dvlp:watch');
 const tmpdir = os.tmpdir();
@@ -22,34 +22,42 @@ const tmpdir = os.tmpdir();
 export function watch(fn) {
   /** @type { Set<string> } */
   const banned = new Set();
+  /** @type {Set<string>} */
+  const changingFiles = new Set();
   /** @type { Set<string> } */
   const files = new Set();
   const watcher = new FSWatcher({
     ignoreInitial: true,
     persistent: true,
   });
+  let changePending = false;
 
   watcher.on('unlink', (filePath) => {
     debug(`unwatching file "${getProjectPath(filePath)}"`);
     watcher.unwatch(filePath);
     files.delete(path.resolve(filePath));
   });
-  watcher.on(
-    'change',
-    // Throttle to allow time for files to be unwatched when file write intercepted in secondary process
-    throttle(
-      /**
-       * @param { string } filePath
-       */
-      (filePath) => {
+  watcher.on('change', (filePath) => {
+    if (!changePending && !changingFiles.has(filePath)) {
+      changePending = true;
+      changingFiles.add(filePath);
+
+      // Delay to allow time for files to be unwatched when file write intercepted in secondary process
+      setTimeout(() => {
         if (files.has(filePath)) {
+          // Delay to ignore duplicate changes to same file
+          setTimeout(() => {
+            changingFiles.delete(filePath);
+          }, IGNORE_CHANGE_WINDOW);
+
           debug(`change detected "${getProjectPath(filePath)}"`);
           fn(path.resolve(filePath));
         }
-      },
-      THROTTLE_LIMIT,
-    ),
-  );
+
+        changePending = false;
+      }, CHANGE_DELAY);
+    }
+  });
 
   return {
     has(filePath) {
