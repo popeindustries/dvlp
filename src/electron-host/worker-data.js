@@ -17,7 +17,13 @@ export function getElectronWorkerData() {
     const workerData = /** @type { ElectronProcessWorkerData } */ (
       JSON.parse(Buffer.from(workerDataArgv, 'base64').toString('utf-8'))
     );
-    workerData.postMessage = (msg) => process.send?.(msg);
+    workerData.postMessage = (msg) => {
+      try {
+        process.send?.(msg);
+      } catch {
+        // Ignore
+      }
+    };
 
     return workerData;
   }
