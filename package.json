@@ -49,7 +49,7 @@
     "cjs-module-lexer": "^2.1.0",
     "cross-env": "^7.0.3",
     "debug": "^4.4.0",
-    "electron": "33.2.1",
+    "electron": "35.0.3",
     "es-module-lexer": "~1.6.0",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",
@@ -79,7 +79,10 @@
   "pnpm": {
     "overrides": {
       "debug": "^4.4.0"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "electron"
+    ]
   },
   "scripts": {
     "build": "node ./scripts/build.js",
