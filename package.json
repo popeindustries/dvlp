@@ -69,7 +69,7 @@
     "react": "^18.3.1",
     "resolve.exports": "^2.0.3",
     "terser": "^5.37.0",
-    "typescript": "^5.7.2",
+    "typescript": "^5.8.2",
     "typescript-eslint": "^8.27.0"
   },
   "engines": {

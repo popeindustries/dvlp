@@ -27,8 +27,9 @@ export function send(filePath, res) {
 
       stream.on(
         'error',
-        /** @param { Error & { code: string } } error */
+        /** @param { Error } error */
         (error) => {
+          // @ts-expect-error - it exists
           if (error.code === 'ENOENT') {
             res.writeHead(404);
             res.end('Not Found');
