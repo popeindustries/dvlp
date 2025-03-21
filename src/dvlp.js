@@ -73,8 +73,10 @@ export async function server(
   if (certsPath) {
     certsPath = expandPath(certsPath);
     entry.isSecure = true;
-    // TODO: don't force port number
-    port = 443;
+    // Override default
+    if (port === config.defaultPort) {
+      port = 443;
+    }
   }
 
   createApplicationLoaderFile(config.applicationLoaderURL, {
