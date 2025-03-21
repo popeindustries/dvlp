@@ -81,7 +81,8 @@
       "debug": "^4.4.0"
     },
     "onlyBuiltDependencies": [
-      "electron"
+      "electron",
+      "esbuild"
     ]
   },
   "scripts": {
