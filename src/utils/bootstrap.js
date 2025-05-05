@@ -6,11 +6,13 @@ import path from 'node:path';
  * Create directory structure:
  *  .dvlp/
  *    - <version>/
+ *      - cached/
  *      - bundled/
  */
 export function bootstrap() {
-  const { bundleDirPath, dirPath, versionDirPath } = config;
+  const { bundleDirPath, cacheDirPath, dirPath, versionDirPath } = config;
   const bundleDirExists = fs.existsSync(bundleDirPath);
+  const cacheDirExists = fs.existsSync(cacheDirPath);
   const dirExists = fs.existsSync(dirPath);
   const subdirExists = fs.existsSync(versionDirPath);
 
@@ -22,5 +24,8 @@ export function bootstrap() {
   }
   if (!bundleDirExists) {
     fs.mkdirSync(bundleDirPath, { recursive: true });
+  }
+  if (!cacheDirExists) {
+    fs.mkdirSync(cacheDirPath, { recursive: true });
   }
 }

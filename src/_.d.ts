@@ -5,6 +5,7 @@ declare interface Config {
   bundleDirMetaPath: string;
   bundleDirName: string;
   bundleDirPath: string;
+  cacheDirPath: string;
   defaultPort: number;
   directories: Array<string>;
   dirPath: string;
@@ -61,7 +62,7 @@ type Req = (IncomingMessage | Http2ServerRequest) & {
   filePath: string;
   type?: ContentType;
   url: string;
-  params?: { [key: string]: string } | {};
+  params?: Record<string, string>;
 };
 type Res = (ServerResponse | Http2ServerResponse) & {
   bundled: boolean;

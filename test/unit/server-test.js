@@ -692,7 +692,6 @@ describe('server', () => {
         it('should implicitly serve index.html over https', async () => {
           server = await serverFactory('test/unit/fixtures/www', {
             certsPath: 'test/unit/fixtures/certificates',
-            port: 8100,
             reload: false,
           });
           const res = await fetch('https://localhost:443/');
@@ -705,7 +704,7 @@ describe('server', () => {
             port: 8100,
             reload: false,
           });
-          const res = await fetch('https://localhost:443/');
+          const res = await fetch('https://localhost:8100/');
           expect(res.status).to.eql(200);
           expect(await res.text()).to.contain('<!doctype html>');
         });
@@ -713,7 +712,6 @@ describe('server', () => {
           serverFactory('test/unit/fixtures/www', {
             certsPath: 'test/unit/fixtures/certificates',
             mockPath: 'test/unit/fixtures/mock-push',
-            port: 8100,
             reload: true,
           }).then((srvr) => {
             server = srvr;
@@ -731,7 +729,6 @@ describe('server', () => {
         it('should serve a js file with correct mime type over https', async () => {
           server = await serverFactory('test/unit/fixtures/www', {
             certsPath: 'test/unit/fixtures/certificates',
-            port: 8100,
             reload: false,
           });
           const res = await fetch('https://localhost:443/script.js');
@@ -749,7 +746,6 @@ describe('server', () => {
         it('should start an app server over https', async () => {
           server = await serverFactory('test/unit/fixtures/app.mjs', {
             certsPath: 'test/unit/fixtures/certificates',
-            port: 8100,
             reload: false,
           });
           const res = await fetch('https://localhost:443/', {
@@ -761,7 +757,6 @@ describe('server', () => {
         it('should serve a node_modules module js file over https', async () => {
           server = await serverFactory('test/unit/fixtures/app.mjs', {
             certsPath: 'test/unit/fixtures/certificates',
-            port: 8100,
             reload: false,
           });
           const res = await fetch(
@@ -785,7 +780,7 @@ describe('server', () => {
         it('should successfully forward https requests to https application', async () => {
           server = await serverFactory('test/unit/fixtures/app-https.mjs', {
             certsPath: 'test/unit/fixtures/certificates',
-            port: 8100,
+            // port: 8100,
             reload: false,
           });
           const res = await fetch('https://localhost:443/', {

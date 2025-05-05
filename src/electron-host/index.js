@@ -152,6 +152,11 @@ export class ElectronHost {
           serializedMocks: this.serializedMocks,
         }),
       ).toString('base64');
+      /** @type {Record<string, string>} */
+      const env = { NODE_COMPILE_CACHE: config.cacheDirPath, ...process.env };
+      env['NODE_OPTIONS'] =
+        (process.env.NODE_OPTIONS ?? '') +
+        ` --experimental-strip-types --disable-warning=ExperimentalWarning`;
       const child = childProcess.spawn(
         this.pathToElectron,
         [
@@ -161,6 +166,7 @@ export class ElectronHost {
           ...this.argv,
         ],
         {
+          env,
           stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
         },
       );

@@ -16,6 +16,7 @@ const applicationLoaderURL = pathToFileURL(
 const bundleDirName = path.join(DIR_NAME, VERSION, 'bundled');
 const bundleDirPath = path.resolve(bundleDirName);
 const bundleDirMetaPath = path.join(bundleDirPath, '__meta__.json');
+const cacheDirPath = path.join(versionDirPath, 'cached');
 const defaultPort = process.env.PORT ? Number(process.env.PORT) : 8080;
 const electronEntryURL = pathToFileURL(
   path.join(versionDirPath, 'electron-entry.mjs'),
@@ -31,6 +32,7 @@ const config = {
   bundleDirPath,
   bundleDirMetaPath,
   bundleDirName,
+  cacheDirPath,
   defaultPort,
   directories: [],
   dirPath,

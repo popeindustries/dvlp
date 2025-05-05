@@ -2,7 +2,7 @@ import { dirname, join } from 'node:path';
 import { error, fatal, noisyInfo } from '../utils/log.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { format, msDiff } from '../utils/metrics.js';
-import { MessageChannel, SHARE_ENV, Worker } from 'node:worker_threads';
+import { MessageChannel, Worker } from 'node:worker_threads';
 import { readFileSync, writeFileSync } from 'node:fs';
 import chalk from 'chalk';
 import config from '../config.js';
@@ -140,7 +140,10 @@ export class ApplicationHost {
    */
   createThread() {
     const { port1, port2 } = new MessageChannel();
-    const execArgv = ['--enable-source-maps', '--no-warnings'];
+    const execArgv = [
+      '--enable-source-maps',
+      '--disable-warning=ExperimentalWarning',
+    ];
 
     port1.unref();
 
@@ -150,7 +153,7 @@ export class ApplicationHost {
 
     const thread = new ApplicationThread(workerPath, port1, this.watcher, {
       argv: this.argv,
-      env: SHARE_ENV,
+      env: { NODE_COMPILE_CACHE: config.cacheDirPath, ...process.env },
       execArgv,
       // Don't pipe to parent process. Handled manually in ApplicationThread
       stderr: true,

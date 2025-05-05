@@ -13,12 +13,16 @@ import config from './config.js';
 import { createApplicationLoaderFile } from './application-host/index.js';
 import { createElectronEntryFile } from './electron-host/index.js';
 import { Dvlp } from './server/index.js';
+import { enableCompileCache } from 'node:module';
 import { init as esLexerInit } from 'es-module-lexer';
 import { expandPath } from './utils/expand-path.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
 export { getDependencies } from './utils/module.js';
+
+// Enable code cache in default location (tmpdir/node-compile-cache)
+enableCompileCache();
 
 /**
  * Server instance factory
