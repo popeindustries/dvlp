@@ -11,6 +11,8 @@ import { forwardRequest } from '../utils/request.js';
 import { getProjectPath } from '../utils/file.js';
 import { needsLegacyLoader } from '../utils/module.js';
 import { performance } from 'node:perf_hooks';
+// @ts-expect-error - no types
+import semver from 'semver';
 import { watch } from '../utils/watch.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -140,10 +142,11 @@ export class ApplicationHost {
    */
   createThread() {
     const { port1, port2 } = new MessageChannel();
-    const execArgv = [
-      '--enable-source-maps',
-      '--disable-warning=ExperimentalWarning',
-    ];
+    const execArgv = ['--enable-source-maps'];
+
+    if (semver.gte(process.version, '21.3.0')) {
+      execArgv.push('--disable-warning=ExperimentalWarning');
+    }
 
     port1.unref();
 

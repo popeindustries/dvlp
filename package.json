@@ -68,6 +68,7 @@
     "prettier": "^3.5.3",
     "react": "^18.3.1",
     "resolve.exports": "^2.0.3",
+    "semver": "^7.7.0",
     "terser": "^5.39.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.31.1"
