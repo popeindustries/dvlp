@@ -32,15 +32,15 @@
   },
   "dependencies": {
     "commander": "^13.1.0",
-    "esbuild": "^0.25.3"
+    "esbuild": "^0.25.4"
   },
   "devDependencies": {
-    "@eslint/js": "^9.25.1",
+    "@eslint/js": "^9.26.0",
     "@fidm/x509": "^1.2.1",
     "@types/debug": "^4.1.12",
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.15.3",
+    "@types/node": "^22.15.11",
     "@types/platform": "^1.3.6",
     "@types/send": "^0.17.4",
     "chai": "^5.2.0",
@@ -49,9 +49,9 @@
     "cjs-module-lexer": "^2.1.0",
     "cross-env": "^7.0.3",
     "debug": "^4.4.0",
-    "electron": "36.0.1",
+    "electron": "36.1.0",
     "es-module-lexer": "^1.7.0",
-    "eslint": "^9.25.1",
+    "eslint": "^9.26.0",
     "eslint-config-prettier": "^10.1.2",
     "eventsource": "^3.0.6",
     "fast-glob": "^3.3.3",
@@ -61,7 +61,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.5.1",
     "lit-html": "^3.3.0",
-    "mocha": "^11.1.0",
+    "mocha": "^11.2.2",
     "path-to-regexp": "^8.2.0",
     "permessage-deflate": "^0.1.7",
     "platform": "^1.3.6",
@@ -71,7 +71,7 @@
     "semver": "^7.7.0",
     "terser": "^5.39.0",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.31.1"
+    "typescript-eslint": "^8.32.0"
   },
   "engines": {
     "node": ">=18",
@@ -95,6 +95,7 @@
     "lint:types": "tsc --noEmit --skipLibCheck ",
     "prepublishOnly": "pnpm run build",
     "test": "cross-env NODE_ENV=dvlptest NODE_TLS_REJECT_UNAUTHORIZED='0' mocha --reporter spec --bail --exit --timeout 10000 --require ./test/unit/init.js test/unit/index.js",
+    "test:all": "pnpm run test && pnpm run test:integration",
     "test:browser": "pnpm run build && ./bin/dvlp.js --mock test/browser/fixtures/mock test/browser",
     "test:integration": "pnpm run build && cross-env NODE_ENV=dvlptest mocha test/integration/*-test.js --reporter spec --exit --timeout 10000",
     "prepare": "husky"
