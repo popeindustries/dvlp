@@ -1,7 +1,6 @@
 import { isJsFilePath, isNodeModuleFilePath } from './is.js';
 import esbuild from 'esbuild';
 import { fileURLToPath } from 'node:url';
-import module from 'node:module';
 
 /**
  * Retrieve all dependencies for "filePath"
@@ -51,11 +50,4 @@ export async function getDependencies(filePath, platform) {
   }
 
   return dependencies;
-}
-
-/**
- * Determine whether the current Node.js version supports new Loader API
- */
-export function needsLegacyLoader() {
-  return !('register' in module);
 }

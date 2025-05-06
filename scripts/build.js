@@ -87,10 +87,7 @@ await esbuild.build({
 await esbuild.build({
   bundle: true,
   entryNames: '[name]',
-  entryPoints: [
-    './src/application-host/application-loader-legacy.js',
-    './src/application-host/application-loader.js',
-  ],
+  entryPoints: ['./src/application-host/application-loader.js'],
   external,
   format: 'esm',
   splitting: false,

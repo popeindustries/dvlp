@@ -9,7 +9,6 @@ import config from '../config.js';
 import Debug from 'debug';
 import { forwardRequest } from '../utils/request.js';
 import { getProjectPath } from '../utils/file.js';
-import { needsLegacyLoader } from '../utils/module.js';
 import { performance } from 'node:perf_hooks';
 // @ts-expect-error - no types
 import semver from 'semver';
@@ -26,9 +25,6 @@ const workerPath = join(__dirname, './application-worker.js');
  * @param { { hooks?: Hooks, hooksPath?: string } } hooksConfig
  */
 export function createApplicationLoaderFile(filePath, hooksConfig) {
-  const loaderName = needsLegacyLoader()
-    ? 'application-loader-legacy.js'
-    : 'application-loader.js';
   const hooksPath =
     hooksConfig.hooks &&
     (hooksConfig.hooks.onServerTransform || hooksConfig.hooks.onServerResolve)
@@ -38,7 +34,7 @@ export function createApplicationLoaderFile(filePath, hooksConfig) {
     (hooksPath
       ? `import customHooks from '${hooksPath}';\n`
       : 'const customHooks = {};\n') +
-    readFileSync(join(__dirname, loaderName), 'utf-8');
+    readFileSync(join(__dirname, 'application-loader.js'), 'utf-8');
 
   writeFileSync(filePath, contents);
 }
@@ -149,10 +145,6 @@ export class ApplicationHost {
     }
 
     port1.unref();
-
-    if (needsLegacyLoader()) {
-      execArgv.push('--experimental-loader', config.applicationLoaderURL.href);
-    }
 
     const thread = new ApplicationThread(workerPath, port1, this.watcher, {
       argv: this.argv,
