@@ -57,7 +57,7 @@ export function parseEsbuildTarget(platform) {
     !version ||
     !ESBUILD_BROWSER_ENGINES.includes(engine)
   ) {
-    return 'es2020';
+    return 'esnext';
   }
 
   return `${engine}${version}`;

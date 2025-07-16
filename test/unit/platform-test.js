@@ -7,11 +7,11 @@ import { expect } from 'chai';
 describe('platform', () => {
   describe('parseEsbuildTarget', () => {
     it('should return default for missing ua', () => {
-      expect(parseEsbuildTarget(parseUserAgent())).to.equal('es2020');
+      expect(parseEsbuildTarget(parseUserAgent())).to.equal('esnext');
     });
     it('should return default for unknown ua', () => {
       expect(parseEsbuildTarget(parseUserAgent('xxxxxxxxx'))).to.equal(
-        'es2020',
+        'esnext',
       );
     });
     it('should correctly parse mobile chrome ua', () => {
