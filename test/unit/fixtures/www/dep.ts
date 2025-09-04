@@ -1,1 +1,1 @@
-export default 'HI!';
+export default 'HI!' as const;

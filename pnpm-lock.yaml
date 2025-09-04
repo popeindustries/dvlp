@@ -11,6 +11,9 @@ importers:
 
   .:
     dependencies:
+      amaro:
+        specifier: ^1.1.2
+        version: 1.1.2
       commander:
         specifier: ^14.0.0
         version: 14.0.0
@@ -549,6 +552,10 @@ packages:
 
   ajv@8.17.1:
     resolution: {integrity: sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==}
+
+  amaro@1.1.2:
+    resolution: {integrity: sha512-oJzgW3TS6b9tPOLFVFReAuSrg3QzFWs2TkMf/3fLjp77TKOL4EZpRR6ia9dO4g3R41J65D3J5ngCpFvRqk4yFQ==}
+    engines: {node: '>=22'}
 
   ansi-escapes@7.0.0:
     resolution: {integrity: sha512-GdYO7a61mR0fOlAsvC9/rIHf7L96sBc6dEWzeOu+KAea5bZyQRPIpojrVoI4AXGJS/ycu/fBTdLrUkA4ODrvjw==}
@@ -2014,6 +2021,8 @@ snapshots:
       fast-uri: 3.1.0
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
+
+  amaro@1.1.2: {}
 
   ansi-escapes@7.0.0:
     dependencies:

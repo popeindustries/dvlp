@@ -31,6 +31,7 @@
     }
   },
   "dependencies": {
+    "amaro": "^1.1.2",
     "commander": "^14.0.0",
     "esbuild": "^0.25.9"
   },

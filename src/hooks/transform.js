@@ -1,12 +1,13 @@
 import { findClosest, getProjectPath, getTypeFromPath } from '../utils/file.js';
 import Debug from 'debug';
 import { error } from '../utils/log.js';
-import { extname } from 'node:path';
+import { basename, extname } from 'node:path';
 import { getType } from '../utils/mime.js';
 import { isTransformableJsFile } from '../utils/is.js';
 import { Metrics } from '../utils/metrics.js';
 import { parseEsbuildTarget } from '../utils/platform.js';
 import { readFileSync } from 'node:fs';
+import { transformSync } from 'amaro';
 
 const debug = Debug('dvlp:transform');
 const tsconfigPath = findClosest('tsconfig.json');
@@ -15,6 +16,8 @@ const tsconfig = tsconfigPath
   : `{
       compilerOptions: {
         useDefineForClassFields: true,
+        verbatimModuleSyntax: true,
+        erasableSyntaxOnly: true
       },
     }`;
 
@@ -27,6 +30,7 @@ const tsconfig = tsconfigPath
  * @param { TransformHookContext["client"] } clientPlatform
  * @param { Map<string, string> } cache
  * @param { esbuild } esbuild
+ * @param { 'esbuild' | 'amaro' } defaultTransformer
  * @param { Hooks["onTransform"] } hookFn
  * @returns { Promise<void> }
  */
@@ -37,6 +41,7 @@ export async function transform(
   clientPlatform,
   cache,
   esbuild,
+  defaultTransformer,
   hookFn,
 ) {
   res.metrics.recordEvent(Metrics.EVENT_NAMES.transform);
@@ -74,21 +79,33 @@ export async function transform(
           return;
         }
 
-        /** @type { import("esbuild").TransformOptions } */
-        const options = {
-          format: 'esm',
-          // @ts-expect-error - filtered by "fileType"
-          loader: fileExtension.slice(1),
-          logLevel: 'warning',
-          sourcefile: filePath,
-          target: parseEsbuildTarget(clientPlatform),
-        };
+        if (defaultTransformer === 'esbuild') {
+          /** @type { import("esbuild").TransformOptions } */
+          const options = {
+            format: 'esm',
+            // @ts-expect-error - filtered by "fileType"
+            loader: fileExtension.slice(1),
+            logLevel: 'warning',
+            sourcefile: filePath,
+            target: parseEsbuildTarget(clientPlatform),
+          };
 
-        if (tsconfig) {
-          options.tsconfigRaw = tsconfig;
+          if (tsconfig) {
+            options.tsconfigRaw = tsconfig;
+          }
+
+          code = (await esbuild.transform(fileContents, options)).code;
+        } else if (defaultTransformer === 'amaro') {
+          code = transformSync(fileContents, {
+            mode: 'strip-only',
+            module: true,
+            filename: basename(filePath),
+          }).code;
+        } else {
+          throw Error(
+            `unknown transformer configured ('esbuild' or 'amaro' supported): ${defaultTransformer}`,
+          );
         }
-
-        code = (await esbuild.transform(fileContents, options)).code;
       }
       if (code !== undefined) {
         transformed = true;

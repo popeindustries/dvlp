@@ -69,7 +69,7 @@ export class Dvlp {
     this.clients = new Set();
     this.connections = new Map();
     this.entry = entry;
-    this.hooks = new Hooker(hooks, this.watcher);
+    this.hooks = new Hooker(config.defaultTransformer, hooks, this.watcher);
     this.isListening = false;
     this.lastChanged = '';
     /** @type { Http2SecureServerOptions } */

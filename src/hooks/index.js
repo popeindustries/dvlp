@@ -20,10 +20,11 @@ export class Hooker {
   /**
    * Constructor
    *
+   * @param { 'esbuild' | 'amaro' } [defaultTransformer]
    * @param { Hooks } [hooks]
    * @param { Watcher } [watcher]
    */
-  constructor(hooks, watcher) {
+  constructor(defaultTransformer = 'esbuild', hooks, watcher) {
     if (hooks) {
       for (const name of Object.keys(hooks)) {
         if (!HOOK_NAMES.includes(name) && name !== 'filePath') {
@@ -38,6 +39,7 @@ export class Hooker {
       }
     }
 
+    this.defaultTransformer = defaultTransformer;
     /** @type { Hooks | undefined } */
     this.hooks = hooks;
     /** @type { Map<string, string> } */
@@ -120,6 +122,7 @@ export class Hooker {
         build: this.patchedESBuild,
         transform: esbuild.transform,
       },
+      this.defaultTransformer,
       this.hooks && this.hooks.onTransform,
     );
   }
