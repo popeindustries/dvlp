@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  debug: ^4.4.0
+  debug: ^4.4.3
 
 importers:
 
@@ -59,7 +59,7 @@ importers:
         version: 4.4.3(supports-color@8.1.1)
       electron:
         specifier: 43.1.0
-        version: 43.1.0
+        version: 43.1.0(supports-color@8.1.1)
       es-module-lexer:
         specifier: ^2.3.1
         version: 2.3.1
@@ -1385,14 +1385,14 @@ snapshots:
 
   '@electron-internal/extract-zip@1.0.4': {}
 
-  '@electron/get@5.0.0':
+  '@electron/get@5.0.0(supports-color@8.1.1)':
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       env-paths: 3.0.0
       graceful-fs: 4.2.11
       progress: 2.0.3
       semver: 7.8.5
-      sumchecker: 3.0.1
+      sumchecker: 3.0.1(supports-color@8.1.1)
     optionalDependencies:
       undici: 7.28.0
     transitivePeerDependencies:
@@ -1821,10 +1821,10 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
-  electron@43.1.0:
+  electron@43.1.0(supports-color@8.1.1):
     dependencies:
       '@electron-internal/extract-zip': 1.0.4
-      '@electron/get': 5.0.0
+      '@electron/get': 5.0.0(supports-color@8.1.1)
       '@types/node': 24.13.3
     transitivePeerDependencies:
       - supports-color
@@ -2337,7 +2337,7 @@ snapshots:
 
   strip-json-comments@3.1.1: {}
 
-  sumchecker@3.0.1:
+  sumchecker@3.0.1(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:

@@ -7,4 +7,4 @@ onlyBuiltDependencies:
   - esbuild
 
 overrides:
-  debug: ^4.4.0
+  debug: ^4.4.3
