@@ -6,6 +6,10 @@ import log from './utils/log.ts';
 import { TestServer } from './test-server/index.ts';
 import type { TestServerOptions } from './test-server/types.ts';
 
+export { TestServer };
+export type { Req, Res } from './types.ts';
+export type { TestServerOptions } from './test-server/types.ts';
+
 interface TestServerFactory {
   (options?: TestServerOptions): Promise<TestServer>;
   disableNetwork(rerouteAllRequests?: boolean): void;

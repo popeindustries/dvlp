@@ -1,8 +1,7 @@
+import { bundleDts } from './bundle-dts.js';
 import esbuild from 'esbuild';
 import fs from 'fs';
-import glob from 'fast-glob';
 import { minify } from 'terser';
-import path from 'path';
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
@@ -24,27 +23,8 @@ const define = {
   'global.$VERSION': `'${pkg.version}'`,
 };
 const external = ['electron', 'esbuild', 'fsevents', 'dvlp/internal'];
-let types = '';
 
-for (const typePath of glob.sync('src/**/_.d.ts')) {
-  types += `// ${typePath}\n${fs.readFileSync(
-    path.resolve(typePath),
-    'utf-8',
-  )}\n`;
-}
-
-types = types.replace(
-  /(declare) (interface|type|enum|namespace|function|class)/g,
-  'export $2',
-);
-
-fs.writeFileSync(
-  'dvlp.d.ts',
-  `${fs.readFileSync('src/dvlp.d.ts', 'utf-8')}\n${types}`,
-  'utf8',
-);
-fs.copyFileSync('src/dvlp-test.d.ts', 'dvlp-test.d.ts');
-fs.copyFileSync('src/dvlp-test-browser.d.ts', 'dvlp-test-browser.d.ts');
+bundleDts();
 
 await esbuild.build({
   bundle: true,

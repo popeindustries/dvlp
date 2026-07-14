@@ -24,6 +24,77 @@ import path from 'node:path';
 
 export { getDependencies } from './utils/module.ts';
 
+export type {
+  Config,
+  ContentType,
+  Entry,
+  Req,
+  Res,
+  RequestHandler,
+} from './types.ts';
+export type {
+  DefaultResolve,
+  DependencyBundleHookContext,
+  Hooks,
+  NodeLoadLoaderHook,
+  NodeResolveLoaderHook,
+  ResolveHookContext,
+  TransformHookContext,
+} from './hooks/types.ts';
+export type {
+  DeserializedMock,
+  MockPushEvent,
+  MockPushEventJSONSchema,
+  MockPushEventOptions,
+  MockPushStream,
+  MockRequest,
+  MockResponse,
+  MockResponseData,
+  MockResponseDataType,
+  MockResponseHandler,
+  MockResponseJSONSchema,
+  Mocks,
+  MockStreamData,
+  MockStreamDataType,
+  MockStreamEventData,
+  SerializedMock,
+} from './mock/types.ts';
+export type { Server, ServerOptions } from './server/types.ts';
+export type { Package, ResolveResult } from './resolver/types.ts';
+export type {
+  PushClient,
+  PushEvent,
+  PushEventOptions,
+  PushStream,
+} from './push-events/types.ts';
+export type {
+  ApplicationHostMessage,
+  ApplicationLoaderMessage,
+  ApplicationProcessWorkerData,
+  ApplicationWorker,
+  ApplicationWorkerMessage,
+  ApplicationWorkerPendingHandle,
+} from './application-host/types.ts';
+export type {
+  ElectronProcess,
+  ElectronProcessMessage,
+  ElectronProcessWorkerData,
+} from './electron-host/types.ts';
+export type {
+  FindOptions,
+  ImportAssertionType,
+  InterceptClientRequestCallback,
+  InterceptCreateServerCallback,
+  InterceptFileAccessCallback,
+  PatchResponseOptions,
+  Platform,
+  RequestContext,
+  Watcher,
+} from './utils/types.ts';
+export type { Metrics } from './utils/metrics.ts';
+export type { TestServer } from './test-server/index.ts';
+export type { TestServerOptions } from './test-server/types.ts';
+
 // Enable code cache in default location (tmpdir/node-compile-cache)
 // NOTE: not available in older Node versions
 module.enableCompileCache?.();
