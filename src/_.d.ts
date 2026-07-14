@@ -65,7 +65,7 @@ type Req = (IncomingMessage | Http2ServerRequest) & {
   url: string;
   params?: Record<string, string>;
 };
-type Res = (ServerResponse | Http2ServerResponse) & {
+type Res = (ServerResponse & Http2ServerResponse) & {
   bundled: boolean;
   encoding: string;
   metrics: Metrics;

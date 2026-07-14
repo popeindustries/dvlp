@@ -421,7 +421,10 @@ export class Dvlp {
    * @private
    */
   registerReloadClient(req, res) {
-    const client = new EventSource(req, res);
+    const client = new EventSource(
+      req,
+      /** @type { ServerResponse & Http2ServerResponse } */ (res),
+    );
 
     this.clients.add(client);
     debug('added reload connection', this.clients.size);

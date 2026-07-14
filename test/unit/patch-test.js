@@ -566,9 +566,9 @@ describe('patch', () => {
           patchResponse(req, res, {
             resolveImport: hooks.resolveImport,
           });
-          res.end('import "./style.css" assert { type: "css" };');
+          res.end('import "./style.css" with { type: "css" };');
           expect(getBody(res)).to.include(
-            `import "${cwd}/test/unit/fixtures/www/style.css" assert { type: "css" };`,
+            `import "${cwd}/test/unit/fixtures/www/style.css" with { type: "css" };`,
           );
         });
         it('should resolve asserted package css import', () => {
@@ -579,9 +579,9 @@ describe('patch', () => {
           patchResponse(req, res, {
             resolveImport: hooks.resolveImport,
           });
-          res.end('import "css" assert { type: "css" };');
+          res.end('import "css" with { type: "css" };');
           expect(getBody(res)).to.include(
-            `import "${cwd}/test/unit/fixtures/node_modules/css/styles.css" assert { type: "css" };`,
+            `import "${cwd}/test/unit/fixtures/node_modules/css/styles.css" with { type: "css" };`,
           );
         });
         it('should resolve multiple bare js import ids', () => {

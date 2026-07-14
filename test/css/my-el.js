@@ -1,4 +1,4 @@
-import styles from './adopted-el-styles.css' assert { type: 'css' };
+import styles from './adopted-el-styles.css' with { type: 'css' };
 
 const html = String.raw;
 

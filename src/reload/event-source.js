@@ -28,7 +28,7 @@ export class EventSource extends EventEmitter {
    * Constructor
    *
    * @param { IncomingMessage | Http2ServerRequest } req
-   * @param { ServerResponse | Http2ServerResponse } res
+   * @param { ServerResponse & Http2ServerResponse } res
    */
   constructor(req, res) {
     super();
@@ -150,7 +150,6 @@ export class EventSource extends EventEmitter {
    */
   _write(chunk) {
     try {
-      // @ts-expect-error - writeable
       this._res.write(chunk);
       return true;
     } catch {

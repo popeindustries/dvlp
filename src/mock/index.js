@@ -316,7 +316,6 @@ export class Mocks {
       // @ts-expect-error - is string
       'Content-Length': Buffer.byteLength(content),
     });
-    // @ts-expect-error - is string
     res.end(content);
     res.metrics.recordEvent(Metrics.EVENT_NAMES.mock);
 
