@@ -1,0 +1,10 @@
+import './file-test.ts';
+import './hooks-test.ts';
+import './intercept-test.ts';
+import './platform-test.ts';
+import './patch-test.ts';
+import './resolver-test.ts';
+import './mock-test.ts';
+import './test-server-test.ts';
+import './server-test.ts';
+import './electron-test.ts';

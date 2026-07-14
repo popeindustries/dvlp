@@ -4,7 +4,7 @@ import config from '../../src/config.ts';
 import { EventSource } from 'eventsource';
 import { expect } from 'chai';
 import { fileURLToPath } from 'node:url';
-import { getBundleFilePath } from './utils.js';
+import { getBundleFilePath } from './utils.ts';
 import http2 from 'node:http2';
 import path from 'node:path';
 import { platform } from 'node:os';
