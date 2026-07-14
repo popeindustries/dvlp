@@ -99,7 +99,7 @@ await esbuild.build({
     {
       name: 'dummylog',
       setup(build) {
-        build.onLoad({ filter: /utils\/log.js$/ }, (args) => {
+        build.onLoad({ filter: /utils\/log\.(?:js|ts)$/ }, (args) => {
           return {
             contents: `
               export function error() {};
