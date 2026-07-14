@@ -1,23 +1,32 @@
+import type { Req, Res } from './types.ts';
 import config from './config.ts';
 import { interceptClientRequest } from './utils/intercept-client-request.ts';
 import { isLocalhost } from './utils/is.ts';
 import log from './utils/log.ts';
 import { TestServer } from './test-server/index.ts';
+import type { TestServerOptions } from './test-server/types.ts';
 
-/** @type { Set<TestServer> } */
-const instances = new Set();
+interface TestServerFactory {
+  (options?: TestServerOptions): Promise<TestServer>;
+  disableNetwork(rerouteAllRequests?: boolean): void;
+  enableNetwork(): void;
+  mockHangResponseHandler(req: Req, res: Res): void;
+  mockErrorResponseHandler(req: Req, res: Res): void;
+  mockMissingResponseHandler(req: Req, res: Res): void;
+  mockOfflineResponseHandler(req: Req, res: Res): void;
+}
+
+const instances = new Set<TestServer>();
 let reroute = false;
 let networkDisabled = false;
-/** @type { () => void | undefined } */
-let uninterceptClientRequest;
+let uninterceptClientRequest: (() => void) | undefined;
 
 /**
  * Create test server
- *
- * @param { TestServerOptions } [options]
- * @returns { Promise<TestServer> }
  */
-export async function testServer(options) {
+export const testServer = async function testServer(
+  options?: TestServerOptions,
+): Promise<TestServer> {
   enableRequestIntercept();
 
   const server = new TestServer(options || {});
@@ -38,14 +47,11 @@ export async function testServer(options) {
   };
 
   return server;
-}
+} as TestServerFactory;
 
 /**
  * Disable all external network connections
  * and optionally reroute all external requests to this server
- *
- * @param { boolean } [rerouteAllRequests]
- * @returns { void }
  */
 testServer.disableNetwork = function disableNetwork(
   rerouteAllRequests = false,
@@ -57,8 +63,6 @@ testServer.disableNetwork = function disableNetwork(
 
 /**
  * Re-enable all external network connections
- *
- * @returns { void }
  */
 testServer.enableNetwork = function enableNetwork() {
   uninterceptClientRequest?.();
@@ -68,10 +72,6 @@ testServer.enableNetwork = function enableNetwork() {
 
 /**
  * Default mock response handler for network hang
- *
- * @param { Req } req
- * @param { Res } res
- * @returns { undefined }
  */
 testServer.mockHangResponseHandler = function mockHangResponseHandler(
   req,
@@ -82,10 +82,6 @@ testServer.mockHangResponseHandler = function mockHangResponseHandler(
 
 /**
  * Default mock response handler for 500 response
- *
- * @param { Req } req
- * @param { Res } res
- * @returns { undefined }
  */
 testServer.mockErrorResponseHandler = function mockErrorResponseHandler(
   req,
@@ -99,10 +95,6 @@ testServer.mockErrorResponseHandler = function mockErrorResponseHandler(
 
 /**
  * Default mock response handler for 404 response
- *
- * @param { Req } req
- * @param { Res } res
- * @returns { undefined }
  */
 testServer.mockMissingResponseHandler = function mockMissingResponseHandler(
   req,
@@ -115,10 +107,6 @@ testServer.mockMissingResponseHandler = function mockMissingResponseHandler(
 
 /**
  * Default mock response handler for offline
- *
- * @param { Req } req
- * @param { Res } res
- * @returns { undefined }
  */
 testServer.mockOfflineResponseHandler = function mockOfflineResponseHandler(
   req,

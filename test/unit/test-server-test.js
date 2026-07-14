@@ -1,6 +1,6 @@
 import { EventSource } from 'eventsource';
 import { expect } from 'chai';
-import { testServer } from '../../src/dvlp-test.js';
+import { testServer } from '../../src/dvlp-test.ts';
 import websocket from 'faye-websocket';
 
 const { Client: WebSocket } = websocket;
@@ -41,7 +41,7 @@ describe('testServer', () => {
   });
   it('should respond to requests for resources using default "webroot"', async () => {
     server = await testServer();
-    const res = await fetch('http://localhost:8080/src/dvlp-test.js');
+    const res = await fetch('http://localhost:8080/src/dvlp-test.ts');
     expect(res).to.exist;
     expect(await res.text()).to.contain('testServer');
   });
@@ -131,7 +131,7 @@ describe('testServer', () => {
   it('should reroute external request when network disabled and rerouting enabled', async () => {
     testServer.disableNetwork(true);
     server = await testServer();
-    const res = await fetch('http://www.google.com/src/dvlp-test.js');
+    const res = await fetch('http://www.google.com/src/dvlp-test.ts');
     expect(res).to.exist;
     expect(await res.text()).to.contain('testServer');
     testServer.disableNetwork(false);

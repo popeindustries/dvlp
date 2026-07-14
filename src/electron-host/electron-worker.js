@@ -7,12 +7,15 @@ const messagePort = /** @type { import('worker_threads').MessagePort } */ (
 
 interceptInProcess({
   hostOrigin: workerData.dvlp.hostOrigin,
-  postMessage: /** @param { ApplicationWorkerMessage } msg */ (msg) => {
-    try {
-      messagePort.postMessage(msg);
-    } catch {
-      // Ignroe
-    }
-  },
+  postMessage:
+    /** @param { import('../application-host/types.ts').ApplicationWorkerMessage } msg */ (
+      msg,
+    ) => {
+      try {
+        messagePort.postMessage(msg);
+      } catch {
+        // Ignroe
+      }
+    },
   serializedMocks: workerData.dvlp.serializedMocks,
 });

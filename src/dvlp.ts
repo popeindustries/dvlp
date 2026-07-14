@@ -6,6 +6,7 @@
 
 import { exists, getProjectPath, importModule } from './utils/file.ts';
 import logger, { fatal, noisyInfo } from './utils/log.ts';
+import type { Server, ServerOptions } from './server/types.ts';
 import { bootstrap } from './utils/bootstrap.ts';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
@@ -13,9 +14,11 @@ import config from './config.ts';
 import { createApplicationLoaderFile } from './application-host/index.ts';
 import { createElectronEntryFile } from './electron-host/index.ts';
 import { Dvlp } from './server/index.ts';
+import type { Entry } from './types.ts';
 import { init as esLexerInit } from 'es-module-lexer';
 import { expandPath } from './utils/expand-path.ts';
 import fs from 'node:fs';
+import type { Hooks } from './hooks/types.ts';
 import module from 'node:module';
 import path from 'node:path';
 
@@ -27,13 +30,9 @@ module.enableCompileCache?.();
 
 /**
  * Server instance factory
- *
- * @param { string | Array<string> } filePath
- * @param { ServerOptions } options
- * @returns { Promise<Server> }
  */
 export async function server(
-  filePath = process.cwd(),
+  filePath: string | Array<string> = process.cwd(),
   {
     argv = [],
     certsPath,
@@ -45,12 +44,11 @@ export async function server(
     reload = true,
     silent = false,
     verbose = false,
-  } = {},
-) {
+  }: ServerOptions = {},
+): Promise<Server> {
   bootstrap();
   const entry = resolveEntry(filePath, directories, electron);
-  /** @type { Hooks | undefined } */
-  let hooks;
+  let hooks: Hooks | undefined;
 
   await cjsLexerInit();
   await esLexerInit;
@@ -68,7 +66,7 @@ export async function server(
   }
   if (hooksPath) {
     hooksPath = path.resolve(hooksPath);
-    hooks = /** @type { Hooks } */ (await importModule(hooksPath));
+    hooks = await importModule<Hooks>(hooksPath);
     noisyInfo(
       `${chalk.green('✔')} registered hooks at ${chalk.green(
         getProjectPath(hooksPath),
@@ -119,7 +117,7 @@ export async function server(
         .filter((dir) => !dir.includes('node_modules'))
         .map((dir) => path.relative(parentDir, dir) || path.basename(parentDir))
         .join(', ')
-    : getProjectPath(/** @type { string } */ (entry.main));
+    : getProjectPath(entry.main as string);
   const origin = server.origin;
   const appOrigins = server.applicationHost?.appOrigins;
   const electronAppOrigins = server.electronHost?.appOrigins;
@@ -156,12 +154,10 @@ export async function server(
           return server.applicationHost?.activeThread?.isListening ?? false;
         },
         origins: server.applicationHost.appOrigins,
-        /** @param { string | Array<string> } filePaths */
-        addWatchFiles(filePaths) {
+        addWatchFiles(filePaths: string | Array<string>) {
           server.applicationHost?.addWatchFiles(filePaths);
         },
-        /** @param { string | object | number | boolean | bigint } msg */
-        sendMessage(msg) {
+        sendMessage(msg: string | object | number | boolean | bigint) {
           server.applicationHost?.activeThread?.messagePort.postMessage(msg);
         },
       }
@@ -175,12 +171,10 @@ export async function server(
           return server.electronHost?.isListening ?? false;
         },
         origins: server.electronHost.appOrigins,
-        /** @param { string | Array<string> } filePaths */
-        addWatchFiles(filePaths) {
+        addWatchFiles(filePaths: string | Array<string>) {
           server.electronHost?.addWatchFiles(filePaths);
         },
-        /** @param { string | object | number | boolean | bigint } msg */
-        sendMessage(msg) {
+        sendMessage(msg: string | object | number | boolean | bigint) {
           server.electronHost?.activeProcess.send(msg);
         },
       }
@@ -207,15 +201,13 @@ export async function server(
 
 /**
  * Resolve entry data from "filePaths"
- *
- * @param { string | Array<string> } filePath
- * @param { Array<string> } directories
- * @param { boolean } electron
- * @returns { Entry }
  */
-function resolveEntry(filePath, directories = [], electron) {
-  /** @type { Entry } */
-  const entry = {
+function resolveEntry(
+  filePath: string | Array<string>,
+  directories: Array<string> = [],
+  electron: boolean,
+): Entry {
+  const entry: Entry = {
     directories: [],
     isApp: false,
     isElectron: electron,

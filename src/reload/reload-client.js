@@ -126,9 +126,10 @@
     }
 
     try {
-      const { assert, filePath, href, type } = /** @type { RequestContext } */ (
-        JSON.parse(event.data)
-      );
+      const { assert, filePath, href, type } =
+        /** @type { import('../utils/types.ts').RequestContext } */ (
+          JSON.parse(event.data)
+        );
 
       if (type === 'css') {
         if (assert === 'css') {

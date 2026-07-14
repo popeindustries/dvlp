@@ -8,7 +8,7 @@ import { getBundleFilePath } from './utils.js';
 import http2 from 'node:http2';
 import path from 'node:path';
 import { platform } from 'node:os';
-import { server as serverFactory } from '../../src/dvlp.js';
+import { server as serverFactory } from '../../src/dvlp.ts';
 import websocket from 'faye-websocket';
 
 const { Client: WebSocket } = websocket;

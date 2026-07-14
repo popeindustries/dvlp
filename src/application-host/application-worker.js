@@ -11,19 +11,22 @@ const messagePort = /** @type { MessagePort } */ (workerData.messagePort);
 
 interceptInProcess({
   hostOrigin: workerData.hostOrigin,
-  postMessage: /** @param { ApplicationWorkerMessage } msg */ (msg) => {
-    try {
-      messagePort.postMessage(msg);
-    } catch {
-      // Ignroe
-    }
-  },
+  postMessage:
+    /** @param { import('./types.ts').ApplicationWorkerMessage } msg */ (
+      msg,
+    ) => {
+      try {
+        messagePort.postMessage(msg);
+      } catch {
+        // Ignroe
+      }
+    },
   serializedMocks: workerData.serializedMocks,
 });
 
 messagePort.on(
   'message',
-  /** @param { ApplicationHostMessage } msg */
+  /** @param { import('./types.ts').ApplicationHostMessage } msg */
   async (msg) => {
     if (msg.type === 'start') {
       try {
@@ -63,7 +66,7 @@ if ('register' in module) {
     port1.unref();
     port1.on(
       'message',
-      /** @param { ApplicationLoaderMessage } msg */
+      /** @param { import('./types.ts').ApplicationLoaderMessage } msg */
       (msg) => {
         if (msg.type === 'dependency') {
           const { filePath } = msg;

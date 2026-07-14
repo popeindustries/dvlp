@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import http from 'node:http';
 import { interceptClientRequest } from '../../src/utils/intercept-client-request.ts';
-import { testServer } from '../../src/dvlp-test.js';
+import { testServer } from '../../src/dvlp-test.ts';
 
 /** @type { () => void } */
 let unintercept;

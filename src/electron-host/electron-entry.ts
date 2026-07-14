@@ -25,7 +25,7 @@ const reFileProtocol = new RegExp(
 );
 
 export async function bootstrapElectron() {
-  const electronWorkerData = getElectronWorkerData();
+  const electronWorkerData = getElectronWorkerData()!;
   const { app, BrowserWindow } = await import('electron');
 
   interceptInProcess(electronWorkerData);

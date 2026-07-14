@@ -48,7 +48,7 @@ fs.copyFileSync('src/dvlp-test-browser.d.ts', 'dvlp-test-browser.d.ts');
 
 await esbuild.build({
   bundle: true,
-  entryPoints: ['./src/dvlp-test-browser.js'],
+  entryPoints: ['./src/dvlp-test-browser.ts'],
   format: 'esm',
   outfile: 'dvlp-test-browser.js',
   target: 'es2020',
@@ -58,7 +58,7 @@ await esbuild.build({
   banner,
   bundle: true,
   define,
-  entryPoints: ['./src/dvlp-test.js'],
+  entryPoints: ['./src/dvlp-test.ts'],
   format: 'esm',
   outfile: 'dvlp-test.js',
   platform: 'node',
@@ -71,8 +71,8 @@ await esbuild.build({
   define,
   entryNames: '[name]',
   entryPoints: [
-    './src/dvlp.js',
-    './src/dvlp-internal.js',
+    './src/dvlp.ts',
+    './src/dvlp-internal.ts',
     './src/application-host/application-worker.js',
     './src/electron-host/electron-worker.js',
   ],

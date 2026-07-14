@@ -11,10 +11,10 @@
     "dvlp": "bin/dvlp.js"
   },
   "exports": {
-    ".": "./src/dvlp.js",
-    "./internal": "./src/dvlp-internal.js",
-    "./test-browser": "./src/dvlp-test-browser.js",
-    "./test": "./src/dvlp-test.js"
+    ".": "./src/dvlp.ts",
+    "./internal": "./src/dvlp-internal.ts",
+    "./test-browser": "./src/dvlp-test-browser.ts",
+    "./test": "./src/dvlp-test.ts"
   },
   "publishConfig": {
     "exports": {
