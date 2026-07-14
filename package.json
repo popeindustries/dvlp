@@ -61,11 +61,10 @@
     "resolve.exports": "^2.0.3",
     "semver": "^7.8.5",
     "terser": "^5.49.0",
-    "tsx": "^4.23.1",
     "typescript": "^7.0.2"
   },
   "engines": {
-    "node": ">=20",
+    "node": ">=22.18.0",
     "pnpm": ">=11"
   },
   "scripts": {
@@ -76,10 +75,10 @@
     "lint:src": "oxlint",
     "lint:types": "tsc --noEmit --skipLibCheck ",
     "prepublishOnly": "pnpm run build",
-    "test": "cross-env NODE_ENV=dvlptest NODE_TLS_REJECT_UNAUTHORIZED='0' NODE_OPTIONS='--import tsx' mocha --reporter spec --bail --exit --timeout 10000 --require ./test/unit/init.js test/unit/index.js",
+    "test": "cross-env NODE_ENV=dvlptest NODE_TLS_REJECT_UNAUTHORIZED='0' mocha --reporter spec --bail --exit --timeout 10000 --require ./test/unit/init.js test/unit/index.js",
     "test:all": "pnpm run test && pnpm run test:integration",
     "test:browser": "pnpm run build && ./bin/dvlp.js --mock test/browser/fixtures/mock test/browser",
-    "test:integration": "pnpm run build && cross-env NODE_ENV=dvlptest NODE_OPTIONS='--import tsx' mocha test/integration/*-test.js --reporter spec --exit --timeout 10000",
+    "test:integration": "pnpm run build && cross-env NODE_ENV=dvlptest mocha test/integration/*-test.js --reporter spec --exit --timeout 10000",
     "prepare": "husky"
   },
   "prettier": {

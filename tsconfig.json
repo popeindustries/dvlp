@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "checkJs": true,
+    "erasableSyntaxOnly": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
@@ -10,6 +12,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "noEmit": true,
+    "rewriteRelativeImportExtensions": true,
     "strict": true,
     "target": "esnext",
     "verbatimModuleSyntax": true

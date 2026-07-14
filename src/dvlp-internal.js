@@ -1,8 +1,8 @@
-export { info, noisyInfo, warn, error, fatal } from './utils/log.js';
-export { bootstrapElectron } from './electron-host/electron-entry.js';
-export { filePathToUrlPathname } from './utils/url.js';
-export { getDependencies } from './utils/module.js';
-export { getElectronWorkerData } from './electron-host/worker-data.js';
-export { interceptInProcess } from './utils/intercept-in-process.js';
-export { nodeResolve } from './resolver/index.js';
-export { default as config } from './config.js';
+export { info, noisyInfo, warn, error, fatal } from './utils/log.ts';
+export { bootstrapElectron } from './electron-host/electron-entry.ts';
+export { filePathToUrlPathname } from './utils/url.ts';
+export { getDependencies } from './utils/module.ts';
+export { getElectronWorkerData } from './electron-host/worker-data.ts';
+export { interceptInProcess } from './utils/intercept-in-process.ts';
+export { nodeResolve } from './resolver/index.ts';
+export { default as config } from './config.ts';

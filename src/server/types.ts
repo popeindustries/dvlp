@@ -1,7 +1,7 @@
-import type { ApplicationWorker } from '../application-host/types.js';
-import type { ElectronProcess } from '../electron-host/types.js';
-import type { Mocks } from '../mock/types.js';
-import type { Entry } from '../types.js';
+import type { ApplicationWorker } from '../application-host/types.ts';
+import type { ElectronProcess } from '../electron-host/types.ts';
+import type { Entry } from '../types.ts';
+import type { Mocks } from '../mock/types.ts';
 
 export interface ServerOptions {
   /**

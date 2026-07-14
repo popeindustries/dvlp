@@ -1,1 +1,1 @@
-export { testBrowser } from './test-browser/index.js';
+export { testBrowser } from './test-browser/index.ts';

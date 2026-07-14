@@ -1,5 +1,5 @@
+import type { SerializedMock } from '../mock/types.ts';
 import type { Worker } from 'node:worker_threads';
-import type { SerializedMock } from '../mock/types.js';
 
 export interface ApplicationWorker {
   readonly activeProcess?: Worker;

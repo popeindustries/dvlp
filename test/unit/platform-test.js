@@ -1,7 +1,7 @@
 import {
   parseEsbuildTarget,
   parseUserAgent,
-} from '../../src/utils/platform.js';
+} from '../../src/utils/platform.ts';
 import { expect } from 'chai';
 
 describe('platform', () => {

@@ -1,0 +1,325 @@
+import {
+  connectClient,
+  destroyClients,
+  pushEvent,
+} from '../push-events/index.ts';
+import type {
+  MockPushEvent,
+  MockPushStream,
+  MockRequest,
+  MockResponse,
+  MockResponseHandler,
+} from '../mock/types.ts';
+import type { PushEvent, PushStream } from '../push-events/types.ts';
+import config from '../config.ts';
+import Debug from 'debug';
+import type { Duplex } from 'node:stream';
+import { EventSource } from '../reload/event-source.ts';
+import fs from 'node:fs';
+import { getType } from '../utils/mime.ts';
+import http from 'node:http';
+import type { HttpServer } from '../types.ts';
+import { Metrics } from '../utils/metrics.ts';
+import { Mocks } from '../mock/index.ts';
+import path from 'node:path';
+import type { TestServerOptions } from './types.ts';
+// @ts-expect-error - missing types
+import WebSocket from 'faye-websocket';
+
+const debug = Debug('dvlp:test');
+
+export class TestServer {
+  latency: number;
+  webroot: string;
+  port: number;
+  mocks: Mocks;
+
+  #autorespond: boolean;
+  #connections: Map<string, Duplex> = new Map();
+  #server: HttpServer | undefined;
+  #onSendCallbacks: Record<string, (data: any) => void> = {};
+
+  /**
+   * Constructor
+   */
+  constructor(options: TestServerOptions) {
+    const {
+      autorespond = false,
+      latency = config.latency,
+      port = config.defaultPort,
+      webroot = '',
+    } = options;
+
+    this.latency = latency;
+    this.webroot = webroot;
+    // Make sure mocks instance has access to active port
+    this.port = config.activePort = port;
+    this.mocks = new Mocks();
+
+    this.#autorespond = autorespond;
+  }
+
+  /**
+   * Start server
+   */
+  private _start(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.#server = http.createServer(async (req, res) => {
+        // @ts-expect-error - exists
+        res.url ??= req.url;
+        // @ts-expect-error - exists
+        res.metrics = new Metrics(res);
+
+        if (EventSource.isEventSource(req)) {
+          connectClient(
+            {
+              // @ts-expect-error - non-null
+              url: req.url,
+              type: 'es',
+            },
+            req,
+            res,
+          );
+          // @ts-expect-error - non-null
+          this.pushEvent(req.url, 'connect');
+          return;
+        }
+
+        // @ts-expect-error - non-null
+        const url = new URL(req.url, `http://localhost:${this.port}`);
+        const error = url.searchParams.get('error') != null;
+        const hang = url.searchParams.get('hang') != null;
+        const maxage = url.searchParams.get('maxage') || 0;
+        const missing = url.searchParams.get('missing') != null;
+        const offline = url.searchParams.get('offline') != null;
+        const mock = url.searchParams.get('dvlpmock') ?? url.href;
+
+        if (hang) {
+          return;
+        }
+
+        this.latency && (await sleep(this.latency));
+
+        if (error || missing) {
+          const statusCode = error ? 500 : 404;
+          const body = error ? 'error' : 'missing';
+
+          debug(`not ok: ${req.url} responding with ${statusCode}`);
+          res.statusCode = statusCode;
+          res.end(body);
+          return;
+        } else if (offline) {
+          debug(`not ok: ${req.url} offline`);
+          req.socket.destroy();
+          return;
+        } else if (req.destroyed) {
+          debug(`not ok: ${req.url} aborted`);
+          return;
+        } else if (mock) {
+          debug(`ok: ${req.url} responding with mocked data`);
+          // @ts-expect-error - type Req
+          if (this.mocks.matchResponse(mock, req, res)) {
+            return;
+          }
+        }
+
+        const trimmedPath = url.pathname.slice(1);
+        const type = getType(trimmedPath);
+        const headers: Record<string, string> = {};
+        // TODO: handle encoded query strings in path name?
+        let filePath = path.resolve(path.join(this.webroot, trimmedPath));
+        let body = '';
+        let size = 0;
+        let stat;
+        let msg = '';
+
+        // Copy custom headers to response
+        for (const [key, value] of Object.entries(req.headers)) {
+          if (key.startsWith('x-')) {
+            // @ts-expect-error - is string
+            headers[key] = value;
+          }
+        }
+
+        // Ignore webroot if no file
+        if (!fs.existsSync(filePath)) {
+          filePath = path.resolve(trimmedPath);
+        }
+
+        try {
+          stat = fs.statSync(filePath);
+          if (stat.isDirectory()) {
+            throw new Error('path is directory');
+          }
+          size = stat.size;
+          msg = `ok: ${req.url} responding with file`;
+        } catch {
+          if (!this.#autorespond) {
+            res.writeHead(404);
+            return res.end();
+          }
+          body = `"hello from ${url.href}!"`;
+          size = Buffer.byteLength(body);
+          msg = `ok: ${req.url} responding with dummy file`;
+        }
+
+        res.writeHead(200, {
+          'Content-Length': size,
+          'Cache-Control': `public, max-age=${maxage}`,
+          'Content-Type': type,
+          ...headers,
+        });
+
+        debug(msg);
+
+        return body ? res.end(body) : fs.createReadStream(filePath).pipe(res);
+      });
+
+      this.#server.unref();
+      this.#server.on('error', reject);
+      this.#server.on('listening', resolve);
+      this.#server.on('connection', (connection) => {
+        const key = `${connection.remoteAddress}:${connection.remotePort}`;
+
+        this.#connections.set(key, connection);
+        connection.once('close', () => {
+          this.#connections.delete(key);
+        });
+      });
+      this.#server.on('upgrade', (req, socket, body) => {
+        if (WebSocket.isWebSocket(req)) {
+          const url = new URL(req.url as string, `ws://${req.headers.host}`);
+          const callback = this.#onSendCallbacks[decodeURIComponent(url.href)];
+
+          connectClient(
+            {
+              url: url.href,
+              type: 'ws',
+            },
+            req,
+            socket,
+            body,
+            callback,
+          );
+
+          this.pushEvent(url.href, 'connect');
+        }
+      });
+
+      this.#server.listen(this.port);
+    });
+  }
+
+  /**
+   * Load mock files at 'filePath'
+   */
+  loadMockFiles(filePath: string | Array<string>) {
+    return this.mocks.load(filePath);
+  }
+
+  /**
+   * Register mock 'response' for 'request'
+   */
+  mockResponse(
+    request: string | MockRequest,
+    response: MockResponse | MockResponseHandler,
+    once = false,
+    onMockCallback?: () => void,
+  ) {
+    return this.mocks.addResponse(request, response, once, onMockCallback);
+  }
+
+  /**
+   * Register mock push 'events' for 'stream'
+   *
+   * @param onSendCallback - WS client send callback
+   */
+  mockPushEvents(
+    stream: string | MockPushStream,
+    events: MockPushEvent | Array<MockPushEvent>,
+    onSendCallback?: (data: any) => void,
+  ) {
+    if (onSendCallback) {
+      const key = typeof stream === 'string' ? stream : stream.url;
+      this.#onSendCallbacks[key] = onSendCallback;
+    }
+    return this.mocks.addPushEvents(stream, events);
+  }
+
+  /**
+   * Push data to WebSocket/EventSource clients
+   * A string passed as 'event' will be handled as a named mock push event
+   */
+  pushEvent(stream: string | PushStream, event?: string | PushEvent): void {
+    // Passed a mocked event name
+    if (typeof event === 'string') {
+      this.mocks.matchPushEvent(stream, event, pushEvent);
+    } else {
+      // @ts-expect-error - non-null
+      pushEvent(stream, event);
+    }
+  }
+
+  /**
+   * Clear all mock data
+   */
+  clearMockFiles() {
+    this.mocks.clear();
+  }
+
+  ref() {
+    this.#server?.ref();
+  }
+
+  unref() {
+    this.#server?.unref();
+  }
+
+  /**
+   * Stop running server
+   */
+  private _stop(): Promise<void> {
+    return new Promise((resolve) => {
+      for (const connection of this.#connections.values()) {
+        connection.destroy();
+      }
+      this.#connections.clear();
+
+      if (!this.#server) {
+        return resolve();
+      }
+
+      debug('server stopped');
+      this.#server.removeAllListeners();
+      if (!this.#server.listening) {
+        resolve();
+      } else {
+        this.#server.close(() => {
+          resolve();
+        });
+      }
+    });
+  }
+
+  /**
+   * Destroy instance
+   */
+  destroy(): Promise<void> {
+    debug('destroying');
+    destroyClients();
+    this.mocks.clear();
+    return this._stop();
+  }
+}
+
+/**
+ * Sleep for random number of milliseconds between 'min' and '2xmin'
+ */
+function sleep(min: number): Promise<void> {
+  return new Promise((resolve) => {
+    if (!min) {
+      return resolve();
+    }
+    setTimeout(resolve, min + Math.random() * min);
+  });
+}

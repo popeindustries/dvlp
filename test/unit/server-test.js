@@ -1,6 +1,6 @@
-import { cleanBundledFiles } from '../../src/utils/bundling.js';
-import { clearContexts } from '../../src/utils/request-contexts.js';
-import config from '../../src/config.js';
+import { cleanBundledFiles } from '../../src/utils/bundling.ts';
+import { clearContexts } from '../../src/utils/request-contexts.ts';
+import config from '../../src/config.ts';
 import { EventSource } from 'eventsource';
 import { expect } from 'chai';
 import { fileURLToPath } from 'node:url';

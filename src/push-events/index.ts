@@ -1,0 +1,184 @@
+import { getUrl, getUrlCacheKey, isWebSocketUrl } from '../utils/url.ts';
+import type { PushClient, PushEvent, PushStream } from './types.ts';
+import Debug from 'debug';
+import deflate from 'permessage-deflate';
+import { error } from '../utils/log.ts';
+import { EventSource } from '../reload/event-source.ts';
+// @ts-expect-error - missing types
+import WebSocket from 'faye-websocket';
+
+const RE_SOCKETIO_PROTOCOL = /socket\.?io|EIO/;
+
+const cache: Map<string, Set<PushClient>> = new Map();
+const debug = Debug('dvlp:push');
+
+/**
+ * Initialize EventSource/WebSocket client
+ */
+export function connectClient(
+  stream: string | PushStream,
+  ...args: Array<any>
+): void {
+  const { type, url } = getStream(stream);
+  const cacheKey = getUrlCacheKey(getUrl(url));
+  const clients = cache.get(cacheKey) ?? new Set();
+  let client: PushClient;
+
+  if (type === 'ws') {
+    const [req, socket, body, onSendCallback] = args;
+    const isSocketio = RE_SOCKETIO_PROTOCOL.test(req.url);
+    const extensionsHeaders = req.headers['Sec-WebSocket-Extensions'];
+    const extensions =
+      extensionsHeaders && extensionsHeaders.includes('permessage-deflate')
+        ? [deflate]
+        : [];
+    const protocolHeader = req.headers['sec-websocket-protocol'] || '';
+
+    client = new WebSocket(req, socket, body, protocolHeader.split(','), {
+      extensions,
+    });
+    client.on('message', (event: { data: string }) => {
+      debug('received ws message', event.data);
+
+      onSendCallback?.(event.data);
+
+      // Handle Socket.io channel protocol
+      // ex: 40/channel?somequery=foo
+      if (isSocketio) {
+        const [packetAndChannel] = event.data.split('?');
+
+        // Send separate packet and packet/channel responses
+        if (packetAndChannel.includes('/')) {
+          client.send(packetAndChannel.slice(0, packetAndChannel.indexOf('/')));
+          client.send(packetAndChannel);
+        }
+      }
+    });
+
+    if (isSocketio) {
+      client.send(
+        '0{"sid":"dvlp","upgrades":[],"pingInterval":250000,"pingTimeout":600000}',
+      );
+    }
+  } else {
+    const [req, res] = args;
+
+    client = new EventSource(req, res);
+  }
+
+  clients.add(client);
+  cache.set(cacheKey, clients);
+  debug(`added ${type} connection`, clients.size);
+
+  client.on('close', () => {
+    clients.delete(client);
+    if (!clients.size) {
+      cache.delete(cacheKey);
+    }
+    debug(`removed ${type} connection`, cache.size);
+  });
+}
+
+/**
+ * Push event data to WebSocket/EventSource clients
+ */
+export function pushEvent(stream: string | PushStream, event: PushEvent): void {
+  if (!stream || !event) {
+    return;
+  }
+
+  const { url, type } = getStream(stream);
+  const cacheKey = getUrlCacheKey(getUrl(url));
+  const clients = cache.get(cacheKey);
+
+  if (clients === undefined) {
+    return error(`no push clients registered for ${url}`);
+  }
+
+  let { message, options } = event;
+
+  if (!Buffer.isBuffer(message)) {
+    if (typeof message !== 'string') {
+      try {
+        message = JSON.stringify(message);
+      } catch {
+        return error(`unable to stringify message for push event`, message);
+      }
+    }
+
+    if (type === 'ws' && options !== undefined) {
+      const { event = '', namespace = '/', protocol } = options;
+
+      // Handle socket.io protocol
+      // https://github.com/socketio/socket.io-protocol/blob/master/Readme.md
+      if (protocol && RE_SOCKETIO_PROTOCOL.test(protocol)) {
+        // TODO: handle binary message
+        message = `42${namespace},["${event}",${message}]`;
+      }
+      options = undefined;
+    }
+  }
+
+  debug(
+    `push to ${clients.size} client${
+      clients.size > 1 ? 's' : ''
+    } connected on ${url}`,
+  );
+  debug(message);
+
+  for (const client of clients) {
+    client.send(message, options);
+  }
+}
+
+/**
+ * Destroy all active push clients for connection at 'url'
+ * If 'url' not defined, destroys all clients for all connections
+ */
+export function destroyClients(stream?: string | PushStream): void {
+  if (stream === undefined) {
+    for (const cacheKey of cache.keys()) {
+      destroyClient(cacheKey);
+    }
+    return;
+  }
+
+  const { url } = getStream(stream);
+  const cacheKey = getUrlCacheKey(getUrl(url));
+
+  destroyClient(cacheKey);
+}
+
+/**
+ * Destroy client at 'cacheKey'
+ */
+function destroyClient(cacheKey: string): void {
+  const clients = cache.get(cacheKey);
+
+  if (clients !== undefined) {
+    for (const client of clients) {
+      client.removeAllListeners();
+      client.close();
+    }
+    clients.clear();
+    cache.delete(cacheKey);
+  }
+}
+
+/**
+ * Retrieve PushStream from 'stream'
+ * If passed as string, will determine type from url
+ */
+function getStream(stream: string | PushStream): PushStream {
+  if (typeof stream === 'string') {
+    const url = getUrl(stream);
+    const isWebSocket = isWebSocketUrl(url);
+
+    stream = {
+      url: url.href,
+      type: isWebSocket ? 'ws' : 'es',
+    };
+  }
+
+  return stream;
+}

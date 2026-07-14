@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { Mocks } from '../../src/mock/index.js';
-import { pushEvent } from '../../src/push-events/index.js';
+import { Mocks } from '../../src/mock/index.ts';
+import { pushEvent } from '../../src/push-events/index.ts';
 
 const mocks = new Mocks();
 

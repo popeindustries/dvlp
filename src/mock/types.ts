@@ -1,6 +1,6 @@
 import type { MatchFunction, ParamData } from 'path-to-regexp';
-import type { PushEvent, PushStream } from '../push-events/types.js';
-import type { Req, Res } from '../types.js';
+import type { PushEvent, PushStream } from '../push-events/types.ts';
+import type { Req, Res } from '../types.ts';
 
 export interface Mocks {
   addResponse(

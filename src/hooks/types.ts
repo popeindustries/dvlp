@@ -4,7 +4,7 @@ import type {
   Http2ServerResponse,
   IncomingMessage,
   ServerResponse,
-} from '../types.js';
+} from '../types.ts';
 
 export interface Hooks {
   /**

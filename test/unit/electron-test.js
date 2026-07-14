@@ -1,5 +1,5 @@
-import { cleanBundledFiles } from '../../src/utils/bundling.js';
-import config from '../../src/config.js';
+import { cleanBundledFiles } from '../../src/utils/bundling.ts';
+import config from '../../src/config.ts';
 import { server as serverFactory } from '../../src/dvlp.js';
 
 let server;

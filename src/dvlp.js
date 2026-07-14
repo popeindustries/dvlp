@@ -4,22 +4,22 @@
  * - intercept file reads in all threads, send filepath to main process
  */
 
-import { exists, getProjectPath, importModule } from './utils/file.js';
-import logger, { fatal, noisyInfo } from './utils/log.js';
-import { bootstrap } from './utils/bootstrap.js';
+import { exists, getProjectPath, importModule } from './utils/file.ts';
+import logger, { fatal, noisyInfo } from './utils/log.ts';
+import { bootstrap } from './utils/bootstrap.ts';
 import chalk from 'chalk';
 import { init as cjsLexerInit } from 'cjs-module-lexer';
-import config from './config.js';
-import { createApplicationLoaderFile } from './application-host/index.js';
-import { createElectronEntryFile } from './electron-host/index.js';
-import { Dvlp } from './server/index.js';
+import config from './config.ts';
+import { createApplicationLoaderFile } from './application-host/index.ts';
+import { createElectronEntryFile } from './electron-host/index.ts';
+import { Dvlp } from './server/index.ts';
 import { init as esLexerInit } from 'es-module-lexer';
-import { expandPath } from './utils/expand-path.js';
+import { expandPath } from './utils/expand-path.ts';
 import fs from 'node:fs';
 import module from 'node:module';
 import path from 'node:path';
 
-export { getDependencies } from './utils/module.js';
+export { getDependencies } from './utils/module.ts';
 
 // Enable code cache in default location (tmpdir/node-compile-cache)
 // NOTE: not available in older Node versions

@@ -47,7 +47,7 @@ describe('testServer', () => {
   });
   it('should respond to requests for resources using specific "webroot"', async () => {
     server = await testServer({ webroot: 'src' });
-    const res = await fetch('http://localhost:8080/test-server/index.js');
+    const res = await fetch('http://localhost:8080/test-server/index.ts');
     expect(res).to.exist;
     const module = await res.text();
     expect(module).to.contain('TestServer');

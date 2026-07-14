@@ -1,6 +1,6 @@
-import { clearResolverCache, resolve } from '../../src/resolver/index.js';
-import { getPackage, resolvePackagePath } from '../../src/resolver/package.js';
-import config from '../../src/config.js';
+import { clearResolverCache, resolve } from '../../src/resolver/index.ts';
+import { getPackage, resolvePackagePath } from '../../src/resolver/package.ts';
+import config from '../../src/config.ts';
 import { expect } from 'chai';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';

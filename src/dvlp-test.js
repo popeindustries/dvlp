@@ -1,8 +1,8 @@
-import config from './config.js';
-import { interceptClientRequest } from './utils/intercept-client-request.js';
-import { isLocalhost } from './utils/is.js';
-import log from './utils/log.js';
-import { TestServer } from './test-server/index.js';
+import config from './config.ts';
+import { interceptClientRequest } from './utils/intercept-client-request.ts';
+import { isLocalhost } from './utils/is.ts';
+import log from './utils/log.ts';
+import { TestServer } from './test-server/index.ts';
 
 /** @type { Set<TestServer> } */
 const instances = new Set();

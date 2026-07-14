@@ -1,5 +1,5 @@
 import type { ChildProcess } from 'node:child_process';
-import type { SerializedMock } from '../mock/types.js';
+import type { SerializedMock } from '../mock/types.ts';
 
 export interface ElectronProcess {
   readonly activeThread?: ChildProcess;

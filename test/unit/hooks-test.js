@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import fs from 'node:fs';
 import { getBundleFilePath } from './utils.js';
-import { Hooker } from '../../src/hooks/index.js';
+import { Hooker } from '../../src/hooks/index.ts';
 import hooksFixture from './fixtures/hooks-bundle.mjs';
 import { init } from 'cjs-module-lexer';
 import path from 'node:path';

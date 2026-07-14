@@ -1,5 +1,5 @@
-import type { DefaultResolve, ResolveHookContext } from '../hooks/types.js';
-import type { ContentType } from '../types.js';
+import type { DefaultResolve, ResolveHookContext } from '../hooks/types.ts';
+import type { ContentType } from '../types.ts';
 
 export interface PatchResponseOptions {
   directories?: Array<string>;

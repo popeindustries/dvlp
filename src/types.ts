@@ -1,22 +1,22 @@
 import type {
-  IncomingMessage,
-  Server as HttpServer,
-  ServerOptions as HttpServerOptions,
-  ServerResponse,
-} from 'node:http';
-import type {
-  Http2SecureServer,
-  Http2ServerRequest,
-  Http2ServerResponse,
-  SecureServerOptions as Http2SecureServerOptions,
-} from 'node:http2';
-import type {
   BuildOptions,
   BuildResult,
   TransformOptions,
   TransformResult,
 } from 'esbuild';
-import type { Metrics } from './utils/metrics.js';
+import type {
+  Http2SecureServer,
+  SecureServerOptions as Http2SecureServerOptions,
+  Http2ServerRequest,
+  Http2ServerResponse,
+} from 'node:http2';
+import type {
+  Server as HttpServer,
+  ServerOptions as HttpServerOptions,
+  IncomingMessage,
+  ServerResponse,
+} from 'node:http';
+import type { Metrics } from './utils/metrics.ts';
 
 export type {
   HttpServer,
