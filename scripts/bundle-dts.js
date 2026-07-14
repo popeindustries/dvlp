@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
@@ -5,7 +6,15 @@ import path from 'node:path';
 
 export { bundleDts };
 
+const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Run tsc's JS entry via `node` (cross-platform; the `.bin/tsc` shim is
+// `tsc.CMD` on Windows and not directly spawnable).
+const TSC = path.join(
+  path.dirname(require.resolve('typescript/package.json')),
+  'bin',
+  'tsc',
+);
 const TYPES_DIR = path.join(ROOT, '.types');
 
 const ENTRIES = ['dvlp', 'dvlp-test', 'dvlp-test-browser'];
@@ -20,14 +29,10 @@ const DECL_RE =
  * self-contained `.d.ts` at the repo root, then clean up `.types/`.
  */
 function bundleDts() {
-  execFileSync(
-    path.join(ROOT, 'node_modules', '.bin', 'tsc'),
-    ['-p', 'tsconfig.build.json'],
-    {
-      cwd: ROOT,
-      stdio: 'inherit',
-    },
-  );
+  execFileSync(process.execPath, [TSC, '-p', 'tsconfig.build.json'], {
+    cwd: ROOT,
+    stdio: 'inherit',
+  });
 
   const files = new Map();
 
