@@ -186,8 +186,8 @@ class ApplicationThread extends Worker {
   constructor(filePath, messagePort, watcher, options) {
     super(filePath, options);
 
-    /** @type { boolean } */
-    this.isListening;
+    /** @type { boolean | undefined } */
+    this.isListening = undefined;
     this.isRegistered = false;
     this.messagePort = messagePort;
     this.watcher = watcher;

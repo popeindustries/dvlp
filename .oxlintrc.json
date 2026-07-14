@@ -1,0 +1,47 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript"],
+  "jsPlugins": ["./tools/oxlint-plugins/no-only-tests.js"],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2024": true,
+    "mocha": true
+  },
+  "globals": {
+    "globalThis": "readonly",
+    "URLPattern": "readonly"
+  },
+  "rules": {
+    "typescript/ban-ts-comment": "off",
+    "typescript/no-unused-expressions": "off",
+    "typescript/no-unused-vars": [
+      "warn",
+      {
+        "args": "none",
+        "argsIgnorePattern": "^_",
+        "ignoreRestSiblings": true,
+        "vars": "all"
+      }
+    ],
+    "curly": ["warn", "all"],
+    "no-unused-private-class-members": "warn",
+    "prefer-const": ["error", { "destructuring": "all" }],
+    "sort-imports": [
+      "warn",
+      {
+        "ignoreCase": true,
+        "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+      }
+    ],
+    "dvlp/no-only-tests": "error"
+  },
+  "ignorePatterns": [
+    "**/.*",
+    "**/test/**/fixtures",
+    "dvlp.js",
+    "dvlp-internal.js",
+    "dvlp-test.js",
+    "dvlp-test-browser.js"
+  ]
+}

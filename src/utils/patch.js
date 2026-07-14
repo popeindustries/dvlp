@@ -591,7 +591,7 @@ function proxyBodyWrite(res, action) {
 
       if (!res.headersSent) {
         if (size) {
-          originalSetHeader.call(res, 'Content-Length', size);
+          Reflect.apply(originalSetHeader, res, ['Content-Length', size]);
         }
       }
 

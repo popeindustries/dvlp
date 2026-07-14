@@ -72,8 +72,8 @@ export class Dvlp {
     this.hooks = new Hooker(config.defaultTransformer, hooks, this.watcher);
     this.isListening = false;
     this.lastChanged = '';
-    /** @type { Http2SecureServerOptions } */
-    this.secureServerOptions;
+    /** @type { Http2SecureServerOptions | undefined } */
+    this.secureServerOptions = undefined;
 
     let protocol = 'http';
     let commonName = undefined;
@@ -148,7 +148,7 @@ export class Dvlp {
     return new Promise((resolve, reject) => {
       if (this.entry.isSecure) {
         this.server = http2.createSecureServer(
-          this.secureServerOptions,
+          /** @type { Http2SecureServerOptions } */ (this.secureServerOptions),
           this.requestHandler,
         );
         this.server.setTimeout(0);

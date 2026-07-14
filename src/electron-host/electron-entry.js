@@ -1,5 +1,5 @@
 /**
- * @typedef { import('electron') } Electron
+ * @typedef { typeof import('electron') } Electron
  */
 
 import { dirname, join } from 'node:path';

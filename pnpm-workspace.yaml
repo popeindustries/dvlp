@@ -1,0 +1,10 @@
+allowBuilds:
+  electron: true
+  esbuild: true
+
+onlyBuiltDependencies:
+  - electron
+  - esbuild
+
+overrides:
+  debug: ^4.4.0

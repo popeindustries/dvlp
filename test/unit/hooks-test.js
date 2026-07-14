@@ -24,19 +24,12 @@ function getResponse() {
   };
 }
 
-/** @type { Hooks } */
-let hooks;
-
 describe('hooks()', () => {
   before(async () => {
     await init();
   });
 
   describe('bundle', () => {
-    afterEach(() => {
-      hooks && hooks.destroy();
-    });
-
     it('should return "undefined" if no module bundle found', async () => {
       const hooks = new Hooker();
       expect(

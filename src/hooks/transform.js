@@ -1,7 +1,7 @@
+import { basename, extname } from 'node:path';
 import { findClosest, getProjectPath, getTypeFromPath } from '../utils/file.js';
 import Debug from 'debug';
 import { error } from '../utils/log.js';
-import { basename, extname } from 'node:path';
 import { getType } from '../utils/mime.js';
 import { isTransformableJsFile } from '../utils/is.js';
 import { Metrics } from '../utils/metrics.js';

@@ -156,7 +156,7 @@
     const url = new URL(href, location.origin);
     url.searchParams.set('t', String(Date.now()));
 
-    import(url.href, { assert: { type: 'css' } })
+    import(url.href, { with: { type: 'css' } })
       .then((module) => {
         const styles = module.default;
 

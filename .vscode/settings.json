@@ -1,3 +1,14 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+
+  "oxc.enable": true,
+  "oxc.lint.run": "onType",
+  "oxc.configPath": ".oxlintrc.json",
+  "oxc.fixKind": "all",
+
+  "eslint.enable": false,
+
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit"
+  }
 }
