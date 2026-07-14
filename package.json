@@ -67,6 +67,7 @@
     "node": ">=22.18.0",
     "pnpm": ">=11"
   },
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "build": "node ./scripts/build.js",
     "clean": "git clean -x -f",
