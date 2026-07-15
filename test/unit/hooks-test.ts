@@ -61,7 +61,7 @@ describe('hooks()', () => {
       fs.unlinkSync(filePath);
     });
     it('should bundle with custom hook', async () => {
-      const hooks = new Hooker('esbuild', hooksFixture);
+      const hooks = new Hooker(hooksFixture);
       const filePath = path.resolve(getBundleFilePath('debug'));
       await hooks.bundleDependency(filePath, getResponse());
       const module = fs.readFileSync(filePath, 'utf8');
@@ -70,17 +70,8 @@ describe('hooks()', () => {
   });
 
   describe('transform', () => {
-    it('should transform filePath', async () => {
+    it('should transform filePath by stripping types with Amaro', async () => {
       const hooks = new Hooker();
-      const filePath = path.resolve('./test/unit/fixtures/www/dep.ts');
-      const res = getResponse();
-      await hooks.transform(filePath, '', res, {
-        client: { ua: 'test' },
-      });
-      expect(res.body).to.contain('dep_default as default');
-    });
-    it('should transform filePath with Amaro', async () => {
-      const hooks = new Hooker('amaro');
       const filePath = path.resolve('./test/unit/fixtures/www/dep.ts');
       const res = getResponse();
       await hooks.transform(filePath, '', res, {
@@ -88,8 +79,18 @@ describe('hooks()', () => {
       });
       expect(res.body).to.contain("export default 'HI!'         ;");
     });
+    it('should transform JSX filePath with esbuild', async () => {
+      const hooks = new Hooker();
+      const filePath = path.resolve('./test/unit/fixtures/www/dep.tsx');
+      const res = getResponse();
+      await hooks.transform(filePath, '', res, {
+        client: { ua: 'test' },
+      });
+      expect(res.body).to.contain('React.createElement');
+      expect(res.body).to.not.contain('<div>');
+    });
     it('should transform with custom hook', async () => {
-      const hooks = new Hooker('esbuild', transformFixture);
+      const hooks = new Hooker(transformFixture);
       const filePath = path.resolve('./test/unit/fixtures/www/script.js');
       const res = getResponse();
       await hooks.transform(filePath, '', res, {
@@ -99,7 +100,7 @@ describe('hooks()', () => {
     });
     it('should add project dependencies to optional watcher', async () => {
       const added = [];
-      const hooks = new Hooker('esbuild', transformBundleFixture, {
+      const hooks = new Hooker(transformBundleFixture, {
         add(filePath) {
           added.push(filePath);
         },

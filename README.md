@@ -110,7 +110,8 @@ export default {
    * @param { { client: { manufacturer: string, name: string, ua: string, version: string }, esbuild: Pick<import("esbuild"), 'build', 'transform'> } } context
    */
   async onTransform(filePath, fileContents, context) {
-    // Note: .ts, .tsx, .jsx files are transformed by default
+    // Note: .ts/.mts/.cts files have their types stripped with Amaro,
+    // and .tsx/.jsx files are transformed with esbuild, by default
 
     if (RE_SASS.test(filePath)) {
       return sass.renderSync({

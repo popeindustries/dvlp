@@ -38,7 +38,6 @@ export interface Config {
   bundleDirPath: string;
   cacheDirPath: string;
   defaultPort: number;
-  defaultTransformer: 'esbuild' | 'amaro';
   directories: Array<string>;
   dirPath: string;
   dvlpDirPath: string;

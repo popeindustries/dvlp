@@ -185,6 +185,16 @@ export function isTransformableJsFile(
 }
 
 /**
+ * Determine if "filePath" contains JSX (.tsx/.jsx),
+ * which requires esbuild rather than type-stripping.
+ */
+export function isJsxFilePath(filePath: string): boolean {
+  const extension = path.extname(filePath);
+
+  return extension === '.tsx' || extension === '.jsx';
+}
+
+/**
  * Determine if "filePath" is valid.
  * If relative, resolves against "fromDir".
  */

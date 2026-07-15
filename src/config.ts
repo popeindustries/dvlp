@@ -32,8 +32,6 @@ const config: Config = {
   bundleDirName,
   cacheDirPath,
   defaultPort,
-  defaultTransformer:
-    process.env.DVLP_TRANSFORMER === 'amaro' ? 'amaro' : 'esbuild',
   directories: [],
   dirPath,
   dvlpDirPath: path.resolve(DIR_NAME),
