@@ -4,6 +4,10 @@
  * - intercept file reads in all threads, send filepath to main process
  */
 
+import {
+  createStartupProfiler,
+  isStartupProfilingEnabled,
+} from './utils/startup-profiler.ts';
 import { exists, getProjectPath, importModule } from './utils/file.ts';
 import logger, { fatal, noisyInfo } from './utils/log.ts';
 import type { Server, ServerOptions } from './server/types.ts';
@@ -50,6 +54,13 @@ export type { ElectronProcess } from './electron-host/types.ts';
 // Enable code cache in default location (tmpdir/node-compile-cache)
 // NOTE: not available in older Node versions
 module.enableCompileCache?.();
+
+// Establish the shared profiling origin as early as possible so spawned
+// child/worker processes can report elapsed time from the true start.
+const startupProfiler = isStartupProfilingEnabled()
+  ? createStartupProfiler('dvlp-main')
+  : undefined;
+startupProfiler?.mark('dvlp process start');
 
 /**
  * Server instance factory
@@ -129,6 +140,9 @@ export async function server(
 
   try {
     await server.start();
+    // Persist the compile cache for the startup graph now, so it survives
+    // a later Ctrl+C/kill (Node otherwise only flushes on a clean exit)
+    module.flushCompileCache?.();
   } catch (err) {
     fatal(err);
     process.exit(1);

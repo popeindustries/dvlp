@@ -28,4 +28,5 @@ export type ElectronProcessMessage =
       type: 'listening';
       origin: string;
     }
+  | { type: 'dependency'; filePaths: Array<string> }
   | { type: 'watch'; filePath: string; mode: 'read' | 'write' };

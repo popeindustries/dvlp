@@ -1,3 +1,7 @@
+import {
+  createStartupProfiler,
+  isStartupProfilingEnabled,
+} from '../utils/startup-profiler.ts';
 import { dirname, join } from 'node:path';
 import {
   error,
@@ -8,6 +12,8 @@ import {
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { ElectronProcessMessage } from './types.ts';
 import { escapeRegExp } from '../utils/regexp.ts';
+import { isNodeModuleFilePath } from '../utils/is.ts';
+import module from 'node:module';
 import path from 'node:path';
 import { syncBuiltinESMExports } from 'node:module';
 import { toBase64Url } from '../utils/base64Url.ts';
@@ -25,8 +31,14 @@ const reFileProtocol = new RegExp(
 );
 
 export async function bootstrapElectron() {
+  const profiler = isStartupProfilingEnabled()
+    ? createStartupProfiler('electron-main', { trackModules: true })
+    : undefined;
+  profiler?.mark('electron entry loaded');
+
   const electronWorkerData = getElectronWorkerData()!;
   const { app, BrowserWindow } = await import('electron');
+  profiler?.mark('electron imported');
 
   interceptInProcess(electronWorkerData);
 
@@ -153,9 +165,63 @@ export async function bootstrapElectron() {
   process.on('unhandledRejection', error);
 
   try {
+    // Collect the app's watch dependencies from the actual import graph,
+    // so the host needn't re-derive them with a separate esbuild bundle
+    trackDependencies((msg) => electronWorkerData.postMessage(msg));
+
+    profiler?.mark('importing app entry');
     await import(pathToFileURL(electronWorkerData.main).href);
+    profiler?.mark('app entry loaded');
+    profiler?.report();
+    // Persist the compile cache for the startup graph now, so it survives
+    // a later Ctrl+C/kill (Node otherwise only flushes on a clean exit)
+    module.flushCompileCache?.();
     electronWorkerData.postMessage({ type: 'started' });
   } catch (err) {
     error(err);
   }
+}
+
+/**
+ * Register a passive module load hook that streams project file dependencies
+ * (as they are actually imported) to "postMessage", batched per event-loop
+ * tick. Transparent: the default loader still performs the real load.
+ */
+function trackDependencies(postMessage: (msg: ElectronProcessMessage) => void) {
+  if (typeof module.registerHooks !== 'function') {
+    return;
+  }
+
+  const pending = new Set<string>();
+  let scheduled = false;
+
+  function flush() {
+    scheduled = false;
+
+    if (pending.size === 0) {
+      return;
+    }
+
+    postMessage({ type: 'dependency', filePaths: Array.from(pending) });
+    pending.clear();
+  }
+
+  module.registerHooks({
+    load(url, context, nextLoad) {
+      if (url.startsWith('file://')) {
+        const filePath = fileURLToPath(url);
+
+        if (!isNodeModuleFilePath(filePath)) {
+          pending.add(filePath);
+
+          if (!scheduled) {
+            scheduled = true;
+            setImmediate(flush);
+          }
+        }
+      }
+
+      return nextLoad(url, context);
+    },
+  });
 }

@@ -38,6 +38,7 @@ export interface Config {
   bundleDirPath: string;
   cacheDirPath: string;
   defaultPort: number;
+  depsDirPath: string;
   directories: Array<string>;
   dirPath: string;
   dvlpDirPath: string;

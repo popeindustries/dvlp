@@ -31,6 +31,9 @@ messagePort.on(
     if (msg.type === 'start') {
       try {
         await import(msg.main);
+        // Persist the compile cache for the startup graph now, so it survives
+        // a later Ctrl+C/kill (Node otherwise only flushes on a clean exit)
+        module.flushCompileCache?.();
         messagePort.postMessage({ type: 'started' });
       } catch (err) {
         messagePort.postMessage({ type: 'error', error: err });

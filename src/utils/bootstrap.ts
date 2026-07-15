@@ -5,21 +5,31 @@ import path from 'node:path';
 /**
  * Create directory structure:
  *  .dvlp/
+ *    - cached/       (version-independent V8 compile cache)
+ *    - deps/         (version-independent watch-dependency manifests)
  *    - <version>/
- *      - cached/
  *      - bundled/
  */
 export function bootstrap() {
-  const { bundleDirPath, cacheDirPath, dirPath, versionDirPath } = config;
+  const { bundleDirPath, cacheDirPath, depsDirPath, dirPath, versionDirPath } =
+    config;
   const bundleDirExists = fs.existsSync(bundleDirPath);
   const cacheDirExists = fs.existsSync(cacheDirPath);
+  const depsDirExists = fs.existsSync(depsDirPath);
   const dirExists = fs.existsSync(dirPath);
   const subdirExists = fs.existsSync(versionDirPath);
 
-  // New version of .dvlp, so delete existing
+  // New version of .dvlp, so delete existing (but preserve the version-independent
+  // compile cache and dependency manifests, which are keyed by their own content)
   if (dirExists && !subdirExists) {
+    const preserved = new Set([cacheDirPath, depsDirPath]);
+
     for (const item of fs.readdirSync(dirPath)) {
-      fs.rmSync(path.resolve(dirPath, item), { force: true, recursive: true });
+      const itemPath = path.resolve(dirPath, item);
+
+      if (!preserved.has(itemPath)) {
+        fs.rmSync(itemPath, { force: true, recursive: true });
+      }
     }
   }
   if (!bundleDirExists) {
@@ -27,5 +37,8 @@ export function bootstrap() {
   }
   if (!cacheDirExists) {
     fs.mkdirSync(cacheDirPath, { recursive: true });
+  }
+  if (!depsDirExists) {
+    fs.mkdirSync(depsDirPath, { recursive: true });
   }
 }

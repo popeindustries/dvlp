@@ -1,6 +1,14 @@
+import {
+  createStartupProfiler,
+  isStartupProfilingEnabled,
+} from '../utils/startup-profiler.ts';
 import { dirname, relative } from 'node:path';
 import { error, fatal, noisyInfo } from '../utils/log.ts';
 import { format, msDiff } from '../utils/metrics.ts';
+import {
+  readDependencyManifest,
+  writeDependencyManifest,
+} from '../utils/dependency-manifest.ts';
 import type { Req, Res } from '../types.ts';
 import chalk from 'chalk';
 import type { ChildProcess } from 'node:child_process';
@@ -42,6 +50,8 @@ export class ElectronHost {
   main: string;
   serializedMocks: Array<SerializedMock> | undefined;
   watcher: Watcher | undefined;
+  private dependencies = new Set<string>();
+  private persistTimer: NodeJS.Timeout | undefined;
 
   constructor(
     main: string,
@@ -89,11 +99,23 @@ export class ElectronHost {
     this.isListening = false;
 
     const times: [start: number, stop: number] = [performance.now(), 0];
+    const profiler = isStartupProfilingEnabled()
+      ? createStartupProfiler('electron-host')
+      : undefined;
 
     debug(`starting Electron application at ${this.main}`);
 
+    // Seed the watcher from the persisted manifest so watching is live before
+    // the app finishes importing. The child then streams the live dependency
+    // set (from its actual import graph) via 'dependency' messages.
+    const persisted = readDependencyManifest(this.main);
+    for (const filePath of persisted) {
+      this.dependencies.add(filePath);
+    }
+    this.watcher?.add(persisted);
+
     this.activeProcess = await this.createProcess();
-    this.watcher?.add(await getDependencies(this.main, 'node'));
+    profiler?.mark('child process started');
 
     times[1] = performance.now();
 
@@ -123,6 +145,34 @@ export class ElectronHost {
    */
   addWatchFiles(filePaths: string | Array<string>) {
     this.watcher?.add(filePaths);
+  }
+
+  /**
+   * Add watch "filePaths" streamed from the running app's import graph,
+   * persisting the accumulated set (debounced) whenever it grows.
+   */
+  private addDependencies(filePaths: Array<string>) {
+    let added = false;
+
+    for (const filePath of filePaths) {
+      if (!this.dependencies.has(filePath)) {
+        this.dependencies.add(filePath);
+        added = true;
+      }
+    }
+
+    if (added) {
+      this.watcher?.add(filePaths);
+      this.schedulePersist();
+    }
+  }
+
+  private schedulePersist() {
+    clearTimeout(this.persistTimer);
+    this.persistTimer = setTimeout(() => {
+      writeDependencyManifest(this.main, this.dependencies);
+    }, 1000);
+    this.persistTimer.unref?.();
   }
 
   /**
@@ -170,6 +220,8 @@ export class ElectronHost {
         } else if (msg.type === 'listening') {
           this.isListening = true;
           this.appOrigins.add(msg.origin);
+        } else if (msg.type === 'dependency') {
+          this.addDependencies(msg.filePaths);
         } else if (msg.type === 'watch') {
           if (msg.mode === 'write') {
             if (this.watcher?.has(msg.filePath)) {
@@ -196,6 +248,7 @@ export class ElectronHost {
    * Destroy instance
    */
   destroy() {
+    clearTimeout(this.persistTimer);
     this.activeProcess?.removeAllListeners();
     this.activeProcess?.kill();
     this.watcher?.close();
