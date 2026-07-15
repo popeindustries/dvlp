@@ -17,7 +17,11 @@ const applicationLoaderURL = pathToFileURL(
 const bundleDirName = path.join(DIR_NAME, VERSION, 'bundled');
 const bundleDirPath = path.resolve(bundleDirName);
 const bundleDirMetaPath = path.join(bundleDirPath, '__meta__.json');
-const cacheDirPath = path.join(versionDirPath, 'cached');
+// Version-independent so the V8 compile cache survives dvlp upgrades.
+// Node keys entries by Node version + source, so sharing is safe.
+const cacheDirPath = path.join(dirPath, 'cached');
+// Version-independent persistent watch-dependency manifests (per app entry)
+const depsDirPath = path.join(dirPath, 'deps');
 const defaultPort = process.env.PORT ? Number(process.env.PORT) : 8080;
 const electronEntryURL = pathToFileURL(
   path.join(versionDirPath, 'electron-entry.mjs'),
@@ -32,6 +36,7 @@ const config: Config = {
   bundleDirName,
   cacheDirPath,
   defaultPort,
+  depsDirPath,
   directories: [],
   dirPath,
   dvlpDirPath: path.resolve(DIR_NAME),
