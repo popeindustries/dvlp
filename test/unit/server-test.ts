@@ -60,21 +60,21 @@ describe('server', () => {
         headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(200);
-      expect(res.headers.get('cache-control')).to.include('no-store');
+      expect(res.headers.get('cache-control')).to.include('no-cache');
       expect(await res.text()).to.contain('<!doctype html>');
     });
     it('should serve a css file with correct mime type', async () => {
       server = await serverFactory('test/unit/fixtures/www', { port: 8100 });
       const res = await fetch('http://localhost:8100/style.css');
       expect(res.status).to.eql(200);
-      expect(res.headers.get('cache-control')).to.include('no-store');
+      expect(res.headers.get('cache-control')).to.include('no-cache');
       expect(res.headers.get('Content-type')).to.include('text/css');
     });
     it('should serve a js file with correct mime type', async () => {
       server = await serverFactory('test/unit/fixtures/www', { port: 8100 });
       const res = await fetch('http://localhost:8100/script.js');
       expect(res.status).to.eql(200);
-      expect(res.headers.get('cache-control')).to.include('no-store');
+      expect(res.headers.get('cache-control')).to.include('no-cache');
       expect(res.headers.get('Content-type')).to.include(
         'application/javascript',
       );
@@ -109,7 +109,7 @@ describe('server', () => {
       server = await serverFactory('test/unit/fixtures', { port: 8100 });
       const res = await fetch(`http://localhost:8100/foo/foo.js`);
       expect(res.status).to.eql(200);
-      expect(res.headers.get('cache-control')).to.include('no-store');
+      expect(res.headers.get('cache-control')).to.include('no-cache');
       expect(res.headers.get('Content-type')).to.include(
         'application/javascript',
       );

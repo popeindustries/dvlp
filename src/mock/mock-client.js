@@ -329,7 +329,7 @@
       );
       const pathRegex = new RegExp(url.pathname.replaceAll(/\//g, '\\/'));
       /** @type { MockStreamDataType } */
-      const type = originRegex.source.includes('ws') ? 'ws' : 'es';
+      const type = url.protocol.startsWith('ws') ? 'ws' : 'es';
       // Default to socket.io protocol for ws
       const protocol = (isMockRequest(stream) && stream.protocol) || type;
       /** @type { MockStreamData["events"] } */
@@ -410,7 +410,8 @@
             Accept: 'application/json',
             'Content-Type': 'application/json',
           },
-          // TODO: handle binary?
+          // Note: this bridge is JSON-only; push binary messages
+          // server-side via testServer.pushEvent instead
           body: JSON.stringify({ stream, event }),
         });
       }

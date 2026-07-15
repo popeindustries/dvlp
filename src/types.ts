@@ -17,6 +17,7 @@ import type {
   ServerResponse,
 } from 'node:http';
 import type { Metrics } from './utils/metrics.ts';
+import type { RequestContext } from './utils/types.ts';
 
 export type {
   HttpServer,
@@ -85,10 +86,14 @@ export type Req = (IncomingMessage | Http2ServerRequest) & {
   type?: ContentType;
   url: string;
   params?: Record<string, string>;
+  // Resolved request context, stashed for the lifetime of the request
+  context?: RequestContext;
+  contextUrl?: string;
 };
 
 export type Res = (ServerResponse & Http2ServerResponse) & {
   bundled: boolean;
+  cached: boolean;
   encoding: string;
   metrics: Metrics;
   mocked: boolean;

@@ -95,12 +95,28 @@ export function pushEvent(stream: string | PushStream, event: PushEvent): void {
     return error(`no push clients registered for ${url}`);
   }
 
-  let { message, options } = event;
+  const { message } = event;
+  const binaryMessage = toBinaryBuffer(message);
+  let { options } = event;
+  let payload: string | Buffer;
 
-  if (!Buffer.isBuffer(message)) {
-    if (typeof message !== 'string') {
+  if (binaryMessage !== undefined) {
+    if (type !== 'ws') {
+      return error(
+        `unable to push binary message to EventSource clients connected on ${url}`,
+      );
+    }
+
+    // Binary messages skip socket.io framing (binary attachments are not
+    // supported) and are sent as raw binary frames
+    payload = binaryMessage;
+    options = undefined;
+  } else {
+    if (typeof message === 'string') {
+      payload = message;
+    } else {
       try {
-        message = JSON.stringify(message);
+        payload = JSON.stringify(message);
       } catch {
         return error(`unable to stringify message for push event`, message);
       }
@@ -112,8 +128,7 @@ export function pushEvent(stream: string | PushStream, event: PushEvent): void {
       // Handle socket.io protocol
       // https://github.com/socketio/socket.io-protocol/blob/master/Readme.md
       if (protocol && RE_SOCKETIO_PROTOCOL.test(protocol)) {
-        // TODO: handle binary message
-        message = `42${namespace},["${event}",${message}]`;
+        payload = `42${namespace},["${event}",${payload}]`;
       }
       options = undefined;
     }
@@ -124,10 +139,10 @@ export function pushEvent(stream: string | PushStream, event: PushEvent): void {
       clients.size > 1 ? 's' : ''
     } connected on ${url}`,
   );
-  debug(message);
+  debug(payload);
 
   for (const client of clients) {
-    client.send(message, options);
+    client.send(payload, options);
   }
 }
 
@@ -162,6 +177,22 @@ function destroyClient(cacheKey: string): void {
     }
     clients.clear();
     cache.delete(cacheKey);
+  }
+}
+
+/**
+ * Convert binary-ish "message" (Buffer/ArrayBuffer/TypedArray/DataView)
+ * to a Buffer, or "undefined" if not binary
+ */
+function toBinaryBuffer(message: unknown): Buffer | undefined {
+  if (Buffer.isBuffer(message)) {
+    return message;
+  }
+  if (message instanceof ArrayBuffer) {
+    return Buffer.from(message);
+  }
+  if (ArrayBuffer.isView(message)) {
+    return Buffer.from(message.buffer, message.byteOffset, message.byteLength);
   }
 }
 

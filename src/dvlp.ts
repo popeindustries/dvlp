@@ -9,7 +9,7 @@ import {
   isStartupProfilingEnabled,
 } from './utils/startup-profiler.ts';
 import { exists, getProjectPath, importModule } from './utils/file.ts';
-import logger, { fatal, noisyInfo } from './utils/log.ts';
+import logger, { fatal, noisyInfo, noisyWarn } from './utils/log.ts';
 import type { Server, ServerOptions } from './server/types.ts';
 import { bootstrap } from './utils/bootstrap.ts';
 import chalk from 'chalk';
@@ -24,6 +24,7 @@ import { expandPath } from './utils/expand-path.ts';
 import fs from 'node:fs';
 import type { Hooks } from './hooks/types.ts';
 import module from 'node:module';
+import net from 'node:net';
 import path from 'node:path';
 
 export { getDependencies } from './utils/module.ts';
@@ -51,9 +52,10 @@ export type { PushEvent, PushStream } from './push-events/types.ts';
 export type { ApplicationWorker } from './application-host/types.ts';
 export type { ElectronProcess } from './electron-host/types.ts';
 
-// Enable code cache in default location (tmpdir/node-compile-cache)
+// Enable code cache in the same persistent, version-independent location
+// used by spawned workers/children (via NODE_COMPILE_CACHE)
 // NOTE: not available in older Node versions
-module.enableCompileCache?.();
+module.enableCompileCache?.(config.cacheDirPath);
 
 // Establish the shared profiling origin as early as possible so spawned
 // child/worker processes can report elapsed time from the true start.
@@ -128,6 +130,15 @@ export async function server(
     createElectronEntryFile(config.electronEntryURL);
   }
 
+  const availablePort = await getAvailablePort(port);
+
+  if (availablePort !== port) {
+    noisyWarn(
+      `  ${chalk.yellow('⚠️')}  port ${port} is already in use, using ${chalk.bold(availablePort)} instead`,
+    );
+    port = availablePort;
+  }
+
   const server = new Dvlp(
     entry,
     port,
@@ -178,8 +189,21 @@ export async function server(
   }
   noisyInfo('\n  👀 watching for changes...\n');
 
+  let destroyed: Promise<void> | undefined;
+  const destroyServer = () => (destroyed ??= server.destroy());
+  const onSignal = (signal: NodeJS.Signals) => {
+    noisyInfo(`\n  received ${signal}, shutting down...`);
+    destroyServer().finally(() => {
+      process.exit(0);
+    });
+  };
+
+  // Graceful shutdown on Ctrl+C/kill, with a best-effort synchronous
+  // fallback when exiting by other means ('exit' cannot await)
+  process.once('SIGINT', onSignal);
+  process.once('SIGTERM', onSignal);
   process.on('exit', () => {
-    server.destroy();
+    void destroyServer();
   });
 
   const applicationWorker = server.applicationHost
@@ -231,7 +255,9 @@ export async function server(
       server.addWatchFiles(filePaths);
     },
     destroy() {
-      return server.destroy();
+      process.removeListener('SIGINT', onSignal);
+      process.removeListener('SIGTERM', onSignal);
+      return destroyServer();
     },
   };
 }
@@ -239,6 +265,34 @@ export async function server(
 /**
  * Resolve entry data from "filePaths"
  */
+/**
+ * Resolve the first available port at or above "port"
+ */
+function getAvailablePort(port: number, attempts = 10): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const probe = net.createServer();
+
+    probe.unref();
+    probe.on('error', (err) => {
+      probe.close();
+
+      if (
+        (err as NodeJS.ErrnoException).code === 'EADDRINUSE' &&
+        attempts > 0
+      ) {
+        resolve(getAvailablePort(port + 1, attempts - 1));
+      } else {
+        reject(err);
+      }
+    });
+    probe.listen(port, () => {
+      probe.close(() => {
+        resolve(port);
+      });
+    });
+  });
+}
+
 function resolveEntry(
   filePath: string | Array<string>,
   directories: Array<string> = [],

@@ -52,7 +52,8 @@ export interface MockResponseData {
 
 export interface MockStreamEventData {
   name?: string;
-  message: Buffer | string | Record<string, any>;
+  message:
+    Buffer | ArrayBuffer | ArrayBufferView | string | Record<string, any>;
   options: MockPushEventOptions & {
     protocol?: string;
   };
@@ -117,7 +118,8 @@ export interface MockPushEventOptions {
 
 export interface MockPushEvent {
   name: string;
-  message?: Buffer | string | Record<string, any>;
+  message?:
+    Buffer | ArrayBuffer | ArrayBufferView | string | Record<string, any>;
   sequence?: Array<MockPushEvent>;
   options?: MockPushEventOptions;
 }

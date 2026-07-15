@@ -52,6 +52,8 @@ export class ElectronHost {
   watcher: Watcher | undefined;
   private dependencies = new Set<string>();
   private persistTimer: NodeJS.Timeout | undefined;
+  private restarting = false;
+  private restartPending = false;
 
   constructor(
     main: string,
@@ -81,10 +83,10 @@ export class ElectronHost {
     this.serializedMocks = serializedMocks;
 
     if (triggerClientReload !== undefined) {
-      this.watcher = watch(async (filePath) => {
+      this.watcher = watch(async (filePaths) => {
         noisyInfo(
           `\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.cyan(
-            getProjectPath(filePath),
+            filePaths.map(getProjectPath).join(', '),
           )}`,
         );
         await this.restart();
@@ -123,10 +125,21 @@ export class ElectronHost {
   }
 
   /**
-   * Restart electron application
+   * Restart electron application.
+   * Changes arriving while a restart is already in flight
+   * are coalesced into a single follow-up restart.
    */
   async restart() {
-    if (this.activeProcess !== undefined) {
+    if (this.activeProcess === undefined) {
+      return;
+    }
+    if (this.restarting) {
+      this.restartPending = true;
+      return;
+    }
+    this.restarting = true;
+
+    try {
       debug(`terminating active process`);
 
       this.activeProcess.removeAllListeners();
@@ -137,6 +150,13 @@ export class ElectronHost {
 
       noisyInfo('\n   restarting Electon application...');
       await this.start();
+    } finally {
+      this.restarting = false;
+    }
+
+    if (this.restartPending) {
+      this.restartPending = false;
+      await this.restart();
     }
   }
 
@@ -170,9 +190,18 @@ export class ElectronHost {
   private schedulePersist() {
     clearTimeout(this.persistTimer);
     this.persistTimer = setTimeout(() => {
+      this.persistTimer = undefined;
       writeDependencyManifest(this.main, this.dependencies);
     }, 1000);
     this.persistTimer.unref?.();
+  }
+
+  private flushPersist() {
+    if (this.persistTimer !== undefined) {
+      clearTimeout(this.persistTimer);
+      this.persistTimer = undefined;
+      writeDependencyManifest(this.main, this.dependencies);
+    }
   }
 
   /**
@@ -248,7 +277,7 @@ export class ElectronHost {
    * Destroy instance
    */
   destroy() {
-    clearTimeout(this.persistTimer);
+    this.flushPersist();
     this.activeProcess?.removeAllListeners();
     this.activeProcess?.kill();
     this.watcher?.close();

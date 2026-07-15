@@ -50,6 +50,9 @@ export class Mocks {
   client: string;
   loaded: Promise<void>;
   _uninterceptClientRequest?: () => void;
+  // Insertion-ordered snapshot of "cache", rebuilt on mutation,
+  // to avoid allocating an array on every match attempt
+  private cacheList: Array<MockResponseData | MockStreamData> | undefined;
 
   /**
    * Constructor
@@ -109,6 +112,7 @@ export class Mocks {
       this.enableRequestIntercept();
     }
     this.cache.add(mock);
+    this.cacheList = undefined;
     debug(`adding mocked "${typeof req === 'string' ? req : req.url}"`);
 
     return () => {
@@ -134,7 +138,7 @@ export class Mocks {
       (isMockRequest(stream) && stream.filePath) || path.resolve('mock');
     const [url, originRegex, pathRegex, paramsMatch, searchParams] =
       getUrlSegmentsForMatching(stream, ignoreSearch);
-    const type: MockStreamDataType = originRegex.source.includes('ws')
+    const type: MockStreamDataType = url.protocol.startsWith('ws')
       ? 'ws'
       : 'es';
     // Default to socket.io protocol for ws
@@ -192,6 +196,7 @@ export class Mocks {
     };
 
     this.cache.add(mock);
+    this.cacheList = undefined;
     debug(
       `adding mocked stream "${
         typeof stream === 'string' ? stream : stream.url
@@ -390,11 +395,13 @@ export class Mocks {
   ): void {
     if (isMockResponseData(reqOrMockData) || isMockStreamData(reqOrMockData)) {
       this.cache.delete(reqOrMockData);
+      this.cacheList = undefined;
     } else {
       const mockData = this.getMockData(reqOrMockData);
 
       if (mockData) {
         this.cache.delete(mockData);
+        this.cacheList = undefined;
       }
     }
 
@@ -417,6 +424,7 @@ export class Mocks {
    */
   clear() {
     this.cache.clear();
+    this.cacheList = undefined;
     if (this._uninterceptClientRequest) {
       this._uninterceptClientRequest();
       this._uninterceptClientRequest = undefined;
@@ -452,8 +460,17 @@ export class Mocks {
   ): MockResponseData | MockStreamData | undefined {
     const url = getUrl(req);
 
+    if (
+      this.cacheList === undefined ||
+      this.cacheList.length !== this.cache.size
+    ) {
+      this.cacheList = Array.from(this.cache);
+    }
+
     // Iterate in reverse insertion order (newer first)
-    for (const mock of Array.from(this.cache).reverse()) {
+    for (let i = this.cacheList.length - 1; i >= 0; i--) {
+      const mock = this.cacheList[i];
+
       if (
         !mock.originRegex.test(url.origin) ||
         (!mock.ignoreSearch &&

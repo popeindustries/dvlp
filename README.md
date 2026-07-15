@@ -17,7 +17,7 @@
 
 **dvlp** allows you to easily serve resources from one or more project directories (`static` mode), from your custom application server (`app` mode), or from your Electron desktop application (`electron` mode). In all cases, **dvlp** creates a proxy server in front of your content, automatically injecting the necessary reload script into HTML responses to enable reloading, and watches all files for changes, restarts the `app` server/ `electron` application if necessary, and reloads all connected clients.
 
-In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (`import "lodash"`), which are not natively supported by browsers, work by re-writing all import paths to valid urls. Since some `node_modules` packages are still published as CommonJS modules, non-ESM packages are bundled and converted to an ESM module using [esbuild](https://esbuild.github.io). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under your project root.
+In addition, when working with JS modules, **dvlp** will ensure that so-called _bare_ imports (`import "lodash"`), which are not natively supported by browsers, work by re-writing all import paths to valid urls. Since some `node_modules` packages are still published as CommonJS modules, non-ESM packages are bundled and converted to an ESM module using [esbuild](https://esbuild.github.io). These bundles are versioned and cached for efficient reuse in the `.dvlp` directory under your project root. Specifiers covered by a `<script type="importmap">` in your html are left untouched for the browser to resolve.
 
 ### Bonus!
 

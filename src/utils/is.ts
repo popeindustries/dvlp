@@ -16,6 +16,7 @@ const realPath =
   'native' in fs.realpathSync && typeof fs.realpathSync.native === 'function'
     ? fs.realpathSync.native
     : fs.realpathSync;
+const nodeModuleFilePathCache = new Map<string, boolean>();
 
 /**
  * Determine if "filePath" is absolute
@@ -51,6 +52,13 @@ export function isBundledUrl(url: string): boolean {
 }
 
 /**
+ * Determine if 'accept' header prefers css
+ */
+export function isCssAcceptHeader(accept?: string): boolean {
+  return accept !== undefined && RE_TYPE_CSS.test(accept);
+}
+
+/**
  * Determine if 'filePath' is for a css file
  */
 export function isCssFilePath(filePath: string): boolean {
@@ -61,12 +69,22 @@ export function isCssFilePath(filePath: string): boolean {
  * Determine if 'req' is for a css file
  */
 export function isCssRequest(req: any): req is Req {
+  if (req.type !== undefined) {
+    return req.type === 'css';
+  }
+
   const filePath = new URL(req.url, 'http://localhost').pathname;
   return (
-    req.type === 'css' ||
     isCssFilePath(filePath) ||
     (req.headers.accept && RE_TYPE_CSS.test(req.headers.accept))
   );
+}
+
+/**
+ * Determine if 'accept' header prefers html
+ */
+export function isHtmlAcceptHeader(accept?: string): boolean {
+  return accept !== undefined && RE_TYPE_HTML.test(accept);
 }
 
 /**
@@ -80,9 +98,12 @@ export function isHtmlFilePath(filePath: string): boolean {
  * Determine if 'req' is for an html file
  */
 export function isHtmlRequest(req: any): req is Req {
+  if (req.type !== undefined) {
+    return req.type === 'html';
+  }
+
   const filePath = new URL(req.url, 'http://localhost').pathname;
   return (
-    req.type === 'html' ||
     isHtmlFilePath(filePath) ||
     (req.headers.accept && RE_TYPE_HTML.test(req.headers.accept))
   );
@@ -96,6 +117,13 @@ export function isInvalidFilePath(filePath: string): boolean {
 }
 
 /**
+ * Determine if 'accept' header prefers js
+ */
+export function isJsAcceptHeader(accept?: string): boolean {
+  return accept !== undefined && RE_TYPE_JS.test(accept);
+}
+
+/**
  * Determine if 'filePath' is for a js file
  */
 export function isJsFilePath(filePath: string): boolean {
@@ -106,9 +134,12 @@ export function isJsFilePath(filePath: string): boolean {
  * Determine if 'req' is for a js file
  */
 export function isJsRequest(req: any): req is Req {
+  if (req.type !== undefined) {
+    return req.type === 'js';
+  }
+
   const filePath = new URL(req.url, 'http://localhost').pathname;
   return (
-    req.type === 'js' ||
     isJsFilePath(filePath) ||
     // Almost always '*/*'
     (req.headers.accept && RE_TYPE_JS.test(req.headers.accept))
@@ -130,21 +161,28 @@ export function isLocalhost(url: string): boolean {
 }
 
 /**
- * Determine if 'filePath' is in node_modules
+ * Determine if 'filePath' is in node_modules.
+ * Symlink resolution is memoised, since it is called repeatedly
+ * on the request hot path.
  */
 export function isNodeModuleFilePath(filePath: string): boolean {
-  const isNodeModule = RE_NODE_MODULES.test(filePath);
-
-  if (!isNodeModule) {
+  if (!RE_NODE_MODULES.test(filePath)) {
     return false;
   }
 
-  try {
-    // Resolve symlinks to determine if really a node_module
-    return RE_NODE_MODULES.test(realPath(filePath));
-  } catch {
-    return true;
+  let isNodeModule = nodeModuleFilePathCache.get(filePath);
+
+  if (isNodeModule === undefined) {
+    try {
+      // Resolve symlinks to determine if really a node_module
+      isNodeModule = RE_NODE_MODULES.test(realPath(filePath));
+    } catch {
+      isNodeModule = true;
+    }
+    nodeModuleFilePathCache.set(filePath, isNodeModule);
   }
+
+  return isNodeModule;
 }
 
 /**

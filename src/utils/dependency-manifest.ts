@@ -7,7 +7,8 @@ import path from 'node:path';
 const debug = Debug('dvlp:deps');
 
 /**
- * Read the persisted watch-dependency manifest for application entry "entryPath".
+ * Read the persisted watch-dependency manifest for application entry "entryPath",
+ * pruning files that no longer exist (deleted/renamed since last run).
  * Returns an empty array when no manifest exists yet.
  */
 export function readDependencyManifest(entryPath: string): Array<string> {
@@ -18,7 +19,11 @@ export function readDependencyManifest(entryPath: string): Array<string> {
   }
 
   try {
-    return JSON.parse(readFileSync(manifestPath, 'utf-8'));
+    const filePaths: Array<string> = JSON.parse(
+      readFileSync(manifestPath, 'utf-8'),
+    );
+
+    return filePaths.filter((filePath) => existsSync(filePath));
   } catch (err) {
     debug(`error reading dependency manifest for "${entryPath}": ${err}`);
     return [];

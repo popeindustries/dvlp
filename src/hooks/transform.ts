@@ -71,8 +71,9 @@ export async function transform(
           return;
         }
 
-        // Amaro strips types via whitespace substitution, but can't transform
-        // JSX or downlevel syntax, so fall back to esbuild for .tsx/.jsx
+        // Amaro strips types via whitespace substitution, preserving original
+        // positions, but can't transform JSX or downlevel syntax, so fall back
+        // to esbuild (with an inline source map) for .tsx/.jsx
         if (isJsxFilePath(filePath)) {
           const options: TransformOptions = {
             format: 'esm',
@@ -80,6 +81,7 @@ export async function transform(
             loader: fileExtension.slice(1),
             logLevel: 'warning',
             sourcefile: filePath,
+            sourcemap: 'inline',
             target: parseEsbuildTarget(clientPlatform),
           };
 

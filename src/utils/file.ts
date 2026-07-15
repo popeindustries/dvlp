@@ -2,9 +2,12 @@ import type { ContentType, Req } from '../types.ts';
 import {
   isAbsoluteFilePath,
   isBundledUrl,
-  isCssRequest,
-  isHtmlRequest,
-  isJsRequest,
+  isCssAcceptHeader,
+  isCssFilePath,
+  isHtmlAcceptHeader,
+  isHtmlFilePath,
+  isJsAcceptHeader,
+  isJsFilePath,
   isNodeModuleFilePath,
 } from './is.ts';
 import { warn, WARN_MISSING_EXTENSION, WARN_PACKAGE_INDEX } from './log.ts';
@@ -194,15 +197,20 @@ export function getTypeFromPath(filePath?: string): ContentType | undefined {
  * Retrieve resource type
  */
 export function getTypeFromRequest(req: Req): ContentType | undefined {
-  // Unknown file types are sent with 'Accept: text/html',
-  // so try JS/CSS before HTML
   if (req.type) {
     return req.type;
-  } else if (isJsRequest(req)) {
+  }
+
+  const pathname = new URL(req.url, 'http://localhost').pathname;
+  const accept = req.headers.accept as string | undefined;
+
+  // Unknown file types are sent with 'Accept: text/html',
+  // so try JS/CSS before HTML
+  if (isJsFilePath(pathname) || isJsAcceptHeader(accept)) {
     return 'js';
-  } else if (isCssRequest(req)) {
+  } else if (isCssFilePath(pathname) || isCssAcceptHeader(accept)) {
     return 'css';
-  } else if (isHtmlRequest(req)) {
+  } else if (isHtmlFilePath(pathname) || isHtmlAcceptHeader(accept)) {
     return 'html';
   }
 }

@@ -11,7 +11,8 @@ export interface PushStream {
 }
 
 export interface PushEvent {
-  message: Buffer | string | Record<string, unknown>;
+  message:
+    Buffer | ArrayBuffer | ArrayBufferView | string | Record<string, unknown>;
   options?: PushEventOptions;
 }
 

@@ -17,15 +17,16 @@ const tmpdir = os.tmpdir();
 /**
  * Instantiate a file watcher and begin watching for changes
  */
-export function watch(fn: (callback: string) => void): Watcher {
+export function watch(fn: (filePaths: Array<string>) => void): Watcher {
   const banned = new Set<string>();
   const changingFiles = new Set<string>();
   const files = new Set<string>();
+  const pendingChanges = new Set<string>();
   const watcher = new FSWatcher({
     ignoreInitial: true,
     persistent: true,
   });
-  let changePending = false;
+  let changeTimer: NodeJS.Timeout | undefined;
 
   watcher.on('unlink', (filePath) => {
     debug(`unwatching file "${getProjectPath(filePath)}"`);
@@ -33,25 +34,37 @@ export function watch(fn: (callback: string) => void): Watcher {
     files.delete(path.resolve(filePath));
   });
   watcher.on('change', (filePath) => {
-    if (!changePending && !changingFiles.has(filePath)) {
-      changePending = true;
-      changingFiles.add(filePath);
+    if (changingFiles.has(filePath) || pendingChanges.has(filePath)) {
+      return;
+    }
 
-      // Delay to allow time for files to be unwatched when file write intercepted in secondary process
-      setTimeout(() => {
-        if (files.has(filePath)) {
+    pendingChanges.add(filePath);
+
+    // Delay to allow time for files to be unwatched when file write intercepted
+    // in secondary process, batching any other changes arriving in the window
+    changeTimer ??= setTimeout(() => {
+      const changed: Array<string> = [];
+
+      changeTimer = undefined;
+
+      for (const pendingFilePath of pendingChanges) {
+        if (files.has(pendingFilePath)) {
+          changed.push(path.resolve(pendingFilePath));
+          changingFiles.add(pendingFilePath);
+
           // Delay to ignore duplicate changes to same file
           setTimeout(() => {
-            changingFiles.delete(filePath);
+            changingFiles.delete(pendingFilePath);
           }, IGNORE_CHANGE_WINDOW);
-
-          debug(`change detected "${getProjectPath(filePath)}"`);
-          fn(path.resolve(filePath));
         }
+      }
+      pendingChanges.clear();
 
-        changePending = false;
-      }, CHANGE_DELAY);
-    }
+      if (changed.length > 0) {
+        debug(`change detected "${changed.map(getProjectPath).join('", "')}"`);
+        fn(changed);
+      }
+    }, CHANGE_DELAY);
   });
 
   return {
@@ -91,8 +104,10 @@ export function watch(fn: (callback: string) => void): Watcher {
       }
     },
     close() {
+      clearTimeout(changeTimer);
       banned.clear();
       files.clear();
+      pendingChanges.clear();
       watcher.close();
     },
   };

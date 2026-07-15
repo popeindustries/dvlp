@@ -23,8 +23,8 @@ export function handleFavicon(req: Req, res: Res): boolean {
     const customFavIcon = find(req);
 
     if (customFavIcon) {
-      res.setHeader('Cache-Coontrol', `public, max-age=${config.maxAge}`);
-      send(customFavIcon, res);
+      res.setHeader('Cache-Control', `public, max-age=${config.maxAge}`);
+      send(customFavIcon, res, req);
     } else {
       res.writeHead(200, {
         'Content-Length': favIcon.length,
@@ -73,11 +73,12 @@ export function handleMockResponse(req: Req, res: Res, mocks?: Mocks): boolean {
       }
 
       return true;
-    } else if (mocks.hasMatch(req)) {
-      const handled = mocks.matchResponse(req.url, req, res);
-
-      return handled === true;
     }
+
+    // Matches and responds in a single pass, returning "false" if no match
+    const handled = mocks.matchResponse(req.url, req, res);
+
+    return handled === true;
   }
 
   return false;
@@ -151,8 +152,8 @@ export function handlePushEvent(req: Req, res: Res, mocks?: Mocks): boolean {
 /**
  * Handle file request
  */
-export function handleFile(filePath: string, res: Res): void {
-  send(filePath, res);
+export function handleFile(filePath: string, req: Req, res: Res): void {
+  send(filePath, res, req);
 }
 
 /**

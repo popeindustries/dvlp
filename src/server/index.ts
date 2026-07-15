@@ -1,4 +1,9 @@
 import {
+  clearCachedResponses,
+  invalidateCachedResponses,
+  serveCachedResponse,
+} from '../utils/response-cache.ts';
+import {
   concatScripts,
   getDvlpGlobalString,
   getPatchedAdoptedStyleSheets,
@@ -35,10 +40,13 @@ import type { PatchResponseOptions, Watcher } from '../utils/types.ts';
 import { resolveCerts, validateCert } from './certificate-validation.ts';
 import { ApplicationHost } from '../application-host/index.ts';
 import chalk from 'chalk';
+import { clearImportMap } from '../utils/import-map.ts';
+import { clearResolverCache } from '../resolver/index.ts';
 import config from '../config.ts';
 import Debug from 'debug';
 import { ElectronHost } from '../electron-host/index.ts';
 import { EventSource } from '../reload/event-source.ts';
+import fs from 'node:fs';
 import { getReloadClientEmbed } from '../reload/reload-client-embed.ts';
 import { Hooker } from '../hooks/index.ts';
 import type { Hooks } from '../hooks/types.ts';
@@ -49,6 +57,7 @@ import { Metrics } from '../utils/metrics.ts';
 import { Mocks } from '../mock/index.ts';
 import { parseUserAgent } from '../utils/platform.ts';
 import { patchResponse } from '../utils/patch.ts';
+import path from 'node:path';
 import type { Socket } from 'node:net';
 import { watch } from '../utils/watch.ts';
 
@@ -68,6 +77,7 @@ export class Dvlp {
   origin: string;
   port: number;
   mocks: Mocks;
+  ready: Promise<void>;
   reload: boolean;
   server!: HttpServer | Http2SecureServer;
   patchResponseOptions: PatchResponseOptions;
@@ -91,7 +101,17 @@ export class Dvlp {
 
     // Listen for all upcoming file system reads
     // Register early to catch all reads, including transformers that patch fs.readFile
-    this.watcher = watch(this.triggerClientReload);
+    this.watcher = watch((filePaths) => {
+      for (const filePath of filePaths) {
+        this.triggerClientReload(filePath);
+      }
+    });
+
+    // Watch project package.json to catch dependency/exports changes
+    const packageJsonPath = path.resolve('package.json');
+    if (fs.existsSync(packageJsonPath)) {
+      this.watcher.add(packageJsonPath);
+    }
     this.unlistenForFileRead = interceptFileAccess((filePath) => {
       if (filePath.startsWith(getRepoPath())) {
         this.addWatchFiles(filePath);
@@ -143,7 +163,7 @@ export class Dvlp {
       send: this.hooks.send,
     };
 
-    this.mocks.loaded.then(() => {
+    this.ready = this.mocks.loaded.then(() => {
       headerScript += `\n${this.mocks.client}`;
       this.patchResponseOptions.headerScript = {
         string: headerScript,
@@ -190,6 +210,9 @@ export class Dvlp {
         debug('server started');
         this.isListening = true;
         try {
+          // Host is only created once mock files have finished loading
+          await this.ready;
+
           if (this.applicationHost) {
             await this.applicationHost.start();
           } else if (this.electronHost) {
@@ -225,6 +248,15 @@ export class Dvlp {
    */
   triggerClientReload(filePath: string, silent?: boolean): void {
     this.lastChanged = filePath;
+    invalidateCachedResponses(filePath);
+
+    // Dependencies or exports may have changed,
+    // so previously resolved and rewritten imports are stale
+    if (path.basename(filePath) === 'package.json') {
+      debug('package.json changed: clearing resolver caches');
+      clearResolverCache();
+      clearCachedResponses();
+    }
 
     if (!this.reload) {
       return;
@@ -240,13 +272,10 @@ export class Dvlp {
 
     // TODO: handle mock/hook update
 
-    const context = getContextForFilePath(filePath);
-
-    if (context === undefined) {
-      debug(`unable to resolve context for "${filePath}"`);
-      return;
-    }
-
+    const context = getContextForFilePath(filePath) ?? {
+      type: undefined,
+      href: filePath,
+    };
     const event = context.type === 'css' ? 'refresh' : 'reload';
     const data = JSON.stringify(context);
 
@@ -297,9 +326,11 @@ export class Dvlp {
           ? ' bundled '
           : res.mocked
             ? ' mocked '
-            : res.transformed
-              ? ' transformed '
-              : ' ';
+            : res.cached
+              ? ' cached '
+              : res.transformed
+                ? ' transformed '
+                : ' ';
         let localFilePath = getProjectPath(req.filePath || req.url);
 
         if (res.mocked) {
@@ -357,6 +388,11 @@ export class Dvlp {
 
     if (context.filePath !== undefined) {
       this.addWatchFiles(context.filePath);
+
+      // Serve previously patched response, avoiding transform/rewrite work
+      if (serveCachedResponse(req, res, context.filePath)) {
+        return;
+      }
     }
 
     // Ignore unknown types
@@ -389,7 +425,7 @@ export class Dvlp {
     if (!res.writableEnded) {
       if (context.filePath !== undefined) {
         debug(`sending "${context.filePath}"`);
-        handleFile(context.filePath, res);
+        handleFile(context.filePath, req, res);
         return;
       }
 
@@ -411,7 +447,7 @@ export class Dvlp {
 
           if (context.filePath !== undefined) {
             debug(`sending "${context.filePath}"`);
-            handleFile(context.filePath, res);
+            handleFile(context.filePath, req, res);
             return;
           }
         }
@@ -456,11 +492,13 @@ export class Dvlp {
   /**
    * Destroy running server
    */
-  destroy(): Promise<void> {
+  async destroy(): Promise<void> {
     this.mocks?.clear();
     this.unlistenForFileRead();
     this.watcher.close();
     this.hooks.destroy();
+    clearCachedResponses();
+    clearImportMap();
 
     for (const connection of this.connections.values()) {
       connection.destroy();
@@ -472,7 +510,7 @@ export class Dvlp {
     }
     this.clients.clear();
 
-    this.applicationHost?.destroy();
+    await this.applicationHost?.destroy();
     this.electronHost?.destroy();
 
     return new Promise((resolve) => {

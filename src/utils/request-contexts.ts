@@ -8,35 +8,44 @@ const contextByHref = new Map<string, RequestContext>();
 /**
  * Retrieve context for "req".
  * Creates new context if not already cached.
+ * The result is stashed on "req" to avoid re-resolving (url parse, type
+ * detection, file existence check) at multiple points in the request pipeline.
  */
 export function getContextForReq(req: Req) {
+  if (req.context !== undefined && req.contextUrl === req.url) {
+    return req.context;
+  }
+
   // Ignore search params
   const url = new URL(req.url, 'http://localhost');
   const cached = contextByHref.get(url.pathname);
   const type = getTypeFromRequest(req);
+  let context = cached;
 
-  if (
+  if (!(
     cached &&
     cached.type === type &&
     cached.filePath !== undefined &&
     fs.existsSync(cached.filePath)
-  ) {
-    return cached;
+  )) {
+    const filePath = find(req, { type });
+
+    context = {
+      assert: undefined,
+      dynamic: false,
+      filePath,
+      href: req.url,
+      imported: false,
+      type: type ?? getTypeFromPath(filePath),
+    };
+
+    contextByHref.set(url.pathname, context);
   }
 
-  const filePath = find(req, { type });
-  const context = {
-    assert: undefined,
-    dynamic: false,
-    filePath,
-    href: req.url,
-    imported: false,
-    type: type ?? getTypeFromPath(filePath),
-  };
+  req.context = context;
+  req.contextUrl = req.url;
 
-  contextByHref.set(url.pathname, context);
-
-  return context;
+  return context as RequestContext;
 }
 
 /**

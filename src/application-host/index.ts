@@ -4,6 +4,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { format, msDiff } from '../utils/metrics.ts';
 import { MessageChannel, Worker } from 'node:worker_threads';
 import type { MessagePort, WorkerOptions } from 'node:worker_threads';
+import {
+  readDependencyManifest,
+  writeDependencyManifest,
+} from '../utils/dependency-manifest.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import type { Req, Res } from '../types.ts';
 import type { ApplicationWorkerMessage } from './types.ts';
@@ -53,6 +57,11 @@ export class ApplicationHost {
   serializedMocks: Array<SerializedMock> | undefined;
   activeThread: ApplicationThread;
   watcher: Watcher | undefined;
+  private standbyThread: ApplicationThread | undefined;
+  private dependencies = new Set<string>();
+  private persistTimer: NodeJS.Timeout | undefined;
+  private restarting = false;
+  private restartPending = false;
 
   constructor(
     main: string,
@@ -70,10 +79,10 @@ export class ApplicationHost {
     this.activeThread = this.createThread();
 
     if (triggerClientReload !== undefined) {
-      this.watcher = watch(async (filePath) => {
+      this.watcher = watch(async (filePaths) => {
         noisyInfo(
           `\n  ⏱  ${new Date().toLocaleTimeString()} ${chalk.cyan(
-            getProjectPath(filePath),
+            filePaths.map(getProjectPath).join(', '),
           )}`,
         );
         await this.restart();
@@ -89,25 +98,60 @@ export class ApplicationHost {
 
     debug(`starting thread at ${this.main}`);
 
+    // Seed the watcher from the persisted manifest so watching is live before
+    // the app finishes importing. The worker then streams the live dependency
+    // set (from its actual import graph) via 'watch' messages.
+    const persisted = readDependencyManifest(this.main);
+    for (const filePath of persisted) {
+      this.dependencies.add(filePath);
+    }
+    this.watcher?.add(persisted);
+
     await this.activeThread.start(this.main);
 
     times[1] = performance.now();
     noisyInfo(`${format(msDiff(times))} application server started`);
+
+    // Pre-warm the next thread (worker boot + loader registration) so a
+    // restart only pays for the app import itself. Restarts only happen
+    // in response to watched file changes, so skip if not watching.
+    if (this.watcher !== undefined) {
+      this.standbyThread ??= this.createThread();
+    }
   }
 
   /**
-   * Restart application
+   * Restart application.
+   * Changes arriving while a restart is already in flight
+   * are coalesced into a single follow-up restart.
    */
   async restart() {
-    if (this.activeThread !== undefined) {
+    if (this.activeThread === undefined) {
+      return;
+    }
+    if (this.restarting) {
+      this.restartPending = true;
+      return;
+    }
+    this.restarting = true;
+
+    try {
       debug(`terminating thread with id "${this.activeThread.threadId}"`);
 
       this.activeThread.removeAllListeners();
       await this.activeThread.terminate();
-      this.activeThread = this.createThread();
+      this.activeThread = this.standbyThread ?? this.createThread();
+      this.standbyThread = undefined;
 
       noisyInfo('\n  restarting application server...');
       await this.start();
+    } finally {
+      this.restarting = false;
+    }
+
+    if (this.restartPending) {
+      this.restartPending = false;
+      await this.restart();
     }
   }
 
@@ -116,6 +160,49 @@ export class ApplicationHost {
    */
   addWatchFiles(filePaths: string | Array<string>) {
     this.watcher?.add(filePaths);
+  }
+
+  /**
+   * Add watch dependency "filePath" streamed from the running app's import graph,
+   * persisting the accumulated set (debounced) whenever it changes
+   */
+  private addDependency(filePath: string) {
+    this.watcher?.add(filePath);
+
+    // Only manifest files accepted by the watcher (excludes node_modules etc.)
+    if (this.watcher?.has(filePath) && !this.dependencies.has(filePath)) {
+      this.dependencies.add(filePath);
+      this.schedulePersist();
+    }
+  }
+
+  /**
+   * Stop watching "filePath" written to by the running app
+   */
+  private removeDependency(filePath: string) {
+    if (this.watcher?.has(filePath)) {
+      this.watcher.remove(filePath, true);
+    }
+    if (this.dependencies.delete(filePath)) {
+      this.schedulePersist();
+    }
+  }
+
+  private schedulePersist() {
+    clearTimeout(this.persistTimer);
+    this.persistTimer = setTimeout(() => {
+      this.persistTimer = undefined;
+      writeDependencyManifest(this.main, this.dependencies);
+    }, 1000);
+    this.persistTimer.unref?.();
+  }
+
+  private flushPersist() {
+    if (this.persistTimer !== undefined) {
+      clearTimeout(this.persistTimer);
+      this.persistTimer = undefined;
+      writeDependencyManifest(this.main, this.dependencies);
+    }
   }
 
   /**
@@ -144,19 +231,28 @@ export class ApplicationHost {
 
     port1.unref();
 
-    const thread = new ApplicationThread(workerPath, port1, this.watcher, {
-      argv: this.argv,
-      env: { NODE_COMPILE_CACHE: config.cacheDirPath, ...process.env },
-      execArgv,
-      // Don't pipe to parent process. Handled manually in ApplicationThread
-      stderr: true,
-      workerData: {
-        hostOrigin: this.hostOrigin,
-        messagePort: port2,
-        serializedMocks: this.serializedMocks,
+    const dependencyCallbacks: DependencyCallbacks = {
+      add: (filePath) => this.addDependency(filePath),
+      remove: (filePath) => this.removeDependency(filePath),
+    };
+    const thread = new ApplicationThread(
+      workerPath,
+      port1,
+      dependencyCallbacks,
+      {
+        argv: this.argv,
+        env: { NODE_COMPILE_CACHE: config.cacheDirPath, ...process.env },
+        execArgv,
+        // Don't pipe to parent process. Handled manually in ApplicationThread
+        stderr: true,
+        workerData: {
+          hostOrigin: this.hostOrigin,
+          messagePort: port2,
+          serializedMocks: this.serializedMocks,
+        },
+        transferList: [port2],
       },
-      transferList: [port2],
-    });
+    );
 
     thread.on('listening', (origin) => {
       this.appOrigins.add(origin);
@@ -168,24 +264,33 @@ export class ApplicationHost {
   /**
    * Destroy instance
    */
-  destroy() {
-    this.activeThread?.terminate();
+  async destroy(): Promise<void> {
+    this.flushPersist();
     this.watcher?.close();
+    await Promise.allSettled([
+      this.activeThread?.terminate(),
+      this.standbyThread?.terminate(),
+    ]);
   }
+}
+
+interface DependencyCallbacks {
+  add: (filePath: string) => void;
+  remove: (filePath: string) => void;
 }
 
 class ApplicationThread extends Worker {
   isListening: boolean | undefined;
   isRegistered: boolean;
   messagePort: MessagePort;
-  watcher: Watcher | undefined;
+  dependencyCallbacks: DependencyCallbacks | undefined;
   resolveStarted: (() => void) | undefined;
   rejectStarted: ((value?: unknown) => void) | undefined;
 
   constructor(
     filePath: string,
     messagePort: MessagePort,
-    watcher: Watcher | undefined,
+    dependencyCallbacks: DependencyCallbacks | undefined,
     options: WorkerOptions,
   ) {
     super(filePath, options);
@@ -193,7 +298,7 @@ class ApplicationThread extends Worker {
     this.isListening = undefined;
     this.isRegistered = false;
     this.messagePort = messagePort;
-    this.watcher = watcher;
+    this.dependencyCallbacks = dependencyCallbacks;
 
     this.messagePort.on('message', (msg: ApplicationWorkerMessage) => {
       const { type } = msg;
@@ -207,11 +312,9 @@ class ApplicationThread extends Worker {
         this.resolveStarted?.();
       } else if (type === 'watch') {
         if (msg.mode === 'write') {
-          if (this.watcher?.has(msg.filePath)) {
-            this.watcher.remove(msg.filePath, true);
-          }
+          this.dependencyCallbacks?.remove(msg.filePath);
         } else {
-          this.watcher?.add(msg.filePath);
+          this.dependencyCallbacks?.add(msg.filePath);
         }
       } else if (type === 'error') {
         if (this.isListening === undefined) {
@@ -226,7 +329,7 @@ class ApplicationThread extends Worker {
       this.messagePort.close();
       // @ts-expect-error - clean up
       this.messagePort = undefined;
-      this.watcher = undefined;
+      this.dependencyCallbacks = undefined;
     });
     this.stderr.on('data', (chunk) => {
       error(chunk.toString().trimEnd());

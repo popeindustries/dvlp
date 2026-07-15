@@ -5,14 +5,8 @@ import { getAbsoluteProjectPath, getProjectPath, isEsmFile } from './file.ts';
 import { getBundlePath, getBundleSourcePath } from './bundling.ts';
 import { getPackage, resolve } from '../resolver/index.ts';
 import type { ImportAssertionType, PatchResponseOptions } from './types.ts';
-import {
-  isBundledFilePath,
-  isBundledUrl,
-  isCssRequest,
-  isHtmlRequest,
-  isJsRequest,
-  isNodeModuleFilePath,
-} from './is.ts';
+import { isBundledFilePath, isBundledUrl, isNodeModuleFilePath } from './is.ts';
+import { isMappedSpecifier, recordImportMapFromHtml } from './import-map.ts';
 import type { Req, Res } from '../types.ts';
 import chalk from 'chalk';
 import config from '../config.ts';
@@ -21,6 +15,7 @@ import { filePathToUrlPathname } from './url.ts';
 import { Metrics } from './metrics.ts';
 import { parse } from 'es-module-lexer';
 import path from 'node:path';
+import { setCachedResponse } from './response-cache.ts';
 
 const RE_IMPORT_ASSERT = /type\s?:\s?['"]([^'"]+)/;
 const RE_CLOSE_BODY_TAG = /<\/body>/i;
@@ -45,6 +40,13 @@ export function patchResponse(
 ) {
   const context = getContextForReq(req);
   const filePath = req.filePath || context.filePath || req.url;
+  // Only file-backed responses served by dvlp itself are cacheable,
+  // not responses proxied from the application server
+  const cacheableFilePath = req.filePath || context.filePath;
+  const cacheResponse =
+    cacheableFilePath !== undefined
+      ? (body: string) => setCachedResponse(req, res, cacheableFilePath, body)
+      : undefined;
 
   debug(`patching response for "${getProjectPath(filePath)}"`);
 
@@ -53,7 +55,7 @@ export function patchResponse(
     disableContentEncodingHeader.bind(disableContentEncodingHeader, res),
   );
 
-  if (isHtmlRequest(req)) {
+  if (context.type === 'html') {
     const urls: Array<string> = [];
     const scripts = {
       header: '',
@@ -77,6 +79,7 @@ export function patchResponse(
       // TODO: parse css/js imports?
       enableCrossOriginHeader(res);
       setCacheControlHeader(res, req.url);
+      recordImportMapFromHtml(html);
 
       html = injectCSPMetaTag(res, html, urls);
 
@@ -88,36 +91,42 @@ export function patchResponse(
 
       return injectScripts(res, scripts, html);
     });
-  } else if (isCssRequest(req)) {
-    proxyBodyWrite(res, (css) => {
-      enableCrossOriginHeader(res);
-      // @ts-expect-error - non-null
-      setCacheControlHeader(res, req.url);
-      css = rewriteCSSImports(res, filePath, css, resolveImport);
+  } else if (context.type === 'css') {
+    proxyBodyWrite(
+      res,
+      (css) => {
+        enableCrossOriginHeader(res);
+        setCacheControlHeader(res, req.url);
+        css = rewriteCSSImports(res, filePath, css, resolveImport);
 
-      const transformed = send?.(filePath, css);
+        const transformed = send?.(filePath, css);
 
-      if (transformed !== undefined) {
-        css = transformed;
-      }
+        if (transformed !== undefined) {
+          css = transformed;
+        }
 
-      return css;
-    });
-  } else if (isJsRequest(req)) {
-    proxyBodyWrite(res, (js) => {
-      enableCrossOriginHeader(res);
-      // @ts-expect-error - non-null
-      setCacheControlHeader(res, req.url);
-      js = rewriteJSImports(res, filePath, js, resolveImport);
+        return css;
+      },
+      cacheResponse,
+    );
+  } else if (context.type === 'js') {
+    proxyBodyWrite(
+      res,
+      (js) => {
+        enableCrossOriginHeader(res);
+        setCacheControlHeader(res, req.url);
+        js = rewriteJSImports(res, filePath, js, resolveImport);
 
-      const transformed = send?.(filePath, js);
+        const transformed = send?.(filePath, js);
 
-      if (transformed !== undefined) {
-        js = transformed;
-      }
+        if (transformed !== undefined) {
+          js = transformed;
+        }
 
-      return js;
-    });
+        return js;
+      },
+      cacheResponse,
+    );
   }
 }
 
@@ -144,13 +153,10 @@ function disableContentEncodingHeader(
  */
 function setCacheControlHeader(res: Res, url: string): void {
   if (!res.headersSent) {
-    let cacheControl = `public, max-age=${config.maxAge}`;
-
-    if (isBundledUrl(url) || isNodeModuleFilePath(url)) {
-      cacheControl = `public, max-age=${config.maxAgeLong}`;
-    } else {
-      cacheControl = 'no-store';
-    }
+    const cacheControl =
+      isBundledUrl(url) || isNodeModuleFilePath(url)
+        ? `public, max-age=${config.maxAgeLong}`
+        : 'no-cache';
 
     res.setHeader('cache-control', cacheControl);
   }
@@ -375,6 +381,12 @@ function rewriteJSImports(
           }
         }
 
+        // Leave specifiers covered by the page's import map
+        // for the browser to resolve
+        if (isMappedSpecifier(specifier)) {
+          continue;
+        }
+
         if (resolveImport) {
           let resolveResult;
 
@@ -519,9 +531,15 @@ function proxySetHeader(
 }
 
 /**
- * Proxy body write for 'res', performing 'action' on write()/end()
+ * Proxy body write for 'res', performing 'action' on write()/end().
+ * If "onBody" is passed, the final patched body is offered for caching,
+ * and any returned etag is added to the response headers.
  */
-function proxyBodyWrite(res: Res, action: (data: string) => string) {
+function proxyBodyWrite(
+  res: Res,
+  action: (data: string) => string,
+  onBody?: (body: string) => string | undefined,
+) {
   const originalSetHeader = res.setHeader;
   let ended = false;
   let buffer: Buffer;
@@ -561,6 +579,14 @@ function proxyBodyWrite(res: Res, action: (data: string) => string) {
         }
         data = action(data);
         size = Buffer.byteLength(data);
+
+        if (onBody !== undefined && res.statusCode === 200) {
+          const etag = onBody(data);
+
+          if (etag !== undefined && !res.headersSent) {
+            Reflect.apply(originalSetHeader, res, ['ETag', etag]);
+          }
+        }
       }
 
       if (!res.headersSent) {
