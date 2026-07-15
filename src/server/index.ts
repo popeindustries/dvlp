@@ -4,6 +4,15 @@ import {
   serveCachedResponse,
 } from '../utils/response-cache.ts';
 import {
+  clearContexts,
+  getContextForFilePath,
+  getContextForReq,
+} from '../utils/request-contexts.ts';
+import {
+  clearModuleGraph,
+  findModuleGraphOwners,
+} from '../utils/module-graph.ts';
+import {
   concatScripts,
   getDvlpGlobalString,
   getPatchedAdoptedStyleSheets,
@@ -23,10 +32,6 @@ import type {
 } from '../types.ts';
 import { error, info, noisyInfo } from '../utils/log.ts';
 import { find, getProjectPath, getRepoPath } from '../utils/file.ts';
-import {
-  getContextForFilePath,
-  getContextForReq,
-} from '../utils/request-contexts.ts';
 import {
   handleDataUrl,
   handleFavicon,
@@ -272,12 +277,10 @@ export class Dvlp {
 
     // TODO: handle mock/hook update
 
-    const context = getContextForFilePath(filePath) ?? {
-      type: undefined,
-      href: filePath,
-    };
-    const event = context.type === 'css' ? 'refresh' : 'reload';
-    const data = JSON.stringify(context);
+    const contexts = getReloadContexts(filePath);
+    const event = contexts.every((context) => context.type === 'css')
+      ? 'refresh'
+      : 'reload';
 
     if (this.clients.size) {
       noisyInfo(
@@ -287,7 +290,13 @@ export class Dvlp {
       );
 
       for (const client of this.clients) {
-        client.send(data, { event });
+        if (event === 'refresh') {
+          for (const context of contexts) {
+            client.send(JSON.stringify(context), { event });
+          }
+        } else {
+          client.send(JSON.stringify(contexts[0]), { event });
+        }
       }
     }
   }
@@ -498,7 +507,9 @@ export class Dvlp {
     this.watcher.close();
     this.hooks.destroy();
     clearCachedResponses();
+    clearContexts();
     clearImportMap();
+    clearModuleGraph();
 
     for (const connection of this.connections.values()) {
       connection.destroy();
@@ -536,4 +547,34 @@ export class Dvlp {
  */
 function isReloadRequest(req: IncomingMessage | Http2ServerRequest) {
   return req.url && req.url.startsWith('/dvlp/reload');
+}
+
+/**
+ * Resolve the contexts clients are notified with for changed "filePath".
+ * A changed css dependency is routed to its root owner stylesheets via the
+ * module graph, since clients match refresh events against root hrefs.
+ */
+function getReloadContexts(
+  filePath: string,
+): Array<{ type?: string; href: string }> {
+  const context = getContextForFilePath(filePath);
+
+  if (context === undefined) {
+    return [{ type: undefined, href: filePath }];
+  }
+
+  if (context.type === 'css' && context.assert === undefined) {
+    const ownerContexts = findModuleGraphOwners(
+      filePath,
+      (importer) => getContextForFilePath(importer)?.type === 'css',
+    )
+      .map(getContextForFilePath)
+      .filter((owner) => owner !== undefined && owner.type === 'css');
+
+    if (ownerContexts.length > 0) {
+      return ownerContexts as Array<{ type?: string; href: string }>;
+    }
+  }
+
+  return [context];
 }

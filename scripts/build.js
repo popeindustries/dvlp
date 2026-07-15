@@ -5,21 +5,25 @@ import { minify } from 'terser';
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
-const reloadClient = (
-  await minify(fs.readFileSync('src/reload/reload-client.js', 'utf8'))
-).code.replace(/(["\\])/g, '\\$1');
-const mockClient = (
-  await minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
-    // Preserve 'cache' var for regex replacement
-    mangle: { reserved: ['cache'] },
-  })
-).code.replace(/(["\\])/g, '\\$1');
+// JSON.stringify produces a valid js string literal whatever
+// quote style the minifier chooses
+const reloadClient = JSON.stringify(
+  (await minify(fs.readFileSync('src/reload/reload-client.js', 'utf8'))).code,
+);
+const mockClient = JSON.stringify(
+  (
+    await minify(fs.readFileSync('src/mock/mock-client.js', 'utf8'), {
+      // Preserve 'cache' var for regex replacement
+      mangle: { reserved: ['cache'] },
+    })
+  ).code,
+);
 const banner = {
   js: "import { createRequire as createRequireBecauseEsbuild } from 'module'; \nconst require = createRequireBecauseEsbuild(import.meta.url);",
 };
 const define = {
-  'global.$RELOAD_CLIENT': `'${reloadClient}'`,
-  'global.$MOCK_CLIENT': `"${mockClient}"`,
+  'global.$RELOAD_CLIENT': reloadClient,
+  'global.$MOCK_CLIENT': mockClient,
   'global.$VERSION': `'${pkg.version}'`,
 };
 const external = ['electron', 'esbuild', 'fsevents', 'dvlp/internal'];

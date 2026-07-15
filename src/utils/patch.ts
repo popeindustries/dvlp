@@ -8,6 +8,7 @@ import type { ImportAssertionType, PatchResponseOptions } from './types.ts';
 import { isBundledFilePath, isBundledUrl, isNodeModuleFilePath } from './is.ts';
 import { isMappedSpecifier, recordImportMapFromHtml } from './import-map.ts';
 import type { Req, Res } from '../types.ts';
+import { addModuleGraphEdge } from './module-graph.ts';
 import chalk from 'chalk';
 import config from '../config.ts';
 import Debug from 'debug';
@@ -300,6 +301,7 @@ function rewriteCSSImports(
 
         rewritten[matchingString] = `${pre}${newId}${post}`;
         createContext(newId, undefined, false, importPath, true, 'css');
+        addModuleGraphEdge(getAbsoluteProjectPath(filePath), importPath);
       } else {
         noisyWarn(
           `${chalk.yellow(
@@ -470,6 +472,7 @@ function rewriteJSImports(
             true,
             assert === 'css' ? 'css' : 'js',
           );
+          addModuleGraphEdge(importer, importPath);
         } else {
           noisyWarn(
             `${chalk.yellow(

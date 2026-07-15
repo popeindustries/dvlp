@@ -3,6 +3,7 @@ import { find, getTypeFromPath, getTypeFromRequest } from './file.ts';
 import type { ImportAssertionType, RequestContext } from './types.ts';
 import fs from 'node:fs';
 
+const contextByFilePath = new Map<string, RequestContext>();
 const contextByHref = new Map<string, RequestContext>();
 
 /**
@@ -40,6 +41,7 @@ export function getContextForReq(req: Req) {
     };
 
     contextByHref.set(url.pathname, context);
+    indexByFilePath(context as RequestContext);
   }
 
   req.context = context;
@@ -51,12 +53,10 @@ export function getContextForReq(req: Req) {
 /**
  * Retrieve existing context for "filePath"
  */
-export function getContextForFilePath(filePath: string) {
-  for (const context of contextByHref.values()) {
-    if (context.filePath === filePath) {
-      return context;
-    }
-  }
+export function getContextForFilePath(
+  filePath: string,
+): RequestContext | undefined {
+  return contextByFilePath.get(filePath);
 }
 
 /**
@@ -70,19 +70,36 @@ export function createContext(
   imported: boolean,
   type: ContentType,
 ) {
-  contextByHref.set(href, {
+  const context = {
     assert,
     dynamic,
     filePath,
     href,
     imported,
     type,
-  });
+  };
+
+  contextByHref.set(href, context);
+  indexByFilePath(context);
 }
 
 /**
  * Clear cached contexts
  */
 export function clearContexts() {
+  contextByFilePath.clear();
   contextByHref.clear();
+}
+
+/**
+ * Index "context" by file path for reverse lookup.
+ * First registered context for a file wins (multiple hrefs may map to it).
+ */
+function indexByFilePath(context: RequestContext) {
+  if (
+    context.filePath !== undefined &&
+    !contextByFilePath.has(context.filePath)
+  ) {
+    contextByFilePath.set(context.filePath, context);
+  }
 }

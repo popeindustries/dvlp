@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import Debug from 'debug';
 import fs from 'node:fs';
 import { getType } from './mime.ts';
+import { isInModuleGraph } from './module-graph.ts';
 
 interface ResponseCacheEntry {
   body: string;
@@ -111,8 +112,10 @@ export function setCachedResponse(
 
 /**
  * Invalidate cached responses affected by change to "filePath".
- * Mirrors transform cache semantics: a changed file that has no cached response
- * of its own may be a dependency concatenated into any response of the same type.
+ * Mirrors transform cache semantics: a changed file with no cached response of
+ * its own may be a dependency concatenated into any response of the same type.
+ * Module graph imports are exempt: they are fetched separately by the browser,
+ * so their content is never embedded in an importer's response.
  */
 export function invalidateCachedResponses(filePath: string): void {
   let hadEntry = false;
@@ -124,7 +127,7 @@ export function invalidateCachedResponses(filePath: string): void {
     }
   }
 
-  if (!hadEntry) {
+  if (!hadEntry && !isInModuleGraph(filePath)) {
     const changedType = getTypeFromPath(filePath);
 
     for (const [key, entry] of cache) {
