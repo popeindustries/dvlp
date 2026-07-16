@@ -3,6 +3,7 @@ import {
   destroyClients,
   pushEvent,
 } from '../push-events/index.ts';
+import { getUrl, getUrlCacheKey, isWebSocketUrl } from '../utils/url.ts';
 import type {
   MockPushEvent,
   MockPushStream,
@@ -10,6 +11,12 @@ import type {
   MockResponse,
   MockResponseHandler,
 } from '../mock/types.ts';
+import type {
+  MockStream,
+  MockStreamOptions,
+  TestServerOptions,
+} from './types.ts';
+import { MockStreamInstance, parseWebSocketProtocols } from './mock-stream.ts';
 import type { PushEvent, PushStream } from '../push-events/types.ts';
 import config from '../config.ts';
 import Debug from 'debug';
@@ -22,7 +29,6 @@ import type { HttpServer } from '../types.ts';
 import { Metrics } from '../utils/metrics.ts';
 import { Mocks } from '../mock/index.ts';
 import path from 'node:path';
-import type { TestServerOptions } from './types.ts';
 // @ts-expect-error - missing types
 import WebSocket from 'faye-websocket';
 
@@ -37,7 +43,7 @@ export class TestServer {
   #autorespond: boolean;
   #connections: Map<string, Duplex> = new Map();
   #server: HttpServer | undefined;
-  #onSendCallbacks: Record<string, (data: any) => void> = {};
+  #streams: Map<string, MockStreamInstance> = new Map();
 
   /**
    * Constructor
@@ -71,7 +77,21 @@ export class TestServer {
         res.metrics = new Metrics(res);
 
         if (EventSource.isEventSource(req)) {
-          connectClient(
+          const url = new URL(
+            req.url as string,
+            `http://localhost:${this.port}`,
+          );
+          const stream = this.#streams.get(getUrlCacheKey(url));
+          const context = { headers: req.headers, protocols: [], url };
+
+          if (stream !== undefined && !stream.authorize(context)) {
+            debug(`unauthorized es connection for "${url.href}"`);
+            res.writeHead(401);
+            res.end();
+            return;
+          }
+
+          const client = connectClient(
             {
               // @ts-expect-error - non-null
               url: req.url,
@@ -79,7 +99,12 @@ export class TestServer {
             },
             req,
             res,
+            stream !== undefined
+              ? { pingInterval: stream.options.ping }
+              : undefined,
           );
+
+          stream?.addConnection(client, context);
           // @ts-expect-error - non-null
           this.pushEvent(req.url, 'connect');
           return;
@@ -189,9 +214,23 @@ export class TestServer {
       this.#server.on('upgrade', (req, socket, body) => {
         if (WebSocket.isWebSocket(req)) {
           const url = new URL(req.url as string, `ws://${req.headers.host}`);
-          const callback = this.#onSendCallbacks[decodeURIComponent(url.href)];
+          const stream = this.#streams.get(getUrlCacheKey(url));
+          const context = {
+            headers: req.headers,
+            protocols: parseWebSocketProtocols(
+              req.headers['sec-websocket-protocol'],
+            ),
+            url,
+          };
 
-          connectClient(
+          if (stream !== undefined && !stream.authorize(context)) {
+            debug(`unauthorized ws connection for "${url.href}"`);
+            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+            socket.destroy();
+            return;
+          }
+
+          const client = connectClient(
             {
               url: url.href,
               type: 'ws',
@@ -199,8 +238,9 @@ export class TestServer {
             req,
             socket,
             body,
-            callback,
           );
+
+          stream?.addConnection(client, context, socket);
 
           this.pushEvent(url.href, 'connect');
         }
@@ -230,9 +270,38 @@ export class TestServer {
   }
 
   /**
+   * Register a mock stream at 'url', returning a handle exposing live
+   * connections for request/reply, per-connection send, and close with code
+   */
+  mockStream(url: string, options?: MockStreamOptions): MockStream {
+    const streamUrl = getUrl(url);
+    const key = getUrlCacheKey(streamUrl);
+    const existing = this.#streams.get(key);
+
+    if (existing !== undefined) {
+      debug(`replacing existing mock stream for "${url}"`);
+      existing.destroy();
+    }
+
+    const stream = new MockStreamInstance(
+      streamUrl,
+      isWebSocketUrl(streamUrl) ? 'ws' : 'es',
+      options,
+      (event) => {
+        this.pushEvent(url, event);
+      },
+    );
+
+    this.#streams.set(key, stream);
+
+    return stream;
+  }
+
+  /**
    * Register mock push 'events' for 'stream'
    *
-   * @param onSendCallback - WS client send callback
+   * @param onSendCallback - WS client send callback.
+   * Superseded by `mockStream()`, which exposes per-connection handles.
    */
   mockPushEvents(
     stream: string | MockPushStream,
@@ -240,8 +309,13 @@ export class TestServer {
     onSendCallback?: (data: any) => void,
   ) {
     if (onSendCallback) {
-      const key = typeof stream === 'string' ? stream : stream.url;
-      this.#onSendCallbacks[key] = onSendCallback;
+      const streamUrl = typeof stream === 'string' ? stream : stream.url;
+      const key = getUrlCacheKey(getUrl(streamUrl));
+      const registration =
+        this.#streams.get(key) ??
+        (this.mockStream(streamUrl) as MockStreamInstance);
+
+      registration.onMessage(onSendCallback);
     }
     return this.mocks.addPushEvents(stream, events);
   }
@@ -306,6 +380,10 @@ export class TestServer {
    */
   destroy(): Promise<void> {
     debug('destroying');
+    for (const stream of this.#streams.values()) {
+      stream.destroy();
+    }
+    this.#streams.clear();
     destroyClients();
     this.mocks.clear();
     return this._stop();

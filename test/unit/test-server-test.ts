@@ -421,4 +421,206 @@ describe('testServer', () => {
       });
     });
   });
+
+  describe('mockStream()', () => {
+    it('should expose connection handles with id and protocols', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        const stream = server.mockStream('ws://localhost:8080/socket', {
+          onConnection(connection) {
+            expect(stream.connections).to.have.length(1);
+            expect(stream.connections[0]).to.equal(connection);
+            expect(connection.id).to.be.a('string');
+            expect(connection.type).to.equal('ws');
+            expect(connection.protocols).to.eql([
+              'nbim.bearer.authorization|token',
+              'chat',
+            ]);
+            done();
+          },
+        });
+        ws = new WebSocket('ws://localhost:8080/socket', [
+          'nbim.bearer.authorization|token',
+          'chat',
+        ]);
+      });
+    });
+    it('should create a new connection handle on reconnect', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        const stream = server.mockStream('ws://localhost:8080/socket');
+        ws = new WebSocket('ws://localhost:8080/socket');
+        ws.on('open', () => {
+          const first = stream.connections[0];
+          expect(first).to.exist;
+          ws.close();
+          ws = new WebSocket('ws://localhost:8080/socket');
+          ws.on('open', async () => {
+            await sleep(50);
+            expect(stream.connections).to.have.length(1);
+            expect(stream.connections[0]).to.not.equal(first);
+            expect(stream.connections[0].id).to.not.equal(first.id);
+            expect(first.closed).to.equal(true);
+            done();
+          });
+        });
+      });
+    });
+    it('should send to a single connection only', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        const stream = server.mockStream('ws://localhost:8080/socket');
+        const received = [];
+        ws = new WebSocket('ws://localhost:8080/socket');
+        ws.on('open', () => {
+          const ws2 = new WebSocket('ws://localhost:8080/socket');
+          ws2.on('open', () => {
+            stream.connections[1].send({ to: 'second' });
+          });
+          ws2.on('message', async (event) => {
+            received.push(event.data);
+            await sleep(100);
+            expect(received).to.eql(['{"to":"second"}']);
+            ws2.close();
+            done();
+          });
+        });
+        ws.on('message', (event) => {
+          received.push(`first: ${event.data}`);
+        });
+      });
+    });
+    it('should support request/reply on the same connection', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        server.mockStream('ws://localhost:8080/socket', {
+          onConnection(connection) {
+            connection.on('message', (data) => {
+              const msg = JSON.parse(String(data));
+              if (msg.action === 'subscribe') {
+                connection.send({
+                  type: 'ack',
+                  correlationId: msg.correlationId,
+                });
+              }
+            });
+          },
+        });
+        ws = new WebSocket('ws://localhost:8080/socket');
+        ws.on('open', () => {
+          ws.send(JSON.stringify({ action: 'subscribe', correlationId: '42' }));
+        });
+        ws.on('message', (event) => {
+          expect(JSON.parse(event.data)).to.eql({
+            type: 'ack',
+            correlationId: '42',
+          });
+          done();
+        });
+      });
+    });
+    it('should close a connection with code and reason', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        const stream = server.mockStream('ws://localhost:8080/socket');
+        ws = new WebSocket('ws://localhost:8080/socket');
+        ws.on('open', () => {
+          stream.connections[0].close(4000, 'not allowed');
+        });
+        ws.on('close', (event) => {
+          expect(event.code).to.equal(4000);
+          expect(event.reason).to.equal('not allowed');
+          done();
+        });
+      });
+    });
+    it('should close a connection with a reserved code via driver bypass', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        const stream = server.mockStream('ws://localhost:8080/socket');
+        ws = new WebSocket('ws://localhost:8080/socket');
+        ws.on('open', () => {
+          stream.connections[0].close(1011, 'server error');
+        });
+        ws.on('close', (event) => {
+          expect(event.code).to.equal(1011);
+          expect(event.reason).to.equal('server error');
+          done();
+        });
+      });
+    });
+    it('should reject unauthorized WebSocket connections', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        const stream = server.mockStream('ws://localhost:8080/socket', {
+          authorize: ({ protocols }) =>
+            protocols.includes('nbim.bearer.authorization|valid'),
+        });
+        ws = new WebSocket('ws://localhost:8080/socket', [
+          'nbim.bearer.authorization|invalid',
+        ]);
+        ws.on('close', () => {
+          expect(stream.connections).to.have.length(0);
+          done();
+        });
+      });
+    });
+    it('should reject unauthorized EventSource connections with 401', (done) => {
+      testServer({ port: 8080 }).then(async (srvr) => {
+        server = srvr;
+        server.mockStream('http://localhost:8080/feed', {
+          authorize: ({ headers }) => headers['x-auth'] === 'valid',
+        });
+        const res = await fetch('http://localhost:8080/feed', {
+          headers: { accept: 'text/event-stream' },
+        });
+        expect(res.status).to.equal(401);
+        done();
+      });
+    });
+    it('should send ws ping frames on an interval', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        server.mockStream('ws://localhost:8080/socket', { ping: 50 });
+        ws = new WebSocket('ws://localhost:8080/socket');
+        ws._driver.on('ping', () => {
+          done();
+        });
+      });
+    });
+    it('should expose EventSource connection handles and headers', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        const stream = server.mockStream('http://localhost:8080/feed');
+        es = new EventSource('http://localhost:8080/feed');
+        es.onopen = () => {
+          expect(stream.connections).to.have.length(1);
+          expect(stream.connections[0].type).to.equal('es');
+          expect(stream.connections[0].headers.accept).to.include(
+            'text/event-stream',
+          );
+          stream.connections[0].send('hello', { event: 'greeting' });
+        };
+        es.addEventListener('greeting', (event) => {
+          expect(event.data).to.equal('hello');
+          done();
+        });
+      });
+    });
+    it('should register onSend callback with query string via mockPushEvents', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        server.mockPushEvents(
+          'ws://localhost:8080/socket?foo=bar',
+          [],
+          (data) => {
+            expect(data).to.equal('hi');
+            done();
+          },
+        );
+        ws = new WebSocket('ws://localhost:8080/socket');
+        ws.send('hi');
+      });
+    });
+  });
 });

@@ -593,6 +593,37 @@ console.log(await res.json()); // => { id: "1234", name: "bob" }
 removeMock();
 ```
 
+- **`mockStream(url: string, options?: MockStreamOptions): MockStream`** register a mock WebSocket/EventSource stream at `url`, returning a handle exposing live connections. Each connection supports per-connection `send()`, request/reply via the `message` event, `ping()`, and `close(code, reason)` — enough to mock stateful streaming servers (auth handshakes, correlation-id request/reply, reconnect and heartbeat behaviour) without standing up a real server.
+
+`options` include:
+
+- **`authorize: (context) => boolean`**: inspect `context.headers`, `context.protocols` (parsed `Sec-WebSocket-Protocol` entries), and `context.url`, returning `false` to reject the connection with a `401`
+- **`ping: number | false`**: WebSocket ping-frame / EventSource comment interval in `ms` (default `false` for WebSocket, `15000` for EventSource)
+- **`onConnection: (connection) => void`**: called with a connection handle on each connect
+
+```js
+const stream = mockApi.mockStream('ws://localhost:8080/socket', {
+  authorize: ({ protocols }) => protocols.includes('bearer|valid-token'),
+  ping: 1000,
+  onConnection(connection) {
+    // Request/reply on this connection only
+    connection.on('message', (data) => {
+      const msg = JSON.parse(String(data));
+      if (msg.action === 'subscribe') {
+        connection.send({ type: 'ack', correlationId: msg.correlationId });
+      }
+    });
+  },
+});
+
+// Assert reconnect behaviour with per-connection handles
+stream.connections[0].close(4000, 'not allowed'); // custom close code
+stream.connections; // => new connection instance after client reconnects
+
+// Broadcast to all connections
+stream.pushEvent({ message: { title: 'foo' }, options: { event: 'update' } });
+```
+
 - **`mockPushEvents(stream: string|object, events: object|[object]): () => void`** add one or more mock `events` for a WebSocket/EventSource `stream` (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
 
 ```js

@@ -37,6 +37,7 @@ export class EventSource extends EventEmitter {
   constructor(
     req: IncomingMessage | Http2ServerRequest,
     res: ServerResponse & Http2ServerResponse,
+    options: { pingInterval?: number | false; retry?: number } = {},
   ) {
     super();
     this.readyState = READY_STATE.CONNECTING;
@@ -45,6 +46,8 @@ export class EventSource extends EventEmitter {
     if (res.finished) {
       return;
     }
+
+    const { pingInterval = DEFAULT_PING, retry = DEFAULT_RETRY } = options;
 
     req.socket.setKeepAlive(true);
     if (!res.hasHeader('Access-Control-Allow-Origin')) {
@@ -55,10 +58,12 @@ export class EventSource extends EventEmitter {
       'Cache-Control': 'no-cache, no-store',
     });
 
-    this._write(`retry: ${Math.floor(DEFAULT_RETRY)}\r\n\r\n`);
-    this._pingIntervalId = setInterval(() => {
-      this.ping();
-    }, DEFAULT_PING);
+    this._write(`retry: ${Math.floor(retry)}\r\n\r\n`);
+    if (pingInterval !== false) {
+      this._pingIntervalId = setInterval(() => {
+        this.ping();
+      }, pingInterval);
+    }
 
     for (const event of ['close', 'error']) {
       req.on(event, () => {

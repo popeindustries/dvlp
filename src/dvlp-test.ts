@@ -8,7 +8,13 @@ import type { TestServerOptions } from './test-server/types.ts';
 
 export { TestServer };
 export type { Req, Res } from './types.ts';
-export type { TestServerOptions } from './test-server/types.ts';
+export type {
+  MockStream,
+  MockStreamConnection,
+  MockStreamContext,
+  MockStreamOptions,
+  TestServerOptions,
+} from './test-server/types.ts';
 
 interface TestServerFactory {
   (options?: TestServerOptions): Promise<TestServer>;

@@ -1,8 +1,16 @@
 export interface PushClient {
-  on(event: string, callback: (event: { data: string }) => void): void;
+  on(
+    event: string,
+    callback: (event?: {
+      data?: string | Buffer;
+      code?: number;
+      reason?: string;
+    }) => void,
+  ): void;
   send(msg: Buffer | string, options?: PushEventOptions): void;
+  ping?(message?: string, callback?: () => void): void;
   removeAllListeners(): void;
-  close(): void;
+  close(code?: number, reason?: string): void;
 }
 
 export interface PushStream {

@@ -1,5 +1,10 @@
 import { getUrl, getUrlCacheKey, isWebSocketUrl } from '../utils/url.ts';
-import type { PushClient, PushEvent, PushStream } from './types.ts';
+import type {
+  PushClient,
+  PushEvent,
+  PushEventOptions,
+  PushStream,
+} from './types.ts';
 import Debug from 'debug';
 import deflate from 'permessage-deflate';
 import { error } from '../utils/log.ts';
@@ -13,19 +18,20 @@ const cache: Map<string, Set<PushClient>> = new Map();
 const debug = Debug('dvlp:push');
 
 /**
- * Initialize EventSource/WebSocket client
+ * Initialize EventSource/WebSocket client.
+ * Returns the created client so callers can observe/drive the connection.
  */
 export function connectClient(
   stream: string | PushStream,
   ...args: Array<any>
-): void {
+): PushClient {
   const { type, url } = getStream(stream);
   const cacheKey = getUrlCacheKey(getUrl(url));
   const clients = cache.get(cacheKey) ?? new Set();
   let client: PushClient;
 
   if (type === 'ws') {
-    const [req, socket, body, onSendCallback] = args;
+    const [req, socket, body] = args;
     const isSocketio = RE_SOCKETIO_PROTOCOL.test(req.url);
     const extensionsHeaders = req.headers['Sec-WebSocket-Extensions'];
     const extensions =
@@ -33,19 +39,22 @@ export function connectClient(
         ? [deflate]
         : [];
     const protocolHeader = req.headers['sec-websocket-protocol'] || '';
+    const protocols = protocolHeader
+      .split(',')
+      .map((protocol: string) => protocol.trim());
 
-    client = new WebSocket(req, socket, body, protocolHeader.split(','), {
+    client = new WebSocket(req, socket, body, protocols, {
       extensions,
     });
-    client.on('message', (event: { data: string }) => {
-      debug('received ws message', event.data);
+    client.on('message', (event) => {
+      const data = event?.data as string;
 
-      onSendCallback?.(event.data);
+      debug('received ws message', data);
 
       // Handle Socket.io channel protocol
       // ex: 40/channel?somequery=foo
-      if (isSocketio) {
-        const [packetAndChannel] = event.data.split('?');
+      if (isSocketio && typeof data === 'string') {
+        const [packetAndChannel] = data.split('?');
 
         // Send separate packet and packet/channel responses
         if (packetAndChannel.includes('/')) {
@@ -61,9 +70,9 @@ export function connectClient(
       );
     }
   } else {
-    const [req, res] = args;
+    const [req, res, options] = args;
 
-    client = new EventSource(req, res);
+    client = new EventSource(req, res, options);
   }
 
   clients.add(client);
@@ -77,6 +86,8 @@ export function connectClient(
     }
     debug(`removed ${type} connection`, cache.size);
   });
+
+  return client;
 }
 
 /**
@@ -95,6 +106,33 @@ export function pushEvent(stream: string | PushStream, event: PushEvent): void {
     return error(`no push clients registered for ${url}`);
   }
 
+  const encoded = encodePushEventMessage(event, type);
+
+  if (encoded === undefined) {
+    return;
+  }
+
+  debug(
+    `push to ${clients.size} client${
+      clients.size > 1 ? 's' : ''
+    } connected on ${url}`,
+  );
+  debug(encoded.message);
+
+  for (const client of clients) {
+    client.send(encoded.message, encoded.options);
+  }
+}
+
+/**
+ * Encode push "event" message for transport "type".
+ * Handles JSON stringification, binary buffers, socket.io framing,
+ * and EventSource options. Returns "undefined" if the message cannot be sent.
+ */
+export function encodePushEventMessage(
+  event: PushEvent,
+  type: string,
+): { message: string | Buffer; options?: PushEventOptions } | undefined {
   const { message } = event;
   const binaryMessage = toBinaryBuffer(message);
   let { options } = event;
@@ -102,9 +140,8 @@ export function pushEvent(stream: string | PushStream, event: PushEvent): void {
 
   if (binaryMessage !== undefined) {
     if (type !== 'ws') {
-      return error(
-        `unable to push binary message to EventSource clients connected on ${url}`,
-      );
+      error(`unable to push binary message to EventSource clients`);
+      return;
     }
 
     // Binary messages skip socket.io framing (binary attachments are not
@@ -118,7 +155,8 @@ export function pushEvent(stream: string | PushStream, event: PushEvent): void {
       try {
         payload = JSON.stringify(message);
       } catch {
-        return error(`unable to stringify message for push event`, message);
+        error(`unable to stringify message for push event`, message);
+        return;
       }
     }
 
@@ -134,16 +172,7 @@ export function pushEvent(stream: string | PushStream, event: PushEvent): void {
     }
   }
 
-  debug(
-    `push to ${clients.size} client${
-      clients.size > 1 ? 's' : ''
-    } connected on ${url}`,
-  );
-  debug(payload);
-
-  for (const client of clients) {
-    client.send(payload, options);
-  }
+  return { message: payload, options };
 }
 
 /**
@@ -171,9 +200,10 @@ function destroyClient(cacheKey: string): void {
   const clients = cache.get(cacheKey);
 
   if (clients !== undefined) {
+    // Close before removing listeners so wrappers observe the 'close' event
     for (const client of clients) {
-      client.removeAllListeners();
       client.close();
+      client.removeAllListeners();
     }
     clients.clear();
     cache.delete(cacheKey);
