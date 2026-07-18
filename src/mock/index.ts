@@ -8,10 +8,12 @@ import {
 } from '../utils/is.ts';
 import { match, pathToRegexp } from 'path-to-regexp';
 import type {
+  MockedResponse,
   MockPushEvent,
   MockPushEventJSONSchema,
   MockPushStream,
   MockRequest,
+  MockRequestCall,
   MockResponse,
   MockResponseData,
   MockResponseDataType,
@@ -34,6 +36,7 @@ import { interceptClientRequest } from '../utils/intercept-client-request.ts';
 import type { MatchFunction } from 'path-to-regexp';
 import { Metrics } from '../utils/metrics.ts';
 import path from 'node:path';
+import { readBody } from '../utils/request.ts';
 import { send } from '../utils/send.ts';
 
 const debug = Debug('dvlp:mock');
@@ -77,10 +80,12 @@ export class Mocks {
     res: MockResponse | MockResponseHandler,
     once = false,
     onMockCallback?: () => void,
-  ): () => void {
+  ): MockedResponse {
     const ignoreSearch = (isMockRequest(req) && req.ignoreSearch) || false;
     const filePath =
       (isMockRequest(req) && req.filePath) || path.resolve('mock');
+    const method =
+      (isMockRequest(req) && req.method?.toUpperCase()) || undefined;
     const [url, originRegex, pathRegex, paramsMatch, searchParams] =
       getUrlSegmentsForMatching(req, ignoreSearch);
     let type: MockResponseDataType = 'json';
@@ -94,18 +99,20 @@ export class Mocks {
       }
     }
 
-    const mock = {
+    const mock: MockResponseData = {
       url,
       originRegex,
       pathRegex,
       paramsMatch,
       searchParams,
       ignoreSearch,
+      method,
       once,
       type,
       filePath,
       callback: onMockCallback,
       response: res,
+      calls: [],
     };
 
     if (!this._uninterceptClientRequest) {
@@ -115,9 +122,12 @@ export class Mocks {
     this.cacheList = undefined;
     debug(`adding mocked "${typeof req === 'string' ? req : req.url}"`);
 
-    return () => {
+    const mockedResponse = () => {
       this.remove(mock);
     };
+    mockedResponse.calls = mock.calls;
+
+    return mockedResponse;
   }
 
   /**
@@ -142,7 +152,7 @@ export class Mocks {
       ? 'ws'
       : 'es';
     // Default to socket.io protocol for ws
-    const protocol = (isMockRequest(stream) && stream.protocol) || type;
+    const protocol = (typeof stream !== 'string' && stream.protocol) || type;
     const eventsData: MockStreamData['events'] = {};
 
     for (const event of events) {
@@ -236,7 +246,7 @@ export class Mocks {
     req?: Req,
     res?: Res,
   ): boolean | MockResponseData {
-    const mock = this.getMockData(href);
+    const mock = this.getMockData(href, req?.method);
 
     if (!mock || !isMockResponseData(mock)) {
       return false;
@@ -249,6 +259,12 @@ export class Mocks {
     res.metrics.recordEvent(Metrics.EVENT_NAMES.mock);
     res.mocked = true;
 
+    const url = getUrl(href);
+    const matchObj = mock.paramsMatch(url.pathname);
+    const params = matchObj ? (matchObj.params as Record<string, string>) : {};
+
+    recordCall(mock, url.href, req, params);
+
     if (mock.once) {
       this.remove(mock);
     }
@@ -256,88 +272,92 @@ export class Mocks {
       process.nextTick(mock.callback);
     }
     if (typeof mock.response === 'function') {
-      const url = getUrl(href);
-      const matchObj = mock.paramsMatch(url.pathname);
-
-      req.params = matchObj ? (matchObj.params as Record<string, string>) : {};
+      req.params = params;
 
       mock.response(req, res);
       return true;
     }
 
-    const {
-      response: { hang, error, missing, offline },
-    } = mock;
+    const { response } = mock;
+    const { delay = 0, hang } = response;
 
     // Handle special status
     if (hang) {
       return true;
-    } else if (error || missing) {
-      const statusCode = error ? 500 : 404;
-      const body = error ? 'error' : 'missing';
-
-      res.writeHead(statusCode);
-      res.end(body);
-      return true;
-    } else if (offline && req) {
-      req.socket.destroy();
-      return true;
     }
 
-    debug(`sending mocked "${href}"`);
+    const respond = () => {
+      const { error, missing, offline } = response;
 
-    const {
-      filePath,
-      response: { body, headers = {}, status = 200 },
-      type,
-    } = mock;
-    let content = body;
+      if (error || missing) {
+        const statusCode = error ? 500 : 404;
+        const body = error ? 'error' : 'missing';
 
-    switch (type) {
-      case 'file': {
-        // Set custom headers
-        for (const header in headers) {
-          res.setHeader(header, headers[header]);
-        }
-        if (!res.hasHeader('Access-Control-Allow-Origin')) {
-          res.setHeader('Access-Control-Allow-Origin', '*');
-        }
-        if (!res.hasHeader('Cache-Control')) {
-          res.setHeader('Cache-Control', `public, max-age=${config.maxAge}`);
-        }
-
-        send(
-          // @ts-expect-error - body is path to file (relative to mock file)
-          path.resolve(path.dirname(filePath), body),
-          res,
-        );
-
-        return true;
+        res.writeHead(statusCode);
+        res.end(body);
+        return;
+      } else if (offline && req) {
+        req.socket.destroy();
+        return;
       }
-      case 'json': {
-        content = JSON.stringify(body);
-        break;
-      }
-    }
 
-    if (!res.hasHeader('Access-Control-Allow-Origin')) {
-      res.setHeader('Access-Control-Allow-Origin', '*');
+      debug(`sending mocked "${href}"`);
+
+      const { filePath, type } = mock;
+      const { body, headers = {}, status = 200 } = response;
+      let content = body;
+
+      switch (type) {
+        case 'file': {
+          // Set custom headers
+          for (const header in headers) {
+            res.setHeader(header, headers[header]);
+          }
+          if (!res.hasHeader('Access-Control-Allow-Origin')) {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+          }
+          if (!res.hasHeader('Cache-Control')) {
+            res.setHeader('Cache-Control', `public, max-age=${config.maxAge}`);
+          }
+
+          send(
+            // "body" is a path to a file (relative to the mock file)
+            path.resolve(path.dirname(filePath), body as string),
+            res,
+          );
+
+          return;
+        }
+        case 'json': {
+          content = JSON.stringify(body);
+          break;
+        }
+      }
+
+      if (!res.hasHeader('Access-Control-Allow-Origin')) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
+      res.writeHead(status, {
+        // Allow some headers to be overwritten
+        'Cache-Control': `public, max-age=${config.maxAge}`,
+        'Content-Type': getType(`mock.${type}`),
+        Date: new Date().toUTCString(),
+        ...normaliseHeaderKeys(headers, [
+          'Cache-Control',
+          'Content-Type',
+          'Date',
+        ]),
+        'Content-Length': Buffer.byteLength(content as string),
+      });
+      res.end(content);
+      res.metrics.recordEvent(Metrics.EVENT_NAMES.mock);
+    };
+
+    if (delay > 0) {
+      setTimeout(respond, delay);
+    } else {
+      respond();
     }
-    res.writeHead(status, {
-      // Allow some headers to be overwritten
-      'Cache-Control': `public, max-age=${config.maxAge}`,
-      'Content-Type': getType(`mock.${type}`),
-      Date: new Date().toUTCString(),
-      ...normaliseHeaderKeys(headers, [
-        'Cache-Control',
-        'Content-Type',
-        'Date',
-      ]),
-      // @ts-expect-error - is string
-      'Content-Length': Buffer.byteLength(content),
-    });
-    res.end(content);
-    res.metrics.recordEvent(Metrics.EVENT_NAMES.mock);
 
     return true;
   }
@@ -457,8 +477,11 @@ export class Mocks {
    */
   getMockData(
     req: string | URL | { url: string },
+    method?: string,
   ): MockResponseData | MockStreamData | undefined {
     const url = getUrl(req);
+    const normalisedMethod = method?.toUpperCase();
+    let fallback: MockResponseData | MockStreamData | undefined;
 
     if (
       this.cacheList === undefined ||
@@ -480,9 +503,23 @@ export class Mocks {
       }
 
       if (mock.pathRegex.exec(url.pathname) != null) {
-        return mock;
+        const mockMethod = 'method' in mock ? mock.method : undefined;
+
+        // Method matching is only enforced when both sides are known.
+        // A method-specific mock is preferred over a method-less one,
+        // so keep scanning after a method-less match.
+        if (mockMethod !== undefined && normalisedMethod !== undefined) {
+          if (mockMethod === normalisedMethod) {
+            return mock;
+          }
+          continue;
+        }
+
+        fallback ??= mock;
       }
     }
+
+    return fallback;
   }
 
   /**
@@ -596,6 +633,37 @@ export class Mocks {
       return data;
     });
   }
+}
+
+/**
+ * Record request details on "mock.calls" for later assertion,
+ * capturing the body without consuming it ahead of any handler
+ */
+function recordCall(
+  mock: MockResponseData,
+  href: string,
+  req: Req,
+  params: Record<string, string>,
+): void {
+  const call: MockRequestCall = {
+    body: undefined,
+    headers: { ...req.headers },
+    method: req.method,
+    params: Object.keys(params).length > 0 ? params : undefined,
+    url: href,
+  };
+
+  mock.calls.push(call);
+
+  readBody(req)
+    .then((body) => {
+      if (body.length > 0) {
+        call.body = body;
+      }
+    })
+    .catch(() => {
+      // Ignore aborted requests
+    });
 }
 
 /**

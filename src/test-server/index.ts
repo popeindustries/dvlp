@@ -5,6 +5,7 @@ import {
 } from '../push-events/index.ts';
 import { getUrl, getUrlCacheKey, isWebSocketUrl } from '../utils/url.ts';
 import type {
+  MockedResponse,
   MockPushEvent,
   MockPushStream,
   MockRequest,
@@ -258,14 +259,16 @@ export class TestServer {
   }
 
   /**
-   * Register mock 'response' for 'request'
+   * Register mock 'response' for 'request'.
+   * Returns a handle that removes the mock when called,
+   * and exposes matched requests via its "calls" array.
    */
   mockResponse(
     request: string | MockRequest,
     response: MockResponse | MockResponseHandler,
     once = false,
     onMockCallback?: () => void,
-  ) {
+  ): MockedResponse {
     return this.mocks.addResponse(request, response, once, onMockCallback);
   }
 

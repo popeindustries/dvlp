@@ -1,13 +1,25 @@
-import type { Req, Res } from './types.ts';
 import config from './config.ts';
 import { interceptClientRequest } from './utils/intercept-client-request.ts';
 import { isLocalhost } from './utils/is.ts';
 import log from './utils/log.ts';
+import type { MockHandlerResponse } from './mock/types.ts';
+import { readBody } from './utils/request.ts';
+import type { Req } from './types.ts';
 import { TestServer } from './test-server/index.ts';
 import type { TestServerOptions } from './test-server/types.ts';
 
-export { TestServer };
+export { readBody, TestServer };
 export type { Req, Res } from './types.ts';
+export type {
+  MockedResponse,
+  MockHandlerResponse,
+  MockPushEvent,
+  MockPushStream,
+  MockRequest,
+  MockRequestCall,
+  MockResponse,
+  MockResponseHandler,
+} from './mock/types.ts';
 export type {
   MockStream,
   MockStreamConnection,
@@ -20,10 +32,10 @@ interface TestServerFactory {
   (options?: TestServerOptions): Promise<TestServer>;
   disableNetwork(rerouteAllRequests?: boolean): void;
   enableNetwork(): void;
-  mockHangResponseHandler(req: Req, res: Res): void;
-  mockErrorResponseHandler(req: Req, res: Res): void;
-  mockMissingResponseHandler(req: Req, res: Res): void;
-  mockOfflineResponseHandler(req: Req, res: Res): void;
+  mockHangResponseHandler(req: Req, res: MockHandlerResponse): void;
+  mockErrorResponseHandler(req: Req, res: MockHandlerResponse): void;
+  mockMissingResponseHandler(req: Req, res: MockHandlerResponse): void;
+  mockOfflineResponseHandler(req: Req, res: MockHandlerResponse): void;
 }
 
 const instances = new Set<TestServer>();

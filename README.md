@@ -243,6 +243,21 @@ Mock a response by creating a `.json` file describing the mocked `request/respon
 
 (_Setting `request.ignoreSearch = true` will ignore query parameters when matching an incoming request with the mocked response_)
 
+Set `request.method` to match a specific HTTP method (any method matches when omitted — a method-specific mock is preferred over a method-less one for the same url), and `response.delay` to delay the response by `n` milliseconds:
+
+```json
+{
+  "request": {
+    "url": "http://www.someapi.com/v1/id/101010",
+    "method": "POST"
+  },
+  "response": {
+    "delay": 250,
+    "body": { "accepted": true }
+  }
+}
+```
+
 Bad responses can also be mocked by setting `hang`, `error`, `missing`, or `offline` response properties:
 
 ```json
@@ -558,7 +573,36 @@ const res = await fetch('http://www.someapi.com/v1/id/101010');
 console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 ```
 
-- **`mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): () => void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
+- **`mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): MockedResponse`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time, and which exposes matched requests via its `calls` array for asserting what was requested:
+
+```js
+const mocked = mockApi.mockResponse(
+  { url: '/api/order', method: 'POST' },
+  { body: { accepted: true } },
+);
+
+await fetch('http://localhost:8080/api/order', {
+  method: 'POST',
+  body: JSON.stringify({ id: 'o-1' }),
+});
+
+mocked.calls.length; // => 1
+JSON.parse(mocked.calls[0].body); // => { id: 'o-1' }
+mocked.calls[0].method; // => 'POST'
+mocked(); // remove the mock
+```
+
+Registering a mock for an already-mocked url overrides it for matching (newest wins) — remove the override to restore the original, which makes per-test response variants trivial. Use the exported **`readBody(req): Promise<string>`** helper to read the request body inside a response handler (shared with the `calls` capture, so the stream is only read once):
+
+```js
+import { readBody } from 'dvlp/test';
+
+mockApi.mockResponse({ url: '/api/echo', method: 'POST' }, async (req, res) => {
+  const body = await readBody(req);
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(body);
+});
+```
 
 ```js
 mockApi.mockResponse(

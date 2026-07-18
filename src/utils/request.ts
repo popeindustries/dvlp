@@ -3,9 +3,11 @@ import type {
   IncomingHttpHeaders,
   IncomingMessage,
 } from 'node:http';
-import type { Req, Res } from '../types.ts';
+import type { Http2ServerRequest, Req, Res } from '../types.ts';
 import { request } from 'node:http';
 import { request as secureRequest } from 'node:https';
+
+const BODY_KEY = Symbol('dvlp:body');
 
 const FORBIDDEN_REQUEST_HEADERS = [
   'connection',
@@ -22,6 +24,33 @@ const FORBIDDEN_RESPONSE_HEADERS = [
   'strict-transport-security',
   'transfer-encoding',
 ];
+
+/**
+ * Read the full request body as a string.
+ * Memoised per request, so repeated calls (and dvlp's own mock-call capture)
+ * share a single read of the stream.
+ */
+export function readBody(
+  req: IncomingMessage | Http2ServerRequest,
+): Promise<string> {
+  const request = req as (IncomingMessage | Http2ServerRequest) & {
+    [BODY_KEY]?: Promise<string>;
+  };
+
+  request[BODY_KEY] ??= new Promise((resolve, reject) => {
+    let body = '';
+
+    req.on('data', (chunk: Buffer) => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      resolve(body);
+    });
+    req.on('error', reject);
+  });
+
+  return request[BODY_KEY];
+}
 
 /**
  * Forward request to `origin`.
