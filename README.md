@@ -539,13 +539,15 @@ Create a server for handling network requests during testing.
 
 - **`autorespond: boolean`** enable/disable automatic dummy responses. If unable to resolve a request to a local file or mock, the server will respond with a dummy response of the appropriate type (default `false`)
 - **`latency: number`** the amount of artificial latency to introduce (in `ms`) for responses (default `50`)
-- **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
+- **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`). Pass `0` to bind an ephemeral port, and read the actual port from the returned instance's `port` property
 - **`webroot: String`** the subpath from `process.cwd()` to prepend to relative paths (default `''`)
 
 ```js
 import { testServer } from 'dvlp/test';
 const mockApi = await testServer({ port: 8080, latency: 20, webroot: 'src' });
 ```
+
+Multiple test servers may run in the same process (useful for parallel test workers with `port: 0`): relative mock urls resolve against, and intercepted external requests reroute to, the instance that registered the mock. One server can host http mocks, WebSocket streams, and EventSource streams on a single port, routed by path. Note that `disableNetwork(true)` reroutes *unmocked* requests to the most recently started instance, since they can't be attributed to any particular one.
 
 Returns a **`TestServer`** instance with the following methods:
 

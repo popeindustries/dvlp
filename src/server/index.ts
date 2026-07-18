@@ -147,6 +147,7 @@ export class Dvlp {
     // Make sure mocks instance has access to active port
     this.port = config.activePort = port;
     this.mocks = new Mocks(mockPath);
+    this.mocks.activePort = port;
     this.reload = reload;
     this.server;
 

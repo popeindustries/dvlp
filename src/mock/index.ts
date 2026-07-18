@@ -49,6 +49,12 @@ const mockClient =
   );
 
 export class Mocks {
+  /**
+   * The port relative mock urls resolve against, and the reroute target for
+   * intercepted requests. Falls back to the process-wide `config.activePort`
+   * when not assigned by the owning server instance.
+   */
+  activePort?: number;
   cache: Set<MockResponseData | MockStreamData>;
   client: string;
   loaded: Promise<void>;
@@ -87,7 +93,7 @@ export class Mocks {
     const method =
       (isMockRequest(req) && req.method?.toUpperCase()) || undefined;
     const [url, originRegex, pathRegex, paramsMatch, searchParams] =
-      getUrlSegmentsForMatching(req, ignoreSearch);
+      getUrlSegmentsForMatching(req, ignoreSearch, this.activePort);
     let type: MockResponseDataType = 'json';
 
     if (typeof res !== 'function') {
@@ -147,7 +153,7 @@ export class Mocks {
     const filePath =
       (isMockRequest(stream) && stream.filePath) || path.resolve('mock');
     const [url, originRegex, pathRegex, paramsMatch, searchParams] =
-      getUrlSegmentsForMatching(stream, ignoreSearch);
+      getUrlSegmentsForMatching(stream, ignoreSearch, this.activePort);
     const type: MockStreamDataType = url.protocol.startsWith('ws')
       ? 'ws'
       : 'es';
@@ -259,7 +265,7 @@ export class Mocks {
     res.metrics.recordEvent(Metrics.EVENT_NAMES.mock);
     res.mocked = true;
 
-    const url = getUrl(href);
+    const url = getUrl(href, this.activePort);
     const matchObj = mock.paramsMatch(url.pathname);
     const params = matchObj ? (matchObj.params as Record<string, string>) : {};
 
@@ -460,9 +466,9 @@ export class Mocks {
     this._uninterceptClientRequest = interceptClientRequest((url) => {
       if (this.hasMatch(url.href)) {
         url.searchParams.append('dvlpmock', encodeURIComponent(url.href));
-        // Reroute to active server
+        // Reroute to the server instance this mock belongs to
         url.protocol = 'http:';
-        url.host = `localhost:${config.activePort}`;
+        url.host = `localhost:${this.activePort ?? config.activePort}`;
         return true;
       }
 
@@ -479,7 +485,7 @@ export class Mocks {
     req: string | URL | { url: string },
     method?: string,
   ): MockResponseData | MockStreamData | undefined {
-    const url = getUrl(req);
+    const url = getUrl(req, this.activePort);
     const normalisedMethod = method?.toUpperCase();
     let fallback: MockResponseData | MockStreamData | undefined;
 
@@ -672,6 +678,7 @@ function recordCall(
 function getUrlSegmentsForMatching(
   req: string | MockRequest,
   ignoreSearch: boolean,
+  activePort: number = config.activePort,
 ): [URL, RegExp, RegExp, MatchFunction<any>, URLSearchParams] {
   let href = typeof req === 'string' ? req : req.url;
 
@@ -679,7 +686,7 @@ function getUrlSegmentsForMatching(
     href = href.replace('127.0.0.1', 'localhost');
   }
 
-  const url = new URL(href, `http://localhost:${config.activePort}`);
+  const url = new URL(href, `http://localhost:${activePort}`);
   // Allow matching of both secure/unsecure protocols
   const origin = new RegExp(
     url.origin

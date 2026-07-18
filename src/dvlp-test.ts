@@ -149,10 +149,13 @@ function enableRequestIntercept() {
       });
       const hostname = url.hostname || url.host;
 
-      // Allow mocked requests to pass-through and be intercepted by mock/index.js
+      // Allow mocked requests to pass-through and be intercepted by each
+      // instance's own Mocks interceptor, which reroutes to its own port
       if (!isMocked && !isLocalhost(hostname)) {
         if (reroute) {
-          // Reroute back to this server
+          // Reroute back to the most recently started server.
+          // Ambiguous with multiple instances, since an unmocked request
+          // can't be attributed to any particular one.
           url.protocol = 'http:';
           url.host = url.hostname = `localhost:${config.activePort}`;
           return true;

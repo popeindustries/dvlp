@@ -1,10 +1,11 @@
+import { readBody, testServer } from '../../src/dvlp-test.ts';
 import { EventSource } from 'eventsource';
 import { expect } from 'chai';
-import { readBody, testServer } from '../../src/dvlp-test.ts';
 import websocket from 'faye-websocket';
 
 const { Client: WebSocket } = websocket;
 let server;
+let server2;
 let es, ws;
 
 function sleep(dur) {
@@ -30,6 +31,8 @@ describe('testServer', () => {
       ws = null;
     }
     server && (await server.destroy());
+    server2 && (await server2.destroy());
+    server = server2 = null;
   });
   after(() => {
     testServer.enableNetwork();
@@ -419,6 +422,94 @@ describe('testServer', () => {
           }
         });
       });
+    });
+  });
+
+  describe('multiple instances and ephemeral ports', () => {
+    it('should resolve an ephemeral port when "port: 0"', async () => {
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
+      expect(server.port).to.be.greaterThan(0);
+      server.mockResponse('/api/thing', { body: { ok: true } });
+      const res = await fetch(`http://localhost:${server.port}/api/thing`);
+      expect(await res.json()).to.eql({ ok: true });
+    });
+    it('should route relative mocks to their own instance', async () => {
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
+      server2 = await testServer({ autorespond: false, latency: 0, port: 0 });
+      server.mockResponse('/api/thing', { body: { instance: 1 } });
+      server2.mockResponse('/api/thing', { body: { instance: 2 } });
+      const res1 = await fetch(`http://localhost:${server.port}/api/thing`);
+      const res2 = await fetch(`http://localhost:${server2.port}/api/thing`);
+      expect(await res1.json()).to.eql({ instance: 1 });
+      expect(await res2.json()).to.eql({ instance: 2 });
+    });
+    it('should reroute intercepted external requests to the mocking instance', async () => {
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
+      server2 = await testServer({ autorespond: false, latency: 0, port: 0 });
+      server.mockResponse('http://a.example.com/data', {
+        body: { from: 'a' },
+      });
+      server2.mockResponse('http://b.example.com/data', {
+        body: { from: 'b' },
+      });
+      const resA = await fetch('http://a.example.com/data');
+      const resB = await fetch('http://b.example.com/data');
+      expect(await resA.json()).to.eql({ from: 'a' });
+      expect(await resB.json()).to.eql({ from: 'b' });
+    });
+    it('should key mock streams to their own instance', (done) => {
+      testServer({ autorespond: false, latency: 0, port: 0 }).then(
+        async (srvr) => {
+          server = srvr;
+          server2 = await testServer({
+            autorespond: false,
+            latency: 0,
+            port: 0,
+          });
+          const stream = server2.mockStream(
+            `ws://localhost:${server2.port}/socket`,
+          );
+          ws = new WebSocket(`ws://localhost:${server2.port}/socket`);
+          ws.on('open', () => {
+            expect(stream.connections).to.have.length(1);
+            stream.connections[0].send('hello');
+          });
+          ws.on('message', (event) => {
+            expect(event.data).to.equal('hello');
+            done();
+          });
+        },
+      );
+    });
+    it('should push events to clients of a non-latest instance', (done) => {
+      testServer({ autorespond: false, latency: 0, port: 0 }).then(
+        async (srvr) => {
+          server = srvr;
+          // Second instance shifts the global active port away from "server"
+          server2 = await testServer({
+            autorespond: false,
+            latency: 0,
+            port: 0,
+          });
+          es = new EventSource(`http://localhost:${server.port}/feed`);
+          es.onopen = () => {
+            server.pushEvent('/feed', { message: 'hi' });
+          };
+          es.onmessage = (event) => {
+            expect(event.data).to.equal('hi');
+            done();
+          };
+        },
+      );
+    });
+    it('should keep serving after another instance is destroyed', async () => {
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
+      server2 = await testServer({ autorespond: false, latency: 0, port: 0 });
+      server2.mockResponse('/api/thing', { body: { ok: true } });
+      await server.destroy();
+      server = null;
+      const res = await fetch(`http://localhost:${server2.port}/api/thing`);
+      expect(await res.json()).to.eql({ ok: true });
     });
   });
 

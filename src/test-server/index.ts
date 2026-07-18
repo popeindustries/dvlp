@@ -92,10 +92,11 @@ export class TestServer {
             return;
           }
 
+          // Register with the absolute url so the push-client key
+          // resolves against this instance's port, not the global one
           const client = connectClient(
             {
-              // @ts-expect-error - non-null
-              url: req.url,
+              url: url.href,
               type: 'es',
             },
             req,
@@ -106,8 +107,7 @@ export class TestServer {
           );
 
           stream?.addConnection(client, context);
-          // @ts-expect-error - non-null
-          this.pushEvent(req.url, 'connect');
+          this.pushEvent(url.href, 'connect');
           return;
         }
 
@@ -203,7 +203,20 @@ export class TestServer {
 
       this.#server.unref();
       this.#server.on('error', reject);
-      this.#server.on('listening', resolve);
+      this.#server.on('listening', () => {
+        const address = this.#server?.address();
+
+        // Resolve the actual bound port (supports ephemeral "port: 0").
+        // Safe for mock registration keying because the testServer() factory
+        // awaits start before returning the instance.
+        if (address !== null && typeof address === 'object') {
+          this.port = address.port;
+        }
+        config.activePort = this.port;
+        this.mocks.activePort = this.port;
+
+        resolve();
+      });
       this.#server.on('connection', (connection) => {
         const key = `${connection.remoteAddress}:${connection.remotePort}`;
 
@@ -277,7 +290,7 @@ export class TestServer {
    * connections for request/reply, per-connection send, and close with code
    */
   mockStream(url: string, options?: MockStreamOptions): MockStream {
-    const streamUrl = getUrl(url);
+    const streamUrl = getUrl(url, this.port);
     const key = getUrlCacheKey(streamUrl);
     const existing = this.#streams.get(key);
 
@@ -313,7 +326,7 @@ export class TestServer {
   ) {
     if (onSendCallback) {
       const streamUrl = typeof stream === 'string' ? stream : stream.url;
-      const key = getUrlCacheKey(getUrl(streamUrl));
+      const key = getUrlCacheKey(getUrl(streamUrl, this.port));
       const registration =
         this.#streams.get(key) ??
         (this.mockStream(streamUrl) as MockStreamInstance);
@@ -328,12 +341,19 @@ export class TestServer {
    * A string passed as 'event' will be handled as a named mock push event
    */
   pushEvent(stream: string | PushStream, event?: string | PushEvent): void {
+    // Resolve relative stream urls against this instance's port,
+    // so push clients are found regardless of instance creation order
+    const resolved =
+      typeof stream === 'string'
+        ? getUrl(stream, this.port).href
+        : { ...stream, url: getUrl(stream.url, this.port).href };
+
     // Passed a mocked event name
     if (typeof event === 'string') {
-      this.mocks.matchPushEvent(stream, event, pushEvent);
+      this.mocks.matchPushEvent(resolved, event, pushEvent);
     } else {
       // @ts-expect-error - non-null
-      pushEvent(stream, event);
+      pushEvent(resolved, event);
     }
   }
 
