@@ -99,13 +99,11 @@ export class ApplicationHost {
     debug(`starting thread at ${this.main}`);
 
     // Seed the watcher from the persisted manifest so watching is live before
-    // the app finishes importing. The worker then streams the live dependency
-    // set (from its actual import graph) via 'watch' messages.
-    const persisted = readDependencyManifest(this.main);
-    for (const filePath of persisted) {
-      this.dependencies.add(filePath);
-    }
-    this.watcher?.add(persisted);
+    // the app finishes importing. The live dependency set is rebuilt from the
+    // worker's actual import graph (via 'watch' messages), so files that are
+    // no longer imported drop out of the manifest on the next persist.
+    this.watcher?.add(readDependencyManifest(this.main));
+    this.dependencies.clear();
 
     await this.activeThread.start(this.main);
 
@@ -115,8 +113,15 @@ export class ApplicationHost {
     // Pre-warm the next thread (worker boot + loader registration) so a
     // restart only pays for the app import itself. Restarts only happen
     // in response to watched file changes, so skip if not watching.
-    if (this.watcher !== undefined) {
-      this.standbyThread ??= this.createThread();
+    if (this.watcher !== undefined && this.standbyThread === undefined) {
+      const standbyThread = (this.standbyThread = this.createThread());
+
+      // Never promote a standby that has died while idle
+      standbyThread.once('exit', () => {
+        if (this.standbyThread === standbyThread) {
+          this.standbyThread = undefined;
+        }
+      });
     }
   }
 
@@ -138,13 +143,18 @@ export class ApplicationHost {
     try {
       debug(`terminating thread with id "${this.activeThread.threadId}"`);
 
-      this.activeThread.removeAllListeners();
+      // Terminate before removing listeners so 'exit' cleanup still runs
       await this.activeThread.terminate();
+      this.activeThread.removeAllListeners();
       this.activeThread = this.standbyThread ?? this.createThread();
       this.standbyThread = undefined;
 
       noisyInfo('\n  restarting application server...');
       await this.start();
+    } catch (err) {
+      // Don't crash the main process when the app fails to restart
+      // (e.g. syntax error in freshly saved source)
+      error(err);
     } finally {
       this.restarting = false;
     }

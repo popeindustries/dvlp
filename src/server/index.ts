@@ -77,7 +77,7 @@ export class Dvlp {
   entry: Entry;
   hooks: Hooker;
   isListening: boolean;
-  lastChanged: string;
+  lastChanged: Array<string>;
   secureServerOptions: Http2SecureServerOptions | undefined;
   origin: string;
   port: number;
@@ -107,6 +107,10 @@ export class Dvlp {
     // Listen for all upcoming file system reads
     // Register early to catch all reads, including transformers that patch fs.readFile
     this.watcher = watch((filePaths) => {
+      // Track the whole batch so cache invalidation covers every changed
+      // file, not just the last one
+      this.lastChanged = filePaths;
+
       for (const filePath of filePaths) {
         this.triggerClientReload(filePath);
       }
@@ -129,7 +133,7 @@ export class Dvlp {
     this.entry = entry;
     this.hooks = new Hooker(hooks, this.watcher);
     this.isListening = false;
-    this.lastChanged = '';
+    this.lastChanged = [];
     this.secureServerOptions = undefined;
 
     let protocol = 'http';
@@ -253,7 +257,9 @@ export class Dvlp {
    *  3. full page reload
    */
   triggerClientReload(filePath: string, silent?: boolean): void {
-    this.lastChanged = filePath;
+    if (!this.lastChanged.includes(filePath)) {
+      this.lastChanged = [filePath];
+    }
     invalidateCachedResponses(filePath);
 
     // Dependencies or exports may have changed,

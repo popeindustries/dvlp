@@ -27,6 +27,23 @@ export function addModuleGraphEdge(importer: string, imported: string): void {
 }
 
 /**
+ * Clear the outgoing edges of "importer" ahead of re-recording them,
+ * so imports removed from the file don't linger as stale edges
+ */
+export function clearModuleGraphImports(importer: string): void {
+  const imports = importsByFile.get(importer);
+
+  if (imports === undefined) {
+    return;
+  }
+
+  for (const imported of imports) {
+    importersByFile.get(imported)?.delete(importer);
+  }
+  imports.clear();
+}
+
+/**
  * Determine if "filePath" is a known node in the module graph
  */
 export function isInModuleGraph(filePath: string): boolean {

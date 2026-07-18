@@ -594,7 +594,7 @@ mocked.calls[0].method; // => 'POST'
 mocked(); // remove the mock
 ```
 
-Registering a mock for an already-mocked url overrides it for matching (newest wins) — remove the override to restore the original, which makes per-test response variants trivial. Use the exported **`readBody(req): Promise<string>`** helper to read the request body inside a response handler (shared with the `calls` capture, so the stream is only read once):
+For static mocks the request body is captured automatically; for handler mocks, `calls[n].body` is populated when the handler reads the body via `readBody` (the stream is otherwise left untouched for the handler to consume). Registering a mock for an already-mocked url overrides it for matching (newest wins, except that a method-specific mock is always preferred over a method-less one) — remove the override to restore the original, which makes per-test response variants trivial. Use the exported **`readBody(req): Promise<string>`** helper to read the request body inside a response handler (shared with the `calls` capture, so the stream is only read once):
 
 ```js
 import { readBody } from 'dvlp/test';

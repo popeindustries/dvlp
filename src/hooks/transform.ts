@@ -29,7 +29,7 @@ const tsconfig = tsconfigPath
  */
 export async function transform(
   filePath: string,
-  lastChangedFilePath: string,
+  lastChanged: Array<string>,
   res: Res,
   clientPlatform: TransformHookContext['client'],
   cache: Map<string, string>,
@@ -40,21 +40,21 @@ export async function transform(
 
   // Segment cache by user agent to support different transforms based on client
   const cacheKey = `${clientPlatform.ua}:${filePath}`;
-  const lastChangedCacheKey = `${clientPlatform.ua}:${lastChangedFilePath}`;
   const relativeFilePath = getProjectPath(filePath);
   const fileType = getTypeFromPath(filePath);
   const fileExtension = extname(filePath);
   // Dependencies that are concatenated during transform aren't cached,
   // but they are watched when read from file system during transformation,
-  // so transform again if changed file is of same type
-  const lastChangedIsDependency =
-    lastChangedFilePath &&
-    !cache.has(lastChangedCacheKey) &&
-    getTypeFromPath(lastChangedFilePath) === fileType;
+  // so transform again if any changed file in the batch is of same type
+  const lastChangedIsDependency = lastChanged.some(
+    (changedFilePath) =>
+      !cache.has(`${clientPlatform.ua}:${changedFilePath}`) &&
+      getTypeFromPath(changedFilePath) === fileType,
+  );
   let code = cache.get(cacheKey);
   let transformed = false;
 
-  if (lastChangedIsDependency || lastChangedFilePath === filePath || !code) {
+  if (lastChangedIsDependency || lastChanged.includes(filePath) || !code) {
     try {
       const fileContents = readFileSync(filePath, 'utf8');
       code = undefined;

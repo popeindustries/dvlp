@@ -108,13 +108,11 @@ export class ElectronHost {
     debug(`starting Electron application at ${this.main}`);
 
     // Seed the watcher from the persisted manifest so watching is live before
-    // the app finishes importing. The child then streams the live dependency
-    // set (from its actual import graph) via 'dependency' messages.
-    const persisted = readDependencyManifest(this.main);
-    for (const filePath of persisted) {
-      this.dependencies.add(filePath);
-    }
-    this.watcher?.add(persisted);
+    // the app finishes importing. The live dependency set is rebuilt from the
+    // child's actual import graph (via 'dependency' messages), so files that
+    // are no longer imported drop out of the manifest on the next persist.
+    this.watcher?.add(readDependencyManifest(this.main));
+    this.dependencies.clear();
 
     this.activeProcess = await this.createProcess();
     profiler?.mark('child process started');
@@ -150,6 +148,9 @@ export class ElectronHost {
 
       noisyInfo('\n   restarting Electon application...');
       await this.start();
+    } catch (err) {
+      // Don't crash the main process when the app fails to restart
+      error(err);
     } finally {
       this.restarting = false;
     }

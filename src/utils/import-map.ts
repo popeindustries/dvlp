@@ -1,7 +1,7 @@
 import Debug from 'debug';
 
 const RE_IMPORT_MAP =
-  /<script[^>]+type=['"]importmap['"][^>]*>([\s\S]*?)<\/script>/;
+  /<script[^>]+type=['"]importmap['"][^>]*>([\s\S]*?)<\/script>/g;
 
 const debug = Debug('dvlp:importmap');
 const mappedPrefixes = new Set<string>();
@@ -13,31 +13,30 @@ let hasImportMap = false;
  * so import rewriting can leave them for the browser to resolve.
  */
 export function recordImportMapFromHtml(html: string): void {
-  const match = RE_IMPORT_MAP.exec(html);
+  let match;
 
-  if (match === null) {
-    return;
-  }
+  RE_IMPORT_MAP.lastIndex = 0;
+  while ((match = RE_IMPORT_MAP.exec(html))) {
+    try {
+      const importMap = JSON.parse(match[1]) as {
+        imports?: Record<string, string>;
+        scopes?: Record<string, Record<string, string>>;
+      };
 
-  try {
-    const importMap = JSON.parse(match[1]) as {
-      imports?: Record<string, string>;
-      scopes?: Record<string, Record<string, string>>;
-    };
-
-    collectSpecifiers(importMap.imports);
-    if (importMap.scopes !== undefined) {
-      for (const scopedImports of Object.values(importMap.scopes)) {
-        collectSpecifiers(scopedImports);
+      collectSpecifiers(importMap.imports);
+      if (importMap.scopes !== undefined) {
+        for (const scopedImports of Object.values(importMap.scopes)) {
+          collectSpecifiers(scopedImports);
+        }
       }
-    }
 
-    hasImportMap = true;
-    debug(
-      `recorded import map with ${mappedSpecifiers.size} specifiers and ${mappedPrefixes.size} prefixes`,
-    );
-  } catch (err) {
-    debug(`error parsing import map: ${err}`);
+      hasImportMap = true;
+      debug(
+        `recorded import map with ${mappedSpecifiers.size} specifiers and ${mappedPrefixes.size} prefixes`,
+      );
+    } catch (err) {
+      debug(`error parsing import map: ${err}`);
+    }
   }
 }
 

@@ -515,7 +515,7 @@ describe('testServer', () => {
 
   describe('mockResponse() method matching', () => {
     it('should match mocks by method', async () => {
-      server = await testServer({ autorespond: false, latency: 0 });
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
       server.mockResponse(
         { url: '/api/thing', method: 'GET' },
         { body: { got: true } },
@@ -524,41 +524,44 @@ describe('testServer', () => {
         { url: '/api/thing', method: 'POST' },
         { body: { posted: true } },
       );
-      const getRes = await fetch('http://localhost:8080/api/thing');
-      const postRes = await fetch('http://localhost:8080/api/thing', {
+      const getRes = await fetch(`http://localhost:${server.port}/api/thing`);
+      const postRes = await fetch(`http://localhost:${server.port}/api/thing`, {
         method: 'POST',
       });
       expect(await getRes.json()).to.eql({ got: true });
       expect(await postRes.json()).to.eql({ posted: true });
     });
     it('should prefer a method-specific mock over a method-less one', async () => {
-      server = await testServer({ autorespond: false, latency: 0 });
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
       server.mockResponse(
         { url: '/api/thing', method: 'DELETE' },
         { body: { deleted: true } },
       );
       server.mockResponse('/api/thing', { body: { fallback: true } });
-      const deleteRes = await fetch('http://localhost:8080/api/thing', {
-        method: 'DELETE',
-      });
-      const getRes = await fetch('http://localhost:8080/api/thing');
+      const deleteRes = await fetch(
+        `http://localhost:${server.port}/api/thing`,
+        {
+          method: 'DELETE',
+        },
+      );
+      const getRes = await fetch(`http://localhost:${server.port}/api/thing`);
       expect(await deleteRes.json()).to.eql({ deleted: true });
       expect(await getRes.json()).to.eql({ fallback: true });
     });
     it('should not match a request with a different method', async () => {
-      server = await testServer({ autorespond: false, latency: 0 });
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
       server.mockResponse(
         { url: '/api/thing', method: 'POST' },
         { body: { posted: true } },
       );
-      const res = await fetch('http://localhost:8080/api/thing');
+      const res = await fetch(`http://localhost:${server.port}/api/thing`);
       expect(res.status).to.equal(404);
     });
     it('should delay a mocked response', async () => {
-      server = await testServer({ autorespond: false, latency: 0 });
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
       server.mockResponse('/api/slow', { body: { ok: true }, delay: 150 });
       const start = Date.now();
-      const res = await fetch('http://localhost:8080/api/slow');
+      const res = await fetch(`http://localhost:${server.port}/api/slow`);
       expect(await res.json()).to.eql({ ok: true });
       expect(Date.now() - start).to.be.within(140, 400);
     });
@@ -566,13 +569,15 @@ describe('testServer', () => {
 
   describe('mockResponse() calls', () => {
     it('should record matched requests on the returned handle', async () => {
-      server = await testServer({ autorespond: false, latency: 0 });
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
       const mocked = server.mockResponse('/api/user/:id', {
         body: { ok: true },
       });
-      await fetch('http://localhost:8080/api/user/1234', {
-        headers: { 'x-custom': 'yes' },
-      });
+      await (
+        await fetch(`http://localhost:${server.port}/api/user/1234`, {
+          headers: { 'x-custom': 'yes' },
+        })
+      ).text();
       expect(mocked.calls).to.have.length(1);
       expect(mocked.calls[0].method).to.equal('GET');
       expect(mocked.calls[0].url).to.contain('/api/user/1234');
@@ -581,40 +586,69 @@ describe('testServer', () => {
       expect(mocked.calls[0].body).to.equal(undefined);
     });
     it('should capture the request body', async () => {
-      server = await testServer({ autorespond: false, latency: 0 });
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
       const mocked = server.mockResponse(
         { url: '/api/order', method: 'POST' },
         { body: { accepted: true } },
       );
-      await fetch('http://localhost:8080/api/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: 'o-1', qty: 3 }),
-      });
+      await (
+        await fetch(`http://localhost:${server.port}/api/order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: 'o-1', qty: 3 }),
+        })
+      ).text();
       await sleep(50);
       expect(mocked.calls).to.have.length(1);
       expect(JSON.parse(mocked.calls[0].body)).to.eql({ id: 'o-1', qty: 3 });
     });
     it('should retain calls after a "once" mock is removed', async () => {
-      server = await testServer({ autorespond: false, latency: 0 });
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
       const mocked = server.mockResponse(
         '/api/once',
         { body: { ok: true } },
         true,
       );
-      await fetch('http://localhost:8080/api/once');
+      await (await fetch(`http://localhost:${server.port}/api/once`)).text();
       expect(server.mocks.cache.size).to.equal(0);
       expect(mocked.calls).to.have.length(1);
     });
     it('should still remove the mock when the handle is called', async () => {
-      server = await testServer({ autorespond: false, latency: 0 });
+      server = await testServer({ autorespond: false, latency: 0, port: 0 });
       const mocked = server.mockResponse('/api/tmp', { body: { ok: true } });
       expect(server.mocks.cache.size).to.equal(1);
       mocked();
       expect(server.mocks.cache.size).to.equal(0);
     });
+    it('should not consume the body ahead of a late-reading handler', (done) => {
+      testServer({ autorespond: false, latency: 0, port: 0 }).then((srvr) => {
+        server = srvr;
+        server.mockResponse(
+          { url: '/api/late', method: 'POST' },
+          async (req, res) => {
+            // Read the stream directly only after a delay
+            await sleep(50);
+            let body = '';
+            req.on('data', (chunk) => (body += chunk));
+            req.on('end', () => {
+              res.writeHead(200);
+              res.end(body);
+            });
+          },
+        );
+        fetch(`http://localhost:${server.port}/api/late`, {
+          method: 'POST',
+          body: 'late-body',
+        })
+          .then((res) => res.text())
+          .then((text) => {
+            expect(text).to.equal('late-body');
+            done();
+          });
+      });
+    });
     it('should share the body between readBody and calls capture', (done) => {
-      testServer({ autorespond: false, latency: 0 }).then((srvr) => {
+      testServer({ autorespond: false, latency: 0, port: 0 }).then((srvr) => {
         server = srvr;
         const mocked = server.mockResponse(
           { url: '/api/echo', method: 'POST' },
@@ -625,7 +659,7 @@ describe('testServer', () => {
             });
           },
         );
-        fetch('http://localhost:8080/api/echo', {
+        fetch(`http://localhost:${server.port}/api/echo`, {
           method: 'POST',
           body: JSON.stringify({ echo: 'me' }),
         })

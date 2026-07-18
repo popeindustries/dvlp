@@ -8,6 +8,7 @@ import { request } from 'node:http';
 import { request as secureRequest } from 'node:https';
 
 const BODY_KEY = Symbol('dvlp:body');
+const BODY_CALLBACKS_KEY = Symbol('dvlp:bodyCallbacks');
 
 const FORBIDDEN_REQUEST_HEADERS = [
   'connection',
@@ -33,24 +34,59 @@ const FORBIDDEN_RESPONSE_HEADERS = [
 export function readBody(
   req: IncomingMessage | Http2ServerRequest,
 ): Promise<string> {
-  const request = req as (IncomingMessage | Http2ServerRequest) & {
-    [BODY_KEY]?: Promise<string>;
-  };
+  const request = req as InstrumentedRequest;
 
-  request[BODY_KEY] ??= new Promise((resolve, reject) => {
-    let body = '';
+  if (request[BODY_KEY] === undefined) {
+    request[BODY_KEY] = new Promise((resolve, reject) => {
+      let body = '';
 
-    req.on('data', (chunk: Buffer) => {
-      body += chunk.toString();
+      req.on('data', (chunk: Buffer) => {
+        body += chunk.toString();
+      });
+      req.on('end', () => {
+        resolve(body);
+      });
+      req.on('error', reject);
     });
-    req.on('end', () => {
-      resolve(body);
-    });
-    req.on('error', reject);
-  });
+
+    // Notify passive observers registered before the first read
+    const callbacks = request[BODY_CALLBACKS_KEY];
+
+    if (callbacks !== undefined) {
+      for (const callback of callbacks) {
+        request[BODY_KEY].then(callback, () => {});
+      }
+      callbacks.clear();
+    }
+  }
 
   return request[BODY_KEY];
 }
+
+/**
+ * Observe the request body without consuming the stream:
+ * "callback" fires only if (and when) the body is read via readBody().
+ * Used to capture bodies for mock-call assertions without breaking handlers
+ * that read the stream themselves at a later tick.
+ */
+export function observeBody(
+  req: IncomingMessage | Http2ServerRequest,
+  callback: (body: string) => void,
+): void {
+  const request = req as InstrumentedRequest;
+
+  if (request[BODY_KEY] !== undefined) {
+    request[BODY_KEY].then(callback, () => {});
+    return;
+  }
+
+  (request[BODY_CALLBACKS_KEY] ??= new Set()).add(callback);
+}
+
+type InstrumentedRequest = (IncomingMessage | Http2ServerRequest) & {
+  [BODY_KEY]?: Promise<string>;
+  [BODY_CALLBACKS_KEY]?: Set<(body: string) => void>;
+};
 
 /**
  * Forward request to `origin`.

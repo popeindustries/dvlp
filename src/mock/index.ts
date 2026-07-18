@@ -24,6 +24,7 @@ import type {
   MockStreamEventData,
   SerializedMock,
 } from './types.ts';
+import { observeBody, readBody } from '../utils/request.ts';
 import type { PushEvent, PushStream } from '../push-events/types.ts';
 import type { Req, Res } from '../types.ts';
 import chalk from 'chalk';
@@ -36,7 +37,6 @@ import { interceptClientRequest } from '../utils/intercept-client-request.ts';
 import type { MatchFunction } from 'path-to-regexp';
 import { Metrics } from '../utils/metrics.ts';
 import path from 'node:path';
-import { readBody } from '../utils/request.ts';
 import { send } from '../utils/send.ts';
 
 const debug = Debug('dvlp:mock');
@@ -642,8 +642,11 @@ export class Mocks {
 }
 
 /**
- * Record request details on "mock.calls" for later assertion,
- * capturing the body without consuming it ahead of any handler
+ * Record request details on "mock.calls" for later assertion.
+ * For static mocks the body is read eagerly (nothing else consumes it);
+ * for handler mocks it is only observed, so the handler stays free to read
+ * the stream itself at any time — "call.body" is populated when it does so
+ * via readBody().
  */
 function recordCall(
   mock: MockResponseData,
@@ -661,15 +664,19 @@ function recordCall(
 
   mock.calls.push(call);
 
-  readBody(req)
-    .then((body) => {
-      if (body.length > 0) {
-        call.body = body;
-      }
-    })
-    .catch(() => {
+  const setBody = (body: string) => {
+    if (body.length > 0) {
+      call.body = body;
+    }
+  };
+
+  if (typeof mock.response === 'function') {
+    observeBody(req, setBody);
+  } else {
+    readBody(req).then(setBody, () => {
       // Ignore aborted requests
     });
+  }
 }
 
 /**

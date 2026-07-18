@@ -41,7 +41,7 @@ export function getContextForReq(req: Req) {
     };
 
     contextByHref.set(url.pathname, context);
-    indexByFilePath(context as RequestContext);
+    indexByFilePath(context as RequestContext, cached);
   }
 
   req.context = context;
@@ -93,12 +93,19 @@ export function clearContexts() {
 
 /**
  * Index "context" by file path for reverse lookup.
- * First registered context for a file wins (multiple hrefs may map to it).
+ * First registered context for a file wins (multiple hrefs may map to it),
+ * except when the indexed context is the (stale) one being replaced.
  */
-function indexByFilePath(context: RequestContext) {
+function indexByFilePath(context: RequestContext, replaces?: RequestContext) {
+  if (context.filePath === undefined) {
+    return;
+  }
+
+  const indexed = contextByFilePath.get(context.filePath);
+
   if (
-    context.filePath !== undefined &&
-    !contextByFilePath.has(context.filePath)
+    indexed === undefined ||
+    (replaces !== undefined && indexed === replaces)
   ) {
     contextByFilePath.set(context.filePath, context);
   }

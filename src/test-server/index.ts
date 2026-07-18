@@ -239,8 +239,8 @@ export class TestServer {
 
           if (stream !== undefined && !stream.authorize(context)) {
             debug(`unauthorized ws connection for "${url.href}"`);
-            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-            socket.destroy();
+            // end() (not destroy()) so the 401 is flushed before FIN
+            socket.end('HTTP/1.1 401 Unauthorized\r\n\r\n');
             return;
           }
 
