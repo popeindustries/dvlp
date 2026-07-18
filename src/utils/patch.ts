@@ -1,3 +1,4 @@
+import { addModuleGraphEdge, clearModuleGraphImports } from './module-graph.ts';
 import { brotliDecompressSync, unzipSync } from 'node:zlib';
 import { createContext, getContextForReq } from './request-contexts.ts';
 import { fatal, noisyWarn, warn, WARN_BARE_IMPORT } from './log.ts';
@@ -8,7 +9,6 @@ import type { ImportAssertionType, PatchResponseOptions } from './types.ts';
 import { isBundledFilePath, isBundledUrl, isNodeModuleFilePath } from './is.ts';
 import { isMappedSpecifier, recordImportMapFromHtml } from './import-map.ts';
 import type { Req, Res } from '../types.ts';
-import { addModuleGraphEdge } from './module-graph.ts';
 import chalk from 'chalk';
 import config from '../config.ts';
 import Debug from 'debug';
@@ -79,7 +79,9 @@ export function patchResponse(
     proxyBodyWrite(res, (html) => {
       // TODO: parse css/js imports?
       enableCrossOriginHeader(res);
-      setCacheControlHeader(res, req.url);
+      // Patched html carries runtime config (reload embed port, mock client),
+      // so it must never be reused from the browser cache
+      setCacheControlHeader(res, req.url, 'no-store');
       recordImportMapFromHtml(html);
 
       html = injectCSPMetaTag(res, html, urls);
@@ -152,12 +154,16 @@ function disableContentEncodingHeader(
 /**
  * Set Cache-Control headers
  */
-function setCacheControlHeader(res: Res, url: string): void {
+function setCacheControlHeader(
+  res: Res,
+  url: string,
+  projectFileCacheControl = 'no-cache',
+): void {
   if (!res.headersSent) {
     const cacheControl =
       isBundledUrl(url) || isNodeModuleFilePath(url)
         ? `public, max-age=${config.maxAgeLong}`
-        : 'no-cache';
+        : projectFileCacheControl;
 
     res.setHeader('cache-control', cacheControl);
   }
@@ -269,6 +275,10 @@ function rewriteCSSImports(
 
   const projectFilePath = getProjectPath(filePath);
 
+  // Edges are re-recorded below, so imports removed from the file
+  // don't linger in the graph
+  clearModuleGraphImports(getAbsoluteProjectPath(filePath));
+
   css = `${css}\n:scope { --__dvlp-file-path__: "${filePath.replace(
     /\\/g,
     '\\\\',
@@ -341,6 +351,10 @@ function rewriteJSImports(
     const projectFilePath = getProjectPath(filePath);
     const importer = getAbsoluteProjectPath(filePath);
     const [imports] = parse(js);
+
+    // Edges are re-recorded below, so imports removed from the file
+    // don't linger in the graph
+    clearModuleGraphImports(importer);
 
     if (imports.length > 0) {
       // Track length delta between 'id' and 'newId' to adjust

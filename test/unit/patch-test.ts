@@ -305,14 +305,14 @@ describe('patch', () => {
         patchResponse(req, res, {});
         res.setHeader('Cache-Control', 'max-age=600');
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.include('no-cache');
+        expect(res.getHeader('Cache-Control')).to.include('no-store');
       });
       it('should set cache-control headers for project files when cache-control not set', () => {
         const req = getRequest('/index.html', { accept: 'text/html' });
         const res = getResponse(req);
         patchResponse(req, res, {});
         res.end('done');
-        expect(res.getHeader('Cache-Control')).to.include('no-cache');
+        expect(res.getHeader('Cache-Control')).to.include('no-store');
       });
       it('should set cache-control headers for node_modules files', () => {
         const req = getRequest('/node_modules/foo/foo.js');

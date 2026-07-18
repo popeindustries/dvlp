@@ -1,3 +1,4 @@
+import type { IncomingHttpHeaders, ServerResponse } from 'node:http';
 import type { MatchFunction, ParamData } from 'path-to-regexp';
 import type { PushEvent, PushStream } from '../push-events/types.ts';
 import type { Req, Res } from '../types.ts';
@@ -8,7 +9,7 @@ export interface Mocks {
     res: MockResponse | MockResponseHandler,
     once?: boolean,
     onMock?: () => void,
-  ): () => void;
+  ): MockedResponse;
   addPushEvents(
     stream: string | MockPushStream,
     events: MockPushEvent | Array<MockPushEvent>,
@@ -43,11 +44,13 @@ export interface MockResponseData {
   paramsMatch: MatchFunction<ParamData>;
   searchParams: URLSearchParams;
   ignoreSearch: boolean;
+  method?: string;
   once: boolean;
   filePath: string;
   type: MockResponseDataType;
   response: MockResponse | MockResponseHandler;
   callback?: () => void;
+  calls: Array<MockRequestCall>;
 }
 
 export interface MockStreamEventData {
@@ -76,18 +79,61 @@ export interface MockRequest {
   url: string;
   filePath?: string;
   ignoreSearch?: boolean;
+  /**
+   * Match a specific HTTP method (any method matches when omitted).
+   * A method-specific mock is preferred over a method-less one for the same url.
+   */
+  method?: string;
 }
 
-export type MockResponseHandler = (req: Req, res: Res) => void;
+/**
+ * Handlers receive the plain http response type so header/writeHead overloads
+ * resolve cleanly. Under https/http2 the compat response supports the same api.
+ */
+export type MockHandlerResponse = ServerResponse & {
+  error?: Error;
+};
+
+export type MockResponseHandler = (req: Req, res: MockHandlerResponse) => void;
 
 export interface MockResponse {
   body: string | Record<string, any>;
+  /**
+   * Delay responding by `delay` ms (ignored for handler responses)
+   */
+  delay?: number;
   hang?: boolean;
   headers?: Record<string, any>;
   error?: boolean;
   missing?: boolean;
   offline?: boolean;
   status?: number;
+}
+
+/**
+ * A request that matched a registered mock
+ */
+export interface MockRequestCall {
+  /**
+   * Raw request body ("undefined" when the request had none)
+   */
+  body: string | undefined;
+  headers: IncomingHttpHeaders;
+  method: string | undefined;
+  params?: Record<string, string>;
+  url: string;
+}
+
+/**
+ * Handle returned when registering a mock response.
+ * Call it to remove the mock; inspect "calls" to assert matched requests.
+ */
+export interface MockedResponse {
+  (): void;
+  /**
+   * Requests that matched this mock, in call order
+   */
+  calls: Array<MockRequestCall>;
 }
 
 export interface MockResponseJSONSchema {

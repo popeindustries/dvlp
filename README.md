@@ -243,6 +243,21 @@ Mock a response by creating a `.json` file describing the mocked `request/respon
 
 (_Setting `request.ignoreSearch = true` will ignore query parameters when matching an incoming request with the mocked response_)
 
+Set `request.method` to match a specific HTTP method (any method matches when omitted — a method-specific mock is preferred over a method-less one for the same url), and `response.delay` to delay the response by `n` milliseconds:
+
+```json
+{
+  "request": {
+    "url": "http://www.someapi.com/v1/id/101010",
+    "method": "POST"
+  },
+  "response": {
+    "delay": 250,
+    "body": { "accepted": true }
+  }
+}
+```
+
 Bad responses can also be mocked by setting `hang`, `error`, `missing`, or `offline` response properties:
 
 ```json
@@ -524,13 +539,15 @@ Create a server for handling network requests during testing.
 
 - **`autorespond: boolean`** enable/disable automatic dummy responses. If unable to resolve a request to a local file or mock, the server will respond with a dummy response of the appropriate type (default `false`)
 - **`latency: number`** the amount of artificial latency to introduce (in `ms`) for responses (default `50`)
-- **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`)
+- **`port: number`** the port to expose on `localhost`. Will use `process.env.PORT` if not specified here (default `8080`). Pass `0` to bind an ephemeral port, and read the actual port from the returned instance's `port` property
 - **`webroot: String`** the subpath from `process.cwd()` to prepend to relative paths (default `''`)
 
 ```js
 import { testServer } from 'dvlp/test';
 const mockApi = await testServer({ port: 8080, latency: 20, webroot: 'src' });
 ```
+
+Multiple test servers may run in the same process (useful for parallel test workers with `port: 0`): relative mock urls resolve against, and intercepted external requests reroute to, the instance that registered the mock. One server can host http mocks, WebSocket streams, and EventSource streams on a single port, routed by path. Note that `disableNetwork(true)` reroutes *unmocked* requests to the most recently started instance, since they can't be attributed to any particular one.
 
 Returns a **`TestServer`** instance with the following methods:
 
@@ -558,7 +575,36 @@ const res = await fetch('http://www.someapi.com/v1/id/101010');
 console.log(await res.json()); // => { user: { name: "nancy", id: "101010" } }
 ```
 
-- **`mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): () => void`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
+- **`mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): MockedResponse`** add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time, and which exposes matched requests via its `calls` array for asserting what was requested:
+
+```js
+const mocked = mockApi.mockResponse(
+  { url: '/api/order', method: 'POST' },
+  { body: { accepted: true } },
+);
+
+await fetch('http://localhost:8080/api/order', {
+  method: 'POST',
+  body: JSON.stringify({ id: 'o-1' }),
+});
+
+mocked.calls.length; // => 1
+JSON.parse(mocked.calls[0].body); // => { id: 'o-1' }
+mocked.calls[0].method; // => 'POST'
+mocked(); // remove the mock
+```
+
+For static mocks the request body is captured automatically; for handler mocks, `calls[n].body` is populated when the handler reads the body via `readBody` (the stream is otherwise left untouched for the handler to consume). Registering a mock for an already-mocked url overrides it for matching (newest wins, except that a method-specific mock is always preferred over a method-less one) — remove the override to restore the original, which makes per-test response variants trivial. Use the exported **`readBody(req): Promise<string>`** helper to read the request body inside a response handler (shared with the `calls` capture, so the stream is only read once):
+
+```js
+import { readBody } from 'dvlp/test';
+
+mockApi.mockResponse({ url: '/api/echo', method: 'POST' }, async (req, res) => {
+  const body = await readBody(req);
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(body);
+});
+```
 
 ```js
 mockApi.mockResponse(

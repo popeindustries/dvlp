@@ -56,6 +56,7 @@ export function serveCachedResponse(
   if (req.headers['if-none-match'] === entry.etag) {
     debug(`revalidated "${getProjectPath(filePath)}"`);
     res.writeHead(304, {
+      'Access-Control-Allow-Origin': '*',
       'Cache-Control': entry.cacheControl,
       ETag: entry.etag,
     });

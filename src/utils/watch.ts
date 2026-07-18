@@ -21,6 +21,7 @@ export function watch(fn: (filePaths: Array<string>) => void): Watcher {
   const banned = new Set<string>();
   const changingFiles = new Set<string>();
   const files = new Set<string>();
+  const ignoreTimers = new Set<NodeJS.Timeout>();
   const pendingChanges = new Set<string>();
   const watcher = new FSWatcher({
     ignoreInitial: true,
@@ -53,9 +54,11 @@ export function watch(fn: (filePaths: Array<string>) => void): Watcher {
           changingFiles.add(pendingFilePath);
 
           // Delay to ignore duplicate changes to same file
-          setTimeout(() => {
+          const ignoreTimer = setTimeout(() => {
+            ignoreTimers.delete(ignoreTimer);
             changingFiles.delete(pendingFilePath);
           }, IGNORE_CHANGE_WINDOW);
+          ignoreTimers.add(ignoreTimer);
         }
       }
       pendingChanges.clear();
@@ -105,7 +108,12 @@ export function watch(fn: (filePaths: Array<string>) => void): Watcher {
     },
     close() {
       clearTimeout(changeTimer);
+      for (const ignoreTimer of ignoreTimers) {
+        clearTimeout(ignoreTimer);
+      }
+      ignoreTimers.clear();
       banned.clear();
+      changingFiles.clear();
       files.clear();
       pendingChanges.clear();
       watcher.close();

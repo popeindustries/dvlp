@@ -74,7 +74,7 @@ describe('hooks()', () => {
       const hooks = new Hooker();
       const filePath = path.resolve('./test/unit/fixtures/www/dep.ts');
       const res = getResponse();
-      await hooks.transform(filePath, '', res, {
+      await hooks.transform(filePath, [], res, {
         client: { ua: 'test' },
       });
       expect(res.body).to.contain("export default 'HI!'         ;");
@@ -83,7 +83,7 @@ describe('hooks()', () => {
       const hooks = new Hooker();
       const filePath = path.resolve('./test/unit/fixtures/www/dep.tsx');
       const res = getResponse();
-      await hooks.transform(filePath, '', res, {
+      await hooks.transform(filePath, [], res, {
         client: { ua: 'test' },
       });
       expect(res.body).to.contain('React.createElement');
@@ -93,7 +93,7 @@ describe('hooks()', () => {
       const hooks = new Hooker(transformFixture);
       const filePath = path.resolve('./test/unit/fixtures/www/script.js');
       const res = getResponse();
-      await hooks.transform(filePath, '', res, {
+      await hooks.transform(filePath, [], res, {
         client: { ua: 'test' },
       });
       expect(res.body).to.contain('this is transformed content for: script.js');
@@ -109,7 +109,7 @@ describe('hooks()', () => {
         './test/unit/fixtures/www/module-with-deps.js',
       );
       const res = getResponse();
-      await hooks.transform(filePath, '', res, {
+      await hooks.transform(filePath, [], res, {
         client: { ua: 'test' },
       });
       expect(

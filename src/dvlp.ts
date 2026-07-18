@@ -198,13 +198,15 @@ export async function server(
     });
   };
 
+  const onExit = () => {
+    void destroyServer();
+  };
+
   // Graceful shutdown on Ctrl+C/kill, with a best-effort synchronous
   // fallback when exiting by other means ('exit' cannot await)
   process.once('SIGINT', onSignal);
   process.once('SIGTERM', onSignal);
-  process.on('exit', () => {
-    void destroyServer();
-  });
+  process.on('exit', onExit);
 
   const applicationWorker = server.applicationHost
     ? {
@@ -257,14 +259,12 @@ export async function server(
     destroy() {
       process.removeListener('SIGINT', onSignal);
       process.removeListener('SIGTERM', onSignal);
+      process.removeListener('exit', onExit);
       return destroyServer();
     },
   };
 }
 
-/**
- * Resolve entry data from "filePaths"
- */
 /**
  * Resolve the first available port at or above "port"
  */
@@ -293,6 +293,9 @@ function getAvailablePort(port: number, attempts = 10): Promise<number> {
   });
 }
 
+/**
+ * Resolve entry data from "filePaths"
+ */
 function resolveEntry(
   filePath: string | Array<string>,
   directories: Array<string> = [],

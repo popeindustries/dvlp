@@ -109,13 +109,13 @@ export class Hooker {
    */
   async transform(
     filePath: string,
-    lastChangedFilePath: string,
+    lastChanged: Array<string>,
     res: Res,
     clientPlatform: TransformHookContext['client'],
   ): Promise<void> {
     await transform(
       filePath,
-      lastChangedFilePath,
+      lastChanged,
       res,
       clientPlatform,
       this.transformCache,

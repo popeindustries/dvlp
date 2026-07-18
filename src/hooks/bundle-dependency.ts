@@ -1,5 +1,5 @@
 import type { esbuild as esbuildType, Res } from '../types.ts';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import config from '../config.ts';
 import Debug from 'debug';
 import { error } from '../utils/log.ts';
@@ -134,6 +134,13 @@ async function createBundle(
     }
   } catch (err) {
     debug(`error bundling "${specifier}"`);
+    // Remove the intermediate named-exports entry file, otherwise the
+    // existsSync check would serve it as the finished bundle
+    try {
+      unlinkSync(filePath);
+    } catch {
+      // Nothing written
+    }
     throw err;
   }
 

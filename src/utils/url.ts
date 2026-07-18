@@ -10,13 +10,17 @@ export function isWebSocketUrl(url: URL): boolean {
 }
 
 /**
- * Retrieve URL instance from 'req'
+ * Retrieve URL instance from 'req'.
+ * Relative urls are resolved against "activePort" on localhost.
  */
-export function getUrl(req: string | { url: string } | URL): URL {
+export function getUrl(
+  req: string | { url: string } | URL,
+  activePort: number = config.activePort,
+): URL {
   if (!(req instanceof URL)) {
     req = new URL(
       typeof req === 'string' ? decodeURIComponent(req) : req.url,
-      `http://localhost:${config.activePort}`,
+      `http://localhost:${activePort}`,
     );
   }
   // Map loopback address to localhost

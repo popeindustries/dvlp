@@ -60,8 +60,24 @@ describe('server', () => {
         headers: { accept: 'text/html' },
       });
       expect(res.status).to.eql(200);
-      expect(res.headers.get('cache-control')).to.include('no-cache');
+      expect(res.headers.get('cache-control')).to.include('no-store');
       expect(await res.text()).to.contain('<!doctype html>');
+    });
+    it('should not serve conditional responses for patched html', async () => {
+      server = await serverFactory('test/unit/fixtures/www', { port: 8100 });
+      const res = await fetch('http://localhost:8100/index.html', {
+        headers: { accept: 'text/html' },
+      });
+      expect(res.status).to.eql(200);
+      expect(res.headers.get('etag')).to.eql(null);
+      expect(res.headers.get('last-modified')).to.eql(null);
+      const revalidated = await fetch('http://localhost:8100/index.html', {
+        headers: {
+          accept: 'text/html',
+          'if-modified-since': new Date().toUTCString(),
+        },
+      });
+      expect(revalidated.status).to.eql(200);
     });
     it('should serve a css file with correct mime type', async () => {
       server = await serverFactory('test/unit/fixtures/www', { port: 8100 });
