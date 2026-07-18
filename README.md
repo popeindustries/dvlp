@@ -645,6 +645,7 @@ removeMock();
 
 - **`authorize: (context) => boolean`**: inspect `context.headers`, `context.protocols` (parsed `Sec-WebSocket-Protocol` entries), and `context.url`, returning `false` to reject the connection with a `401`
 - **`ping: number | false`**: WebSocket ping-frame / EventSource comment interval in `ms` (default `false` for WebSocket, `15000` for EventSource)
+- **`retry: number`**: EventSource reconnect interval in `ms`, sent to clients as the `retry:` field (default `5000`; ignored for WebSocket)
 - **`onConnection: (connection) => void`**: called with a connection handle on each connect
 
 ```js

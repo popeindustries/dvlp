@@ -873,5 +873,38 @@ describe('testServer', () => {
         ws.send('hi');
       });
     });
+    it('should replace a previous onSend callback registered via mockPushEvents', (done) => {
+      testServer({ port: 8080 }).then((srvr) => {
+        server = srvr;
+        const received = [];
+        server.mockPushEvents('ws://localhost:8080/socket', [], (data) => {
+          received.push(`first: ${data}`);
+        });
+        ws = new WebSocket('ws://localhost:8080/socket');
+        ws.on('open', async () => {
+          server.mockPushEvents('ws://localhost:8080/socket', [], (data) => {
+            received.push(`second: ${data}`);
+          });
+          ws.send('hi');
+          await sleep(100);
+          expect(received).to.eql(['second: hi']);
+          done();
+        });
+      });
+    });
+    it('should send custom EventSource retry interval', (done) => {
+      testServer({ port: 8080 }).then(async (srvr) => {
+        server = srvr;
+        server.mockStream('http://localhost:8080/feed', { retry: 100 });
+        const res = await fetch('http://localhost:8080/feed', {
+          headers: { accept: 'text/event-stream' },
+        });
+        const reader = res.body.getReader();
+        const { value } = await reader.read();
+        expect(Buffer.from(value).toString()).to.include('retry: 100');
+        reader.cancel();
+        done();
+      });
+    });
   });
 });

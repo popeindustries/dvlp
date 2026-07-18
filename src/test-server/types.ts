@@ -13,6 +13,11 @@ export interface MockStreamOptions {
    */
   ping?: number | false;
   /**
+   * EventSource reconnect interval in `ms`, sent to clients as the
+   * `retry:` field (default `5000`; ignored for WebSocket).
+   */
+  retry?: number;
+  /**
    * Called with a connection handle each time a client connects.
    */
   onConnection?: (connection: MockStreamConnection) => void;
@@ -61,9 +66,10 @@ export interface MockStreamConnection {
     event: 'close',
     handler: (event: { code?: number; reason?: string }) => void,
   ): this;
+  off(event: 'message', handler: (data: string | Buffer) => void): this;
   off(
-    event: 'message' | 'close',
-    handler: (...args: Array<unknown>) => void,
+    event: 'close',
+    handler: (event: { code?: number; reason?: string }) => void,
   ): this;
 }
 

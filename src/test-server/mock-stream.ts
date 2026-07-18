@@ -39,6 +39,7 @@ export class MockStreamInstance implements MockStream {
   connections: Array<MockStreamConnection> = [];
   options: MockStreamOptions;
 
+  #legacyMessageListener: ((data: string | Buffer) => void) | undefined;
   #messageListeners = new Set<(data: string | Buffer) => void>();
   #push: (event: string | PushEvent) => void;
 
@@ -106,6 +107,23 @@ export class MockStreamInstance implements MockStream {
     }
   }
 
+  /**
+   * Register the legacy "mockPushEvents" send callback,
+   * replacing any previously registered one (last-wins, pre-18 semantics)
+   */
+  setLegacyMessageListener(listener: (data: string | Buffer) => void): void {
+    if (this.#legacyMessageListener !== undefined) {
+      this.#messageListeners.delete(this.#legacyMessageListener);
+
+      for (const connection of this.connections) {
+        connection.off('message', this.#legacyMessageListener);
+      }
+    }
+
+    this.#legacyMessageListener = listener;
+    this.onMessage(listener);
+  }
+
   pushEvent(event: string | PushEvent): void {
     this.#push(event);
   }
@@ -115,6 +133,7 @@ export class MockStreamInstance implements MockStream {
       connection.close();
     }
     this.connections.length = 0;
+    this.#legacyMessageListener = undefined;
     this.#messageListeners.clear();
   }
 }

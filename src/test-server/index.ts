@@ -102,7 +102,10 @@ export class TestServer {
             req,
             res,
             stream !== undefined
-              ? { pingInterval: stream.options.ping }
+              ? {
+                  pingInterval: stream.options.ping,
+                  retry: stream.options.retry,
+                }
               : undefined,
           );
 
@@ -331,7 +334,7 @@ export class TestServer {
         this.#streams.get(key) ??
         (this.mockStream(streamUrl) as MockStreamInstance);
 
-      registration.onMessage(onSendCallback);
+      registration.setLegacyMessageListener(onSendCallback);
     }
     return this.mocks.addPushEvents(stream, events);
   }
