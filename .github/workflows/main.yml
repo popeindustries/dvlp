@@ -35,7 +35,7 @@ jobs:
 
       - name: Test:unit
         timeout-minutes: 1
-        run: pnpm run test
+        run: pnpm run test:all
 
       - name: Test:integration
         run: pnpm run test:integration

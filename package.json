@@ -77,7 +77,7 @@
     "lint:types": "tsc --noEmit --skipLibCheck ",
     "prepublishOnly": "pnpm run build",
     "test": "cross-env NODE_ENV=dvlptest NODE_TLS_REJECT_UNAUTHORIZED='0' mocha --reporter spec --bail --exit --timeout 10000 --require ./test/unit/init.ts test/unit/index.ts",
-    "test:all": "pnpm run test && pnpm run test:integration",
+    "test:all": "pnpm run test && pnpm run test:browser:headless",
     "test:browser": "./bin/dvlp.js --mock test/browser/fixtures/mock test/browser",
     "test:browser:headless": "electron test/browser/electron/main.js",
     "test:integration": "pnpm run build && cross-env NODE_ENV=dvlptest mocha test/integration/*-test.ts --reporter spec --exit --timeout 10000",
