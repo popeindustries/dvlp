@@ -16,7 +16,41 @@
     </script>
     <script type="module" src="./mock-test.js"></script>
     <script type="module" class="mocha-exec">
-      mocha.run();
+      const runner = mocha.run();
+
+      // Forward runner events to the terminal spec reporter when run
+      // headless via "pnpm run test:browser:headless"
+      if (window.electronMocha) {
+        const events = [
+          'start',
+          'suite',
+          'suite end',
+          'pass',
+          'fail',
+          'pending',
+          'end',
+        ];
+
+        for (const name of events) {
+          runner.on(name, (...args) => {
+            window.electronMocha.sendEvent(
+              name,
+              { ...runner.stats },
+              ...args.map(serialize),
+            );
+          });
+        }
+      }
+
+      function serialize(arg) {
+        if (arg instanceof Error) {
+          return { message: arg.message, stack: arg.stack };
+        }
+        if (arg != null && typeof arg === 'object') {
+          return arg.serialize?.() ?? JSON.parse(JSON.stringify(arg));
+        }
+        return arg;
+      }
     </script>
   </body>
 </html>

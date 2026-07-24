@@ -177,6 +177,48 @@ describe('Mock', () => {
       xhr.open('GET', 'http://www.google.com/bar?foo=1');
       xhr.send();
     });
+    it('should record matched AJAX requests on the returned mock handle', (done) => {
+      const mocked = testBrowser.mockResponse(
+        'http://www.google.com/bar',
+        { body: { name: 'bar' } },
+        true,
+      );
+      expect(mocked.calls).to.eql([]);
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => {
+        expect(mocked.calls).to.have.length(1);
+        expect(mocked.calls[0]).to.have.property(
+          'url',
+          'http://www.google.com/bar',
+        );
+        expect(mocked.calls[0]).to.have.property('method', 'POST');
+        expect(mocked.calls[0]).to.have.property('body', '{"name":"bar"}');
+        expect(mocked.calls[0].headers).to.have.property(
+          'content-type',
+          'application/json',
+        );
+        done();
+      };
+      xhr.open('POST', 'http://www.google.com/bar');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify({ name: 'bar' }));
+    });
+    it('should delay locally mocked AJAX response', (done) => {
+      testBrowser.mockResponse(
+        'http://www.google.com/bar',
+        { body: { name: 'bar' }, delay: 100 },
+        true,
+      );
+      const start = Date.now();
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => {
+        expect(Date.now() - start).to.be.at.least(90);
+        expect(JSON.parse(xhr.response)).to.eql({ name: 'bar' });
+        done();
+      };
+      xhr.open('GET', 'http://www.google.com/bar');
+      xhr.send();
+    });
     it('should respond to locally mocked AJAX request with search', (done) => {
       testBrowser.mockResponse(
         'http://www.google.com/bar?foo=1',
@@ -216,7 +258,9 @@ describe('Mock', () => {
         expect(json).to.eql({ name: 'bar' });
         remove();
       });
-      it('should work with remote mocked fetch request with Request object', async () => {
+      it('should work with remote mocked fetch request with Request object', async function () {
+        // Unmocked url: performs a real (opaque) network request
+        this.timeout(10000);
         const res = await fetch(
           new Request('http://www.google.com/', { mode: 'no-cors' }),
         );
@@ -322,6 +366,46 @@ describe('Mock', () => {
         const json = await res.json();
         expect(json).to.eql({ name: 'bar' });
         remove();
+      });
+      it('should record matched fetch requests on the returned mock handle', async () => {
+        const mocked = testBrowser.mockResponse(
+          'http://www.google.com/bar',
+          { body: { name: 'bar' } },
+          false,
+        );
+        expect(mocked.calls).to.eql([]);
+        await fetch('http://www.google.com/bar', {
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+          body: JSON.stringify({ name: 'bar' }),
+          mode: 'cors',
+        });
+        expect(mocked.calls).to.have.length(1);
+        expect(mocked.calls[0]).to.have.property(
+          'url',
+          'http://www.google.com/bar',
+        );
+        expect(mocked.calls[0]).to.have.property('method', 'POST');
+        expect(mocked.calls[0]).to.have.property('body', '{"name":"bar"}');
+        expect(mocked.calls[0].headers).to.have.property(
+          'content-type',
+          'application/json',
+        );
+        mocked();
+      });
+      it('should delay locally mocked fetch response', async () => {
+        const mocked = testBrowser.mockResponse(
+          'http://www.google.com/bar',
+          { body: { name: 'bar' }, delay: 100 },
+          false,
+        );
+        const start = Date.now();
+        const res = await fetch('http://www.google.com/bar', {
+          mode: 'cors',
+        });
+        expect(Date.now() - start).to.be.at.least(90);
+        expect(await res.json()).to.eql({ name: 'bar' });
+        mocked();
       });
       it('should respond to locally mocked function fetch POST request, with request.body', async () => {
         const remove = testBrowser.mockResponse(
@@ -491,6 +575,98 @@ describe('Mock', () => {
           done();
         }
         testBrowser.enableNetwork();
+      });
+    });
+
+    describe('mockStream', () => {
+      it('should expose live WebSocket connections in connect order', (done) => {
+        const connected = [];
+        const stream = testBrowser.mockStream('ws://streamapi.com/socket', {
+          onConnection: (connection) => connected.push(connection),
+        });
+        expect(stream.type).to.equal('ws');
+        expect(stream.connections).to.eql([]);
+        const ws = new WebSocket('ws://streamapi.com/socket');
+        expect(stream.connections).to.have.length(1);
+        expect(connected).to.have.length(1);
+        expect(stream.connections[0].type).to.equal('ws');
+        expect(stream.connections[0].closed).to.be.false;
+        ws.onopen = () => {
+          ws.close();
+          stream.destroy();
+          done();
+        };
+      });
+      it('should observe messages sent by a WebSocket client', (done) => {
+        const stream = testBrowser.mockStream('ws://streamapi.com/socket');
+        const ws = new WebSocket('ws://streamapi.com/socket');
+        stream.connections[0].on('message', (data) => {
+          expect(data).to.equal('hi from client');
+          ws.close();
+          stream.destroy();
+          done();
+        });
+        ws.onopen = () => {
+          ws.send('hi from client');
+        };
+      });
+      it('should send a message on a single WebSocket connection', (done) => {
+        const stream = testBrowser.mockStream('ws://streamapi.com/socket');
+        const ws = new WebSocket('ws://streamapi.com/socket');
+        ws.onmessage = (event) => {
+          expect(event.data).to.equal('hi from mock');
+          ws.close();
+          stream.destroy();
+          done();
+        };
+        ws.onopen = () => {
+          stream.connections[0].send('hi from mock');
+        };
+      });
+      it('should broadcast a pushEvent to all EventSource connections', (done) => {
+        const stream = testBrowser.mockStream('http://streamapi.com/feed');
+        const received = [];
+        const es1 = new EventSource('http://streamapi.com/feed');
+        const es2 = new EventSource('http://streamapi.com/feed');
+        const onMessage = (event) => {
+          received.push(event.data);
+          if (received.length === 2) {
+            expect(received).to.eql(['all', 'all']);
+            es1.close();
+            es2.close();
+            stream.destroy();
+            done();
+          }
+        };
+        es1.onmessage = onMessage;
+        es2.onmessage = onMessage;
+        expect(stream.connections).to.have.length(2);
+        stream.pushEvent({ message: 'all', options: {} });
+      });
+      it('should remove closed connections', (done) => {
+        const stream = testBrowser.mockStream('ws://streamapi.com/socket');
+        const ws = new WebSocket('ws://streamapi.com/socket');
+        const connection = stream.connections[0];
+        connection.on('close', () => {
+          expect(connection.closed).to.be.true;
+          expect(stream.connections).to.eql([]);
+          stream.destroy();
+          done();
+        });
+        ws.onopen = () => {
+          connection.close();
+        };
+      });
+      it('should reject unauthorized connections with an error event', (done) => {
+        const stream = testBrowser.mockStream('ws://streamapi.com/socket', {
+          authorize: (context) => context.protocols.includes('authorized'),
+        });
+        const ws = new WebSocket('ws://streamapi.com/socket', 'unauthorized');
+        expect(stream.connections).to.eql([]);
+        ws.addEventListener('error', () => {
+          stream.destroy();
+          done();
+        });
       });
     });
   }

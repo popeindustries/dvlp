@@ -21,6 +21,9 @@
     }
     return events;
   }, {});
+  /** @type {Map<string, MockStream>} */
+  const streams = new Map();
+  let connectionCount = 0;
   let networkDisabled = false;
 
   window.XMLHttpRequest.prototype.open = function open(method, href) {
@@ -34,6 +37,11 @@
         // eslint-disable-next-line
         const xhr = this;
         const mockResponse = resolveMockResponse(mockData);
+        // Delay responding by "delay" ms (ignored for handler responses)
+        const delay =
+          (typeof mockData.response !== 'function' &&
+            mockData.response.delay) ||
+          0;
 
         xhr.send = function send() {
           // Hang
@@ -41,55 +49,81 @@
             return;
           }
 
-          const body =
-            typeof mockResponse.body === 'string'
-              ? mockResponse.body
-              : JSON.stringify(mockResponse.body);
+          const respond = function respond() {
+            const body =
+              typeof mockResponse.body === 'string'
+                ? mockResponse.body
+                : JSON.stringify(mockResponse.body);
 
-          Object.defineProperties(xhr, {
-            readyState: {
-              value: 4,
-            },
-            response: {
-              get: function () {
-                if (mockData.callback) {
-                  setTimeout(mockData.callback, 0);
-                }
-                return body;
+            Object.defineProperties(xhr, {
+              readyState: {
+                value: 4,
               },
-            },
-            responseText: {
-              get: function () {
-                return this.response;
+              response: {
+                get: function () {
+                  if (mockData.callback) {
+                    setTimeout(mockData.callback, 0);
+                  }
+                  return body;
+                },
               },
-            },
-            responseURL: {
-              value: href,
-            },
-            status: {
-              get: function () {
-                return mockResponse.status;
+              responseText: {
+                get: function () {
+                  return this.response;
+                },
               },
-            },
-          });
+              responseURL: {
+                value: href,
+              },
+              status: {
+                get: function () {
+                  return mockResponse.status;
+                },
+              },
+            });
 
-          console.log(
-            'mocking xhr response (with local data) for: ' +
-              parseOriginalHref(href),
-          );
-          if (
-            xhr.onreadystatechange &&
-            typeof xhr.onreadystatechange === 'function'
-          ) {
-            xhr.onreadystatechange({ currentTarget: xhr });
+            console.log(
+              'mocking xhr response (with local data) for: ' +
+                parseOriginalHref(href),
+            );
+            if (
+              xhr.onreadystatechange &&
+              typeof xhr.onreadystatechange === 'function'
+            ) {
+              xhr.onreadystatechange({ currentTarget: xhr });
+            }
+            xhr.onload({ currentTarget: xhr });
+          };
+
+          if (delay > 0) {
+            setTimeout(respond, delay);
+          } else {
+            respond();
           }
-          xhr.onload({ currentTarget: xhr });
         };
       } else if (mockData.callback) {
         // Triggered on load/error/abort
         this.addEventListener('loadend', function () {
           mockData.callback();
         });
+      }
+
+      if (mockData.calls) {
+        // eslint-disable-next-line
+        const xhr = this;
+        const requestHeaders = {};
+        const originalSetRequestHeader = xhr.setRequestHeader;
+        // Either the mocked "send" registered above, or the real one
+        const innerSend = xhr.send;
+
+        xhr.setRequestHeader = function setRequestHeader(name, value) {
+          requestHeaders[String(name).toLowerCase()] = value;
+          return originalSetRequestHeader.call(this, name, value);
+        };
+        xhr.send = function send(body) {
+          recordCall(mockData, href, method, requestHeaders, body);
+          return innerSend.call(this, body);
+        };
       }
     }
 
@@ -100,12 +134,17 @@
     if (typeof fetch !== 'undefined') {
       window.fetch = new Proxy(window.fetch, {
         apply(target, ctx, args) {
+          const request = args[0];
           const options = args[1] || {};
-          const [href, mockData] = matchHref(args[0]);
+          const [href, mockData] = matchHref(request);
 
           args[0] = href;
 
           if (mockData) {
+            if (mockData.calls) {
+              recordFetchCall(mockData, href, request, options);
+            }
+
             // Handle mock registered in browser
             if (mockData.response) {
               const mockResponse = resolveMockResponse(mockData, options);
@@ -135,6 +174,19 @@
                 'mocking fetch response (with local data) for: ' +
                   parseOriginalHref(href),
               );
+
+              // Delay responding by "delay" ms (ignored for handler responses)
+              const delay =
+                (typeof mockData.response !== 'function' &&
+                  mockData.response.delay) ||
+                0;
+
+              if (delay > 0) {
+                return sleep(delay).then(function () {
+                  return res;
+                });
+              }
+
               return Promise.resolve(res);
             } else if (mockData.callback) {
               return Reflect.apply(target, ctx, args)
@@ -157,6 +209,7 @@
     if (typeof EventSource !== 'undefined') {
       window.EventSource = new Proxy(window.EventSource, {
         construct: function (target, args) {
+          const url = getUrl(args[0]);
           const [href, mockData] = matchHref(args[0]);
           const isLocal = mockData && mockData.handlers !== undefined;
 
@@ -172,22 +225,30 @@
           const es = Reflect.construct(target, args);
 
           if (isLocal) {
-            es.addEventListener = new Proxy(es.addEventListener, {
-              apply(target, ctx, args) {
-                const [event, callback] = args;
+            const connection = connectStream('es', url, [], es);
 
-                if (event !== 'open' && event !== 'error') {
-                  mockData.handlers[event] = callback;
-                }
+            if (connection) {
+              const originalClose = es.close;
 
-                return Reflect.apply(target, ctx, args);
-              },
-            });
-            Object.defineProperty(mockData.handlers, 'onmessage', {
-              get() {
-                return es.onmessage;
-              },
-            });
+              es.close = function close() {
+                connection._onClose();
+                return originalClose.call(this);
+              };
+              es.addEventListener = new Proxy(es.addEventListener, {
+                apply(target, ctx, args) {
+                  const [event, callback] = args;
+
+                  if (event !== 'open' && event !== 'error') {
+                    mockData.handlers[event] = callback;
+                    connection.handlers[event] = callback;
+                  }
+
+                  return Reflect.apply(target, ctx, args);
+                },
+              });
+              defineHandlersOnMessage(mockData.handlers, es);
+              defineHandlersOnMessage(connection.handlers, es);
+            }
           }
 
           return es;
@@ -198,6 +259,7 @@
     if (typeof WebSocket !== 'undefined') {
       window.WebSocket = new Proxy(window.WebSocket, {
         construct: function (target, args) {
+          const url = getUrl(args[0]);
           const [href, mockData] = matchHref(args[0]);
           const isLocal = mockData && mockData.handlers !== undefined;
 
@@ -211,31 +273,44 @@
           args[0] = href;
 
           const ws = Reflect.construct(target, args);
+          let connection;
 
           if (isLocal) {
-            ws.addEventListener = new Proxy(ws.addEventListener, {
-              apply(target, ctx, args) {
-                const [event, callback] = args;
+            connection = connectStream('ws', url, parseProtocols(args[1]), ws);
 
-                if (event === 'message') {
-                  mockData.handlers.message = callback;
-                }
+            if (connection) {
+              ws.addEventListener('close', function (event) {
+                connection._onClose(event.code, event.reason);
+              });
+              ws.addEventListener = new Proxy(ws.addEventListener, {
+                apply(target, ctx, args) {
+                  const [event, callback] = args;
 
-                return Reflect.apply(target, ctx, args);
-              },
-            });
-            Object.defineProperty(mockData.handlers, 'onmessage', {
-              get() {
-                return ws.onmessage;
-              },
-            });
+                  if (event === 'message') {
+                    mockData.handlers.message = callback;
+                    connection.handlers.message = callback;
+                  }
+
+                  return Reflect.apply(target, ctx, args);
+                },
+              });
+              defineHandlersOnMessage(mockData.handlers, ws);
+              defineHandlersOnMessage(connection.handlers, ws);
+            }
           }
 
-          if (mockData && mockData.callback) {
+          if (mockData && (mockData.callback || connection)) {
             ws.send = new Proxy(ws.send, {
               apply(target, ctx, args) {
                 const result = Reflect.apply(target, ctx, args);
-                mockData.callback(args[0]);
+
+                if (connection) {
+                  connection._emit('message', args[0]);
+                }
+                if (mockData.callback) {
+                  mockData.callback(args[0]);
+                }
+
                 return result;
               },
             });
@@ -275,7 +350,8 @@
      * @param { MockResponse | MockResponseHandler } [res]
      * @param { boolean } [once]
      * @param { () => void } [onMockCallback]
-     * @returns { () => void } remove mock instance
+     * @returns { MockedResponse } remove mock instance when called;
+     *  exposes matched requests via "calls"
      */
     mockResponse(req, res, once = false, onMockCallback) {
       const ignoreSearch = (isMockRequest(req) && req.ignoreSearch) || false;
@@ -293,6 +369,7 @@
 
       const mock = {
         callback: onMockCallback,
+        calls: [],
         href: url.href,
         ignoreSearch,
         once,
@@ -304,9 +381,55 @@
 
       cache.unshift(mock);
 
-      return () => {
+      const mockedResponse = () => {
         remove(mock);
       };
+      mockedResponse.calls = mock.calls;
+
+      return mockedResponse;
+    },
+
+    /**
+     * Register a mock stream at "url", returning a handle exposing live
+     * connections for per-connection send/close, and stream-wide push
+     *
+     * @param { string } url
+     * @param { MockStreamOptions } [options]
+     * @returns { MockStream }
+     */
+    mockStream(url, options) {
+      const streamUrl = getUrl(url);
+      const key = getStreamKey(streamUrl);
+      let stream = streams.get(key);
+
+      if (stream !== undefined && stream._explicit) {
+        // Replace previously registered stream
+        stream.destroy();
+        stream = undefined;
+      }
+
+      if (stream === undefined) {
+        // Adopts connections already tracked for "url", if any
+        stream = createStream(
+          streamUrl,
+          streamUrl.protocol.startsWith('ws') ? 'ws' : 'es',
+        );
+        streams.set(key, stream);
+      }
+
+      stream._explicit = true;
+      stream.options = options || {};
+
+      // Ensure the EventSource/WebSocket proxies intercept connections
+      // to "url", unless an existing local stream mock already does
+      const mockData = findMock(streamUrl);
+
+      if (!mockData || mockData.handlers === undefined) {
+        stream._mockData = createStreamMockData(streamUrl, true);
+        cache.unshift(stream._mockData);
+      }
+
+      return stream;
     },
 
     /**
@@ -324,10 +447,6 @@
       const ignoreSearch =
         (isMockRequest(stream) && stream.ignoreSearch) || false;
       const url = getUrl(stream);
-      const originRegex = new RegExp(
-        url.origin.replace(/ws:|wss:/, 'wss?:').replace('//', '\\/\\/'),
-      );
-      const pathRegex = new RegExp(url.pathname.replaceAll(/\//g, '\\/'));
       /** @type { MockStreamDataType } */
       const type = url.protocol.startsWith('ws') ? 'ws' : 'es';
       // Default to socket.io protocol for ws
@@ -371,16 +490,10 @@
       }
 
       /** @type { DeserializedMock & { callback?: (data: any) => void; handlers: Record<string, (event: MessageEvent) => void> } } */
-      const mock = {
-        href: url.href,
-        originRegex,
-        pathRegex,
-        search: url.search,
-        ignoreSearch,
-        events: eventsData,
-        handlers: {},
-        callback: onSendCallback,
-      };
+      const mock = createStreamMockData(url, ignoreSearch);
+
+      mock.events = eventsData;
+      mock.callback = onSendCallback;
 
       this.cache.unshift(mock);
 
@@ -427,29 +540,18 @@
             } = event;
 
             await sleep(delay);
-
-            const handler =
-              mockData.handlers[options.event] ||
-              mockData.handlers.message ||
-              mockData.handlers.onmessage;
-            const msg = new MessageEvent('message', {
-              data: message,
-              lastEventId: options.id || '',
-            });
-            handler(msg);
+            dispatchStreamEvent(stream, mockData, message, options);
           }
         }
       } else {
         const { message, options = {} } = event;
-        const handler =
-          mockData.handlers[options.event] ||
-          mockData.handlers.message ||
-          mockData.handlers.onmessage;
-        const msg = new MessageEvent('message', {
-          data: typeof message !== 'string' ? JSON.stringify(message) : message,
-          lastEventId: options.id || '',
-        });
-        handler(msg);
+
+        dispatchStreamEvent(
+          stream,
+          mockData,
+          typeof message !== 'string' ? JSON.stringify(message) : message,
+          options,
+        );
       }
     },
   };
@@ -486,28 +588,7 @@
       return [href];
     }
 
-    // Fix Edge URL.origin
-    const origin =
-      url.origin.indexOf(url.host) === -1 ? url.origin + url.host : url.origin;
-    let mockData;
-
-    for (let i = 0; i < cache.length; i++) {
-      const mock = cache[i];
-
-      if (
-        !mock.originRegex.test(origin) ||
-        (!mock.ignoreSearch &&
-          mock.search &&
-          !isEqualSearch(url.search, mock.search))
-      ) {
-        continue;
-      }
-
-      if (mock.pathRegex.exec(url.pathname) != null) {
-        mockData = mock;
-        break;
-      }
-    }
+    const mockData = findMock(url);
 
     if (mockData) {
       if (mockData.once) {
@@ -532,6 +613,131 @@
     }
 
     return [href, mockData];
+  }
+
+  /**
+   * Find mock in "cache" matching "url"
+   *
+   * @param { URL } url
+   * @returns { MockResponseData | MockStreamData | undefined }
+   */
+  function findMock(url) {
+    // Fix Edge URL.origin
+    const origin =
+      url.origin.indexOf(url.host) === -1 ? url.origin + url.host : url.origin;
+
+    for (let i = 0; i < cache.length; i++) {
+      const mock = cache[i];
+
+      if (
+        !mock.originRegex.test(origin) ||
+        (!mock.ignoreSearch &&
+          mock.search &&
+          !isEqualSearch(url.search, mock.search))
+      ) {
+        continue;
+      }
+
+      if (mock.pathRegex.exec(url.pathname) != null) {
+        return mock;
+      }
+    }
+  }
+
+  /**
+   * Record request matching "mockData" on its "calls" array,
+   * mirroring the node mock's MockRequestCall shape
+   *
+   * @param { MockResponseData } mockData
+   * @param { string } href
+   * @param { string } [method]
+   * @param { Record<string, string> } headers
+   * @param { unknown } [body]
+   */
+  function recordCall(mockData, href, method, headers, body) {
+    const call = {
+      body: undefined,
+      headers,
+      method: method ? String(method).toUpperCase() : 'GET',
+      url: parseOriginalHref(href),
+    };
+
+    mockData.calls.push(call);
+
+    if (typeof body === 'string') {
+      if (body.length > 0) {
+        call.body = body;
+      }
+    } else if (body instanceof URLSearchParams) {
+      call.body = body.toString();
+    } else if (body && typeof body.text === 'function') {
+      // Blob or cloned Request: "call.body" is populated when the body
+      // read completes, mirroring the node mock's async body capture
+      body.text().then(
+        function (text) {
+          if (text.length > 0) {
+            call.body = text;
+          }
+        },
+        function () {},
+      );
+    }
+  }
+
+  /**
+   * Record fetch request matching "mockData" on its "calls" array
+   *
+   * @param { MockResponseData } mockData
+   * @param { string } href
+   * @param { string | URL | Request } request
+   * @param { Object } options
+   */
+  function recordFetchCall(mockData, href, request, options) {
+    const isRequest =
+      typeof Request !== 'undefined' && request instanceof Request;
+
+    recordCall(
+      mockData,
+      href,
+      options.method || (isRequest ? request.method : undefined),
+      parseRequestHeaders(
+        options.headers || (isRequest ? request.headers : undefined),
+      ),
+      options.body != null
+        ? options.body
+        : isRequest
+          ? request.clone()
+          : undefined,
+    );
+  }
+
+  /**
+   * Normalize fetch headers init (Headers | entries | object) to a plain object
+   *
+   * @param { unknown } [headers]
+   * @returns { Record<string, string> }
+   */
+  function parseRequestHeaders(headers) {
+    const parsed = {};
+
+    if (headers) {
+      if (Array.isArray(headers)) {
+        for (const entry of headers) {
+          parsed[String(entry[0]).toLowerCase()] = entry[1];
+        }
+      } else if (typeof headers.forEach === 'function') {
+        // Headers instance
+        headers.forEach(function (value, name) {
+          parsed[name] = value;
+        });
+      } else {
+        for (const name in headers) {
+          parsed[name.toLowerCase()] = headers[name];
+        }
+      }
+    }
+
+    return parsed;
   }
 
   /**
@@ -608,6 +814,325 @@
         cache.splice(i, 1);
       }
     }
+  }
+
+  /**
+   * Create stream mock data for matching EventSource/WebSocket
+   * connections to "url"
+   *
+   * @param { URL } url
+   * @param { boolean } ignoreSearch
+   * @returns { MockStreamData }
+   */
+  function createStreamMockData(url, ignoreSearch) {
+    return {
+      href: url.href,
+      originRegex: new RegExp(
+        url.origin.replace(/ws:|wss:/, 'wss?:').replace('//', '\\/\\/'),
+      ),
+      pathRegex: new RegExp(url.pathname.replaceAll(/\//g, '\\/')),
+      search: url.search,
+      ignoreSearch,
+      events: {},
+      handlers: {},
+    };
+  }
+
+  /**
+   * Retrieve cache key for stream at "url" (mirrors the node mock's
+   * url cache key: host + pathname, search ignored)
+   *
+   * @param { URL } url
+   * @returns { string }
+   */
+  function getStreamKey(url) {
+    // Map loopback address to localhost
+    const host = url.host === '127.0.0.1' ? 'localhost' : url.host;
+    let key = host + url.pathname;
+
+    if (key.endsWith('/')) {
+      key = key.slice(0, -1);
+    }
+
+    return key;
+  }
+
+  /**
+   * Create MockStream handle for stream at "url"
+   *
+   * @param { URL } url
+   * @param { MockStreamDataType } type
+   * @returns { MockStream }
+   */
+  function createStream(url, type) {
+    const stream = {
+      url,
+      type,
+      connections: [],
+      options: {},
+      _explicit: false,
+      _mockData: undefined,
+      pushEvent: function pushEvent(event) {
+        return window.dvlp.pushEvent(stream.url.href, event);
+      },
+      destroy: function destroy() {
+        for (const connection of stream.connections.slice()) {
+          connection.close();
+        }
+        stream.connections.length = 0;
+
+        if (stream._mockData) {
+          remove(stream._mockData);
+          stream._mockData = undefined;
+        }
+
+        const key = getStreamKey(stream.url);
+
+        if (streams.get(key) === stream) {
+          streams.delete(key);
+        }
+      },
+    };
+
+    return stream;
+  }
+
+  /**
+   * Register a connection for "client" on the stream at "url",
+   * creating an implicit stream when none has been registered.
+   * Returns undefined when rejected by the stream's "authorize" option
+   *
+   * @param { MockStreamDataType } type
+   * @param { URL } url
+   * @param { Array<string> } protocols
+   * @param { EventSource | WebSocket } client
+   * @returns { MockStreamConnection | undefined }
+   */
+  function connectStream(type, url, protocols, client) {
+    const key = getStreamKey(url);
+    let stream = streams.get(key);
+
+    if (stream === undefined) {
+      stream = createStream(url, type);
+      streams.set(key, stream);
+    }
+
+    if (
+      stream.options.authorize &&
+      !stream.options.authorize({ headers: {}, protocols, url })
+    ) {
+      // No in-page 401: close the client and surface an error instead
+      setTimeout(function () {
+        // Closing a connecting WebSocket fails the connection, which fires
+        // "error" natively; EventSource (and an open WebSocket) close silently
+        const closesSilently =
+          type === 'es' || client.readyState !== WebSocket.CONNECTING;
+
+        client.close();
+
+        if (closesSilently) {
+          client.dispatchEvent(new Event('error'));
+        }
+      }, 0);
+      return undefined;
+    }
+
+    const connection = createStreamConnection(
+      type,
+      url,
+      protocols,
+      client,
+      stream,
+    );
+
+    stream.connections.push(connection);
+
+    if (stream.options.onConnection) {
+      stream.options.onConnection(connection);
+    }
+
+    return connection;
+  }
+
+  /**
+   * Create MockStreamConnection handle wrapping "client"
+   *
+   * @param { MockStreamDataType } type
+   * @param { URL } url
+   * @param { Array<string> } protocols
+   * @param { EventSource | WebSocket } client
+   * @param { MockStream } stream
+   * @returns { MockStreamConnection }
+   */
+  function createStreamConnection(type, url, protocols, client, stream) {
+    const listeners = { close: [], message: [] };
+    const connection = {
+      id: 'connection-' + ++connectionCount,
+      type,
+      url,
+      // Request headers are not readable in-page
+      headers: {},
+      protocols,
+      closed: false,
+      handlers: {},
+      send: function send(message, options) {
+        if (!connection.closed) {
+          dispatchToHandlers(
+            connection.handlers,
+            encodeStreamMessage(message),
+            options || {},
+          );
+        }
+      },
+      close: function close(code, reason) {
+        if (connection.closed) {
+          return;
+        }
+
+        try {
+          client.close(code, reason);
+        } catch {
+          // Browser WebSocket.close() only permits codes 1000/3000-4999
+          client.close();
+        }
+        connection._onClose(code, reason);
+      },
+      on: function on(event, handler) {
+        listeners[event].push(handler);
+        return connection;
+      },
+      once: function once(event, handler) {
+        const wrapped = function (data) {
+          connection.off(event, wrapped);
+          handler(data);
+        };
+
+        return connection.on(event, wrapped);
+      },
+      off: function off(event, handler) {
+        const index = listeners[event].indexOf(handler);
+
+        if (index !== -1) {
+          listeners[event].splice(index, 1);
+        }
+
+        return connection;
+      },
+      _emit: function emit(event, data) {
+        for (const handler of listeners[event].slice()) {
+          handler(data);
+        }
+      },
+      _onClose: function onClose(code, reason) {
+        if (connection.closed) {
+          return;
+        }
+
+        connection.closed = true;
+
+        const index = stream.connections.indexOf(connection);
+
+        if (index !== -1) {
+          stream.connections.splice(index, 1);
+        }
+
+        connection._emit('close', { code, reason });
+      },
+    };
+
+    return connection;
+  }
+
+  /**
+   * Dispatch push event "data" to all live connections for "streamHref",
+   * falling back to the shared legacy handlers registered on "mockData"
+   *
+   * @param { string } streamHref
+   * @param { MockStreamData } mockData
+   * @param { unknown } data
+   * @param { Object } options
+   */
+  function dispatchStreamEvent(streamHref, mockData, data, options) {
+    const stream = streams.get(getStreamKey(getUrl(streamHref)));
+
+    if (stream && stream.connections.length > 0) {
+      for (const connection of stream.connections.slice()) {
+        dispatchToHandlers(connection.handlers, data, options);
+      }
+      return;
+    }
+
+    dispatchToHandlers(mockData.handlers, data, options);
+  }
+
+  /**
+   * Dispatch MessageEvent with "data" to the matching handler in "handlers"
+   *
+   * @param { Record<string, (event: MessageEvent) => void> } handlers
+   * @param { unknown } data
+   * @param { Object } options
+   */
+  function dispatchToHandlers(handlers, data, options) {
+    const handler =
+      handlers[options.event] || handlers.message || handlers.onmessage;
+
+    if (typeof handler === 'function') {
+      handler(
+        new MessageEvent('message', {
+          data,
+          lastEventId: options.id || '',
+        }),
+      );
+    }
+  }
+
+  /**
+   * Mirror "client.onmessage" on "handlers"
+   *
+   * @param { Record<string, (event: MessageEvent) => void> } handlers
+   * @param { EventSource | WebSocket } client
+   */
+  function defineHandlersOnMessage(handlers, client) {
+    Object.defineProperty(handlers, 'onmessage', {
+      configurable: true,
+      get() {
+        return client.onmessage;
+      },
+    });
+  }
+
+  /**
+   * Encode "message" for MessageEvent data:
+   * strings and binary pass through, objects are JSON-stringified
+   *
+   * @param { unknown } message
+   * @returns { unknown }
+   */
+  function encodeStreamMessage(message) {
+    if (
+      typeof message === 'string' ||
+      message instanceof ArrayBuffer ||
+      ArrayBuffer.isView(message) ||
+      (typeof Blob !== 'undefined' && message instanceof Blob)
+    ) {
+      return message;
+    }
+
+    return JSON.stringify(message);
+  }
+
+  /**
+   * Parse WebSocket constructor "protocols" argument to an array
+   *
+   * @param { string | Array<string> } [protocols]
+   * @returns { Array<string> }
+   */
+  function parseProtocols(protocols) {
+    if (protocols === undefined) {
+      return [];
+    }
+
+    return Array.isArray(protocols) ? protocols.slice() : [protocols];
   }
 
   /**

@@ -727,24 +727,69 @@ Re-enables all previously disabled external network requests for the current Nod
 
 ## JS API (browser)
 
-#### - `testBrowser.mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): () => void`
+#### - `testBrowser.mockResponse(request: string|object, response: object|(req, res) => void, once: boolean, onMockCallback: () => void): MockedResponse`
 
-Add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time.
+Add a mock `response` for `request`, optionally removing it after first use, and/or triggering a callback when successfully mocked (see [mocking](#mocking)). Returns a function that may be called to remove the added mock at any time, and which exposes matched requests via its `calls` array — same shape as the [`testServer`](#--testserveroptions-promisetestserver) version. `response.delay` is honoured for static mocks:
 
 ```js
 // Also available as "window.dvlp"
 import { testBrowser } from 'dvlp/test-browser';
 
-testBrowser.mockResponse(
+const mocked = testBrowser.mockResponse(
   'http://localhost:8080/api/user/1234',
   {
     body: {
       id: '1234',
       name: 'bob',
     },
+    delay: 100,
   },
   true,
 );
+
+await fetch('http://localhost:8080/api/user/1234', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ name: 'bob' }),
+});
+
+mocked.calls.length; // => 1
+mocked.calls[0].method; // => 'POST'
+JSON.parse(mocked.calls[0].body); // => { name: 'bob' }
+mocked(); // remove the mock
+```
+
+Both `fetch` and `XMLHttpRequest` requests are captured. Request headers are recorded as passed from page script (`Blob`/`Request` bodies populate `calls[n].body` asynchronously once read).
+
+#### - `testBrowser.mockStream(url: string, options?: MockStreamOptions): MockStream`
+
+Register a mock WebSocket/EventSource stream at `url`, returning a handle exposing live connections — the in-browser variant of the [`testServer`](#--testserveroptions-promisetestserver) version, with the same connection semantics (per-connection `send()`, request/reply via the `message` event, `close(code, reason)`, and stream-wide `pushEvent()`/`destroy()`), minus what the browser environment can't provide:
+
+- **`authorize: (context) => boolean`**: `context.headers` is always empty (request headers are not readable in-page), and rejection surfaces as a client `error` event rather than a `401`
+- **`ping`/`retry`**: not supported (ping frames and reconnect intervals are invisible to page script)
+- **`connection.close(code, reason)`**: browsers only permit WebSocket close codes `1000`/`3000-4999`; other codes fall back to a plain close
+
+```js
+const stream = testBrowser.mockStream('ws://streamapi.com/socket', {
+  authorize: ({ protocols }) => protocols.includes('bearer|valid-token'),
+  onConnection(connection) {
+    // Request/reply on this connection only
+    connection.on('message', (data) => {
+      const msg = JSON.parse(String(data));
+      if (msg.action === 'subscribe') {
+        connection.send({ type: 'ack', correlationId: msg.correlationId });
+      }
+    });
+  },
+});
+
+const ws = new WebSocket('ws://streamapi.com/socket', 'bearer|valid-token');
+
+// Broadcast to all connections
+stream.pushEvent({ message: { title: 'foo' }, options: { event: 'update' } });
+
+// Close all connections and unregister the stream
+stream.destroy();
 ```
 
 #### - `testBrowser.pushEvent(stream: string|object, event: string|object’):void`
@@ -765,6 +810,6 @@ await fetch('https://github.com/popeindustries/dvlp');
 // => Error "network connections disabled"
 ```
 
-#### - `testServer.enableNetwork(): void`
+#### - `testBrowser.enableNetwork(): void`
 
 Re-enables all previously disabled requests originating from the current browser window.
