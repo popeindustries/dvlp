@@ -190,18 +190,20 @@ function injectScripts(
 
   const { footer, header } = scripts;
 
+  // Replace with functions so "$"-sequences in script content
+  // aren't interpreted as substitution patterns
   if (header && RE_OPEN_HEAD_TAG.test(html)) {
     debug('injecting header script');
     html = html.replace(
       RE_OPEN_HEAD_TAG,
-      `<head>\n<script nonce="dvlp">${header}</script>`,
+      () => `<head>\n<script nonce="dvlp">${header}</script>`,
     );
   }
   if (footer && RE_CLOSE_BODY_TAG.test(html)) {
     debug('injecting footer script');
     html = html.replace(
       RE_CLOSE_BODY_TAG,
-      `<script nonce="dvlp">${footer}</script>\n</body>`,
+      () => `<script nonce="dvlp">${footer}</script>\n</body>`,
     );
   }
 

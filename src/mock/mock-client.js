@@ -356,10 +356,8 @@
     mockResponse(req, res, once = false, onMockCallback) {
       const ignoreSearch = (isMockRequest(req) && req.ignoreSearch) || false;
       const url = getUrl(req);
-      const originRegex = new RegExp(
-        url.origin.replace(/http:|https:/, 'https?:').replace('//', '\\/\\/'),
-      );
-      const pathRegex = new RegExp(url.pathname.replaceAll(/\//g, '\\/'));
+      const originRegex = createOriginRegex(url);
+      const pathRegex = createPathRegex(url);
 
       if (typeof res !== 'function') {
         if (res && res.body == null) {
@@ -827,15 +825,46 @@
   function createStreamMockData(url, ignoreSearch) {
     return {
       href: url.href,
-      originRegex: new RegExp(
-        url.origin.replace(/ws:|wss:/, 'wss?:').replace('//', '\\/\\/'),
-      ),
-      pathRegex: new RegExp(url.pathname.replaceAll(/\//g, '\\/')),
+      originRegex: createOriginRegex(url),
+      pathRegex: createPathRegex(url),
       search: url.search,
       ignoreSearch,
       events: {},
       handlers: {},
     };
+  }
+
+  /**
+   * Create anchored origin regex for "url", matching both
+   * secure/unsecure protocols. Anchored so one origin can't
+   * prefix-match another ("localhost:555" vs "localhost:5551")
+   *
+   * @param { URL } url
+   * @returns { RegExp }
+   */
+  function createOriginRegex(url) {
+    const source = url.origin
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      .replace(/^https?:/, 'https?:')
+      .replace(/^wss?:/, 'wss?:');
+
+    return new RegExp(`^${source}$`);
+  }
+
+  /**
+   * Create anchored path regex for "url", matching with or
+   * without a trailing slash. Anchored so one path can't
+   * prefix-match another ("/chunked" vs "/chunked-sized")
+   *
+   * @param { URL } url
+   * @returns { RegExp }
+   */
+  function createPathRegex(url) {
+    const source = url.pathname
+      .replace(/\/$/, '')
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    return new RegExp(`^${source}\\/?$`);
   }
 
   /**

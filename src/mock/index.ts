@@ -237,9 +237,11 @@ export class Mocks {
     const stringifiedCache = JSON.stringify(this.toJSON(), undefined, 2);
 
     // Client mocking only relevant for loaded mocks
+    // Replace with a function so "$"-sequences in serialized mock data
+    // aren't interpreted as substitution patterns
     this.client = mockClient.replace(
       /cache\s?=\s?\[\]/,
-      `cache=${stringifiedCache}`,
+      () => `cache=${stringifiedCache}`,
     );
   }
 
@@ -694,14 +696,16 @@ function getUrlSegmentsForMatching(
   }
 
   const url = new URL(href, `http://localhost:${activePort}`);
-  // Allow matching of both secure/unsecure protocols
-  const origin = new RegExp(
-    url.origin
-      .replace(/http:|https:/, 'https?:')
-      .replace('ws:', 'wss?:')
-      .replace('//', '\\/\\/'),
-  );
-  let pathname = href.replace(origin, '');
+  // Escape regex specials, then allow matching of both
+  // secure/unsecure protocols
+  const originSource = url.origin
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/^https?:/, 'https?:')
+    .replace(/^wss?:/, 'wss?:');
+  // Anchored so one origin can't prefix-match another
+  // ("localhost:555" vs "localhost:5551")
+  const origin = new RegExp(`^${originSource}$`);
+  let pathname = href.replace(new RegExp(`^${originSource}`), '');
   let search = '';
 
   if (pathname.includes('?')) {
