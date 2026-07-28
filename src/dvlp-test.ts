@@ -88,6 +88,8 @@ testServer.disableNetwork = function disableNetwork(
  */
 testServer.enableNetwork = function enableNetwork() {
   uninterceptClientRequest?.();
+  // Reset so a later disableNetwork()/testServer() reinstalls the interceptor
+  uninterceptClientRequest = undefined;
   networkDisabled = false;
   reroute = false;
 };

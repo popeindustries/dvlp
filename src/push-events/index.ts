@@ -176,41 +176,6 @@ export function encodePushEventMessage(
 }
 
 /**
- * Destroy all active push clients for connection at 'url'
- * If 'url' not defined, destroys all clients for all connections
- */
-export function destroyClients(stream?: string | PushStream): void {
-  if (stream === undefined) {
-    for (const cacheKey of cache.keys()) {
-      destroyClient(cacheKey);
-    }
-    return;
-  }
-
-  const { url } = getStream(stream);
-  const cacheKey = getUrlCacheKey(getUrl(url));
-
-  destroyClient(cacheKey);
-}
-
-/**
- * Destroy client at 'cacheKey'
- */
-function destroyClient(cacheKey: string): void {
-  const clients = cache.get(cacheKey);
-
-  if (clients !== undefined) {
-    // Close before removing listeners so wrappers observe the 'close' event
-    for (const client of clients) {
-      client.close();
-      client.removeAllListeners();
-    }
-    clients.clear();
-    cache.delete(cacheKey);
-  }
-}
-
-/**
  * Convert binary-ish "message" (Buffer/ArrayBuffer/TypedArray/DataView)
  * to a Buffer, or "undefined" if not binary
  */

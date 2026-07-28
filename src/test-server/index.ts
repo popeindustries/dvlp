@@ -1,8 +1,4 @@
-import {
-  connectClient,
-  destroyClients,
-  pushEvent,
-} from '../push-events/index.ts';
+import { connectClient, pushEvent } from '../push-events/index.ts';
 import { getUrl, getUrlCacheKey, isWebSocketUrl } from '../utils/url.ts';
 import type {
   MockedResponse,
@@ -18,7 +14,11 @@ import type {
   TestServerOptions,
 } from './types.ts';
 import { MockStreamInstance, parseWebSocketProtocols } from './mock-stream.ts';
-import type { PushEvent, PushStream } from '../push-events/types.ts';
+import type {
+  PushClient,
+  PushEvent,
+  PushStream,
+} from '../push-events/types.ts';
 import config from '../config.ts';
 import Debug from 'debug';
 import type { Duplex } from 'node:stream';
@@ -43,6 +43,9 @@ export class TestServer {
 
   #autorespond: boolean;
   #connections: Map<string, Duplex> = new Map();
+  // Push clients connected to this instance, so destroy() only closes
+  // its own connections when multiple instances share a process
+  #pushClients: Set<PushClient> = new Set();
   #server: HttpServer | undefined;
   #streams: Map<string, MockStreamInstance> = new Map();
 
@@ -109,6 +112,7 @@ export class TestServer {
               : undefined,
           );
 
+          this.#trackPushClient(client);
           stream?.addConnection(client, context);
           this.pushEvent(url.href, 'connect');
           return;
@@ -257,6 +261,7 @@ export class TestServer {
             body,
           );
 
+          this.#trackPushClient(client);
           stream?.addConnection(client, context, socket);
 
           this.pushEvent(url.href, 'connect');
@@ -410,9 +415,27 @@ export class TestServer {
       stream.destroy();
     }
     this.#streams.clear();
-    destroyClients();
+
+    // Close only this instance's push clients, leaving other instances
+    // in the same process connected. Closing (rather than removing
+    // listeners) lets the shared push-client registry self-clean
+    for (const client of this.#pushClients) {
+      client.close();
+    }
+    this.#pushClients.clear();
+
     this.mocks.clear();
     return this._stop();
+  }
+
+  /**
+   * Track push 'client' for cleanup on destroy()
+   */
+  #trackPushClient(client: PushClient): void {
+    this.#pushClients.add(client);
+    client.on('close', () => {
+      this.#pushClients.delete(client);
+    });
   }
 }
 
