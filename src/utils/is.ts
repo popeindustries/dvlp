@@ -6,7 +6,10 @@ import type { Req } from '../types.ts';
 const RE_BARE_SPECIFIER = /^[^./](?!:)/; // Discard if A: (windows file path)
 const RE_INVALID = /[<>:"|?*]/;
 const RE_JSON = /.json$/i;
-const RE_LOCALHOST = /localhost|127\.0\.0\.1/;
+// "::1" covers the ipv6 loopback, with and without the "[...]" url brackets.
+// `localhost` resolves to "::1" before "127.0.0.1" on most current systems, so
+// omitting it classified ordinary loopback traffic as external.
+const RE_LOCALHOST = /localhost|127\.0\.0\.1|\[?::1\]?/;
 const RE_NODE_MODULES = /node_modules/;
 const RE_TYPE_CSS = /text\/css/i;
 const RE_TYPE_HTML = /text\/html/i;
