@@ -875,8 +875,13 @@
    * @returns { string }
    */
   function getStreamKey(url) {
-    // Map loopback address to localhost
-    const host = url.host === '127.0.0.1' ? 'localhost' : url.host;
+    // Map loopback address to localhost. Compares "hostname" rather than
+    // "host", which includes the port: a real server url is "127.0.0.1:3000",
+    // so the equality never held and the mapping was dead code.
+    const host =
+      url.hostname === '127.0.0.1'
+        ? `localhost${url.port ? `:${url.port}` : ''}`
+        : url.host;
     let key = host + url.pathname;
 
     if (key.endsWith('/')) {
