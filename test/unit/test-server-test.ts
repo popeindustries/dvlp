@@ -42,6 +42,20 @@ describe('testServer', () => {
     server = await testServer({ port: 3332 });
     expect(server).to.have.property('port', 3332);
   });
+  it('should serve mocks over every loopback form, not just "localhost"', async () => {
+    server = await testServer({ latency: 0, port: 3332 });
+
+    // `localhost` resolves to `::1` before `127.0.0.1` on current systems, so a
+    // client that resolves the host itself reaches us over ipv6. All three
+    // spellings address the same server and must match the same mock.
+    for (const host of ['localhost', '127.0.0.1', '[::1]']) {
+      server.mockResponse('/probe', { body: { host } }, true);
+      const res = await fetch(`http://${host}:3332/probe`);
+
+      expect(res).to.have.property('status', 200);
+      expect(await res.json()).to.eql({ host });
+    }
+  });
   it('should respond to requests for resources using default "webroot"', async () => {
     server = await testServer();
     const res = await fetch('http://localhost:8080/src/dvlp-test.ts');

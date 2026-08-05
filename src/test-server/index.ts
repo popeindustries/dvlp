@@ -234,7 +234,11 @@ export class TestServer {
       });
       this.#server.on('upgrade', (req, socket, body) => {
         if (WebSocket.isWebSocket(req)) {
-          const url = new URL(req.url as string, `ws://${req.headers.host}`);
+          // Normalised against our own port rather than the Host header, so a
+          // client addressing us by ip or over the ipv6 loopback still yields
+          // the origin stream mocks were registered against. Mirrors the http
+          // url, which is built against `http://localhost:${this.port}`.
+          const url = new URL(req.url as string, `ws://localhost:${this.port}`);
           const stream = this.#streams.get(getUrlCacheKey(url));
           const context = {
             headers: req.headers,
